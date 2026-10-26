@@ -8,25 +8,10 @@
 import { fromReply, type ReplyContext, type SingleFailure } from '../errors';
 import { isSuccess, type SendInit } from '../transport';
 import { err, ok, type Result } from '../../lib/result';
+import type { ProviderId } from '../catalog/providers';
 
-/** The sixteen providers (glossary 17 §1.1). */
-export type ProviderId =
-  | 'gemini'
-  | 'openai'
-  | 'anthropic'
-  | 'xai'
-  | 'openrouter'
-  | 'together'
-  | 'groq'
-  | 'huggingface'
-  | 'fireworks'
-  | 'deepinfra'
-  | 'mistral'
-  | 'deepseek'
-  | 'qwen'
-  | 'cerebras'
-  | 'ollama'
-  | 'custom';
+/** The sixteen providers (glossary 17 §1.1), as the catalogue lists them. */
+export type { ProviderId };
 
 /** How hard an OpenRouter model may think before it answers; `auto` leaves it to the model. */
 export type OpenRouterEffort =

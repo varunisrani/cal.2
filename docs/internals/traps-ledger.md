@@ -146,11 +146,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > adds the refused-key hint for providers that hide it behind CORS
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > reports an offline device as offline, and anything else as connection
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
-  - Review: owned by P03-04
+  - Test: src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses plain http to the local network or the internet, with the reason
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
   - Review: owned by P03-17
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
-  - Review: owned by P03-04
+  - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > is invalid when it is the same provider, model and address as the primary
+  - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > lets two Ollama servers run the same model as primary and standby (ACC-E3-2)
 - **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > reports Cancel during the body read as cancelled, not offline
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > stops one attempt at its 75 s cap, not before, as timeout
@@ -187,11 +188,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > keeps the order: key before credit, credit before daily quota, quota before status
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > calls a 429 that says the quota was exceeded quota, not rateLimit
 - **R03.20** Custom: key optional, model required; keys trimmed
-  - Review: owned by P03-04
+  - Test: src/ai/settings.test.ts > missingFor and keyFor: what a role still needs (R03.20) > trims keys, so a pasted newline or spaces never reach a header; blank is no key
 - **R03.21** Ollama accepts free-form model ids
-  - Review: owned by P03-03
+  - Test: src/ai/catalog/presets.test.ts > resolveModel: a saved pick > keeps an Ollama tag typed freely (R03.21, ACC-E13-2)
 - **R03.22** Server addresses are trimmed and lose trailing slashes; Ollama without /v1 gets a hint
-  - Review: owned by P03-04
+  - Test: src/ai/endpoint.test.ts > checkServerUrl: the Ollama /v1 hint (R03.22) > accepts an Ollama address without /v1 but suggests adding it
 - **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
   - Review: owned by P03-17
 - **R03.24** Label scaling rounds kcal
@@ -203,7 +204,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
   - Test: src/data/repos/secretsRepo.test.ts > recovery (R03.27) > reads every slot as unset and empties the table when the device key is gone, without throwing
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
-  - Review: owned by P03-03
+  - Test: src/ai/catalog/presets.test.ts > upgradeChoices: retired presets (R03.28) > rewrites the primary and the standby once, and not on the second run
 - **R03.29** Large photo sets: the payload is estimated and size errors get their own message (message is v1.x, E16)
   - Test: src/ai/image.test.ts > estimatePayload (R03.29) > sums the base64 lengths of the prepared photos
   - Review: the size message is v1.x (E16)
