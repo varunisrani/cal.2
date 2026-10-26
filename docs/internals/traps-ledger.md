@@ -42,7 +42,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
   - Review: owned by P02-05
 - **R01.18** Height and weight units default together from the browser locale (D-16.10)
-  - Review: owned by P01-04
+  - Test: src/domain/units/defaults.test.ts > defaultUnits > seeds height and weight together from the locale (R01.18)
 
 ## R02 · Food logging (`research/02-*.md` §6)
 
@@ -89,7 +89,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.21** Saving an untouched entry keeps its exact timestamp
   - Review: owned by P06-11
 - **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator
-  - Review: owned by P01-06
+  - Test: src/domain/servings/expression.test.ts > evalAmount > rejects a trailing operator, letters and division by about zero (R02.22)
+  - Test: src/domain/servings/expression.test.ts > pushOperator > replaces a trailing operator instead of stacking one (R02.22)
 - **R02.23** Add-menu decoding drops unknown methods; a menu emptied only by unknown ids falls back to the default; a deliberately empty menu stays empty
   - Review: owned by P06-01
 - **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
@@ -227,7 +228,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.9** Tracker switches hide entry controls, not history
   - Review: owned by P07-05
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
-  - Review: owned by P01-05 (water) and P01-04 (weight)
+  - Test: src/domain/units/water.test.ts > quickAddFromFields > keeps the exact ml of a field left untouched in fl oz (R05.10)
+  - Test: src/domain/units/water.test.ts > amountToMl > caps a custom amount at 5 000 ml (R05.10, D-16.39)
+  - Test: src/domain/units/body.test.ts > weightWheel > shows 160.0 lb after a round trip through kg, not 159.9 (R05.10)
+  - Test: src/domain/units/body.test.ts > weightWheel > keeps every tenth of the lb wheel after a round trip through kg (R05.10)
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
   - Review: owned by P07-12
 - **R05.12** No fallback goals flash before the profile is read
@@ -294,7 +298,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.19** Browser storage can be evicted: request persistence, show it, nudge install and backups
   - Review: owned by P09-15
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
-  - Review: owned by P01-03
+  - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches

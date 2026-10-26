@@ -122,7 +122,8 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 
 | ID | Area | Reference | Platewise 1.0 |
 |---|---|---|---|
-| — | — | — | (none yet) |
+| D-16.67 | Water goal wheel in fl oz (P01-05) | Saving converts the rounded wheel value, so an untouched 2 000 ml goal becomes 2 011 ml | An untouched wheel keeps the exact stored ml, as the kJ wheel keeps kcal (R06.20) |
+| D-16.68 | Water amount fields (P01-05) | Always write a dot | Show and accept the locale's decimal mark ("8,5" in de-DE); a typed comma or dot becomes that mark |
 
 ### 2.8 Not in 1.0
 
