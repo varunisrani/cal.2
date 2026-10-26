@@ -109,9 +109,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B7 · Building the plan (P1)
 
 - **ACC-B7-1** With the AI unreachable the formula plan appears after 60 s with a note
-  - Review: P05-05
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the formula plan with the AI-unavailable note at 60 s when the AI never answers (ACC-B7-1, R01.8, D-16.14)
 - **ACC-B7-2** A valid AI plan is shown after the animation
-  - Review: P05-05
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the AI plan on Plan ready after the animation when the AI answered at 2 s (ACC-B7-2)
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan > moves on only once the 4 s animation is over when the plan came at 2 s, for the run it started (ACC-B7-2)
 
 ### B8 · Plan Ready (P1)
 
@@ -123,9 +124,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B9 · Finishing onboarding saves the profile and plan, seeds the first … (P0)
 
 - **ACC-B9-1** After finishing, Home shows the plan's targets and Progress shows the first weigh-in
-  - Review: P05-07
+  - Test: src/services/onboarding.test.ts > complete > stores the profile with the plan, one weigh-in at now, the units, the tune-up on from today, and onboarding done (ACC-B9-1)
+  - Test: src/features/onboarding/OnboardingRoute.test.tsx > OnboardingRoute > walks the shortest path and finishes: the plan, one weigh-in, the units and the done flag are stored (ACC-B9-1)
 - **ACC-B9-2** An edited plan leaves the weekly tune-up off
-  - Review: P05-07
+  - Test: src/services/onboarding.test.ts > complete > leaves the weekly tune-up off when the plan was changed by hand (ACC-B9-2, R01.7)
 
 ### B10 · Restore from a backup file on Welcome (P1)
 

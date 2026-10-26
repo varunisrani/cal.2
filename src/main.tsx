@@ -5,6 +5,7 @@ import './ui/tokens.css';
 import { App } from './app/App';
 import type { ShellPorts } from './app/ports';
 import { createRouter, windowHost } from './app/router';
+import { browserFetch } from './ai/transport';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
 import { hasUnreadableData } from './data/guard';
@@ -22,7 +23,6 @@ import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
-import { browserFetch } from './ai/transport';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createCaptureDraftService } from './services/captureDrafts';
@@ -32,6 +32,7 @@ import { createDiaryService } from './services/diary';
 import { createRebuildService } from './services/goals/rebuild';
 import { createTuneUpRunner } from './services/goals/tuneUp';
 import type { PlanServiceDeps } from './services/goals/planRequest';
+import { createPlanBuilder, storedAiAccess } from './services/goals/planBuilder';
 import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
@@ -76,6 +77,7 @@ async function start(): Promise<void> {
   const fastRepo = createFastRepo(db);
   const diaryRepo = createDiaryRepo(db);
   const weightRepo = createWeightRepo(db);
+  const bodyFatRepo = createBodyFatRepo(db);
   const secretsRepo = createSecretsRepo(db);
 
   // A fast left running while tracking is off would keep food logging locked (R05.2).
@@ -86,7 +88,6 @@ async function start(): Promise<void> {
   const storage = createStorageAccess({ settings: settingsRepo });
   const photoRepo = createPhotoRepo(db);
   const photos = createPhotoService({ photoRepo });
-  const bodyFatRepo = createBodyFatRepo(db);
   const planDeps: PlanServiceDeps = {
     profileRepo,
     settingsRepo,
@@ -109,6 +110,7 @@ async function start(): Promise<void> {
       profileRepo,
       settingsRepo,
       weightRepo,
+      bodyFatRepo,
     }),
     aiSetup: createAiSetupService({ settingsRepo, secretsRepo }),
     photos,
@@ -119,6 +121,11 @@ async function start(): Promise<void> {
     }),
     rebuild: createRebuildService(planDeps),
     tuneUp: createTuneUpRunner(planDeps),
+    planBuilder: createPlanBuilder({
+      aiAccess: storedAiAccess({ settingsRepo, secretsRepo }),
+      energyUnit: () => settingsRepo.get('units.energy'),
+      fetch: browserFetch,
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

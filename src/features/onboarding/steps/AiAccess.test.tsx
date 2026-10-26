@@ -26,7 +26,7 @@ import {
 import { ServicesProvider, type Services } from '../../../services/context';
 import { openTestDb } from '../../../test/db';
 import { FACTORY_NOW } from '../../../test/factories';
-import { TEST_TODAY, wizardAt } from '../testing/renderWizard';
+import { STAND_IN_STEPS, TEST_TODAY, wizardAt } from '../testing/renderWizard';
 import type { WizardState } from '../wizard';
 import { WizardPage } from '../WizardPage';
 import { AiAccess } from './AiAccess';
@@ -84,7 +84,8 @@ async function setUp(change: (real: AiSetupService) => AiSetupService = (real) =
   const used = change(real);
   const services: Services = {
     diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
-    onboarding: { startWithDefaults: vi.fn() },
+    onboarding: { complete: vi.fn() },
+    planBuilder: { build: vi.fn() },
     aiSetup: {
       saveChoice: (choice) => track(used.saveChoice(choice)),
       savedKeyMask: (provider) => track(used.savedKeyMask(provider)),
@@ -125,7 +126,7 @@ async function setUp(change: (real: AiSetupService) => AiSetupService = (real) =
             today={TEST_TODAY}
             locale="en-GB"
             requestNotifications={vi.fn()}
-            lateSteps={{ aiAccess: AiAccess }}
+            lateSteps={{ ...STAND_IN_STEPS, aiAccess: AiAccess }}
             initialState={state}
             onStateChange={(next) => states.push(next)}
           />

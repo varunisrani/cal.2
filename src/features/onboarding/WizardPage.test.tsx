@@ -4,7 +4,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { common } from '../../i18n/en/common';
 import { onboarding } from '../../i18n/en/onboarding';
 import type { StepProps } from './steps/stepProps';
-import { renderWizard, TEST_TODAY, wizardAt } from './testing/renderWizard';
+import {
+  renderWizard,
+  STAND_IN_STEPS,
+  standInTitle,
+  TEST_TODAY,
+  wizardAt,
+} from './testing/renderWizard';
 import { WizardPage } from './WizardPage';
 
 const words = onboarding.onboarding;
@@ -139,7 +145,7 @@ describe('WizardPage', () => {
     expect(heading()).toHaveTextContent(words.reminders.title);
     await user.click(continueButton());
 
-    expect(heading()).toHaveTextContent(words.wizard.pending.aiAccess);
+    expect(heading()).toHaveTextContent(standInTitle('aiAccess'));
     expect(continueButton()).toBeDisabled();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', 'Step 10 of 12');
     expect(latest()).toMatchObject({
@@ -162,7 +168,11 @@ describe('WizardPage', () => {
       expect(heading()).toHaveTextContent(words.body.title);
     };
     const first = render(
-      <WizardPage today={TEST_TODAY} requestNotifications={async () => 'granted'} />,
+      <WizardPage
+        today={TEST_TODAY}
+        requestNotifications={async () => 'granted'}
+        lateSteps={STAND_IN_STEPS}
+      />,
     );
     await toBody();
 
@@ -174,7 +184,13 @@ describe('WizardPage', () => {
 
     // The same fresh wizard in a British browser reads kilograms and centimetres.
     language.mockReturnValue('en-GB');
-    render(<WizardPage today={TEST_TODAY} requestNotifications={async () => 'granted'} />);
+    render(
+      <WizardPage
+        today={TEST_TODAY}
+        requestNotifications={async () => 'granted'}
+        lateSteps={STAND_IN_STEPS}
+      />,
+    );
     await toBody();
     expect(screen.getByRole('radio', { name: words.body.metric })).toBeChecked();
     expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeKg })).toHaveValue('70');
@@ -203,14 +219,14 @@ describe('WizardPage', () => {
         },
       }),
     });
-    expect(heading()).toHaveTextContent(words.wizard.pending.planReady);
+    expect(heading()).toHaveTextContent(standInTitle('planReady'));
     expect(screen.getByRole('button', { name: common.common.back })).toBeVisible();
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByRole('button', { name: words.wizard.continue })).toBeNull();
     unmount();
 
     renderWizard({ state: wizardAt('buildingPlan', { buildRun: 1 }) });
-    expect(heading()).toHaveTextContent(words.wizard.pending.buildingPlan);
+    expect(heading()).toHaveTextContent(standInTitle('buildingPlan'));
     expect(screen.queryByRole('button', { name: common.common.back })).toBeNull();
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByRole('button', { name: words.wizard.continue })).toBeNull();
@@ -249,6 +265,6 @@ describe('WizardPage', () => {
 
     act(() => finish?.());
     expect(latest().step).toBe('planReady');
-    expect(heading()).toHaveTextContent(words.wizard.pending.planReady);
+    expect(heading()).toHaveTextContent(standInTitle('planReady'));
   });
 });

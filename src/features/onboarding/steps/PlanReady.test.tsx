@@ -6,7 +6,7 @@ import { about } from '../../../i18n/en/about';
 import { common } from '../../../i18n/en/common';
 import { onboarding } from '../../../i18n/en/onboarding';
 import { closeHarnesses, openHarness, untilShown } from '../../../test/screenHarness';
-import { TEST_TODAY, wizardAt } from '../testing/renderWizard';
+import { STAND_IN_STEPS, TEST_TODAY, wizardAt } from '../testing/renderWizard';
 import { WizardPage } from '../WizardPage';
 import type { WizardState } from '../wizard';
 import { planWheel, PlanReady } from './PlanReady';
@@ -32,7 +32,7 @@ async function showPlan(state: WizardState = planAt(), energy: 'kcal' | 'kJ' = '
       today={TEST_TODAY}
       locale="en-GB"
       requestNotifications={async () => 'granted'}
-      lateSteps={{ planReady: PlanReady }}
+      lateSteps={{ ...STAND_IN_STEPS, planReady: PlanReady }}
       initialState={state}
       onStateChange={(next) => states.push(next)}
     />,

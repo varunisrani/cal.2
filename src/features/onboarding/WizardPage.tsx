@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useReducer, useRef, type ComponentType } fr
 import type { DayKey } from '../../domain/dates/dayKey';
 import { defaultUnits } from '../../domain/units/defaults';
 import { currentLocale } from '../../i18n/locale';
-import { t, type TKey } from '../../i18n/t';
+import { t } from '../../i18n/t';
 import { Button, IconButton } from '../../ui/Button';
 import { cx } from '../../ui/classes';
 import { Icon } from '../../ui/icons';
@@ -16,7 +16,6 @@ import { Goal } from './steps/Goal';
 import { Pace } from './steps/Pace';
 import { Reminders } from './steps/Reminders';
 import { Sex } from './steps/Sex';
-import { StepHeader } from './steps/StepHeader';
 import type { StepProps } from './steps/stepProps';
 import { Target } from './steps/Target';
 import { Welcome } from './steps/Welcome';
@@ -43,25 +42,6 @@ export type LateStepId = 'aiAccess' | 'buildingPlan' | 'planReady';
  */
 export type LateSteps = Readonly<Record<LateStepId, ComponentType<StepProps>>>;
 
-const PENDING_TITLE_KEYS: Readonly<Record<LateStepId, TKey>> = {
-  aiAccess: 'onboarding.wizard.pending.aiAccess',
-  buildingPlan: 'onboarding.wizard.pending.buildingPlan',
-  planReady: 'onboarding.wizard.pending.planReady',
-};
-
-function pendingStep(id: LateStepId): ComponentType<StepProps> {
-  return function PendingStep() {
-    return <StepHeader title={t(PENDING_TITLE_KEYS[id])} />;
-  };
-}
-
-/** Stand-ins for the late steps until their slice lands: a heading and nothing else. */
-export const PENDING_LATE_STEPS: LateSteps = {
-  aiAccess: pendingStep('aiAccess'),
-  buildingPlan: pendingStep('buildingPlan'),
-  planReady: pendingStep('planReady'),
-};
-
 export interface WizardPageProps {
   /** Today's local day: the birthday starts 25 years before it and cannot pass it. */
   readonly today: DayKey;
@@ -71,8 +51,8 @@ export interface WizardPageProps {
   readonly requestNotifications: AskNotifications;
   /** The Welcome step's "Restore from a backup file" (P09-14). */
   readonly onRestore?: () => void;
-  /** Views for the AI access, Building plan and Plan ready steps; stand-ins when left out. */
-  readonly lateSteps?: Partial<LateSteps>;
+  /** Views for the AI access, Building plan and Plan ready steps (the onboarding route's). */
+  readonly lateSteps: LateSteps;
   /** Where the wizard starts instead of a fresh Welcome. */
   readonly initialState?: WizardState;
   /** Hears every new state, the first one included (onboarding completes from it, P05-07). */
@@ -147,7 +127,7 @@ export function WizardPage({
       case 'aiAccess':
       case 'buildingPlan':
       case 'planReady': {
-        const Late = lateSteps?.[state.step] ?? PENDING_LATE_STEPS[state.step];
+        const Late = lateSteps[state.step];
         return <Late {...props} />;
       }
     }

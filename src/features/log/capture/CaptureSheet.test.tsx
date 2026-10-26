@@ -62,7 +62,14 @@ function servicesOver(db: PlatewiseDb, fake: FakeCodec) {
   const captureDrafts = createCaptureDraftService({ photos, draftsRepo, photoRepo });
   const services: Services = {
     diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
-    onboarding: { startWithDefaults: vi.fn() },
+    onboarding: { complete: vi.fn() },
+    aiSetup: {
+      saveChoice: vi.fn(),
+      savedKeyMask: vi.fn(),
+      setTermsAccepted: vi.fn(),
+      setUpLater: vi.fn(),
+    },
+    planBuilder: { build: vi.fn() },
     photos,
     captureDrafts,
     clock: fixedClock(FACTORY_NOW, 'America/New_York'),

@@ -1,8 +1,9 @@
 /**
- * The walking skeleton end to end (P04-14, Demo 1): a first run on a phone starts with the
- * defaults, logs "Toast, 250 kcal" by hand, sees it under its meal with the gauge at 250, reloads
- * and still has it, then deletes it only after confirming. parity/walking-skeleton.platewise.json
- * is the same flow for REA.
+ * The walking skeleton end to end (P04-14, Demo 1): a first run on a phone walks the wizard's
+ * shortest path (every step on its default, AI set up later, the formula plan), logs "Toast,
+ * 250 kcal" by hand, sees it under its meal with the gauge at 250, reloads and still has it, then
+ * deletes it only after confirming. parity/walking-skeleton.platewise.json is the same flow for
+ * REA.
  */
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import { lookupMessage, type MessageKey } from '../src/i18n/catalogue';
@@ -65,24 +66,71 @@ test.describe('walking skeleton (Demo 1)', () => {
     const breakfast = ui(diary, 'home.meal.breakfast');
     const entry = ui(page, 'entry.row');
 
-    await test.step('a fresh load offers the quick start', async () => {
+    const wizard = ui(page, 'screen.onboarding');
+
+    await test.step('a fresh load opens the wizard; Get started', async () => {
       await page.goto('/');
-      const onboarding = ui(page, 'screen.onboarding');
-      await expect(
-        onboarding.getByRole('heading', { name: words('common.appName') }),
-      ).toBeVisible();
-      const start = onboarding.getByRole('button', {
-        name: words('onboarding.quickStart.start'),
+      await expect(wizard).toHaveAttribute('data-step', 'welcome');
+      const start = wizard.getByRole('button', {
+        name: words('onboarding.welcome.start'),
         exact: true,
       });
-      await expect(start).toHaveAttribute('data-ui', 'onboarding.start');
+      await expect(start).toHaveAttribute('data-ui', 'wizard.start');
       await start.click();
     });
 
-    await test.step('Home opens with nothing eaten', async () => {
+    await test.step('Continue on every step from Sex to Reminders, keeping the defaults', async () => {
+      const next = wizard.getByRole('button', {
+        name: words('onboarding.wizard.continue'),
+        exact: true,
+      });
+      await expect(next).toHaveAttribute('data-ui', 'wizard.continue');
+      const steps = [
+        'sex',
+        'birthday',
+        'body',
+        'bodyFat',
+        'activity',
+        'goal',
+        'target',
+        'pace',
+        'reminders',
+      ];
+      for (const step of steps) {
+        await expect(wizard).toHaveAttribute('data-step', step);
+        await next.click();
+      }
+    });
+
+    await test.step('AI access: Set up later', async () => {
+      await expect(wizard).toHaveAttribute('data-step', 'aiAccess');
+      const later = wizard.getByRole('button', {
+        name: words('aiSetup.access.later'),
+        exact: true,
+      });
+      await expect(later).toHaveAttribute('data-ui', 'wizard.ai.later');
+      await later.click();
+    });
+
+    await test.step('Building plan, then Plan ready with the formula plan; finish', async () => {
+      await expect(wizard).toHaveAttribute('data-step', 'buildingPlan');
+      await expect(ui(wizard, 'wizard.building')).toBeVisible();
+      await expect(wizard.getByRole('button', { name: words('common.back') })).toHaveCount(0);
+      await expect(wizard).toHaveAttribute('data-step', 'planReady');
+      await expect(ui(wizard, 'wizard.plan.kcal')).toContainText('2,452');
+      await expect(ui(wizard, 'wizard.plan.aiUnavailable')).toBeVisible();
+      const finish = wizard.getByRole('button', {
+        name: words('onboarding.planReady.finish'),
+        exact: true,
+      });
+      await expect(finish).toHaveAttribute('data-ui', 'wizard.plan.finish');
+      await finish.click();
+    });
+
+    await test.step('Home opens with nothing eaten, against the plan', async () => {
       await expect(page).toHaveURL(/#\/home$/);
       await expect(gauge).toHaveAccessibleName(words('home.gauge.heading.kcal'));
-      await expect(gauge).toHaveAccessibleDescription(/^0 /);
+      await expect(gauge).toHaveAccessibleDescription(/^0 .*2,452/);
       await expect(ui(diary, 'home.diary.empty')).toHaveText(words('home.diary.empty'));
       await expect(entry).toHaveCount(0);
     });

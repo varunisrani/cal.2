@@ -49,7 +49,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/onboarding/wizard.test.ts > building the plan > ignores a completion that arrives after the person left (R01.8)
   - Test: src/features/onboarding/wizard.test.ts > Continue and Back > does nothing on Back from Welcome or Building plan
   - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows Back but no progress on Plan ready, and neither while the plan is built
-  - Review: owned by P05-05 (the 60 s cap and the formula fallback)
+  - Test: src/services/goals/planBuilder.test.ts > buildPlan > stops waiting at 60 s and gives the formula plan, even with a 600 s time limit (R01.8, D-16.14)
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the formula plan with the AI-unavailable note at 60 s when the AI never answers (ACC-B7-1, R01.8, D-16.14)
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan > drops a plan that lands after the step went away, and stops its request (R01.8)
+  - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan > shows no Back while it builds (R01.8)
 - **R01.9** Truncation and rounding follow the spec exactly; the fat residue uses a true floor-mod
   - Test: src/domain/goals/formulas.test.ts > formulaPlan > truncates every step instead of rounding (R01.9)
   - Test: src/domain/goals/integers.test.ts > floorMod > gives a remainder with the sign of the divisor, unlike % (R01.9)

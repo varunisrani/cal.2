@@ -7,7 +7,6 @@ import { common } from '../i18n/en/common';
 import { goals } from '../i18n/en/goals';
 import { onboarding } from '../i18n/en/onboarding';
 import { shell } from '../i18n/en/shell';
-import { t } from '../i18n/t';
 import { fixedClock } from '../lib/clock';
 import { ServicesProvider, type Services } from '../services/context';
 import { App } from './App';
@@ -26,7 +25,14 @@ import { memoryHost } from './testing/memoryHost';
 
 const services: Services = {
   diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
-  onboarding: { startWithDefaults: vi.fn() },
+  onboarding: { complete: vi.fn() },
+  aiSetup: {
+    saveChoice: vi.fn(),
+    savedKeyMask: vi.fn(),
+    setTermsAccepted: vi.fn(),
+    setUpLater: vi.fn(),
+  },
+  planBuilder: { build: vi.fn() },
   clock: fixedClock(Date.parse('2026-10-26T12:30:00-04:00'), 'America/New_York'),
 };
 
@@ -63,19 +69,29 @@ function renderApp(ports: ShellPorts, initialHash = '', withServices: Services =
 }
 
 describe('App', () => {
-  it('boots to onboarding with the temporary source and shows the quick start', () => {
+  it("boots to onboarding with the temporary source and opens the wizard's Welcome", () => {
     const { host } = renderApp(temporaryPorts());
-    expect(screen.getByRole('heading', { level: 1, name: 'Platewise' })).toBeInTheDocument();
-    const { start } = onboarding.onboarding.quickStart;
-    expect(screen.getByRole('button', { name: start })).toBeInTheDocument();
+    const { headlineTop, headlineBottom, start } = onboarding.onboarding.welcome;
+    expect(
+      screen.getByRole('heading', { level: 1, name: `${headlineTop} ${headlineBottom}` }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: start })).toHaveAttribute('data-ui', 'wizard.start');
+    expect(document.querySelector('[data-ui="screen.onboarding"]')).toHaveAttribute(
+      'data-step',
+      'welcome',
+    );
     expect(host.hash()).toBe('#/onboarding');
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('shows only text from the catalogue', () => {
     const { container } = renderApp(temporaryPorts());
-    const { lead, start } = onboarding.onboarding.quickStart;
-    expect(container.textContent).toBe(`${t('common.appName')}${lead}${start}`);
+    const welcome = onboarding.onboarding.welcome;
+    const tour = Object.values(welcome.tour).join('');
+    expect(container.textContent).toBe(
+      `${welcome.headlineTop} ${welcome.headlineBottom}${welcome.lead}${tour}` +
+        `${welcome.start}${welcome.restore}`,
+    );
   });
 
   it('shows the skeleton, then Home and the tab bar once the profile and settings are read', () => {

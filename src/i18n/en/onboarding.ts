@@ -1,27 +1,17 @@
 import type { MessageTree } from '../catalogue';
 
 /**
- * Words of onboarding (src/features/onboarding): the wizard's frame and its steps from Welcome
- * to Reminders (P05-01..03) and Plan ready (P05-06), and the temporary quick start (P04-09,
- * deleted by P05-07), whose heading is the app's name (`common.appName`).
+ * Words of onboarding (src/features/onboarding): the wizard's frame, its steps from Welcome to
+ * Reminders (P05-01..03), Building plan (P05-05) and Plan ready (P05-06), and the onboarding
+ * route's message when finishing fails (P05-07).
  */
 export const onboarding = {
   onboarding: {
-    quickStart: {
-      lead: 'Count what you eat with your own AI key. Begin with standard details now and change them any time in Settings.',
-      start: 'Start with defaults',
-      failed: "That didn't save. Please try again.",
-    },
+    finishFailed: "Your plan wasn't saved. Please try again.",
     wizard: {
       continue: 'Continue',
       progress: 'Setup progress',
       progressValue: 'Step {step} of {total}',
-      // Steps 10–12 until the AI setup slice fills them.
-      pending: {
-        aiAccess: 'Connect your AI',
-        buildingPlan: 'Building your plan',
-        planReady: 'Your plan',
-      },
       units: {
         kg: 'kg',
         lb: 'lb',
@@ -172,6 +162,21 @@ export const onboarding = {
       unsupported:
         'This browser cannot show notifications, so reminders stay off. Adding Platewise to your home screen may help.',
       skip: 'Not now? Continue, and nothing is switched on.',
+    },
+    building: {
+      title: 'Building your plan',
+      subtitle: 'Your numbers are being worked out. This takes a few seconds.',
+      progress: 'Plan progress',
+      percent: '{value}%',
+      listTitle: 'Going into your plan',
+      lines: {
+        energy: 'Your daily energy budget',
+        protein: 'Protein for your body and goal',
+        fat: 'Fat for steady energy',
+        carbs: 'Carbs from the energy that is left',
+        check: 'A last check that it all adds up',
+      },
+      done: 'Done',
     },
     planReady: {
       title: 'Your daily plan',

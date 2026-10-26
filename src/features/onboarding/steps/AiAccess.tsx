@@ -2,7 +2,7 @@ import { useCallback, useEffect, useId, useRef, useState, type Dispatch } from '
 import { DEFAULT_AI_SETTINGS, type AiSettings } from '../../../ai/settings';
 import { useSettings } from '../../../data/hooks';
 import { t } from '../../../i18n/t';
-import type { AiChoice, AiSetupService } from '../../../services/aiSetup';
+import type { AiChoice } from '../../../services/aiSetup';
 import { useServices } from '../../../services/context';
 import { Button } from '../../../ui/Button';
 import formStyles from '../../ai-setup/aiSetup.module.css';
@@ -14,12 +14,6 @@ import { StepHeader } from './StepHeader';
 import type { StepProps } from './stepProps';
 
 const STEP_SETTINGS = ['ai.settings', 'onboarding.termsAccepted'] as const;
-
-function useAiSetup(): AiSetupService {
-  const { aiSetup } = useServices();
-  if (!aiSetup) throw new Error('AiAccess: the services have no aiSetup');
-  return aiSetup;
-}
 
 /** Runs storage work one call at a time, in the order asked, so an older save never lands last. */
 function useSerial(): <T>(work: () => Promise<T>) => Promise<T> {
@@ -74,7 +68,7 @@ interface KnownKey {
 }
 
 function AccessForm({ saved, termsAccepted, dispatch }: AccessFormProps) {
-  const aiSetup = useAiSetup();
+  const { aiSetup } = useServices();
   const serial = useSerial();
   const settings = saved ?? DEFAULT_AI_SETTINGS;
   const [choice, setChoice] = useState(() => primaryChoice(settings));

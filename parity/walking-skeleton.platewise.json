@@ -15,16 +15,193 @@
   },
   "actions": [
     {
-      "step_id": "quick-start.shown",
+      "step_id": "wizard.welcome",
       "action": "wait_for",
-      "locator": { "kind": "css", "selector": "[data-ui=\"onboarding.start\"]" },
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.start\"]" },
       "state": "visible",
       "timeout_ms": 15000
     },
     {
-      "step_id": "quick-start.start",
+      "step_id": "wizard.start",
       "action": "click",
-      "locator": { "kind": "css", "selector": "[data-ui=\"onboarding.start\"]" },
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.start\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.continue\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.ai.later\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.later",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.ai.later\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.building-plan",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.building\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.plan.finish\"]" },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"wizard.plan.finish\"]" },
       "timeout_ms": 10000
     },
     {
