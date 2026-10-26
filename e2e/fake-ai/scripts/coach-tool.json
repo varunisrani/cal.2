@@ -1,0 +1,63 @@
+{
+  "about": "Coach: one food_log tool call (range left to the app defaults), then a text answer.",
+  "replies": [
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-1",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call_fake_food_log_1",
+                  "type": "function",
+                  "function": {
+                    "name": "food_log",
+                    "arguments": "{\"limit\":30}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1240,
+          "completion_tokens": 22,
+          "total_tokens": 1262
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-2",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "I looked through your food log. Your meals are fairly balanced, but protein falls short of your target on most days. Adding eggs, tofu or Greek yoghurt to one meal a day would close most of that gap."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1530,
+          "completion_tokens": 48,
+          "total_tokens": 1578
+        }
+      }
+    }
+  ]
+}

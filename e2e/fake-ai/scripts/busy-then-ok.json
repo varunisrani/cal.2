@@ -1,0 +1,39 @@
+{
+  "about": "The provider is busy once (429), then answers with the curry analysis of food-ok.",
+  "replies": [
+    {
+      "status": 429,
+      "body": {
+        "error": {
+          "message": "Fake provider: too many requests right now, please try again in a moment.",
+          "type": "rate_limit_exceeded",
+          "code": "rate_limit_exceeded"
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-busy-2",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"name\":\"Chickpea and spinach curry with rice\",\"emoji\":\"🍛\",\"kcal\":531,\"protein\":18.1,\"carbs\":82.4,\"fat\":13.5,\"servingGrams\":420,\"nutrients\":{\"fibre\":11.2,\"sugar\":6.8,\"saturatedFat\":2.1,\"sodium\":780,\"potassium\":690,\"iron\":4.9,\"calcium\":140},\"units\":[{\"unit\":\"bowl\",\"count\":1,\"gramsEach\":420}],\"parts\":[{\"name\":\"Chickpea and spinach curry\",\"grams\":250,\"kcal\":310,\"protein\":13.5,\"carbs\":34,\"fat\":13},{\"name\":\"Steamed basmati rice\",\"grams\":170,\"kcal\":221,\"protein\":4.6,\"carbs\":48.4,\"fat\":0.5}],\"progressive\":false}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 812,
+          "completion_tokens": 164,
+          "total_tokens": 976
+        }
+      }
+    }
+  ]
+}

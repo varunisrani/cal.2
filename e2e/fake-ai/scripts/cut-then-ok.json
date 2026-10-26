@@ -1,0 +1,53 @@
+{
+  "about": "A food answer cut off by the token limit (finish_reason length), then the full answer to the re-ask.",
+  "replies": [
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-cut-1",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"name\":\"Oat porridge with banana and peanut butter\",\"emoji\":\"🥣\",\"kcal\":452,\"protein\":15.2,\"carbs\":61.3,\"fat\":17.4,\"servingGrams\":340,\"nutrients\":{\"fibre\":8.1"
+            },
+            "finish_reason": "length"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 798,
+          "completion_tokens": 64,
+          "total_tokens": 862
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-cut-2",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"name\":\"Oat porridge with banana and peanut butter\",\"emoji\":\"🥣\",\"kcal\":452,\"protein\":15.2,\"carbs\":61.3,\"fat\":17.4,\"servingGrams\":340,\"nutrients\":{\"fibre\":8.1,\"sugar\":19.6,\"saturatedFat\":3.4,\"sodium\":160,\"potassium\":720,\"magnesium\":120},\"units\":[{\"unit\":\"bowl\",\"count\":1,\"gramsEach\":340}],\"parts\":[{\"name\":\"Oats cooked in milk\",\"grams\":220,\"kcal\":238,\"protein\":9.8,\"carbs\":32.4,\"fat\":7.4},{\"name\":\"Banana\",\"grams\":100,\"kcal\":89,\"protein\":1.1,\"carbs\":22.8,\"fat\":0.3},{\"name\":\"Peanut butter\",\"grams\":20,\"kcal\":125,\"protein\":4.3,\"carbs\":6.1,\"fat\":9.7}],\"progressive\":false}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 851,
+          "completion_tokens": 171,
+          "total_tokens": 1022
+        }
+      }
+    }
+  ]
+}

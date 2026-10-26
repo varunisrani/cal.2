@@ -1,0 +1,33 @@
+{
+  "about": "Two unusable answers: a body that is not JSON, then a completion whose text is not the JSON object asked for.",
+  "replies": [
+    {
+      "status": 200,
+      "body": "{\"choices\": [{\"message\": {\"content\": \"half a reply"
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-garbage-2",
+        "object": "chat.completion",
+        "created": 1767225600,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "That looks like a tasty plate! I can't put numbers on it right now, sorry."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 805,
+          "completion_tokens": 19,
+          "total_tokens": 824
+        }
+      }
+    }
+  ]
+}
