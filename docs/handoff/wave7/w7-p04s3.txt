@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S3 = P04-04, P04-05, P04-06, P04-07 — the hash router and sheet stack; the tab bar; the theme provider; the boot gate, today clock and error boundary (App.tsx composes them). Spec: those four rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (the "Read in reference" column says which reference parts to read: behaviour only), plus its "Files to create" and "Files to update" tables; the architecture's shell in docs/plan/04-architecture.md (§4 row 6, the hash router); research spec 05 §3.1.1–3.1.2. Traps owned: R05.13 (P04-05), R05.12, R05.14 (P04-07) — search docs/internals/traps-ledger.md for "owned by P04-04" … "P04-07". Acceptance rows owned: ACC-A1-1, ACC-A2-1, ACC-A2-2, ACC-A3-1, ACC-A3-2, ACC-A4-1, ACC-A6-1, ACC-A8-1, ACC-A10-1, ACC-A11-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P04/hash-router-and-sheet-stack.md, docs/notes/P04/tab-bar.md, docs/notes/P04/theme-provider.md, docs/notes/P04/boot-gate-today-clock-and-error-boundary.md.
+
+You own:
+- src/app/** (router, useRoute, TabBar, ThemeProvider, Boot, TodayProvider, ErrorBoundary, appState and their tests; App.tsx and App.test.tsx are updated by P04-07), plus a small CSS module for the shell if you need one (src/app/shell.module.css, on the tokens only)
+- src/i18n/en/shell.ts — a new catalogue partition rooted at `shell` for the shell's own copy (skeleton, recovery card, crash card, placeholder screens); and src/i18n/en.ts — only its import line and the `shell` entry in enPartitions (shared: report it). Tab names already exist in common (`common.tabs.*`).
+
+Do not touch:
+- src/ui/** (landed primitives: import Button, Card, Icon, Toast's ToastProvider, etc.; if one needs a change, stop and report it), src/data/** (landed: use createSettingsRepo / createProfileRepo / openDb / DbOpenError and the bus; other P02 builders are writing more repositories in parallel), src/domain/**, src/ai/**, src/lib/**, src/i18n/** other than the two files above, e2e/**, playwright.config.ts, scripts/**, eslint.config.js, vite.config.ts, public/**, index.html, src/main.tsx (except the one line App needs, if any: shared, report it), docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+- src/features/** (P04 wave B builds the screens later): each route renders a placeholder screen from src/app for now.
+
+Decisions already made:
+- Our own small hash router, no new dependency. Routes as the P04-04 row lists; unknown hash → #/home; a sheet stack pushes a history entry per sheet so browser Back closes the top sheet first; each tab remembers scroll and last nested route.
+- Data comes only through the landed repositories: createSettingsRepo(db, {bus}) (snapshot() stays null until the first read; feed, toggleHiddenTab; Home and Settings can never be hidden) and createProfileRepo(db) (get answers missing / ok / corrupt; feed stays loading until the first read). The tab bar draws nothing until settings are loaded (R05.13); Boot shows a neutral skeleton until both the profile read and the settings snapshot resolve (R05.12, R06.22), then routes to #/onboarding when there is no completed profile (a corrupt profile is not "no profile": show the recovery card), else to the last tab. A DbOpenError shows a recovery card instead of the app.
+- ThemeProvider reads display.appearance and display.accent from the settings feed and calls applyTheme from src/ui/theme.ts (it returns a stop: call it on cleanup; a new call on the same root already replaces the old listener). Changes apply without remounting children.
+- TodayProvider gives today's day key (src/domain/dates) and refreshes at the next local midnight and on visibilitychange → visible and pageshow (R05.14); tests use fake timers for the clock, but data-backed tests use real timers (fake timers stall Dexie): test the shell against small fake repositories where you can.
+- Mount ToastProvider (src/ui/Toast.tsx) once in App.tsx. Every interactive element takes a data-ui hook (`shell.tab.home` …) and an accessible name; tab buttons have aria-current. No user-visible literal text in .tsx (copy rule lint).
+- Placeholder screens until P04 wave B: Home, Progress, Coach, Settings and Onboarding each show a heading. The onboarding placeholder's heading must be the app name (t('common.appName')) so the existing e2e smoke test (heading "Platewise" on first load with an empty database) keeps passing; do not edit e2e/.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/app src/i18n --maxWorkers=1
+- e2e smoke still passes: pnpm build, then PLATEWISE_E2E_PORT=4176 PLATEWISE_FAKE_AI_PORT=4322 pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p04s3
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
