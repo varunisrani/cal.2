@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s2a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 wave A slice S2a = P05-04 — the AI access step and the shared provider form. (P05-05 Building plan waits for P03-18; P05-06 Plan ready runs in another slice now.) Spec: the P05-04 row in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read, BYOK part only); research specs 01 §3.4 and 03 §3.3; decisions D-16.7, D-16.26 in docs/plan/16-what-we-change.md and Proposed D-16.49 in docs/plan/18-phase-wise-build-plan.md. Acceptance ids: ACC-B6-1, ACC-B6-2, ACC-E13-1 (P05-04).
+Task note (before code): docs/notes/P05/ai-access-and-provider-form.md.
+
+You own:
+- src/features/ai-setup/** (ProviderForm, ModelPicker, KeyField + tests; a css module if needed)
+- src/features/onboarding/steps/AiAccess.tsx, src/features/onboarding/steps/AiAccess.test.tsx
+- src/i18n/en/aiSetup.ts (new partition) and its one line in src/i18n/en.ts (another slice adds its own line there now; the lead merges them)
+- src/services/aiSetup.ts, src/services/aiSetup.test.ts (new): saves the AI choice
+- additive edits only: the `ai.settings` row in src/data/settingsSchema.ts (+ its test), `aiSetup` in `Services` (src/services/context.tsx) and its wiring in src/main.tsx
+
+Do not touch:
+- src/features/onboarding/{wizard.ts,WizardPage.tsx} and the other steps (landed; another slice now adds a finish action to wizard.ts), src/features/onboarding/steps/{PlanReady,BuildingPlan}.tsx
+- src/ai/** (landed or being built: import only), src/domain/**, src/lib/**, src/data/** other than settingsSchema.ts, src/app/**, src/features/{home,settings,goals,about}/**, src/ui/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). The form is shared with the P09 AI settings page, so it takes values and callbacks and holds no storage itself.
+- Reuse the landed AI layer, do not re-derive: PROVIDERS (16, with format, key need, vision, free-form model, self-hosted) from src/ai/catalog/providers.ts, the presets from src/ai/catalog/presets.ts, AiSettings, DEFAULT_AI_SETTINGS, decodeAiSettings, missingFor and keyFor from src/ai/settings.ts, checkServerUrl and normaliseBaseUrl from src/ai/endpoint.ts (http only for loopback, with the reason shown: ACC-E13-1), mask from src/data/repos/secretsRepo.ts for the saved-key display (import the function through the service if the lint boundary refuses it in a screen).
+- The choice is saved when the step's setup lets the person go on, so Building plan (P05-05) and the rest of the app read the saved settings and key the same way: decodeAiSettings is ready for an `ai.settings` row in src/data/settingsSchema.ts (plug it in); the key goes into the secrets repository (slot per provider; check the slot pattern). AiAccess dispatches `aiReady` (src/features/onboarding/wizard.ts) true only when the terms box is ticked and missingFor finds nothing, or after "Set up later", which saves no provider (Proposed D-16.49: the plan then uses the formulas). A key is trimmed before saving and shown masked afterwards; the browser stores it on this device only (D-16.7), said in one plain line.
+- Steps open with StepHeader and take StepProps (src/features/onboarding/steps/). The key link-out text names where each provider's keys are made; no logos.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/ai-setup src/features/onboarding/steps/AiAccess.test.tsx src/services/aiSetup.test.ts src/data/settingsSchema.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

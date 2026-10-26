@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s3a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 slice S3a = P05-06, P05-13, P05-14 — the Plan ready step; the calculation methods page; the goal-reached dialog. Spec: those three rows in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read; for P05-13 only the list of topics, every sentence ours); research spec 01 §3.4, §3.6, §3.13; decisions D-16.12, D-16.13 in docs/plan/16-what-we-change.md. Traps: R01.7 (P05-06), R01.11 (P05-14, the dialog side). Acceptance ids: ACC-B8-1, ACC-B8-2 (P05-06), ACC-C11-1 (P05-14).
+Task notes (each before its code): docs/notes/P05/plan-ready-step.md, docs/notes/P05/calculation-methods-page.md, docs/notes/P05/goal-reached-dialog.md.
+
+You own:
+- src/features/onboarding/steps/PlanReady.tsx, src/features/onboarding/steps/PlanReady.test.tsx
+- additive edits to src/features/onboarding/wizard.ts and wizard.test.ts: a `finish` action that Plan ready's final button dispatches and a `finished` flag in the state (P05-07 completes onboarding from it; nothing else in the reducer changes)
+- src/features/about/** (MethodsPage + test), src/i18n/en/about.ts (new partition), the onboarding partition src/i18n/en/onboarding.ts (Plan ready keys; remove the `onboarding.wizard.pending.planReady` placeholder key only if nothing uses it) and the about/goals lines in src/i18n/en.ts (another slice adds its own line there now; the lead merges them)
+- src/features/goals/** (GoalReachedDialog + test) and a goals partition if you need one
+- additive edits: the methods page's record in src/features/settings/registry.ts (group `info`), mounting the dialog once in the app frame (src/app/App.tsx), and a small bus hook in src/data/hooks.ts (+ DataProvider if the bus has to travel through it) so a screen can hear `goal-reached` without importing src/data/bus.ts
+- docs/notes/P05/** for your three notes
+
+Do not touch:
+- src/features/onboarding/{WizardPage.tsx,steps/(any other step)}, src/features/ai-setup/**, src/services/** (another slice adds aiSetup now), src/main.tsx, src/data/settingsSchema.ts (another slice, now), src/ai/**, src/domain/** (import only), src/lib/**, src/ui/** (import only), src/features/{home,settings (except the registry record),log,progress,coach}/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule).
+- Plan ready edits only through the wizard's `planEdit` (editPlan in src/domain/goals/planEdit.ts keeps calories and macros consistent; R01.7); the wheels use the Settings ranges (kcal 800–6 000 step 50 or the kJ picker from P01-03; protein 10–500, carbs 0–800, fat 10–300, step 5); a kJ person sees kJ and an untouched wheel keeps the exact kcal; under 1 200 kcal a warning card; the weekly tune-up note; the "AI unavailable" note when state.plan.aiUnavailable; "How is this calculated?" opens the methods page in a sheet (onboarding has no tabs).
+- The methods page renders every multiplier and constant from the domain (src/domain/goals/formulas.ts and friends), never as duplicated literals; it is our own prose under the similarity check (run pnpm check:similarity); reachable from Plan ready (sheet) and Settings (registry record).
+- The dialog listens for `{type:'goal-reached', kg}` (posted by weightRepo for every add path); two messages in a row show one dialog; "Set a new goal" goes to Settings › Personal info (`#/settings/profile`, the page P05-10 registers; until then the router's fallback is fine) and Dismiss closes.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/onboarding src/features/about src/features/goals src/features/settings src/app/App.test.tsx src/data/hooks.test.tsx src/i18n --maxWorkers=1
+- PLATEWISE_REF=/root/reference/fud-ai pnpm check:similarity (must pass on your files)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
