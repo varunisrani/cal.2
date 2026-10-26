@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:25 IST (Agent 1, session 3). 57/176 tasks; P00, P01 and P02 complete; the app runs on the
-real database. New usage window (resets 05:20 IST); wave 8 running.
+Updated: 2026-10-27 00:55 IST (Agent 1, session 3). 63/176 tasks; P00, P01 and P02 complete; the app runs on the
+real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -76,23 +76,33 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 6 | P04-08, P04-09 (diary service, quick start, `src/main.tsx` composition root on the real database, `onboarding` partition) | cfb32cf |
 | Wave 6 | P02-12, P02-14 (secrets under a device key, erase everything, persistence and estimates; D-16.78; persistence wired after the first entry) | 86b4ad7 |
 | Wave 7 | P02-15 (feature hooks over a DataProvider; `LiveState<T>` convention). P02 done | 322a3f7 |
+| Wave 8 | P03-10..12 (image preparation, JSON extraction, food reply parser; reply key constants) | bca540b |
+| Wave 8 | P03-07..09 (Gemini, OpenAI-compatible and Anthropic adapters) | 9d8d27d |
 
 ## In progress
 
-**Wave 8** (launched 2026-10-27 00:24 IST after the reset, base d38d4fb, prompts in `docs/handoff/wave8/`),
-four builders in `/root/wt/wt-{p04s5,p03s2,p03s3,p03s4}`: P04 S5 (P04-10..13 Home, manual entry, entry
-row, tab placeholders, Settings hub), P03 S2 (P03-03/04 catalogue, AI settings, endpoints), P03 S3
-(P03-07..09 adapters), P03 S4a (P03-10..12 image, JSON, food reply parser). At landing: add the `home`,
-`log` and `settings` partitions to `src/i18n/en.ts`. If this container is gone, re-create the four
-worktrees at d38d4fb and relaunch the same prompts. **Progress: 57/176 tasks** (P00 10/10, P01 19/19,
-P02 15/15, P03 4/19, P04 9/14).
+Four builders:
+- Wave 8 (base d38d4fb, `docs/handoff/wave8/`): P04 S5 (P04-10..13 Home, manual entry, entry row, tab
+  placeholders, Settings hub) in `/root/wt/wt-p04s5`; P03 S2 (P03-03/04 catalogue, AI settings,
+  endpoints) in `/root/wt/wt-p03s2`. At landing: add the `home`, `log` and `settings` partitions to
+  `src/i18n/en.ts`; point `ProviderId` in `src/ai/adapters/request.ts` at the catalogue's ids if they
+  match.
+- Wave 9 (base 7a6e065, `docs/handoff/wave9/`): P03 S4b (P03-13/14 units, parts, plan/goal/label
+  readers) in `/root/wt/wt-p03s4b`; P03 S5 (P03-15/16 prompts and contract) in `/root/wt/wt-p03s5`.
+Landed this window: bca540b, 9d8d27d (full loop on the stack: unit 2160 passed + 2 expected-fail in 135
+files, check 6/6, bundle 123.08 kB, e2e 1/1). If this container is gone, re-create the worktrees at their
+bases and relaunch the same prompts. **Progress: 63/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03
+10/19, P04 9/14).
+
+**Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
+`src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
+whether to fast-forward `main` to the work branch.
 
 ## Next
 
-1. Land wave 8 as it returns (see In progress).
-2. Wave 9: P04-14 walking-skeleton e2e and parity scenario (= **Demo 1**, after P04 S5), P03-13/14
-   (units, parts, plan/goal/label readers), P03-15/16 (prompts and contract: contract.ts reuses the
-   key constants exported by foodReply.ts), then P03 wave C (P03-17..19), P05 onboarding and goals,
+1. Land waves 8–9 as they return (see In progress).
+2. Then: P04-14 walking-skeleton e2e and parity scenario (= **Demo 1**, after P04 S5), P03 wave C
+   (P03-17 client, P03-18 tasks, P03-19 CORS probe; after P03 S2, S4b, S5), P05 onboarding and goals,
    P06–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
