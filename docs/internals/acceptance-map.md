@@ -441,9 +441,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E4 · Retry 429/503/529 at 1, 2 and 4 s on every format (P1)
 
 - **ACC-E4-1** A busy provider is retried three times before the busy message
-  - Review: P03-06
+  - Test: src/ai/retry.test.ts > sendWithRetry > retries a busy provider three times, then shows the busy message (ACC-E4-1)
 - **ACC-E4-2** No analysis waits longer than the timeout setting
-  - Review: P03-05
+  - Test: src/ai/retry.test.ts > sendWithRetry > ends a ladder of slow busy replies from a user server at the 180 s deadline (ACC-E4-2)
+  - Test: src/ai/retry.test.ts > sendWithRetry > ends a four-try cloud ladder at the 180 s deadline, never later (ACC-E4-2)
+  - Test: src/ai/transport.test.ts > send > gives an attempt at a user server the whole remaining budget instead of the cap
 
 ### E5 · The standby also runs when the primary's answer fails validation, … (P1)
 

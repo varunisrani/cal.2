@@ -137,7 +137,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
   - Review: owned by P03-04
 - **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
-  - Review: owned by P03-05
+  - Test: src/ai/transport.test.ts > send > reports a Cancel during the body read as cancelled, not offline (R03.6)
+  - Test: src/ai/transport.test.ts > send > tells our own stops apart by the signal that fired, even when the browser only says TypeError
+  - Test: src/ai/retry.test.ts > sendWithRetry > stops at once when the person cancels during a wait
+  - Test: src/ai/retry.test.ts > sendWithRetry > works the same for every wire format
+  - Test: src/ai/retry.test.ts > sendWithRetry > ends a four-try cloud ladder at the 180 s deadline, never later (ACC-E4-2)
 - **R03.7** Gemini replies can hold several parts and thought parts: join every non-thought part; MAX_TOKENS means cut off
   - Review: owned by P03-07
 - **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none
@@ -164,7 +168,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > failureMessage > never shows the provider body, which is kept only as detail (R03.18)
   - Test: src/ai/errors.test.ts > classify > reads a quota with a per-day sign as the daily quota, from the Gemini quotaId too
   - Test: src/ai/errors.test.ts > classify > reads the vendor body shapes: error.message, a string error, detail and plain text
-  - Review: daily-quota detail kept through every retry, P03-06
+  - Test: src/ai/retry.test.ts > sendWithRetry > keeps the daily quota of the last reply through four tries (R03.18)
+  - Test: src/ai/retry.test.ts > sendWithRetry > reads the kind from the last reply, not the first
 - **R03.19** Classification order is fixed: 401/403, credits, daily quota, quota, 404, 429, 503/529, generic
   - Test: src/ai/errors.test.ts > classify > reads 402 and credit wording as credits, ahead of quota and status rules
   - Test: src/ai/errors.test.ts > classify > keeps a refused key ahead of credit wording
@@ -184,7 +189,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.25** Nutrient-goal replies are read tolerantly but keep the person's values for missing keys; a failure never clears goals
   - Review: owned by P03-14
 - **R03.26** Any 2xx status counts as success
-  - Review: owned by P03-05
+  - Test: src/ai/transport.test.ts > send > accepts any 2xx as success: 200, 204 and 299 (R03.26)
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
   - Review: owned by P02-12
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
