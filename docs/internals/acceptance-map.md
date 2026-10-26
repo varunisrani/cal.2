@@ -882,7 +882,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### K9 · Unreadable stored data is kept aside, never overwritten, and a … (P1)
 
 - **ACC-K9-1** A damaged entry is skipped, kept aside, and the other entries still show
-  - Review: P02-02
+  - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
 
 ## L · Platform
 
@@ -925,7 +925,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L7 · Every open tab sees every saved change (P1)
 
 - **ACC-L7-1** An entry added in one tab appears in another open tab
-  - Review: P02-03
+  - Test: src/data/live.test.ts > other tabs > shows an entry added in one tab in another open tab (ACC-L7-1)
 
 ### L9 · Accessible names on every control (P1)
 

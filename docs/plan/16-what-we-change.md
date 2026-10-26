@@ -131,6 +131,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.73 | Ingredient change with no known weights (P01-10) | Unit choices are cleared | The serving stays as it was: basis, unit choices and the chosen unit are kept |
 | D-16.74 | Evidence pack and forecast days (P01-17, P01-18) | Entries are placed by their timestamp | Entries are placed by their stored day key; a day with no entries has its own shape with no numbers (R01.16) |
 | D-16.75 | Swipe-to-delete threshold (P04-03) | A fixed distance | min(220 px, 60 % of the row width), so narrow rows can still reach it; travel capped at 72 %; a keyboard delete button that slides the row aside when focused |
+| D-16.76 | Unreadable stored data (P02-01, P02-02) | One store of JSON blobs; a failed safety copy blocks every later write to the key | One table per record type, so a bad row costs only that row; the quarantine is a table written in the same transaction; a failed copy refuses only that one write |
 
 ### 2.8 Not in 1.0
 

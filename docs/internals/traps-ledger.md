@@ -259,7 +259,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
-  - Review: owned by P02-02
+  - Test: src/data/guard.test.ts > readAll > never lets an unreadable row turn into an empty list that a save replaces (R05.6)
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > never fires for a back-dated 79 under target 79.5 (R05.7)
   - Test: src/domain/trackers/goalCrossing.test.ts > latestWeighIn (R05.7) > picks the latest by date, not the last added (R05.7)
@@ -301,13 +301,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R06 · Settings and data (`research/06-*.md` §6)
 
 - **R06.1** Unreadable data is never treated as empty: drop unreadable records only, keep raw data aside first, show a banner
-  - Review: owned by P02-02
+  - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
+  - Test: src/data/guard.test.ts > writeOne > keeps a corrupt profile aside before saving over it (R06.1)
+  - Test: src/data/guard.test.ts > writeOne > refuses the save and leaves the record untouched when the copy fails (R06.1)
+  - Review: the banner owned by P09 (K9)
 - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
   - Review: owned by P02-06
 - **R06.3** After every committed write every live query and tab re-reads
-  - Review: owned by P02-03
+  - Test: src/data/live.test.ts > live > ends a subscriber that starts during an open write on the committed value (R06.3)
+  - Test: src/data/live.test.ts > other tabs > shows an entry added in one tab in another open tab (ACC-L7-1)
 - **R06.4** An open or upgrade failure never deletes the database
-  - Review: owned by P02-01
+  - Test: src/data/db.test.ts > openDb > refuses a database a newer version wrote and leaves it exactly as it was (R06.4)
+  - Test: src/data/db.test.ts > openDb > turns a failing upgrade into DbOpenError and keeps version 1 with its rows (R06.4)
 - **R06.5** Erase everything invalidates any running backup before wiping
   - Review: owned by P09-15
 - **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything

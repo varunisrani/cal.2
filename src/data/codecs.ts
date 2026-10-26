@@ -1,0 +1,433 @@
+// Lenient readers for stored rows. A codec keeps everything it can understand and builds a fresh
+// record from it: unknown fields are left behind, an unknown or missing enum value becomes the
+// field's default, whole and decimal numbers both read, and an optional part that does not parse
+// is left out (an unknown nutrient is absent, never 0). Only a row whose identity, time or core
+// numbers cannot be read is unreadable: the codec returns null and the guard keeps the raw row.
+
+import { dayKeyOf, isDayKey, type DayKey } from '../domain/dates/dayKey';
+import {
+  EXTRA_KEYS,
+  MAX_LOCKED_MACROS,
+  NUTRIENT_KEYS,
+  isActivity,
+  isCoachRole,
+  isEntrySource,
+  isGoalKind,
+  isMacroKey,
+  isMealKind,
+  isSex,
+  type AnalysisDraft,
+  type BodyFatReading,
+  type CoachMessage,
+  type CoachMessageState,
+  type DiaryEntry,
+  type EntrySource,
+  type Fast,
+  type IngredientLine,
+  type MacroKey,
+  type NovaGroup,
+  type NutritionDraft,
+  type ProductInfo,
+  type Profile,
+  type SavedMeal,
+  type SavedTargets,
+  type ServingBasis,
+  type UnitChoice,
+  type WaterLog,
+  type WeighIn,
+} from '../domain/model';
+import type { PhotoRow } from './schema';
+
+/** Reads a raw stored value into a record, or returns null when it is unreadable. */
+export type Codec<T> = (raw: unknown) => T | null;
+
+/** Defaults for enum fields whose stored value is missing or unknown. */
+export const ENUM_DEFAULTS = {
+  meal: 'other',
+  source: 'manual',
+  sex: 'male',
+  activity: 'moderate',
+  goal: 'maintain',
+} as const;
+
+/** Goal length of a fast whose stored goal is missing or not a positive number: 16 h. */
+export const DEFAULT_FAST_GOAL_MIN = 960;
+
+// ---- Field readers ---------------------------------------------------------------------------
+
+type Fields = Record<string, unknown>;
+
+function fieldsOf(raw: unknown): Fields | null {
+  return typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? (raw as Fields) : null;
+}
+
+/** A finite number, int or decimal. */
+function finite(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+/** A finite number that is not negative. */
+function amount(value: unknown): number | undefined {
+  const n = finite(value);
+  return n !== undefined && n >= 0 ? n : undefined;
+}
+
+/** A finite number above 0. */
+function positive(value: unknown): number | undefined {
+  const n = finite(value);
+  return n !== undefined && n > 0 ? n : undefined;
+}
+
+function text(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+/** A record id: a non-empty string. */
+function id(value: unknown): string | undefined {
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+/** The strings of a list; anything else in it is skipped, a non-list reads as empty. */
+function texts(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+/** The ids of a list (non-empty strings only). */
+function ids(value: unknown): string[] {
+  return texts(value).filter((item) => item !== '');
+}
+
+function flag(value: unknown, fallback: boolean): boolean {
+  return typeof value === 'boolean' ? value : fallback;
+}
+
+/** Sets `key` on `target` only when `value` is defined, so absent stays absent. */
+function put<T extends object, K extends keyof T>(
+  target: T,
+  key: K,
+  value: T[K] | undefined,
+): void {
+  if (value !== undefined) target[key] = value;
+}
+
+/** True for a Blob, from this realm or another (checked by shape, not by class). */
+export function isBlobLike(value: unknown): value is Blob {
+  if (typeof value !== 'object' || value === null) return false;
+  const blob = value as { size?: unknown; type?: unknown; arrayBuffer?: unknown };
+  return (
+    typeof blob.size === 'number' &&
+    typeof blob.type === 'string' &&
+    typeof blob.arrayBuffer === 'function'
+  );
+}
+
+function dayKeyFor(stored: unknown, instant: number): DayKey {
+  return isDayKey(stored) ? stored : dayKeyOf(instant);
+}
+
+// ---- Food -----------------------------------------------------------------------------------
+
+function decodeValues<K extends string>(
+  raw: unknown,
+  keys: readonly K[],
+): Partial<Record<K, number>> {
+  const fields = fieldsOf(raw);
+  const values: Partial<Record<K, number>> = {};
+  if (!fields) return values;
+  for (const key of keys) put(values, key, amount(fields[key]));
+  return values;
+}
+
+function decodeBasis(raw: unknown): ServingBasis {
+  const fields = fieldsOf(raw);
+  if (fields?.kind === 'grams') {
+    // A weight that is missing, zero or not finite means the weight is unknown.
+    const grams = positive(fields.grams);
+    if (grams !== undefined) return { kind: 'grams', grams };
+  }
+  if (fields?.kind === 'servings') {
+    const count = positive(fields.count);
+    if (count !== undefined) return { kind: 'servings', count };
+  }
+  return { kind: 'servings', count: 1 };
+}
+
+function decodeUnitChoice(raw: unknown): UnitChoice | null {
+  const fields = fieldsOf(raw);
+  const unit = text(fields?.unit);
+  const gramsEach = positive(fields?.gramsEach);
+  if (!fields || !unit || gramsEach === undefined) return null;
+  const choice: UnitChoice = { unit, gramsEach };
+  put(choice, 'count', positive(fields.count));
+  return choice;
+}
+
+function decodeLine(raw: unknown): IngredientLine | null {
+  const fields = fieldsOf(raw);
+  const name = text(fields?.name);
+  if (!fields || name === undefined) return null;
+  const line: IngredientLine = {
+    name,
+    grams: amount(fields.grams) ?? 0,
+    kcal: Math.round(amount(fields.kcal) ?? 0),
+    protein: amount(fields.protein) ?? 0,
+    carbs: amount(fields.carbs) ?? 0,
+    fat: amount(fields.fat) ?? 0,
+    photoIds: ids(fields.photoIds),
+  };
+  put(line, 'emoji', text(fields.emoji));
+  return line;
+}
+
+function isNovaGroup(value: unknown): value is NovaGroup {
+  return value === 1 || value === 2 || value === 3 || value === 4;
+}
+
+function decodeProduct(raw: unknown): ProductInfo | undefined {
+  const fields = fieldsOf(raw);
+  const barcode = id(fields?.barcode);
+  if (!fields || !barcode) return undefined;
+  const product: ProductInfo = {
+    barcode,
+    allergens: texts(fields.allergens),
+    traces: texts(fields.traces),
+    labels: texts(fields.labels),
+    categories: texts(fields.categories),
+  };
+  put(product, 'package', text(fields.package));
+  put(product, 'ingredients', text(fields.ingredients));
+  put(product, 'nutri', text(fields.nutri));
+  put(product, 'nova', isNovaGroup(fields.nova) ? fields.nova : undefined);
+  put(product, 'eco', text(fields.eco));
+  put(product, 'imageUrl', text(fields.imageUrl));
+  put(product, 'source', fields.source === 'fdc' ? 'fdc' : undefined);
+  return product;
+}
+
+function present<T>(items: readonly (T | null)[]): T[] {
+  return items.filter((item): item is T => item !== null);
+}
+
+/** The food values shared by entries, saved meals and drafts. Name and core numbers required. */
+export const decodeNutritionDraft: Codec<NutritionDraft> = (raw) => {
+  const fields = fieldsOf(raw);
+  if (!fields) return null;
+  const name = text(fields.name);
+  const kcal = amount(fields.kcal);
+  const protein = amount(fields.protein);
+  const carbs = amount(fields.carbs);
+  const fat = amount(fields.fat);
+  if (
+    name === undefined ||
+    kcal === undefined ||
+    protein === undefined ||
+    carbs === undefined ||
+    fat === undefined
+  ) {
+    return null;
+  }
+  const draft: NutritionDraft = {
+    name,
+    kcal: Math.round(kcal),
+    protein,
+    carbs,
+    fat,
+    nutrients: decodeValues(fields.nutrients, NUTRIENT_KEYS),
+    extras: decodeValues(fields.extras, EXTRA_KEYS),
+    basis: decodeBasis(fields.basis),
+    units: Array.isArray(fields.units) ? present(fields.units.map(decodeUnitChoice)) : [],
+    lines: Array.isArray(fields.lines) ? present(fields.lines.map(decodeLine)) : [],
+    progressive: flag(fields.progressive, false),
+  };
+  put(draft, 'chosenUnit', text(fields.chosenUnit));
+  put(draft, 'chosenCount', positive(fields.chosenCount));
+  put(draft, 'emoji', text(fields.emoji));
+  put(draft, 'note', text(fields.note));
+  put(draft, 'product', decodeProduct(fields.product));
+  return draft;
+};
+
+function sourceOf(value: unknown): EntrySource {
+  return isEntrySource(value) ? value : ENUM_DEFAULTS.source;
+}
+
+export const decodeEntry: Codec<DiaryEntry> = (raw) => {
+  const draft = decodeNutritionDraft(raw);
+  const fields = fieldsOf(raw);
+  const entryId = id(fields?.id);
+  const loggedAt = finite(fields?.loggedAt);
+  if (!draft || !fields || !entryId || loggedAt === undefined) return null;
+  return {
+    ...draft,
+    id: entryId,
+    loggedAt,
+    dayKey: dayKeyFor(fields.dayKey, loggedAt),
+    meal: isMealKind(fields.meal) ? fields.meal : ENUM_DEFAULTS.meal,
+    source: sourceOf(fields.source),
+    photoIds: ids(fields.photoIds),
+  };
+};
+
+export const decodeSavedMeal: Codec<SavedMeal> = (raw) => {
+  const draft = decodeNutritionDraft(raw);
+  const fields = fieldsOf(raw);
+  const mealId = id(fields?.id);
+  if (!draft || !fields || !mealId) return null;
+  const meal: SavedMeal = {
+    ...draft,
+    id: mealId,
+    order: finite(fields.order) ?? 0,
+    source: sourceOf(fields.source),
+    photoIds: ids(fields.photoIds),
+  };
+  put(meal, 'originEntryId', id(fields.originEntryId));
+  return meal;
+};
+
+export const decodeAnalysisDraft: Codec<AnalysisDraft> = (raw) => {
+  const fields = fieldsOf(raw);
+  const draft = decodeNutritionDraft(fields?.draft);
+  if (!fields || !draft) return null;
+  const stored: AnalysisDraft = {
+    draft,
+    photoIds: ids(fields.photoIds),
+    createdAt: finite(fields.createdAt) ?? 0,
+    fromSavedLabel: flag(fields.fromSavedLabel, false),
+  };
+  put(stored, 'source', isEntrySource(fields.source) ? fields.source : undefined);
+  return stored;
+};
+
+// ---- Profile ----------------------------------------------------------------------------------
+
+function decodeSavedTargets(raw: unknown): SavedTargets {
+  const fields = fieldsOf(raw);
+  const saved: SavedTargets = {};
+  if (!fields) return saved;
+  for (const key of ['kcal', 'protein', 'carbs', 'fat'] as const) {
+    const value = amount(fields[key]);
+    put(saved, key, value === undefined ? undefined : Math.round(value));
+  }
+  return saved;
+}
+
+function decodeLocks(raw: unknown): MacroKey[] {
+  const locks: MacroKey[] = [];
+  if (!Array.isArray(raw)) return locks;
+  for (const item of raw) {
+    if (locks.length === MAX_LOCKED_MACROS) break;
+    if (isMacroKey(item) && !locks.includes(item)) locks.push(item);
+  }
+  return locks;
+}
+
+/** The profile row's body data; the row key (`id`) is not part of the record. */
+export const decodeProfile: Codec<Profile> = (raw) => {
+  const fields = fieldsOf(raw);
+  const heightCm = positive(fields?.heightCm);
+  const weightKg = positive(fields?.weightKg);
+  if (!fields || !isDayKey(fields.birthDate) || heightCm === undefined || weightKg === undefined) {
+    return null;
+  }
+  const profile: Profile = {
+    sex: isSex(fields.sex) ? fields.sex : ENUM_DEFAULTS.sex,
+    birthDate: fields.birthDate,
+    heightCm,
+    weightKg,
+    activity: isActivity(fields.activity) ? fields.activity : ENUM_DEFAULTS.activity,
+    goal: isGoalKind(fields.goal) ? fields.goal : ENUM_DEFAULTS.goal,
+    saved: decodeSavedTargets(fields.saved),
+    allergens: texts(fields.allergens),
+    caloriesLocked: flag(fields.caloriesLocked, false),
+    lockedMacros: decodeLocks(fields.lockedMacros),
+  };
+  put(profile, 'bodyFat', positive(fields.bodyFat));
+  put(profile, 'goalBodyFat', positive(fields.goalBodyFat));
+  put(profile, 'weeklyKg', amount(fields.weeklyKg));
+  put(profile, 'goalWeightKg', positive(fields.goalWeightKg));
+  return profile;
+};
+
+// ---- Trackers ---------------------------------------------------------------------------------
+
+export const decodeWeighIn: Codec<WeighIn> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const at = finite(fields?.at);
+  const kg = positive(fields?.kg);
+  return rowId && at !== undefined && kg !== undefined ? { id: rowId, at, kg } : null;
+};
+
+export const decodeBodyFat: Codec<BodyFatReading> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const at = finite(fields?.at);
+  const fraction = positive(fields?.fraction);
+  return rowId && at !== undefined && fraction !== undefined ? { id: rowId, at, fraction } : null;
+};
+
+export const decodeWater: Codec<WaterLog> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const at = finite(fields?.at);
+  const ml = positive(fields?.ml);
+  if (!fields || !rowId || at === undefined || ml === undefined) return null;
+  return { id: rowId, at, dayKey: dayKeyFor(fields.dayKey, at), ml };
+};
+
+export const decodeFast: Codec<Fast> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const start = finite(fields?.start);
+  if (!fields || !rowId || start === undefined) return null;
+  // Only a missing or null end means "still running": a damaged end must not turn into a
+  // running fast, which would block food logging.
+  let end: number | null = null;
+  if (fields.end !== undefined && fields.end !== null) {
+    const stored = finite(fields.end);
+    if (stored === undefined || stored < start) return null;
+    end = stored;
+  }
+  return { id: rowId, start, end, goalMin: positive(fields.goalMin) ?? DEFAULT_FAST_GOAL_MIN };
+};
+
+// ---- Coach and photos ---------------------------------------------------------------------------
+
+function decodeMessageState(raw: unknown): CoachMessageState | undefined {
+  const fields = fieldsOf(raw);
+  const kind = text(fields?.kind);
+  if (!fields || fields.status !== 'failed' || kind === undefined) return undefined;
+  const state: CoachMessageState = { status: 'failed', kind };
+  put(state, 'details', text(fields.details));
+  return state;
+}
+
+/** A message with an unknown role is unreadable: there is no safe side to show it on. */
+export const decodeCoachMessage: Codec<CoachMessage> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const at = finite(fields?.at);
+  if (!fields || !rowId || at === undefined || !isCoachRole(fields.role)) return null;
+  const message: CoachMessage = { id: rowId, role: fields.role, text: text(fields.text) ?? '', at };
+  put(message, 'thumb', isBlobLike(fields.thumb) ? fields.thumb : undefined);
+  put(message, 'state', decodeMessageState(fields.state));
+  return message;
+};
+
+export const decodePhoto: Codec<PhotoRow> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  if (!fields || !rowId || !isBlobLike(fields.blob)) return null;
+  const photo: PhotoRow = {
+    id: rowId,
+    blob: fields.blob,
+    width: amount(fields.width) ?? 0,
+    height: amount(fields.height) ?? 0,
+    bytes: amount(fields.bytes) ?? fields.blob.size,
+    createdAt: finite(fields.createdAt) ?? 0,
+  };
+  put(photo, 'thumb', isBlobLike(fields.thumb) ? fields.thumb : undefined);
+  return photo;
+};
