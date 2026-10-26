@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 21:50 IST (Agent 1, session 3). Rolling waves (54/176 tasks; P00 and P01 complete; the app
-runs on the real database).
+Updated: 2026-10-26 21:55 IST (Agent 1, session 3). 56/176 tasks; P00 and P01 complete; the app runs on the real
+database. One builder (P02-15) runs into the 75 % band; the next waves wait for the 00:20 IST reset.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -74,27 +74,35 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 6 | P02-10, P02-11 (saved meals, Coach messages) | 797e1f1 |
 | Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 8227428 |
 | Wave 6 | P04-08, P04-09 (diary service, quick start, `src/main.tsx` composition root on the real database, `onboarding` partition) | cfb32cf |
+| Wave 6 | P02-12, P02-14 (secrets under a device key, erase everything, persistence and estimates; D-16.78; persistence wired after the first entry) | 86b4ad7 |
 
 ## In progress
 
-**Wave 6**, one builder left: P02 S5 (P02-12/14 secrets with a wrapping key, erase everything,
-persistence and storage estimates), `docs/handoff/wave6/w6-p02s5.txt`, base 2d893e7,
-`/root/wt/wt-p02s5`. At landing: in `src/main.tsx` pass `onFirstEntry: () => requestPersistence()` to
-`createDiaryService` (a comment marks the spot). Landed from wave 6: 797e1f1, 8227428, cfb32cf (latest
-full loop: unit 1922 passed + 2 expected-fail in 122 files, check 6/6, bundle 121.07 kB, e2e 1/1).
-**Progress: 54/176 tasks** (P00 10/10, P01 19/19, P02 12/15, P03 4/19, P04 9/14).
+**Wave 7**: one builder, P02-15 feature hooks (`docs/handoff/wave7/w7-p02c.txt`, base 1dc2830,
+`/root/wt/wt-p02c`), launched 21:52 IST at 67 % usage as the last builder before the reset. Wave 6 fully
+landed (latest full loop on 86b4ad7's stack: unit 1969 passed + 2 expected-fail in 126 files, check 6/6,
+bundle 121.34 kB, e2e 1/1). If this container is gone, re-create the worktree at 1dc2830 and relaunch.
+**Progress: 56/176 tasks** (P00 10/10, P01 19/19, P02 14/15, P03 4/19, P04 9/14).
 
 ## Next
 
-1. Land P02-12/14 when it returns. No new builders until the 00:20 IST reset unless usage reads well
-   below 70 % (59 % at 21:29 IST, about 0.5 points a minute with four builders).
-2. After the reset: P02-15 hooks (all repositories landed), P04 wave B S5 (P04-10..13 Home, log,
-   tab placeholders) and P04-14 walking-skeleton e2e = **Demo 1**; P03 wave B S2..S5 (catalog and
-   settings, adapters, image and parse, prompts), then P03 wave C; P05–P10.
+1. Land P02-15 when it returns (75–89 % band: small tasks only, no new builders).
+2. After the 00:20 IST reset (new prompts needed, same pattern as `docs/handoff/wave6/`): P04 wave B S5
+   (P04-10..13: Home with gauge, pillars and diary; manual entry; tab placeholders) on the hooks and
+   services, then P04-14 walking-skeleton e2e and parity scenario = **Demo 1**; in parallel P03 wave B
+   S2 (P03-03/04 catalog, settings, endpoint), S3 (P03-07..09 adapters), S4 (P03-10..14 image, parse),
+   S5 (P03-15/16 prompts); then P03 wave C (P03-17..19), P05 onboarding and goals, P06–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
 - From wave 6:
+  - Secrets/erase/storage (P02-12/14): device key in meta (`wrapKey`); slot names match
+    `/^[a-z0-9][a-z0-9._-]{0,63}$/`; `WrapKeyChangedError` for a save racing a key change; erase returns
+    erased | blocked (with `finished`) | failed; `closeOnErase(db, onErased, bus?)` is not wired yet (boot
+    should, with the erase notice taking priority over reload-needed); P09 leaves secrets quarantine
+    rows out of exports and backups; the P10 service worker names caches `platewise-*`; read secrets from
+    services, not inside a live query. Typed arrays read back from fake-indexeddb fail `instanceof
+    Uint8Array` in tests: check binary fields structurally.
   - Diary service: `logEntry(draft, {loggedAt, meal, source, photoIds?})` → `logged | fastActive | ignored`;
     one log gate per service, delete gated per id; storage errors reject and reopen the gate.
     `Services = {diary, onboarding, clock}` via `ServicesProvider` / `useServices` (src/services/context.tsx).
