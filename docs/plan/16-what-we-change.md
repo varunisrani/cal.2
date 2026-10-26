@@ -135,6 +135,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.77 | Fasting switched off by a restore or import (P02-09) | No start-up check | settleOnOpen ends any running fast at start-up while fasting is off, so a restored fast never blocks food logging |
 | D-16.78 | Short API keys in Settings (P02-12) | Keys of 8 characters or fewer are shown in full | Shown as dots only; longer keys show the first 4 and last 4 characters |
 | D-16.79 | Manual entry with bad macro text (P04-11) | Unreadable or negative macro text saves as 0 | Save is blocked with a field error; a negative fibre still means unknown |
+| D-16.80 | Wizard target and pace with maintain (P05-01) | "Maintain skips target and pace" | Both steps stay in the sequence (D-16.63 indices fixed): with maintain the target check is skipped, Pace shows its maintain confirmation and the profile keeps no pace or target weight. The target check compares the weights as shown (tenths in the person's unit); a unit switch holds a value the new wheel cannot show to the wheel's end |
 
 ### 2.8 Not in 1.0
 

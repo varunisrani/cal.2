@@ -15,7 +15,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses protein 300 for the default profile, which allows 78–146 (step 6, R01.2)
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: exact energy > gives whole values that sum exactly to kcal for every accepted reply (R01.2)
 - **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
-  - Review: owned by P05-01
+  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)
+  - Test: src/features/onboarding/wizard.test.ts > units > shows 170 cm as 5 ft 7 in and keeps 170 cm through a round trip (R01.3)
+  - Test: src/features/onboarding/steps/Body.test.tsx > Body > reads 70.0 kg again after kg → lb → kg (R01.3)
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when %s changed during the call (R01.4)
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when the profile is gone (R01.4)
@@ -28,13 +30,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
   - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a lose target at or above the current weight (R01.6, D-16.11)
   - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a gain target at or below the current weight (R01.6, D-16.11)
-  - Review: wizard wiring owned by P05-01
+  - Test: src/features/onboarding/wizard.test.ts > target weight > blocks Continue for a lose target of 72 kg when the current weight is 70 (R01.6, ACC-B4-1)
+  - Test: src/features/onboarding/wizard.test.ts > target weight > lets a lose target below the current weight pass and refuses an equal one (R01.6)
+  - Test: src/features/onboarding/wizard.test.ts > target weight > refuses a gain target at or below the current weight (R01.6, D-16.11)
 - **R01.7** Plan Ready edits keep calories and macros consistent and mark the plan as edited
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives carbs after kcal, protein or fat: 2 000 / 150 / 60 → carbs 215 (R01.7)
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives kcal after carbs: carbs 300 → 2 340 kcal (R01.7)
   - Test: src/domain/goals/planEdit.test.ts > editPlan > marks the plan touched only when a value changes (R01.7)
 - **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
-  - Review: owned by P05-05
+  - Test: src/features/onboarding/wizard.test.ts > building the plan > ignores a completion that arrives after the person left (R01.8)
+  - Test: src/features/onboarding/wizard.test.ts > Continue and Back > does nothing on Back from Welcome or Building plan
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows Back but no progress on Plan ready, and neither while the plan is built
+  - Review: owned by P05-05 (the 60 s cap and the formula fallback)
 - **R01.9** Truncation and rounding follow the spec exactly; the fat residue uses a true floor-mod
   - Test: src/domain/goals/formulas.test.ts > formulaPlan > truncates every step instead of rounding (R01.9)
   - Test: src/domain/goals/integers.test.ts > floorMod > gives a remainder with the sign of the divisor, unlike % (R01.9)

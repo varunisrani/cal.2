@@ -73,29 +73,31 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B1 · Welcome screen with a short tour and Get Started (P0)
 
 - **ACC-B1-1** A fresh install opens on Welcome and Get Started begins the wizard
-  - Review: P05-02
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > opens a fresh wizard on Welcome without Back or progress, and Get started begins it (ACC-B1-1)
 
 ### B2 · Wizard steps (P0)
 
 - **ACC-B2-1** Each step accepts its value and Continue moves on
-  - Review: P05-02
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > walks from Welcome to Body fat with the keyboard only, each step keeping its answer (ACC-B2-1)
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > walks from Activity to AI access, each step starting on its default (ACC-B2-1)
 - **ACC-B2-2** Pace 0.5 kg/week from 70 to 65 kg shows 70 days
-  - Review: P05-03
+  - Test: src/features/onboarding/steps/Pace.test.tsx > Pace > estimates 70 days from 70 to 65 kg at 0.5 kg a week (ACC-B2-2)
 
 ### B3 · Switching metric and imperial in the wizard keeps the value … (P1)
 
 - **ACC-B3-1** 70.0 kg toggled to lb and back still reads 70.0 kg
-  - Review: P05-01
+  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)
 
 ### B4 · Target weight must be below the current weight to lose and above … (P1)
 
 - **ACC-B4-1** A lose target above the current weight blocks Continue with an explanation
-  - Review: P05-01
+  - Test: src/features/onboarding/wizard.test.ts > target weight > blocks Continue for a lose target of 72 kg when the current weight is 70 (R01.6, ACC-B4-1)
+  - Test: src/features/onboarding/steps/Target.test.tsx > Target > shows why a lose target above the current weight is refused and holds Continue (ACC-B4-1)
 
 ### B5 · Optional Reminders step using web notifications, replacing the … (P1)
 
 - **ACC-B5-1** Denying permission leaves reminders off and the wizard continues
-  - Review: P05-03
+  - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > leaves reminders off after a denial, says how to allow them later, and continues (ACC-B5-1)
 
 ### B6 · AI access step (P1)
 
@@ -137,7 +139,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-B11-1** The unit defaults for an en-US browser are lb and ft-in, and kg and cm for en-GB
   - Review: P01-04
 - **ACC-B11-2** A fresh wizard in an en-US browser shows weight in lb
-  - Review: P05-02
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows weight in pounds in a fresh wizard in an en-US browser (ACC-B11-2)
 
 ### B12 · Personal info in Settings (P1)
 
