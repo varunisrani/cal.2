@@ -49,7 +49,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/dates/age.test.ts > ageOn > gives the same age in Asia/Tokyo for a birthday stored as a key (R01.15)
   - Test: src/domain/dates/age.test.ts > ageOn > clamps a birth date in the future to 0
 - **R01.16** The evidence pack is numbers and dates only, excludes today, treats missing days as unknown and leaves out workout calories
-  - Review: owned by P01-17
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > never counts today's entries (R01.16)
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > reads a day with no entries as none, with no kcal at all (R01.16)
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy (R01.16) > holds none of the names, notes, ingredients, photos or product text of the entries
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy (R01.16) > has no workout or burn field anywhere in the pack
+  - Test: src/domain/forecast/forecast.test.ts > forecastWeight: average intake > averages 1 400 two days ago and 1 600 yesterday as 1 500 over 2 days, leaving out today's 300 (R01.16)
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
   - Review: owned by P02-05
 - **R01.18** Height and weight units default together from the browser locale (D-16.10)
@@ -253,7 +257,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
   - Review: owned by P02-02
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
-  - Review: owned by P01-19
+  - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal > never fires for a back-dated reading, even one past the target (R05.7)
+  - Test: src/domain/trackers/goalCrossing.test.ts > reachesGoalOnAdd > fires once as a lose series passes 79.5, then never again (R05.7, R01.11)
+  - Test: src/domain/trackers/goalCrossing.test.ts > reachesGoalOnAdd > never fires for a back-dated 79 while the latest is above the target
+  - Test: src/domain/trackers/goalCrossing.test.ts > reachesGoalOnAdd > takes the previous latest by date, whatever order the list is in
 - **R05.8** Weight and body-fat writes sync the profile in the same transaction; deleting the last body-fat reading leaves the profile value
   - Review: owned by P02-08
 - **R05.9** Tracker switches hide entry controls, not history
