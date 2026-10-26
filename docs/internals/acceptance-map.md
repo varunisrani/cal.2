@@ -546,7 +546,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F8 · Water and fast rows in the diary (P1)
 
 - **ACC-F8-1** A fast from 20:00 to 12:00 shows on the second day only
-  - Review: P01-08
+  - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
 - **ACC-F8-2** The active fast row counts up every second
   - Review: P07-05
 

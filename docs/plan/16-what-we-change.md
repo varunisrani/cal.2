@@ -124,6 +124,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 |---|---|---|---|
 | D-16.67 | Water goal wheel in fl oz (P01-05) | Saving converts the rounded wheel value, so an untouched 2 000 ml goal becomes 2 011 ml | An untouched wheel keeps the exact stored ml, as the kJ wheel keeps kcal (R06.20) |
 | D-16.68 | Water amount fields (P01-05) | Always write a dot | Show and accept the locale's decimal mark ("8,5" in de-DE); a typed comma or dot becomes that mark |
+| D-16.69 | Meal-time editor (P01-08) | Choices counted in 15-minute steps from the lower bound; a current value inside the 15-minute margin is dropped | Choices on the quarter hours; the current value is always offered. Same choices whenever the neighbours sit on quarter hours |
 
 ### 2.8 Not in 1.0
 
