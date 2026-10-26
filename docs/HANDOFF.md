@@ -1,8 +1,8 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 19:25 IST (Agent 1, session 2, last entry). Wave 1 landed (7/176 tasks). At the
-user's request the code is on `main`, and Agent 1 moves to a **new session** (fresh usage window).
-Session 2 has stopped: its routines are disabled or deleted and it pushes nothing more.
+Updated: 2026-10-26 19:58 IST (Agent 1, session 3). Wave 2 landed (16/176 tasks; P00 complete).
+Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
+updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
 ## New session: start here
 
@@ -38,7 +38,7 @@ Session 2 has stopped: its routines are disabled or deleted and it pushes nothin
 | Reference | `~/reference/fud-ai` at `10e14b67116c52b515d2389621266e32b3a99840` (re-clone and check out that commit if the container was reset) |
 | REA | `~/rea-lab/rea` wraps `npx -y rea-agents@6.8.0` on Node 24.22.1 (`nvm install 24.22.1` if missing). Evidence and captures live in `~/rea-lab/`; nothing of it is in the repo |
 | Plan | `docs/plan/` (start at `README.md`) |
-| Handoff kit | `docs/handoff/builder-rules.md` (builder rules), `docs/handoff/wave2/` (the four wave-2 prompts, ready to launch) |
+| Handoff kit | `docs/handoff/builder-rules.md` (builder rules), `docs/handoff/wave2/` (the wave-2 prompts, landed; a pattern for later waves) |
 
 ## Done
 
@@ -52,27 +52,53 @@ Session 2 has stopped: its routines are disabled or deleted and it pushes nothin
 | Wave 1 | P00-08, P00-01, P00-10 (clock, ids, test time, CI pinned + `scripts/ci-local.sh`, bundle budget) | 4b31214 |
 | Wave 1 | P01-01, P01-02 (domain records, day keys and windows) | e081191 |
 | Wave 1 | P00-05, P00-06 (catalogue, typed `t()`, catalogue lint, Intl helpers) | 4ffda80 |
+| Wave 2 | P00-07 (lint boundaries between layers, the copy rule) | 6c49d15 |
+| Wave 2 | P00-09 (scripted fake AI provider, Playwright globalSetup) | 59e57dc |
+| Wave 2 | P00-02, P00-03, P00-04 (tokens and six accents, theme runtime, contrast sweep, icon set) | 00a1182 |
+| Wave 2 | P01-03..06 (energy, body, water units; locale defaults; number parsing; amount expressions; D-16.67, D-16.68) | 6897aaf |
 
 ## In progress
 
-**Wave 2** (session 3, launched 2026-10-26 19:31 IST, base f67065d): four builders in
-`/root/wt/wt-{p00s2,p00s4,p00s5,p01b1}` from the prompts in `docs/handoff/wave2/` — P00 S2
-(P00-02..04), P00 S4 (P00-07), P00 S5 (P00-09), P01 wave B S1 (P01-03..06). If this container is
-gone, re-create the worktrees at f67065d and relaunch the same prompts (nothing is landed yet).
-
-Previously: wave 1 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
-clean; unit 293/293 in 25 files; check --require-ref 6/6; check:bundle 68.00 kB of 250 kB; e2e 1/1)
-and pushed as 4b31214, e081191, 4ffda80. **Progress: 7/176 tasks** (P00: 5/10, P01: 2/19).
+Nothing in flight. Wave 2 (session 3, base f67065d) verified on the stacked head and again on the
+rebuilt head 6897aaf with `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt,
+typecheck clean; unit 615/615 in 38 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB;
+e2e 1/1. **Progress: 16/176 tasks** (P00: 10/10, P01: 6/19).
 
 ## Next
 
-1. Wave 2, after the reset (4 builders, base = branch head): P00 S2 (P00-02..04 tokens, theme,
-   contrast, icons), P00 S4 (P00-07 lint boundaries), P00 S5 (P00-09 fake AI server), P01 wave B S1
-   (P01-03..06 units, `src/domain/units/**`, `src/domain/servings/expression*`).
-2. Wave 3: P01 wave B S2 (P01-07/08), S3 (P01-09..11), S4 (P01-12..16); then P01 wave C, P02, P03,
+1. Wave 3: P01 wave B S2 (P01-07/08), S3 (P01-09..11), S4 (P01-12..16); then P01 wave C, P02, P03,
    P04 walking skeleton (Demo 1) and P05–P10.
 
-## Notes for later waves (from wave-1 builders; put them in the prompts)
+## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
+
+- Lint boundaries (P00-07): test files (`*.test.ts[x]`, `src/test/**`) are exempt from rules 2-5;
+  `e2e/**`, `scripts/**`, `tooling/**` are not exempt from the IndexedDB/Dexie rule (exempt `e2e/**`
+  there if a spec ever needs IndexedDB). `window/globalThis/self.fetch` are caught too. **P03-02**:
+  `src/ai/testing/fakeFetch.ts` is not on the fetch allow-list: inject fetch, or add
+  `src/ai/testing/**` to the allow-list in `eslint.config.js`. Not caught: dynamic `import()` of dexie
+  or repositories; `aria-valuetext/-description/-roledescription` literals.
+- Copy rule: every `.tsx` in `src/{app,ui,features}` (tests exempt): JSX text with a letter and literal
+  aria-label/title/placeholder/alt fail. `src/main.tsx` is outside it.
+- Fake AI (P00-09): `startFakeAiServer()` gives `url` = origin; the Custom provider base URL is
+  `${url}/v1`. Specs reach it at `http://127.0.0.1:${PLATEWISE_FAKE_AI_PORT ?? 4320}` (no client helper
+  yet: add one with the first spec that drives it, P05-15 or P06-20). Script files are
+  `{description, replies}`, unknown keys refused; `POST /__script` rewinds but keeps recorded requests,
+  `POST /__reset` clears both; a delayed reply is still sent after a reset (P08-14 relies on it). The
+  food scripts use the P03-15 reply keys (red lentil soup, 410 kcal, 420 g): if P03-15 changes the
+  contract, update `food-ok`, `busy-then-ok`, `cut-then-ok`. `coach-tool` calls `food_log` for
+  2026-10-19..25. No streaming, no Gemini/Anthropic formats.
+- Theme (P00-02..04): the P04 theme provider owns `applyTheme`'s unsubscribe and replaces the
+  `applyTheme(DEFAULT_THEME)` call in `src/main.tsx`. A light-mode device sees the dark default until
+  `main.tsx` runs: an inline head script fixes it (P04 or P09-18). The web manifest listing the icons
+  is not built yet. `PAGE_COLOURS` in `src/ui/tokens.ts` must equal the CSS and `index.html`
+  theme-color (a test enforces it). CSS imports are blank in Vitest: read tokens with
+  `src/test/tokenSheet.ts`. Labels: `appearance.accent.*`, `appearance.mode.{system,light,dark}`.
+- Units (P01-03..06): types `EnergyDisplayUnit`, `WeightDisplayUnit`, `HeightDisplayUnit`,
+  `WaterDisplayUnit` with setting values `kcal`/`kJ`, `kg`/`lb`, `cm`/`ftIn`, `ml`/`flOz`.
+  `formatQuantity`/`formatMacro`/`plainText` write a dot and no grouping (input fields only); screens
+  use `formatNumber` or `src/i18n/format.ts`. Energy fields parse with `parseLocaleNumber` (grouped
+  reader). Unit labels, "kg/wk", the ′ ″ marks, the AI kJ prompt line and the quick-add summary copy
+  are not built (P03/P09 and UI). Native digits (ar-EG, fa-IR) are not read.
 
 - P00-09 (S5): Playwright's default `testMatch` also matches `*.test.ts`, so set
   `testMatch: '**/*.spec.ts'` (or a `testIgnore`) or `pnpm e2e` runs the Vitest files in
