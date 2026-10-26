@@ -139,8 +139,10 @@ whether to fast-forward `main` to the work branch.
   yet: `<AnalysisOverlay />` (P06-01 mounts it), `CaptureSheet.onAnalyse` → `analysis.start('photo', …)`
   and the describe sheet (P06-01), the review from `reviewReady` (P06-06).
 - From wave 9 (Building plan and completion, P05 S3b): `buildPlan({profile, today, units, cancel?})`;
-  `planBuilder.ts` has its own `storedAiAccess` beside `src/services/aiAccess.ts`'s `createAiAccess`
-  (unify them in the next slice that touches either). `complete(answers, {now, restored?})`: `restored`
+  three readers of the stored AI setup exist: `createAiAccess` (`src/services/aiAccess.ts`, used by
+  rebuild and tune-up), `storedAiAccess` in `planBuilder.ts` (settings nullable: null = formulas at once)
+  and a private `aiAccess` in `analysis.ts`. Unify them on `createAiAccess` (its `configured` flag stands in
+  for the null row) in a small lead task or the next slice that touches one of them. `complete(answers, {now, restored?})`: `restored`
   skips weigh-in, body fat, tune-up defaults and sort mode (P09-14 can narrow it); `units.energy` is not
   written at completion; the rebuild baseline is not stored at completion (the Goals page seeds it on
   first open). The notification permission request lives in `OnboardingRoute.tsx` until P09-09. Dexie
