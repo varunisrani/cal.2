@@ -454,12 +454,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E7 · Photos prepared upright, at most 1 600 px, JPEG 0.8, never … (P1)
 
 - **ACC-E7-1** A 3 200 × 1 200 photo is sent at 1 600 × 600
-  - Review: P03-10
+  - Test: src/ai/image.test.ts > prepareImage: size (03 §3.5) > sends a 3 200 × 1 200 photo at 1 600 × 600 (ACC-E7-1)
 
 ### E8 · Food answers parsed tolerantly (P1)
 
 - **ACC-E8-1** An answer wrapped in prose and a code fence is still read
-  - Review: P03-11
+  - Test: src/ai/parse/json.test.ts > parseModelJson: answers wrapped in prose or a fence (R03.13, ACC-E8-1) > reads an answer wrapped in prose and a plain fence with a language word
 - **ACC-E8-2** A breakdown that does not add up is dropped and the totals kept
   - Review: P03-13
 

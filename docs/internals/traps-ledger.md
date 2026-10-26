@@ -166,13 +166,14 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.11** Qwen needs enable_thinking false; OpenRouter reasoning is excluded; a reasoning-only reply counts as cut off
   - Review: owned by P03-08
 - **R03.12** Every image is re-encoded to JPEG; an undecodable one (HEIC outside Safari) fails as image conversion
-  - Review: owned by P03-10
+  - Test: src/ai/image.test.ts > prepareImage: always a fresh JPEG (R03.12) > re-encodes a photo that needs no shrinking and sends the JPEG, not the picked bytes
 - **R03.13** JSON extraction strips fences and takes the first balanced object, aware of strings
-  - Review: owned by P03-11
+  - Test: src/ai/parse/json.test.ts > parseModelJson: the first balanced object, aware of strings (R03.13) > ignores braces inside a string
+  - Test: src/ai/parse/json.test.ts > parseModelJson: the first balanced object, aware of strings (R03.13) > takes the first of two objects, never a span from the first { to the last }
 - **R03.14** The ingredient breakdown is all or nothing (≤ 20 entries, valid values, ≤ 9 kcal/g fill, coverage 0.5–1.5)
   - Review: owned by P03-13
 - **R03.15** A missing serving weight stays unknown and is never repaired
-  - Review: owned by P03-12
+  - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a missing weight stays unknown (R03.15) > describes one serving, never 100 g, when the answer gives no weight
 - **R03.16** Unit choices need real positive numbers within max(5 g, 15 %); one bad element voids the list; an empty list is valid
   - Review: owned by P03-13
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
@@ -202,7 +203,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
   - Review: owned by P03-03
 - **R03.29** Large photo sets: the payload is estimated and size errors get their own message (message is v1.x, E16)
-  - Review: owned by P03-10
+  - Test: src/ai/image.test.ts > estimatePayload (R03.29) > sums the base64 lengths of the prepared photos
+  - Review: the size message is v1.x (E16)
 
 ## R04 · Coach (`research/04-*.md` §6)
 
