@@ -1,6 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 20:22 IST (Agent 1, session 3). Wave 3 landed (26/176 tasks; P00 complete, P01 16/19).
+Updated: 2026-10-26 20:52 IST (Agent 1, session 3). Wave 4 landing slice by slice (32/176 tasks; P00 and P01
+complete).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -60,32 +61,45 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 3 | P01-09..11 (serving units and scaling, ingredient stretch, recipe split, combining; D-16.72, D-16.73) | 9337e0e |
 | Wave 3 | P01-12..14 (goal formulas, maintenance, targets and locks, Plan Ready editing, AI plan validator; D-16.71) | abc2cee |
 | Wave 3 | P01-15, P01-16 (profile rules, plan-input signature, Adaptive cadence; D-16.70) | bcf0c83 |
+| Wave 4 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing; D-16.74). P01 done | 33b4468 |
+| Wave 4 | P04-03 (gauge, pillar, progress bar, stat badge, menu, swipe row, icons; D-16.75; shared cleanup in `src/test/setup.ts`) | 5177b59 |
+| Wave 4 | P04-01, P04-02 (buttons, cards, sheets, dialogs, toasts, fields, stepper, segmented, switch, list picker, wheel, date-time) | f98a497 |
 
 ## In progress
 
-**Wave 4** (launched 2026-10-26 20:24 IST, base df679fb): four builders in
-`/root/wt/wt-{p01c5,p02a0,p04s1,p04s2}` from `docs/handoff/wave4/`. P01 C S5 came back at 20:37
-(patch `/root/wt/patches/w4-p01c5.patch`, 136/136 by the builder); its core went to P03 wave A
-(P03-01, P03-02, `w4-p03a.txt`, base bf55efd, launched 20:39). If this container is gone,
-re-create the worktrees at their bases and relaunch the same prompts (nothing of wave 4 is landed). Wave 3 (base bf6536b; the plan's P01 S4 split into S4a = P01-12..14 and S4b =
-P01-15/16) verified on the stacked head and again on the rebuilt head bcf0c83 with
-`PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt, typecheck clean; unit
-955/955 in 59 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB; e2e 1/1.
-**Progress: 26/176 tasks** (P00: 10/10, P01: 16/19).
+**Wave 4, rolling** (slices land as they come back; a freed core takes the next slice that has no
+unlanded dependency). Running: P02 wave A S0 (P02-01..03, `w4-p02a0.txt`, base df679fb, in
+`/root/wt/wt-p02a0`), P03 wave A (P03-01/02, `w4-p03a.txt`, base bf55efd, `/root/wt/wt-p03a`), P04 S3
+shell (P04-04..07, `w4-p04s3.txt`, base 9dedcc5, `/root/wt/wt-p04s3`). Landed so far: 33b4468, 5177b59,
+f98a497, each verified on its stacked head with the full loop (latest: unit 1295/1295 in 82 files,
+check 6/6, bundle 70.16 kB, e2e 1/1). If this container is gone, re-create the running slices'
+worktrees at their bases and relaunch the same prompts. **Progress: 32/176 tasks** (P00 10/10, P01
+19/19, P04 3/14).
 
 ## Next
 
-1. Wave 4 (4 builders, prompts in `docs/handoff/wave4/`, base = branch head): P01 wave C S5
-   (P01-17..19 evidence pack, forecast, fasting and goal crossing), P02 wave A S0 (P02-01..03 schema,
-   guard and quarantine, live queries and bus), P04 S1 (P04-01, P04-02 primitives), P04 S2 (P04-03
-   gauge, pillar, menu, swipe row, icons). Shared at landing: `src/i18n/en.ts` gets the `display`
-   partition from P04 S2 (one import line and one `enPartitions` entry); P04 S1 adds keys to
-   `src/i18n/en/common.ts` only.
-2. Then P02 wave B (S1..S5), P04 S3/S4 (shell, diary service, quick start), P03 AI layer, P04 wave B
-   and the walking-skeleton e2e (Demo 1), P05–P10.
+1. Land P02-01..03, P03-01/02 and P04-04..07 as they return. At landing: add the `ai` partition
+   (P03) and the `shell` partition (P04 S3) to `src/i18n/en.ts`.
+2. Then (rolling, up to 4 builders): P02 wave B S1..S5 (after P02 S0), P03 wave B S1..S5 (after P03
+   A), P04 S4 (P04-08/09, after P02-04/05/06), P04 wave B and the walking-skeleton e2e (Demo 1), then
+   P03 wave C, P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From wave 4 so far:
+  - UI tests: `src/test/setup.ts` runs Testing Library's `cleanup` after every test (per-file
+    `afterEach(cleanup)` lines are now redundant). user-event with fake timers needs
+    `vi.stubGlobal('jest', { advanceTimersByTime: (ms) => vi.advanceTimersByTime(ms) })` and
+    `userEvent.setup({ advanceTimers: … })`; a shared helper in `src/test/` would help.
+  - Primitives: `data-ui` is a required typed prop; built-in parts derive hooks (`<ui>.done`,
+    `.scrim`, `.cancel`, `.confirm`, `.decrease`, `.increase`, `.date`, `.time`). The app must sit
+    inside `ToastProvider`. No multi-line Field yet (Coach, custom instructions). SwipeRow has
+    `disabled` (P06 selection mode) and right-to-left support; the trailing favourite swipe is P06's.
+    Gauge launch animation is P07-03 (R05.18). Icons: 25 in `src/ui/icons`.
+  - Fasting: P02-04 decodes the default fast goal with `decodeFastGoal`; P07-07 maps the `overlap`
+    and `active` refusals to its message. `formatFast` returns text (supersedes an older note).
+  - Evidence pack: workout, measurement and energy inputs are not declared yet (no model types);
+    add them as optional fields of the input object later.
 - From wave 3 (P01-07..16):
   - Goals API: `formulaPlan(profile, today)`, `bmr/tdee/estimateMaintenance(…, today)`;
     `checkPlan(values, formulaPlan(profile, today))` returns a Result naming the failed step;
@@ -154,8 +168,7 @@ P01-15/16) verified on the stacked head and again on the rebuilt head bcf0c83 wi
   (`x = { x: {…} }`); landing one = `import { x } from './en/x'` plus `x` in `enPartitions` in
   `src/i18n/en.ts` (the lead does it). `TKey` from `src/i18n/t.ts` types a key in props and tables
   (e.g. the accent labels of P00-02). Plurals follow English rules; numbers the browser locale.
-- Durations: UI uses `formatDuration(minutes)` from `src/i18n/format.ts` ("16h 30m"); P01-19's
-  fast helper should return numbers, not text.
+- Durations: UI uses `formatDuration(minutes)` from `src/i18n/format.ts` ("16h 30m").
 - Names fixed by `src/domain/model.ts` (P01-07 and the P03 reply contract use them): nutrient keys
   such as `fibre`, `monounsaturatedFat`, `polyunsaturatedFat`; extras `arginine`, `betaAlanine`,
   `betaine`, `carnitine`, `citrulline`, `creatine`, `hmb`, `taurine`; `NutritionDraft` is the base of
