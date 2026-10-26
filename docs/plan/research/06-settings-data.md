@@ -516,8 +516,10 @@ time pickers]
 
 ### 3.22 Languages
 
-- 19 UI languages: en (base), ar, az, cs, de, es, fr, hi, it, ja, ko, nl, pl, pt-BR, ro, ru, tr, uk, zh-CN
-  (I: zh-Hans) — the site says "18 languages" = 18 translations + English, and that the app follows the phone's
+- 19 UI languages, grouped by script. Latin: English `en` (base), Azerbaijani `az`, Czech `cs`, German `de`,
+  Spanish `es`, French `fr`, Italian `it`, Dutch `nl`, Polish `pl`, Brazilian Portuguese `pt-BR`, Romanian `ro`,
+  Turkish `tr`. Cyrillic: Russian `ru`, Ukrainian `uk`. Right-to-left: Arabic `ar`. Other scripts: Hindi `hi`,
+  Japanese `ja`, Korean `ko`, Simplified Chinese (A tag `zh-CN`, I tag `zh-Hans`). The site says "18 languages" = 18 translations + English, and that the app follows the phone's
   language (`ev_fa243a1fe14ed63cc6252910410ee973c07740c25cc70484db1eab53b44d991a`). [obs]
 - A picker: "System" + each language shown by its own native name with an initial capital. Matching a stored
   or device tag: exact (case-insensitive) first, else same language with region matching or unspecified
