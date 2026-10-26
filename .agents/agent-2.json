@@ -5,7 +5,7 @@
   "usage_pct": 42,
   "remaining_pct": 58,
   "resets_at": "2026-10-27T02:40:00+05:30",
-  "last_check": "2026-10-27T01:05:00+05:30",
+  "last_check": "2026-10-27T00:32:00+05:30",
   "current_step": "38/176 tasks; 4 builders running (P03 S2, P04 S2, P02 S1, P02 S2)",
   "last_commit": "6ff78c0"
 }

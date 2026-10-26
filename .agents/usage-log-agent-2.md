@@ -14,3 +14,4 @@ Readings lag a few minutes, so 88 % counts as 90 %. When the newest reading is o
 | 2026-10-27 00:15 | Agent 2 | Account 2 | 25 (reading 23:58) | 75 | 2026-10-27 02:40 | wave 3 landed and pushed (33408fc, 4d6b9ec, 1e67ebe): 26/176; wave 4 running; ~0.45 %/min with 4 builders |
 | 2026-10-27 00:13 | Agent 2 | Account 2 | 33 (reading 00:12) | 67 | 2026-10-27 02:40 | 28/176 (P03 wave A landed); 4 builders running; ~0.57 %/min |
 | 2026-10-27 01:05 | Agent 2 | Account 2 | 42 (reading 00:29) | 58 | 2026-10-27 02:40 | 38/176 (P03 S1, P02 S0 landed); 4 builders running; ~0.5 %/min |
+| 2026-10-27 00:33 | Agent 2 | Account 2 | 42 (reading 00:29) | 58 | 2026-10-27 02:40 | correction: the rows stamped 00:15 and 01:05 were written at 23:59 and 00:32 IST (lead clock slip); readings unchanged |
