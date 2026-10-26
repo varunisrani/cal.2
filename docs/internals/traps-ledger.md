@@ -217,9 +217,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.6** Reset aborts the request and drops any late reply by generation (D-16.34)
   - Review: owned by P08-09
 - **R04.7** An unreadable stored message is kept aside, never overwritten
-  - Review: owned by P02-11
+  - Test: src/data/repos/coachRepo.test.ts > unreadable messages (R04.7) > keeps a corrupt message aside and still lists the rest
 - **R04.8** Chat storage is bounded: one record per message, newest 200, small thumbnails (D-16.29)
-  - Review: owned by P02-11
+  - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > keeps the newest 200 of 205 messages, removing the oldest with their thumbnails (ACC-I10-1, R04.8, D-16.29)
 - **R04.9** The 60 000-character tool-result cap applies on every provider (D-16.32)
   - Review: owned by P08-03
 - **R04.10** Count and size limits keep the newest rows (D-16.32, Proposed D-16.59), with markers and the echoed range
