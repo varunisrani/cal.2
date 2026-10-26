@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:48 IST (Agent 2). P00 and P01 complete; 41/176 tasks. The user started the new
+Updated: 2026-10-27 00:59 IST (Agent 2). P00 and P01 complete; 46/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -66,23 +66,25 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 4 | P02-01..03 (schema and safe open, record guard and quarantine, live queries and bus) | e61199b |
 | Wave 6 | P03-03, P03-04 (provider catalogue and presets; AI settings, roles, standbys, server addresses) | 4ef228a |
 | Wave 6 | P04-03 (gauge, pillar, progress bar, stat badge, menu, swipe row, icon set) | cbdd6c8 |
+| Wave 7 | P02-04, P02-05 (settings schema and repository, profile repository) | 31694df |
+| Wave 7 | P02-06, P02-07, P02-13 (diary repository, photo store and cleanup, drafts) | 6ee9257 |
 
 ## In progress
 
 - Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
-  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8; ci-local on that head: unit
-  1572/1572 + 1 expected fail in 101 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress:
-  41/176 tasks** (P00 10/10, P01 19/19, P02 3/15, P03 6/19, P04 3/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P02 wave B S1
-  (P02-04/05) and S2 (P02-06/07/13) on base 6ff78c0, S3 (P02-08/09) on cb104fa, S4 (P02-10/11) on
-  fd6e563.
-- Waiting: P04 S3 (app shell, P04-04..07) needs the settings and profile repositories (P02 S1).
+  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8), P02 S1 (31694df), P02 S2
+  (6ee9257; ci-local on that head: unit 1681/1681 + 1 expected fail in 107 files, check 6/6,
+  bundle 71.03 kB, e2e 1/1). **Progress: 46/176 tasks** (P00 10/10, P01 19/19, P02 8/15,
+  P03 6/19, P04 3/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P02 S3 (P02-08/09,
+  base cb104fa), P02 S4 (P02-10/11, base fd6e563), P04 S3 (P04-04..07 app shell, base 4c1c65d).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P02 S1–S4 as they come back; then P04 S3 (needs P02 S1), P02 S5 (P02-12/14), P03 wave B S3–S5,
+1. Land P02 S3, S4 and P04 S3 as they come back; then P02 S5 (P02-12/14), P04 S4 (P04-08/09),
+   P02-15 hooks, P03 wave B S3–S5,
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -147,6 +149,17 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- Repositories (P02-04..07, 13): every `transact()` body must be an `async` function (a plain arrow
+  returning another promise loses Dexie's transaction after a few awaits) — consider documenting
+  or enforcing it in `db.ts`. Two shapes exist: settings and profile are factories
+  (`createSettingsRepo(db, {bus, clock})`, `createProfileRepo(db)`), diary, photos and drafts are
+  namespace functions with `db` first (`import * as diaryRepo`); P02-15 hooks hide the difference.
+  Expected states are values (`'updated' | 'missing' | 'unreadable'`, `'combined' | 'stale'`).
+  Settings `ai.settings` and `menu.layout` are opaque records until wired to `decodeAiSettings`
+  and the add-menu reader (one line each in `SETTINGS`). `alerts.goalReached` defaults on. The
+  accent/appearance lists are repeated in `settingsSchema.ts` (a test keeps them equal to
+  `src/ui`). `barcodeKeyOf` moves to `src/domain/food/barcode.ts` with P06-17. The generic
+  `update` callback needs typed values or `as const`.
 - Data core (P02-01..03): repositories write only through `transact()` (it adds quarantine and
   meta); `writeOne` refuses a row its codec cannot read; codecs in `src/data/codecs.ts`; test
   helpers `src/test/{db,live,factories}.ts`. Fake timers stall Dexie: data tests use real timers
