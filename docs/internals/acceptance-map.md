@@ -245,7 +245,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D2 · Manual entry (name, energy in your unit, protein, carbs, fat, … (P0)
 
 - **ACC-D2-1** A manual entry appears under its meal and the gauge updates
-  - Review: P04-14
+  - Test: e2e/walking-skeleton.spec.ts > walking skeleton (Demo 1) > a manual entry lands under its meal, moves the gauge, survives a reload and is deleted only after confirming (ACC-D2-1)
 - **ACC-D2-2** Energy typed in kJ is stored as kcal
   - Test: src/features/log/ManualSheet.test.tsx > ManualSheet > saves 2 093 kJ as 500 kcal (ACC-D2-2)
 

@@ -1,6 +1,6 @@
 # P04 · App shell, UI primitives and the walking skeleton
 
-**Weeks:** 2–3 (primitives can start in week 1 on the UI track) · **Tracks:** UI (primitives, shell, Home); data (first cut of the diary service) · **Depends on:** P00; P01 and P02 for the wave-B feature tasks · **Status:** 🔨 in progress: P04-01..13 landed (13/14, 2026-10-27); P04-14 walking-skeleton e2e next
+**Weeks:** 2–3 (primitives can start in week 1 on the UI track) · **Tracks:** UI (primitives, shell, Home); data (first cut of the diary service) · **Depends on:** P00; P01 and P02 for the wave-B feature tasks · **Status:** ✅ done: all 14 tasks landed in waves 4–9 (2026-10-27)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

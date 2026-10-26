@@ -1,0 +1,206 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": { "url": "http://127.0.0.1:4173/" },
+  "environment": {
+    "viewport": { "width": 412, "height": 839, "device_scale_factor": 2.625 },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "quick-start.shown",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"onboarding.start\"]" },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "quick-start.start",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"onboarding.start\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.empty-diary",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.diary.empty\"]" },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "home.zero-eaten",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.gauge\"] :text-is(\"0\")" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "add.open-menu",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.add\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "add.enter-manually",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.add.manual\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "manual.type-name",
+      "action": "fill",
+      "locator": { "kind": "css", "selector": "[data-ui=\"manual.name\"]" },
+      "value": { "source": "literal", "value": "Toast" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "manual.type-energy",
+      "action": "fill",
+      "locator": { "kind": "css", "selector": "[data-ui=\"manual.energy\"]" },
+      "value": { "source": "literal", "value": "250" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "manual.save",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"manual.save\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "manual.closed",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"manual\"]" },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "entry.under-a-meal",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui^=\"home.meal.\"] [data-ui=\"entry.row\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "gauge.reads-250",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.gauge\"] :text-is(\"250\")" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "reload",
+      "action": "goto",
+      "destination": { "url": "http://127.0.0.1:4173/" },
+      "wait_until": "load",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "reload.entry-kept",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui^=\"home.meal.\"] [data-ui=\"entry.row\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "reload.gauge-kept",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.gauge\"] :text-is(\"250\")" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.ask",
+      "action": "press",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.row.delete\"]" },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.asked",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.delete\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.cancel",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.delete.cancel\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.cancelled",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.delete\"]" },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.entry-kept",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.row\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.ask-again",
+      "action": "press",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.row.delete\"]" },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.asked-again",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.delete\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.confirm",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.delete.confirm\"]" },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.entry-gone",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"entry.row\"]" },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.empty-diary",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.diary.empty\"]" },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete.zero-eaten",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.gauge\"] :text-is(\"0\")" },
+      "state": "visible",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": { "request_body": false, "response_body": false, "header_values": false }
+  }
+}
