@@ -125,9 +125,10 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.67 | Water goal wheel in fl oz (P01-05) | Saving converts the rounded wheel value, so an untouched 2 000 ml goal becomes 2 011 ml | An untouched wheel keeps the exact stored ml, as the kJ wheel keeps kcal (R06.20) |
 | D-16.68 | Water amount fields (P01-05) | Always write a dot | Show and accept the locale's decimal mark ("8,5" in de-DE); a typed comma or dot becomes that mark |
 | D-16.69 | Meal-time editor (P01-08) | Choices counted in 15-minute steps from the lower bound; a current value inside the 15-minute margin is dropped | Choices on the quarter hours; the current value is always offered. Same choices whenever the neighbours sit on quarter hours |
+| D-16.70 | Rebuild nudge after a dropped manual rebuild (P01-15) | The nudge is forced on | The nudge shows only when the plan inputs differ from the baseline |
+| D-16.71 | Plan Ready "edited" mark (P01-13) | Saving marks the plan edited | Edited only when a value changes, so a wheel saved unmoved does not turn the tune-up off; edits are clamped, never snapped (keeps R06.20) |
 | D-16.72 | Serving-count labels (P01-09) | The serving word stays singular ("2 serving") | Plural when the count is not 1 ("2 servings"), for the serving count and a recipe serving unit alike |
 | D-16.73 | Ingredient change with no known weights (P01-10) | Unit choices are cleared | The serving stays as it was: basis, unit choices and the chosen unit are kept |
-| D-16.71 | Plan Ready "edited" mark (P01-13) | Saving marks the plan edited | Edited only when a value changes, so a wheel saved unmoved does not turn the tune-up off; edits are clamped, never snapped (keeps R06.20) |
 
 ### 2.8 Not in 1.0
 

@@ -17,11 +17,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
   - Review: owned by P05-01
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
-  - Review: owned by P05-08
+  - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when %s changed during the call (R01.4)
+  - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when the profile is gone (R01.4)
+  - Review: rebuild wiring owned by P05-08
 - **R01.5** The tune-up never hammers a failing provider: failures mark the week, rebuilds and onboarding set the check day, runs are single-flight
-  - Review: owned by P05-09
+  - Test: src/domain/adaptive/cadence.test.ts > settle > marks today on a failure while still on, and keeps the plan (R01.5)
+  - Test: src/domain/adaptive/cadence.test.ts > plan > runs once for three visible events in a row (R01.5)
+  - Test: src/domain/adaptive/cadence.test.ts > plan > sets the check day to today when onboarding completes (R01.5)
+  - Review: tune-up wiring owned by P05-09
 - **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
-  - Review: owned by P05-01
+  - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a lose target at or above the current weight (R01.6, D-16.11)
+  - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a gain target at or below the current weight (R01.6, D-16.11)
+  - Review: wizard wiring owned by P05-01
 - **R01.7** Plan Ready edits keep calories and macros consistent and mark the plan as edited
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives carbs after kcal, protein or fat: 2 000 / 150 / 60 → carbs 215 (R01.7)
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives kcal after carbs: carbs 300 → 2 340 kcal (R01.7)
@@ -37,13 +44,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
   - Review: owned by P02-08
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
-  - Review: owned by P05-10
+  - Test: src/domain/profile/signature.test.ts > needsRebuild > shows no nudge on first open when no baseline is stored (R01.12)
+  - Test: src/domain/profile/signature.test.ts > baselineToSeed > seeds a missing baseline silently with the current key (R01.12)
+  - Test: src/domain/profile/editRules.test.ts > edits and the plan > leave the saved targets and locks as they were for every field edit (R01.12)
+  - Review: Settings wiring owned by P05-10
 - **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
   - Test: src/domain/goals/locks.test.ts > setMacro > pins all three macros from the state before the edit (R01.13)
   - Test: src/domain/goals/locks.test.ts > setMacro > refuses an edit nothing can absorb and changes nothing (R01.13)
   - Test: src/domain/goals/locks.test.ts > setMacro > does not add a third macro lock, while the edit still applies (R01.13, ACC-C6-2)
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
-  - Review: owned by P05-09
+  - Test: src/domain/adaptive/cadence.test.ts > settle > keeps the first plan on the first success and the same snapshot on the second (R01.14)
+  - Test: src/domain/adaptive/cadence.test.ts > turnOff > restores the plan from before the first tune-up after two runs (R01.14)
+  - Review: tune-up wiring owned by P05-09
 - **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
   - Test: src/domain/dates/age.test.ts > ageOn > gives the same age in Asia/Tokyo for a birthday stored as a key (R01.15)
   - Test: src/domain/dates/age.test.ts > ageOn > clamps a birth date in the future to 0
