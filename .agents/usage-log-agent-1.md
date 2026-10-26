@@ -17,3 +17,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-26 19:58 | Agent 1 | Account 1 | 11 (reading 19:53) | 89 | 2026-10-27 00:20 | wave 2 landed and pushed (6c49d15, 59e57dc, 00a1182, 6897aaf): 16/176 tasks; 4 builders moved usage ~11 points in 22 min |
 | 2026-10-26 20:01 | Agent 1 | Account 1 | 13 (reading 20:00) | 87 | 2026-10-27 00:20 | wave 3 launched (4 builders, base bf6536b); 16/176 tasks |
 | 2026-10-26 20:22 | Agent 1 | Account 1 | 22 (reading 20:16) | 78 | 2026-10-27 00:20 | wave 3 landed and pushed (ad0109a … bcf0c83): 26/176 tasks; wave 3 moved usage ~9 points in ~17 min |
+| 2026-10-26 20:32 | Agent 1 | Account 1 | 29 (reading 20:31) | 71 | 2026-10-27 00:20 | wave 4 running (4 builders, base df679fb); 26/176 tasks |

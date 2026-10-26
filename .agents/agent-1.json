@@ -2,10 +2,10 @@
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
   "state": "ACTIVE",
-  "usage_pct": 22,
-  "remaining_pct": 78,
+  "usage_pct": 29,
+  "remaining_pct": 71,
   "resets_at": "2026-10-27T00:20:00+05:30",
-  "last_check": "2026-10-26T20:22:00+05:30",
+  "last_check": "2026-10-26T20:32:00+05:30",
   "current_step": "26/176 tasks; wave 4 running (4 builders, base df679fb): P01-17..19, P02-01..03, P04-01/02, P04-03",
   "last_commit": "df679fb"
 }
