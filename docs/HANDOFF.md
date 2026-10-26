@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:35 IST (Agent 2). P00 and P01 complete, P03 wave A landed (31/176 tasks). The user started the new
+Updated: 2026-10-27 00:50 IST (Agent 2). P00 and P01 complete; P03 wave A and P04 S1 landed (33/176 tasks). The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -60,23 +60,25 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 3 | P01-09..11 (serving units and scaling, ingredient lines, recipe split, combine) | 4d6b9ec |
 | Wave 3 | P01-12..16 (formulas, targets and locks, plan validator, profile rules, adaptive cadence) | 1e67ebe |
 | Wave 4 | P03-01, P03-02 (AI failure kinds, classification and messages; fake fetch and wire fixtures) | 731fc23 |
-| Wave 5 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing); **P01 done** | see git log |
+| Wave 5 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing); **P01 done** | 20c0983 |
+| Wave 4 | P04-01, P04-02 (UI primitives: buttons, sheets, dialogs, toasts, inputs, wheels, date-time fields) | bd36cd2 |
 
 ## In progress
 
-- Landed since wave 3: P03 wave A (731fc23) and P01 wave C (ci-local on that head: unit
-  1164/1164 + 1 expected fail in 65 files, check 6/6, bundle 71.00 kB, e2e 1/1). **Progress:
-  31/176 tasks** (P00 10/10, P01 19/19, P03 2/19).
-- Running: P02 S0 (P02-01..03, `/root/wt/wt-p02s0`) and P04 S1 (P04-01/02, `/root/wt/wt-p04s1`)
-  from `docs/handoff/wave4/` (base f25a8b3); P03 wave B S1 (P03-05/06, `/root/wt/wt-p03s1`) from
-  `docs/handoff/wave6/` (base aa146d1).
+- Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2; ci-local on
+  that head: unit 1267/1267 + 1 expected fail in 78 files, check 6/6, bundle 71.03 kB, e2e 1/1).
+  **Progress: 33/176 tasks** (P00 10/10, P01 19/19, P03 2/19, P04 2/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave4|wave6/`): P02 S0
+  (P02-01..03, base f25a8b3), P03 wave B S1 (P03-05/06, base aa146d1), P03 wave B S2 (P03-03/04,
+  base 369d003), P04 S2 (P04-03, base db84874).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land wave 4 and wave 5 (P01 wave C); then P02 wave B (S1–S5), P03 wave B, P04 S2–S4, toward the walking skeleton
-   (Demo 1), then P05–P10.
+1. Land P02 S0, P03 S1/S2, P04 S2 as they come back; then P02 wave B (S1–S5), P03 wave B S3–S5,
+   P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
+   then P05–P10.
 
 ## Open questions for the user
 
@@ -139,6 +141,11 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- UI primitives (P04-01/02): `data-ui` is a required prop, parts are `<hook>.<part>`; disabled and
+  busy controls use `aria-disabled`; form sheets (P04-11) pass `dismissable={false} hideDone`;
+  P04-07 mounts `ToastProvider` once; weight wheels round tenths (R05.10, P05/P07 callers); no
+  multi-line field yet (P06 Describe, P08 Composer); `src/ui/stylesheets.test.ts` lists the CSS
+  modules it checks (add new ones). Helpers: `src/ui/modal.ts`, `src/ui/primitives.ts`.
 - AI errors (P03-01/02): `fromNetwork(err, {stoppedBy, online, provider, keySent})`; P03-05 passes
   `stoppedBy` so a cap is never read as a cancel. The key-hint provider list is in `errors.ts`
   (P03-03 may move it to the catalogue). Details are capped at 600 characters; `redactKeys` masks
