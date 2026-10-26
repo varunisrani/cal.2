@@ -20,3 +20,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-26 20:32 | Agent 1 | Account 1 | 29 (reading 20:31) | 71 | 2026-10-27 00:20 | wave 4 running (4 builders, base df679fb); 26/176 tasks |
 | 2026-10-26 21:05 | Agent 1 | Account 1 | 43 (reading 20:58) | 57 | 2026-10-27 00:20 | 37/176 tasks (49c5a03, 58180c2 landed); 4 builders running (P04 S3, P02 S1-S3); ~0.5 points/min |
 | 2026-10-26 21:03 | Agent 1 | Account 1 | 46 (reading 21:02) | 54 | 2026-10-27 00:20 | 37/176 tasks; 4 builders running (P04 S3, P02 S1-S3) |
+| 2026-10-26 21:35 | Agent 1 | Account 1 | 56 (reading 21:24) | 44 | 2026-10-27 00:20 | 48/176 tasks (P04-04..07, P02-04..09/13 landed); wave 6 launched (4 builders); last round before the 75 % band |

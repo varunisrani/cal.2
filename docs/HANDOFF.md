@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 21:05 IST (Agent 1, session 3). Rolling waves (37/176 tasks; P00 and P01 complete).
+Updated: 2026-10-26 21:35 IST (Agent 1, session 3). Rolling waves (48/176 tasks; P00 and P01 complete).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -65,32 +65,60 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 4 | P04-01, P04-02 (buttons, cards, sheets, dialogs, toasts, fields, stepper, segmented, switch, list picker, wheel, date-time) | f98a497 |
 | Wave 4 | P02-01..03 (Dexie schema and open safety, record guard and quarantine, live queries and bus; D-16.76) | 49c5a03 |
 | Wave 4 | P03-01, P03-02 (AI failure kinds and messages, `ai` partition, fake fetch and wire fixtures) | 58180c2 |
+| Wave 4 | P04-04..07 (hash router and sheets, tab bar, theme provider, boot gate, today clock, error boundary, `shell` partition) | f9b70fb |
+| Lead fix | Three trap-ledger paths written wrong by f9b70fb; the clean-room file walker skips `.git` | 8655743 |
+| Wave 5 | P02-04, P02-05 (settings schema and repository, profile repository) | 9aefd7c |
+| Wave 5 | P02-06, P02-07, P02-13 (diary repository, photo store, drafts; `src/data/barcodeKey.ts`, `src/test/blobs.ts`) | 192db24 |
+| Wave 5 | P02-08, P02-09 (weight, body fat, water and fasting repositories; D-16.77) | d8caa8a |
 
 ## In progress
 
-**Rolling waves** (a slice lands as soon as it returns; a freed core takes the next slice with no
-unlanded dependency). Running, 4 builders:
-- P04 S3 shell (P04-04..07), `docs/handoff/wave4/w4-p04s3.txt`, base 9dedcc5, `/root/wt/wt-p04s3`.
-- P02 wave B S1 (P02-04/05 settings, profile), S2 (P02-06/07/13 diary, photos, drafts), S3
-  (P02-08/09 weight, body fat, water, fasts): `docs/handoff/wave5/w5-p02s{1,2,3}.txt`, base f2091c9,
-  `/root/wt/wt-p02s{1,2,3}`.
+**Wave 6** (launched 2026-10-26 21:33 IST, base 2d893e7, prompts in `docs/handoff/wave6/`), four builders
+in `/root/wt/wt-{p04s4,p02s4,p02s5,p03b1}`:
+- P04 S4 (P04-08/09 diary service, quick start, and the real database wired into the shell via
+  `src/main.tsx` and `src/services/shell.ts`);
+- P02 S4 (P02-10/11 saved meals, Coach messages); P02 S5 (P02-12/14 secrets with a wrapping key,
+  erase everything, persistence and storage estimates); P03 B S1 (P03-05/06 transport, deadlines,
+  retry ladder).
+At landing: add the `onboarding` partition to `src/i18n/en.ts`; wire `requestPersistence`
+(P02-14) as the diary service's `onFirstEntry` in `src/main.tsx`.
 
-Latest landing (49c5a03 + 58180c2) verified on the stacked head with the full loop: unit 1504 passed +
-2 expected-fail in 93 files, check 6/6, bundle 70.97 kB, e2e 1/1. If this container is gone, re-create
-the running slices' worktrees at their bases and relaunch the same prompts. **Progress: 37/176 tasks**
-(P00 10/10, P01 19/19, P02 3/15, P03 2/19, P04 3/14).
+Latest landing (9aefd7c, 192db24, d8caa8a) verified on the stacked head with the full loop: unit 1806
+passed + 2 expected-fail in 112 files, check 6/6, bundle 77.76 kB, e2e 1/1. If this container is gone,
+re-create the four worktrees at 2d893e7 and relaunch the same prompts. **Progress: 48/176 tasks**
+(P00 10/10, P01 19/19, P02 10/15, P03 2/19, P04 7/14).
 
 ## Next
 
-1. Land P04-04..07 (add the `shell` partition to `src/i18n/en.ts`) and P02 S1–S3 as they return.
-2. Then, as cores free up and usage allows (75 % band: no new builders): P02 S4 (P02-10/11 saved meals,
-   Coach store), P02 S5 (P02-12/14 crypto, wipe, storage, secrets), P03 wave B S1..S5 (transport,
-   catalog, adapters, image and parse, prompts), P04 S4 (P04-08/09 diary service and quick start,
-   after P02-04/05/06), then P04 wave B and the walking-skeleton e2e (Demo 1), P02-15 hooks, P03 wave C,
-   P05–P10.
+1. Land wave 6 as it returns. Usage was 56 % at 21:24 IST: after wave 6 the 75 % band is near, so no
+   new builders until the 00:20 IST reset unless usage reads well below 70 %.
+2. After the reset: P02-15 hooks (all repositories landed), P04 wave B S5 (P04-10..13 Home, log,
+   tab placeholders) and P04-14 walking-skeleton e2e = **Demo 1**; P03 wave B S2..S5 (catalog and
+   settings, adapters, image and parse, prompts), then P03 wave C; P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From waves 4–5 (shell and repositories):
+  - Shell (P04-04..07): `src/app/ports.ts` = `ReadStore<T>` (undefined = not loaded),
+    `ShellSettings {appearance, accent, hiddenTabs}`, `BootState {status: openError | needsOnboarding |
+    ready}`; adapters must return the same snapshot object until something changes. `App` props
+    `{ports, router, clock?, appState?, onReload?}`; tab screens are placeholders in
+    `src/app/Screen.tsx`. History: leaving Home pushes, Back goes Home first; sheets never come back
+    by Forward or reload; a screen whose data arrives late calls `router.applyScroll()`. A home icon
+    is drawn locally in TabBar (move it to `src/ui/icons`). Until settings load the theme is System.
+  - Settings (P02-04): 40 keys of 17-naming §1.3; `alerts.goalReached` defaults off (the in-app
+    dialog does not depend on it); `menu.layout` and `ai.settings` are plain records until P06 and
+    P03-04 plug in decoders; `HIDEABLE_TABS`, `PRODUCT_FIELDS`, `ACCENTS`, `APPEARANCES` live in the
+    schema (a test keeps the last two equal to `src/ui`); unit defaults take a `locale` option.
+  - Profile (P02-05): `update` throws `ProfileUnavailableError` (missing | corrupt); `save` throws
+    `WriteBlockedError` when the safety copy fails.
+  - Diary (P02-06): `update`/`remove`/`combine` return the photo ids they dropped: services pass them
+    to `photoRepo.releaseIfUnused`; full `prune()` at start-up and after import/restore (it skips photos
+    younger than 10 min). `RESTORING_FLAG` exported from `photoRepo.ts` for P09. `combine` refuses fewer
+    than 2 originals or a missing one. P06-17 reuses `src/data/barcodeKey.ts`.
+  - Weight/fasts (P02-08/09): `goal-reached` is posted to this tab only; `FASTING_ON_KEY` in
+    `fastRepo.ts` equals the schema key; boot calls `fastRepo.settleOnOpen(now)` and restore (P09-13)
+    after writing; P05-10 calls `addWeighIn` before `withWeight`.
 - From wave 4 so far:
   - Data layer (P02-01..03): no db singleton (boot owns it); `openDb` options `name`, `indexedDB`,
     `IDBKeyRange`, `steps`, `bus`; a transaction using `writeOne`/`removeRows`/`keepAside` includes
@@ -230,6 +258,8 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
   Playwright install step is a no-op here: chromium-1243 is already in `/opt/pw-browsers`.
 - Landing: `extract-patch.sh` / `land-patches.sh` (copies in `/root/wt/`, from the skill's
   `scripts/`), verify worktree `/root/wt/verify`, then cherry-pick `-n` onto the newest remote head
-  with one message file per slice.
+  with one message file per slice. Gate every push on the real exit code of `pnpm fmt:check` and
+  `pnpm check --require-ref` (store `$?`); never pipe a gating command into `grep` before `&&`, which
+  hid a failing traps check once (fixed by 8655743).
 - `.gitignore` is the package's own now (the old monorepo's Python ignore file is gone); still check
   `git check-ignore -v <path>` when a builder's file is missing from a patch.
