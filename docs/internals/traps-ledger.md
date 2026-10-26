@@ -1,0 +1,350 @@
+# Traps ledger
+
+Every hard part the research found (each research spec's §6) has a row here. `pnpm check:traps` (`tooling/checks/traps.ts`) fails when a declared trap has no row, a row has no coverage line, or a `Test:` line does not resolve. Ids are the explicit `R<nn>.<k>` in the spec item.
+
+**How rows change.** At plan time every row has a `Review:` line naming the owner: a task id (`P02-06`), a later phase (`L2`), a v1.x item, or a not-planned decision (`N-8`). When the owning task lands, the lead replaces the `Review:` line with one or more `Test: <file> > <describe> > <test>` lines. Rows owned by later phases or not-planned features keep their `Review:` line through v1.0 (P10-06).
+
+## R01 · Profile, onboarding and goals (`research/01-*.md` §6)
+
+- **R01.1** The weekly tune-up re-runs the AI plan; the reference's unused deterministic corrector is not built (D-16.45)
+  - Review: owned by P05-09
+- **R01.2** An AI plan that is out of range, incoherent, missing a macro or implausible is refused; accepted plans satisfy 4P + 4C + 9F = kcal exactly
+  - Review: owned by P01-14
+- **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
+  - Review: owned by P05-01
+- **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
+  - Review: owned by P05-08
+- **R01.5** The tune-up never hammers a failing provider: failures mark the week, rebuilds and onboarding set the check day, runs are single-flight
+  - Review: owned by P05-09
+- **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
+  - Review: owned by P05-01
+- **R01.7** Plan Ready edits keep calories and macros consistent and mark the plan as edited
+  - Review: owned by P01-13
+- **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
+  - Review: owned by P05-05
+- **R01.9** Truncation and rounding follow the spec exactly; the fat residue uses a true floor-mod
+  - Review: owned by P01-12
+- **R01.10** The optional-goal refresh keeps current values for keys the AI left out, clamps to 0–999 999 and never snaps typed values
+  - Review: owned by P03-14
+- **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
+  - Review: owned by P02-08
+- **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
+  - Review: owned by P05-10
+- **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
+  - Review: owned by P01-13
+- **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
+  - Review: owned by P05-09
+- **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
+  - Review: owned by P01-02
+- **R01.16** The evidence pack is numbers and dates only, excludes today, treats missing days as unknown and leaves out workout calories
+  - Review: owned by P01-17
+- **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
+  - Review: owned by P02-05
+- **R01.18** Height and weight units default together from the browser locale (D-16.10)
+  - Review: owned by P01-04
+
+## R02 · Food logging (`research/02-*.md` §6)
+
+- **R02.1** An unknown food weight stays unknown: a serving-count basis, never 100 g
+  - Review: owned by P01-09
+- **R02.2** The unknown-weight basis is its own kind, separate from a unit named serving
+  - Review: owned by P01-09
+- **R02.3** A value typed at a scaled amount is stored divided by the scale; a scale of 0 or less is guarded
+  - Review: owned by P01-09
+- **R02.4** With ingredient lines the header is their sum and micronutrients stretch by the gram ratio
+  - Review: owned by P01-10
+- **R02.5** Header values edited through the unlock are replaced by the next line change (accepted behaviour, tested and hinted)
+  - Review: owned by P06-08
+- **R02.6** A logged portion cannot be split again; a split survives line edits with its unit first
+  - Review: owned by P01-11
+- **R02.7** Saved meals have their own ids (D-16.17); often-eaten groups by normalised name and kcal; reorder hidden while searching
+  - Review: owned by P06-12
+- **R02.8** A photo is deleted only when no entry, line, saved meal or draft uses it; cleanup stops if any owner is unreadable
+  - Review: owned by P02-07
+- **R02.9** Combine sums every nutrient all rows know (D-16.20) and keeps unknown-weight lines visible
+  - Review: owned by P01-11
+- **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
+  - Review: owned by P06-04
+- **R02.11** Log, Save and manual Save are single-flight
+  - Review: owned by P04-08
+- **R02.12** The active-fast refusal happens at write time for every food write path
+  - Review: owned by P02-06
+- **R02.13** The review's suggested meal follows its picked date and time (D-16.16)
+  - Review: owned by P06-06
+- **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only
+  - Review: owned by P06-17
+- **R02.15** Open Food Facts wins; the saved label and FDC are tried only after not-found or no-nutrition; same order on every scan path
+  - Review: owned by P06-17
+- **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
+  - Review: owned by P06-15 (OFF) and P06-16 (FDC)
+- **R02.17** A photo batch with an unreadable or oversized file is refused whole
+  - Review: owned by P06-03
+- **R02.18** The FDC key goes only in a header; keys with non-printable characters are refused locally; all-caps names use English casing
+  - Review: owned by P06-16
+- **R02.19** One photo storage rule (≤ 2 048 px at 0.8 only when smaller); restored photos are never re-encoded; thumbnails are upright
+  - Review: owned by P06-02
+- **R02.20** The capture note is stored on the entry; the label-scan barcode is armed once and cleared on every other exit
+  - Review: owned by P06-17
+- **R02.21** Saving an untouched entry keeps its exact timestamp
+  - Review: owned by P06-11
+- **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator
+  - Review: owned by P01-06
+- **R02.23** Add-menu decoding drops unknown methods; a menu emptied only by unknown ids falls back to the default; a deliberately empty menu stays empty
+  - Review: owned by P06-01
+- **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
+  - Review: owned by P02-06
+- **R02.25** Values are stored unrounded and rounded only on screen, so review, fit check and totals agree
+  - Review: owned by P01-09
+
+## R03 · AI providers (`research/03-*.md` §6)
+
+- **R03.1** Anthropic needs its direct-browser header or the reply has no CORS header
+  - Review: owned by P03-09
+- **R03.2** Browser network failures are opaque; offline, our deadline and Cancel are told apart, with a hint where providers drop CORS on errors
+  - Review: owned by P03-01
+- **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
+  - Review: owned by P03-04
+- **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
+  - Review: owned by P03-17
+- **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
+  - Review: owned by P03-04
+- **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
+  - Review: owned by P03-05
+- **R03.7** Gemini replies can hold several parts and thought parts: join every non-thought part; MAX_TOKENS means cut off
+  - Review: owned by P03-07
+- **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none
+  - Review: owned by P03-07
+- **R03.9** The answer token limit is shown for every provider and always sent (D-16.25)
+  - Review: owned by P09-07
+- **R03.10** OpenAI needs max_completion_tokens; Custom only for gpt-5/6 and o1/o3/o4 ids; everything else max_tokens
+  - Review: owned by P03-08
+- **R03.11** Qwen needs enable_thinking false; OpenRouter reasoning is excluded; a reasoning-only reply counts as cut off
+  - Review: owned by P03-08
+- **R03.12** Every image is re-encoded to JPEG; an undecodable one (HEIC outside Safari) fails as image conversion
+  - Review: owned by P03-10
+- **R03.13** JSON extraction strips fences and takes the first balanced object, aware of strings
+  - Review: owned by P03-11
+- **R03.14** The ingredient breakdown is all or nothing (≤ 20 entries, valid values, ≤ 9 kcal/g fill, coverage 0.5–1.5)
+  - Review: owned by P03-13
+- **R03.15** A missing serving weight stays unknown and is never repaired
+  - Review: owned by P03-12
+- **R03.16** Unit choices need real positive numbers within max(5 g, 15 %); one bad element voids the list; an empty list is valid
+  - Review: owned by P03-13
+- **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
+  - Review: owned by P03-18
+- **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
+  - Review: owned by P03-01
+- **R03.19** Classification order is fixed: 401/403, credits, daily quota, quota, 404, 429, 503/529, generic
+  - Review: owned by P03-01
+- **R03.20** Custom: key optional, model required; keys trimmed
+  - Review: owned by P03-04
+- **R03.21** Ollama accepts free-form model ids
+  - Review: owned by P03-03
+- **R03.22** Server addresses are trimmed and lose trailing slashes; Ollama without /v1 gets a hint
+  - Review: owned by P03-04
+- **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
+  - Review: owned by P03-17
+- **R03.24** Label scaling rounds kcal
+  - Review: owned by P03-14
+- **R03.25** Nutrient-goal replies are read tolerantly but keep the person's values for missing keys; a failure never clears goals
+  - Review: owned by P03-14
+- **R03.26** Any 2xx status counts as success
+  - Review: owned by P03-05
+- **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
+  - Review: owned by P02-12
+- **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
+  - Review: owned by P03-03
+- **R03.29** Large photo sets: the payload is estimated and size errors get their own message (message is v1.x, E16)
+  - Review: owned by P03-10
+
+## R04 · Coach (`research/04-*.md` §6)
+
+- **R04.1** A standby re-run discards everything the failed attempt produced
+  - Review: owned by P08-08
+- **R04.2** Earlier photos are not re-sent and the prompt says the model cannot see them (D-16.48)
+  - Review: owned by P08-01
+- **R04.3** History sent to a provider starts with a user turn and merges same-role neighbours (D-16.34)
+  - Review: owned by P08-04
+- **R04.4** A failed turn keeps the question and offers Retry without duplicating it (D-16.31)
+  - Review: owned by P08-09
+- **R04.5** Pending is set before the first await, so double taps start one turn
+  - Review: owned by P08-09
+- **R04.6** Reset aborts the request and drops any late reply by generation (D-16.34)
+  - Review: owned by P08-09
+- **R04.7** An unreadable stored message is kept aside, never overwritten
+  - Review: owned by P02-11
+- **R04.8** Chat storage is bounded: one record per message, newest 200, small thumbnails (D-16.29)
+  - Review: owned by P02-11
+- **R04.9** The 60 000-character tool-result cap applies on every provider (D-16.32)
+  - Review: owned by P08-03
+- **R04.10** Count and size limits keep the newest rows (D-16.32, Proposed D-16.59), with markers and the echoed range
+  - Review: owned by P08-02
+- **R04.11** Round-limit and cut-off-twice failures keep their own kinds and messages
+  - Review: owned by P08-08
+- **R04.12** Every tool call id gets exactly one result, an error result for calls without a name
+  - Review: owned by P08-05
+- **R04.13** Gemini: echo returned parts verbatim, echo the call id, wrap results as objects, results always valid JSON
+  - Review: owned by P08-07
+- **R04.14** A chip sends with the attached photo and clears it (D-16.33)
+  - Review: owned by P08-12
+- **R04.15** Cut-off replies are detected on every format and the cap is sent to Gemini too
+  - Review: owned by P08-06 (Anthropic) and P08-07 (Gemini)
+- **R04.16** Tools and context never invent empty days: no 0 kcal rows, no inferred fasts
+  - Review: owned by P08-02
+- **R04.17** Tool dates are local, ISO, Gregorian and inclusive; bad dates default silently and the effective range is echoed
+  - Review: owned by P08-02
+- **R04.18** One compact retry per round; only OpenRouter changes the request
+  - Review: owned by P08-05
+- **R04.19** Six requests per turn include the answer; the prompt asks the model to batch tool calls
+  - Review: owned by P08-08
+- **R04.20** v1 offers and mentions only the six nutrition tools; a stray workout call gets not available
+  - Review: owned by P08-02
+- **R04.21** Exercise proposals: add only while pending, mark added after the write, fixed ids, name re-check, dedupe, at most 10 (workouts)
+  - Review: owned by L3
+- **R04.22** Tools read the snapshot taken at send time, never live stores mid-loop
+  - Review: owned by P08-08
+
+## R05 · Home, Progress, water and fasting (`research/05-*.md` §6)
+
+- **R05.1** An active fast refuses every food write inside the same transaction
+  - Review: owned by P02-06
+- **R05.2** Turning fasting off ends the active fast; an active fast restored with tracking off is ended on open
+  - Review: owned by P02-09
+- **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
+  - Review: owned by P02-09
+- **R05.4** Water and fasts never enter nutrition totals, averages or the recap
+  - Review: owned by P01-08
+- **R05.5** Readings logged today stay inside range windows (half-open day range)
+  - Review: owned by P01-02
+- **R05.6** An unreadable stored list is never replaced with an empty one and saved
+  - Review: owned by P02-02
+- **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
+  - Review: owned by P01-19
+- **R05.8** Weight and body-fat writes sync the profile in the same transaction; deleting the last body-fat reading leaves the profile value
+  - Review: owned by P02-08
+- **R05.9** Tracker switches hide entry controls, not history
+  - Review: owned by P07-05
+- **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
+  - Review: owned by P01-05 (water) and P01-04 (weight)
+- **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
+  - Review: owned by P07-12
+- **R05.12** No fallback goals flash before the profile is read
+  - Review: owned by P04-07
+- **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time
+  - Review: owned by P04-05
+- **R05.14** Today is recomputed at local midnight and on return to the foreground
+  - Review: owned by P04-07
+- **R05.15** Dense calorie charts always fit so the newest day stays reachable
+  - Review: owned by P07-11
+- **R05.16** Only clearly horizontal drags scrub charts; pointer state stays local; long series are downsampled
+  - Review: owned by P07-10
+- **R05.17** Macro averages divide by logged days, the calorie average by days with energy; missing days are gaps; Count today shifts the window
+  - Review: owned by P07-16
+- **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
+  - Review: owned by P07-03
+- **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights
+  - Review: owned by P07-15
+- **R05.20** The fasting goal alert is dropped on end, cancel and delete and re-evaluated after edits and on open
+  - Review: owned by P09-08
+- **R05.21** Fasts show on the day they end; the active fast only on today
+  - Review: owned by P01-08
+- **R05.22** History rows have a visible delete with a confirmation and vanish at once (D-16.38)
+  - Review: owned by P07-14
+
+## R06 · Settings and data (`research/06-*.md` §6)
+
+- **R06.1** Unreadable data is never treated as empty: drop unreadable records only, keep raw data aside first, show a banner
+  - Review: owned by P02-02
+- **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
+  - Review: owned by P02-06
+- **R06.3** After every committed write every live query and tab re-reads
+  - Review: owned by P02-03
+- **R06.4** An open or upgrade failure never deletes the database
+  - Review: owned by P02-01
+- **R06.5** Erase everything invalidates any running backup before wiping
+  - Review: owned by P09-15
+- **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything
+  - Review: owned by P09-13
+- **R06.7** The backup hash leaves out backup bookkeeping and device-local state
+  - Review: owned by P09-12
+- **R06.8** Restore states what it will replace and asks first (D-16.42)
+  - Review: owned by P09-13
+- **R06.9** Archive entry names are plain photo names only, when writing and reading
+  - Review: owned by P09-12
+- **R06.10** Reminders re-check every switch and the permission when due; everything is cancelled on erase, master off or permission loss
+  - Review: owned by P09-08
+- **R06.11** Reminder times are the next wall-clock occurrence each time (DST-safe)
+  - Review: owned by P09-08
+- **R06.12** There is no streak reminder (D-16.41), so its never-firing condition cannot occur; tested by the reminder list
+  - Review: owned by P09-08
+- **R06.13** The notifications switch turns on only after a grant and shows the real permission on every focus
+  - Review: owned by P09-09
+- **R06.14** Exports always hold kcal; kJ users get a note and a kcal header
+  - Review: owned by P09-10
+- **R06.15** One-time nudges are marked done only after they were shown and dismissed
+  - Review: owned by P09-15
+- **R06.16** Import replace-range matches by id then by day, minute, meal and name, keeps photos, mints ids on collisions, refuses the whole file on any bad value or DST-gap time
+  - Review: owned by P09-11
+- **R06.17** Export "This week" follows the week-start setting
+  - Review: owned by P09-10
+- **R06.18** Photo cleanup stops when any referencing record is unreadable and never runs during a restore
+  - Review: owned by P02-07
+- **R06.19** Browser storage can be evicted: request persistence, show it, nudge install and backups
+  - Review: owned by P09-15
+- **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
+  - Review: owned by P01-03
+- **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
+  - Review: owned by P09-05
+- **R06.22** Settings pages wait for stored values before showing switches
+  - Review: owned by P09-01
+- **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
+  - Review: owned by P00-05
+- **R06.24** Photo compression replaces only smaller, unchanged originals, never during a restore, and reports interruptions as failures
+  - Review: owned by v1.x item K8 (Compress photos, P2)
+
+## R07 · Later phases and the web side (`research/07-*.md` §6)
+
+- **R07.1** Without a health store the workout burn must reach the day summary directly; the calorie goal is not changed by it
+  - Review: owned by L2
+- **R07.2** One versioned burn snapshot per day; undo never restores old calories over a later edit
+  - Review: owned by L2
+- **R07.3** Burn is net of resting energy, with its clamps and floors
+  - Review: owned by L2
+- **R07.4** Rest alerts in a web app are best-effort; keep a wall-clock end time and recompute on resume
+  - Review: owned by L2
+- **R07.5** Never use the reference's illustrations or CDN; take the open dataset from its upstream at a pinned commit without the reference-local records
+  - Review: owned by L2
+- **R07.6** Exercise images load on demand, verified, with a capped cache
+  - Review: owned by L2
+- **R07.7** Exercise search: names only, joined word suffixes, aliases, fixed ranking
+  - Review: owned by L2
+- **R07.8** RPE input per scale keeps in-progress text
+  - Review: owned by L2
+- **R07.9** Routines never overwrite logged work
+  - Review: owned by L2
+- **R07.10** Speech-to-text deletes recordings and vendor uploads in every outcome; standby only to a different usable provider; bounded polling
+  - Review: owned by L4
+- **R07.11** Browser recording formats differ from the WAV that vendors expect
+  - Review: owned by L4
+- **R07.12** Browser WebSockets cannot send auth headers; BYOK live voice needs a browser-safe token path
+  - Review: owned by L5
+- **R07.13** Voice tools need confirmation, undo and timeouts before any write
+  - Review: owned by L5
+- **R07.14** Challenge aggregates are strict (needs a backend)
+  - Review: owned by N-8 (not planned)
+- **R07.15** Hosted AI identity is a bearer secret (needs a backend)
+  - Review: owned by N-8 (not planned)
+- **R07.16** Share payloads must be versioned and capped; imports get new ids and are logged now
+  - Review: owned by L4
+- **R07.17** iOS keeps an installed app's storage apart from Safari; a share import page must work on its own
+  - Review: owned by L4
+- **R07.18** Canonical redirects must spare API paths (needs a backend)
+  - Review: owned by N-8 (not planned)
+- **R07.19** Dynamic server responses need their own security headers (needs a backend)
+  - Review: owned by N-8 (not planned)
+- **R07.20** i18n retrofit: copy externalised and logical CSS from v1, RTL checked in L1
+  - Review: owned by L1 (groundwork: P00-05, P00-07)
+- **R07.21** Local model downloads are verified before use; only Whisper-size models are viable in a browser
+  - Review: owned by L4 (optional on-device speech model)
+- **R07.22** Health deletions need tombstones (no health store in the plan)
+  - Review: owned by N-5 (not planned)
