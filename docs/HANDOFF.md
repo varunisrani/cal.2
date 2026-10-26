@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:33 IST (Agent 2). P00 and P01 complete; 38/176 tasks. The user started the new
+Updated: 2026-10-27 00:42 IST (Agent 2). P00 and P01 complete; 40/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -64,22 +64,23 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 4 | P04-01, P04-02 (UI primitives: buttons, sheets, dialogs, toasts, inputs, wheels, date-time fields) | bd36cd2 |
 | Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 916b62f |
 | Wave 4 | P02-01..03 (schema and safe open, record guard and quarantine, live queries and bus) | e61199b |
+| Wave 6 | P03-03, P03-04 (provider catalogue and presets; AI settings, roles, standbys, server addresses) | 4ef228a |
 
 ## In progress
 
 - Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
-  (916b62f), P02 S0 (e61199b; ci-local on that head: unit 1401/1401 + 1 expected fail in 90 files,
-  check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 38/176 tasks** (P00 10/10, P01 19/19,
-  P02 3/15, P03 4/19, P04 2/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave6|wave7/`): P03 wave B S2
-  (P03-03/04, base 369d003), P04 S2 (P04-03, base db84874), P02 wave B S1 (P02-04/05) and S2
-  (P02-06/07/13), base 6ff78c0.
+  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a; ci-local on that head: unit 1475/1475 + 1
+  expected fail in 94 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 40/176 tasks**
+  (P00 10/10, P01 19/19, P02 3/15, P03 6/19, P04 2/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave6|wave7/`): P04 S2 (P04-03,
+  base db84874), P02 wave B S1 (P02-04/05) and S2 (P02-06/07/13) on base 6ff78c0, S3 (P02-08/09)
+  on base cb104fa.
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P03 S2, P04 S2, P02 S1, P02 S2 as they come back; then P02 wave B S3–S5, P03 wave B S3–S5,
+1. Land P04 S2 and P02 S1–S3 as they come back; then P02 wave B S4–S5, P03 wave B S3–S5,
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -151,6 +152,14 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   `additionalHooks: '(useLive)'` to the exhaustive-deps rule; the `unreadableData` flag is never
   cleared yet (K9 banner task); P02-05 update refuses a corrupt read; P02-14 wipe is the only
   `deleteDatabase` caller; the cross-tab test names Dexie's channel `x-storagemutated-1`.
+- AI catalogue and settings (P03-03/04): preset ids were read from vendor page summaries on
+  2026-10-26 (not live calls); P03-19's probe and P10 confirm them. `hidesKeyRefusal` in the
+  catalogue mirrors `HIDES_REFUSED_KEY` in `errors.ts` (a test keeps them equal). APIs:
+  `roleFor(settings, {images})`, `standbyFor`/`standbyProblem`, `targetProblem` (`noServer`,
+  `noModel`, `noKey`), `KeyRing = {providerId: key}`, `loadAiSettings(raw, marker)` returns the
+  new preset marker, `checkServerUrl` refusal codes (`empty`, `notUrl`, `scheme`, `credentials`,
+  `plainHttp`). P09-07: turning a standby on with default provider and model gives `sameAsRole`;
+  the picker moves it to the next preset. Copy for key hints and address refusals is P05-04/P09-07.
 - AI transport (P03-05/06): `send(url, init, {deadline, attemptCapMs?, provider?, keySent?,
   fetch?})`, `startDeadline({timeoutMs, cancel?})` in ms (caller converts `timeoutSec`); one
   deadline per action, `dispose()` at the end; `attemptCapFor('fixed'|'userServer')`. P03-17 sends
