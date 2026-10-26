@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s4b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S4b = P03-13, P03-14 — unit choices and the parts breakdown; the plan, nutrient-goal and label readers. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.6; decisions D-16.57, D-16.58 in docs/plan/16-what-we-change.md. Traps owned: R03.14, R03.16 (P03-13), R01.10, R03.24, R03.25 (P03-14). Acceptance ids: ACC-E8-2 (P03-13), ACC-C10-2 (P03-14).
+Task notes (each before its code): docs/notes/P03/unit-choices-and-parts-breakdown.md, docs/notes/P03/plan-nutrient-goal-and-label-readers.md.
+
+You own:
+- src/ai/parse/{units,parts,planReply,nutrientGoals,labelReply}.ts and their tests
+
+Do not touch:
+- src/ai/prompts/** (the prompts builder, now)
+- src/ai/errors.ts, src/ai/testing/**, src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts, src/ai/image.ts, src/ai/adapters/**, src/ai/parse/json.ts, src/ai/parse/foodReply.ts (landed: import, do not edit), src/ai/catalog/**, src/ai/settings.ts, src/ai/endpoint.ts (another builder, now), src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/** (another builder, now), src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React; only src/ai/transport.ts calls fetch. Failures are values (Result from src/lib/result.ts; AiFailure kinds from src/ai/errors.ts, invalidResponse for unusable answers). Reuse parseModelJson, isRecord and readNumber from src/ai/parse/json.ts and the reply key constants FOOD_REPLY_KEYS, UNIT_REPLY_KEYS, PART_REPLY_KEYS from src/ai/parse/foodReply.ts. Use the domain rules (src/domain/goals/planValidator.ts checkPlan, src/domain/nutrients/goalDefaults.ts, src/domain/servings/*) rather than re-deriving them. Every sample text and fixture is ours.
+- units.ts follows the P03-13 row exactly (needsRepair rules; counts and gramsEach must be JSON numbers, not strings or booleans: check typeof value === 'number' yourself, since readNumber accepts numeric strings; R03.16). parts.ts is all or nothing per the row (R03.14); when kept, the draft's kcal and macros become the sums.
+- planReply.ts reads our plan keys (kcal, protein, carbs, fat, why) and hands them to checkPlan from src/domain/goals/planValidator.ts; it never re-implements the validation.
+- nutrientGoals.ts (R03.25, R01.10): numbers or numeric strings plus our alias spellings, rounded and clamped 0–999 999, starting from the person's current goals and overwriting only keys that came back; nothing parsable is a failure and never clears goals.
+- labelReply.ts: per-100 g values scaled by G ÷ 100, nutrients to 0.1, kcal rounded (R03.24); the first unit choice chosen with its count derived from G.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/parse --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

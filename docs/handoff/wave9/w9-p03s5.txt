@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S5 = P03-15, P03-16 — the food prompts and reply contract; the planning, evidence-text, nutrient-goal and fit-check prompts. Spec: those two rows in docs/plan/phases/P03-ai-layer.md; research specs 03 §3.5, §3.7–3.8, §3.11 and 01 §3.2, §3.6, §3.8, §3.11 (behaviour only). Decisions D-16.24 and D-16.62 in docs/plan/16-what-we-change.md. Acceptance id: ACC-C9-1 (P03-16).
+Task notes (each before its code): docs/notes/P03/food-prompts-and-reply-contract.md, docs/notes/P03/planning-and-fit-check-prompts.md.
+
+You own:
+- src/ai/prompts/** (contract, food, shared, plan, evidenceText, nutrientGoals, fitCheck + tests)
+
+Do not touch:
+- src/ai/parse/** other than reading (another builder adds units, parts, plan, goal and label readers now)
+- src/ai/errors.ts, src/ai/testing/**, src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts, src/ai/image.ts, src/ai/adapters/**, src/ai/parse/json.ts, src/ai/parse/foodReply.ts (landed: import, do not edit), src/ai/catalog/**, src/ai/settings.ts, src/ai/endpoint.ts (another builder, now), src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/** (another builder, now), src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React; only src/ai/transport.ts calls fetch. Failures are values (Result from src/lib/result.ts; AiFailure kinds from src/ai/errors.ts, invalidResponse for unusable answers). Reuse parseModelJson, isRecord and readNumber from src/ai/parse/json.ts and the reply key constants FOOD_REPLY_KEYS, UNIT_REPLY_KEYS, PART_REPLY_KEYS from src/ai/parse/foodReply.ts. Use the domain rules (src/domain/goals/planValidator.ts checkPlan, src/domain/nutrients/goalDefaults.ts, src/domain/servings/*) rather than re-deriving them. Every sample text and fixture is ours.
+- Clean room, strictly: write every prompt yourself from the behaviour described in the research specs; never open, quote or paraphrase the reference's prompt text (its prompt files and prompt strings are off limits even after writing). The prompts are prose and fall under the similarity check: run pnpm check:similarity on them.
+- contract.ts defines our reply schema with the key constants already exported by src/ai/parse/foodReply.ts (FOOD_REPLY_KEYS, UNIT_REPLY_KEYS, PART_REPLY_KEYS: reuse them, do not redefine names) and its unit rules; the 8 sports extras are asked for inside the nutrients object (that is where the parser reads them).
+- food.ts: the multi-photo meal prompt (each photo is one meal; count each food once across views; prefer readable scale and label values; progressive text only when the flag is set and there are at least two photos; the note as context), the typed description (with one food emoji), the label-scan request (same as photos, source label; D-16.62), the unit-repair request and the compact re-ask note (answer was cut off, return only the object, stay under N tokens). shared.ts: the kJ line only for kJ users and the nutrient unit list.
+- plan.ts per the P03-16 row (formula set and constants, which BMR formula applies, the rules for using the person's own data, 800–6 000 kcal, 4/4/9 consistency, profile in metric plus display units, the formula reference values and current targets, the evidence text); evidenceText.ts renders the buildEvidence object from src/domain/forecast/evidence.ts as compact text with coverage labels and the privacy line and never contains names (test with a fixture that has names); nutrientGoals.ts (integers for the 29 optional goals only, limits as ceilings, supplements 0 unless asked); fitCheck.ts (2–4 plain sentences, one practical next step, concrete numbers, non-medical, never claiming anything was logged; up to 12 of today's meals; the kJ line for kJ users).
+- Tests are snapshot-free: assert the facts each prompt must carry (every contract key, the constants, the kJ line only when needed, the token budget in the compact note, at most 12 meals).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/prompts --maxWorkers=1
+- PLATEWISE_REF=/root/reference/fud-ai pnpm check:similarity (must pass on your files)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
