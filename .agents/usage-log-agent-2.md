@@ -18,3 +18,4 @@ Readings lag a few minutes, so 88 % counts as 90 %. When the newest reading is o
 | 2026-10-27 00:44 | Agent 2 | Account 2 | 51 (reading 00:43) | 49 | 2026-10-27 02:40 | 40/176 (P03 S2 landed); 4 builders running; ~0.6 %/min, 75 % expected near 01:20 |
 | 2026-10-27 00:59 | Agent 2 | Account 2 | 58 (reading 00:57) | 42 | 2026-10-27 02:40 | 46/176 (P02 S1, S2 landed); P04 S3 launched, last new builder before 75 %; 3 running |
 | 2026-10-27 01:08 | Agent 2 | Account 2 | 61 (reading 01:06) | 39 | 2026-10-27 02:40 | 50/176 (P02 S3, S4 landed); P04 S4 launched; 2 running; ~0.35 %/min |
+| 2026-10-27 01:11 | Agent 2 | Account 2 | 62 (reading 01:08) | 38 | 2026-10-27 02:40 | 50/176; 2 builders running (P04 S3, S4); ~0.35 %/min, 75 % expected near 01:45 |
