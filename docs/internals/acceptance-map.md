@@ -408,12 +408,13 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D27-1** During a fast, Log shows the paused dialog and End fast and log does both
   - Review: P07-07
 - **ACC-D27-2** No path writes food during an active fast
-  - Review: P02-06
+  - Test: src/data/repos/diaryRepo.test.ts > writes during a fast (D-16.35) > add throws FastActiveError and writes nothing; once the fast ends it logs (ACC-D27-2, R05.1, R02.12)
+  - Test: src/data/repos/diaryRepo.test.ts > writes during a fast (D-16.35) > addMany and combine are refused as a whole and change nothing (ACC-D27-2, R02.12)
 
 ### D28 · Stored photos upright, capped at 2 048 px when that saves space, … (P1)
 
 - **ACC-D28-1** Deleting an entry keeps a photo still used by a saved meal
-  - Review: P02-07
+  - Test: src/data/repos/photoRepo.test.ts > releasing photos after a diary change > a photo shared by an entry and a saved meal survives deleting the entry (ACC-D28-1, R02.8)
 - **ACC-D28-2** An undecodable HEIC photo is refused with a message
   - Review: P06-02
 
