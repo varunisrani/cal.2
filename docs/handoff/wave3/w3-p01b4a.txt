@@ -1,0 +1,32 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b4a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S4a = P01-12, P01-13, P01-14 — goal formulas and the maintenance estimate; effective targets, locks and plan editing; the plan validator for AI replies. (The plan's S4 is split in two this wave; P01-15/16 go to another builder.) Spec: those three rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests; for the 7 966-line ContentView.swift read only what the row says to search); research spec 01 §3.3, §3.6, §3.7; decisions D-16.12 in docs/plan/16-what-we-change.md. Traps owned: R01.9 (P01-12), R01.7, R01.13 (P01-13), R01.2 (P01-14) in docs/internals/traps-ledger.md.
+Task notes (each before its code): docs/notes/P01/goal-formulas-and-maintenance-estimate.md, docs/notes/P01/effective-targets-locks-and-plan-editing.md, docs/notes/P01/plan-validator-for-ai-replies.md (slugs: the end of the phase file).
+
+You own:
+- src/domain/goals/** (formulas, maintenance, targets, locks, planEdit, planValidator + tests)
+
+Do not touch:
+- src/domain/profile/**, src/domain/adaptive/** (the P01-15/16 builder, writing at the same time: do not import from them), src/domain/nutrients/**, src/domain/meals/**, src/domain/servings/**, src/domain/food/** (other builders this wave)
+- src/ui/**, public/**, index.html, src/main.tsx, src/app/**, src/i18n/**, src/lib/**, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed; import from them, do not edit)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now(), navigator or src/i18n (the P00-07 lint enforces it); it may import src/lib and other landed src/domain modules. Time and locale are parameters ("today" is a DayKey, instants are ms numbers). Words the user sees (a serving word, a default meal name) are parameters the caller fills from the catalogue.
+- Parsers and decoders return null or a fallback, never throw, for stored or typed input. Use the names already fixed by src/domain/model.ts (Profile, Targets, SavedTargets, MealTimes, NutrientKey, ExtraKey, DiaryEntry, …); new names are ours, never the reference's (tooling/checks/banned-patterns.json).
+- Use the exact rules and the Verify column of each row as your test vectors; add a test for every trap your tasks own, with the trap id in the test name, e.g. `… (R02.1)`.
+- Integer maths exactly as the rows state (trunc, div, floor-mod; R01.9).
+- Time-zone helpers if needed: inTimeZone from src/test/time.ts (vitest runs in America/New_York).
+- Work on the model's Profile (sex, birthDate, heightCm, weightKg, activity, goal, bodyFat as a fraction, weeklyKg, goalWeightKg, saved: SavedTargets, caloriesLocked, lockedMacros with MAX_LOCKED_MACROS = 2). Age comes from ageOn in src/domain/dates/age.ts with "today" as a parameter.
+- The default profile in the P01-12 Verify cases (male, 25 y, 175 cm, 70 kg, moderate, maintain) is built inside your tests; the shared defaults function lands with P01-15 in parallel, so do not import it.
+- planValidator returns a Result from src/lib/result.ts (the error names the rejection step); its input is already-read raw values (P03-14 reads the reply later). Body fat never turns protein into a lean-mass rate.
+- Lock edits snapshot all three macros before writing any; a third macro lock is not added (R01.13). Plan Ready ranges and steps as D-16.12 and the row say.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/goals --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md, rows that say "Review: P01-xx" for your tasks) your tests cover, with file > describe > test name. Leave everything uncommitted.

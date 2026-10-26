@@ -59,15 +59,24 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Nothing in flight. Wave 2 (session 3, base f67065d) verified on the stacked head and again on the
+**Wave 3** (session 3, launching 2026-10-26 ~20:10 IST; prompts in `docs/handoff/wave3/`, base = the
+commit that adds them): four builders in `/root/wt/wt-{p01b2,p01b3,p01b4a,p01b4b}` — P01 S2
+(P01-07, P01-08), S3 (P01-09..11), S4a (P01-12..14) and S4b (P01-15, P01-16). The plan's S4 is split
+in two so wave C (needs S2 and S4) starts sooner; P04 S1 primitives move to wave 4. Owned paths do
+not overlap; no shared files. If this container is gone, re-create the worktrees at that base and
+relaunch the same prompts (nothing of wave 3 is landed yet).
+
+Wave 2 (session 3, base f67065d) verified on the stacked head and again on the
 rebuilt head 6897aaf with `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt,
 typecheck clean; unit 615/615 in 38 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB;
 e2e 1/1. **Progress: 16/176 tasks** (P00: 10/10, P01: 6/19).
 
 ## Next
 
-1. Wave 3: P01 wave B S2 (P01-07/08), S3 (P01-09..11), S4 (P01-12..16); then P01 wave C, P02, P03,
-   P04 walking skeleton (Demo 1) and P05–P10.
+1. Land wave 3 (above).
+2. Wave 4 (proposed): P01 wave C S5 (P01-17..19, after S2 and S4 land), P02 wave A S0 (P02-01..03),
+   P04 wave A S1 (P04-01, P04-02 primitives) and S2 (P04-03); then P02 wave B, P03, P04 walking
+   skeleton (Demo 1) and P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 

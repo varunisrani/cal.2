@@ -1,0 +1,33 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b4b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S4b = P01-15, P01-16 — profile rules and the plan-input signature; the Adaptive Goals cadence reducer. (The plan's S4 is split in two this wave; P01-12..14 go to another builder.) Spec: those two rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and line ranges to read, then their tests; read only the named lines of the big files); research spec 01 §3.9, §3.10; decisions D-16.11, D-16.45 in docs/plan/16-what-we-change.md. Traps: none owned outright, but your pure rules are what later tasks rely on for R01.12 (P05-10: missing baseline seeded silently, no nudge), R01.4, R01.5, R01.14 (P05-08/09): test those behaviours here and name the trap ids in the test names so the lead can map them.
+Task notes (each before its code): docs/notes/P01/profile-rules-and-plan-input-signature.md, docs/notes/P01/adaptive-cadence.md (slugs: the end of the phase file).
+
+You own:
+- src/domain/profile/** (profile, editRules, signature + tests)
+- src/domain/adaptive/** (cadence + test)
+
+Do not touch:
+- src/domain/goals/** (the P01-12..14 builder, writing at the same time: do not import from it), src/domain/nutrients/**, src/domain/meals/**, src/domain/servings/**, src/domain/food/** (other builders this wave)
+- src/ui/**, public/**, index.html, src/main.tsx, src/app/**, src/i18n/**, src/lib/**, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed; import from them, do not edit)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now(), navigator or src/i18n (the P00-07 lint enforces it); it may import src/lib and other landed src/domain modules. Time and locale are parameters ("today" is a DayKey, instants are ms numbers). Words the user sees (a serving word, a default meal name) are parameters the caller fills from the catalogue.
+- Parsers and decoders return null or a fallback, never throw, for stored or typed input. Use the names already fixed by src/domain/model.ts (Profile, Targets, SavedTargets, MealTimes, NutrientKey, ExtraKey, DiaryEntry, …); new names are ours, never the reference's (tooling/checks/banned-patterns.json).
+- Use the exact rules and the Verify column of each row as your test vectors; add a test for every trap your tasks own, with the trap id in the test name, e.g. `… (R02.1)`.
+- Integer maths exactly as the rows state (trunc, div, floor-mod; R01.9).
+- Time-zone helpers if needed: inTimeZone from src/test/time.ts (vitest runs in America/New_York).
+- Profile defaults: male, birth date = today − 25 years (today is a DayKey parameter; calendar arithmetic from src/domain/dates), 175 cm, 70 kg, moderate, maintain, no locks (caloriesLocked false, lockedMacros []), saved {}, no allergens; units seeded with defaultUnits(locale) from src/domain/units/defaults.ts (P01-04, landed).
+- "Apply the plan with all locks cleared" and "clear locks" in the cadence are expressed on the model's Profile fields directly (saved, caloriesLocked, lockedMacros); do not import src/domain/goals. The reducer returns decisions/actions and the next state; it does no I/O and reads no clock (today is an input).
+- The signature covers sex, birth date, height, weight, activity, goal, pace, goal weight and body fat — not goal body fat, allergens or targets. A missing baseline is seeded silently (no nudge on first open).
+- The reference's unused deterministic corrector is not built (D-16.45).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/profile src/domain/adaptive --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md, rows that say "Review: P01-xx" for your tasks) your tests cover, with file > describe > test name. Leave everything uncommitted.

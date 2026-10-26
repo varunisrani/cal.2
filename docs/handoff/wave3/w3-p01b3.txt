@@ -1,0 +1,33 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S3 = P01-09, P01-10, P01-11 — serving units and scaling; ingredient lines and the nutrient stretch; recipe split and combining entries. Spec: those three rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research spec 02 §3.3 and §3.15; decision D-16.20 in docs/plan/16-what-we-change.md. Traps owned: R02.1, R02.2, R02.3, R02.25 (P01-09), R02.4 (P01-10), R02.6, R02.9 (P01-11) in docs/internals/traps-ledger.md.
+Task notes (each before its code): docs/notes/P01/serving-units-and-scaling.md, docs/notes/P01/ingredient-lines-and-nutrient-stretch.md, docs/notes/P01/recipe-split-and-combining-entries.md (slugs: the end of the phase file).
+
+You own:
+- src/domain/servings/{units,scale,ingredients,recipe}.ts and their .test.ts files
+- src/domain/food/** (combine + test)
+
+Do not touch:
+- src/domain/nutrients/**, src/domain/meals/**, src/domain/goals/**, src/domain/profile/**, src/domain/adaptive/** (other builders this wave)
+- src/ui/**, public/**, index.html, src/main.tsx, src/app/**, src/i18n/**, src/lib/**, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed; import from them, do not edit)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now(), navigator or src/i18n (the P00-07 lint enforces it); it may import src/lib and other landed src/domain modules. Time and locale are parameters ("today" is a DayKey, instants are ms numbers). Words the user sees (a serving word, a default meal name) are parameters the caller fills from the catalogue.
+- Parsers and decoders return null or a fallback, never throw, for stored or typed input. Use the names already fixed by src/domain/model.ts (Profile, Targets, SavedTargets, MealTimes, NutrientKey, ExtraKey, DiaryEntry, …); new names are ours, never the reference's (tooling/checks/banned-patterns.json).
+- Use the exact rules and the Verify column of each row as your test vectors; add a test for every trap your tasks own, with the trap id in the test name, e.g. `… (R02.1)`.
+- Integer maths exactly as the rows state (trunc, div, floor-mod; R01.9).
+- Time-zone helpers if needed: inTimeZone from src/test/time.ts (vitest runs in America/New_York).
+- The domain stays locale-free: unitLabel takes the serving word (singular and plural) as a parameter instead of reading the catalogue; combineEntries takes the fallback combined-meal name as a parameter. Plural rule as in the P01-09 row (count 1 ± 0.0001 unchanged; metric and kitchen abbreviations unchanged; piece → pieces; else add "s" unless it ends in s).
+- Use the model's NutritionDraft / DiaryEntry / UnitChoice / ServingBasis / IngredientLine shapes: the unknown-weight basis is its own kind (R02.2); a unit choice keeps the grams when switched; unknown nutrients stay absent, never 0.
+- Combining: D-16.20 read as "every nutrient all combined entries know" is summed, otherwise it stays unknown; an unknown-weight entry adds a visible 0 g line (R02.9); notes and product info are not carried.
+- Every list operation keeps the four-unit cap; a recipe split serving unit is placed first so the cap keeps it.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/servings src/domain/food --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md, rows that say "Review: P01-xx" for your tasks) your tests cover, with file > describe > test name. Leave everything uncommitted.

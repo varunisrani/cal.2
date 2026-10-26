@@ -1,0 +1,32 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S2 = P01-07, P01-08 — the nutrient catalogue, goal defaults and Home pillars; meal times and diary grouping. Spec: those two rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research specs 01 §3.11, 02 §3.2, 06 §3.4.1, 05 (diary rows, fasts); decisions D-16.57 (Android ranges for optional goals, confirmed) in docs/plan/16-what-we-change.md. Traps owned: R05.4, R05.21 (docs/internals/traps-ledger.md).
+Task notes (each before its code): docs/notes/P01/nutrient-catalogue-and-goal-defaults.md, docs/notes/P01/meal-times-and-diary-grouping.md (slugs: the end of the phase file).
+
+You own:
+- src/domain/nutrients/** (catalogue, goalDefaults, pillars + tests)
+- src/domain/meals/** (times, diary + tests)
+
+Do not touch:
+- src/domain/servings/** other than reading, src/domain/food/**, src/domain/goals/**, src/domain/profile/**, src/domain/adaptive/** (other builders this wave)
+- src/ui/**, public/**, index.html, src/main.tsx, src/app/**, src/i18n/**, src/lib/**, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed; import from them, do not edit)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now(), navigator or src/i18n (the P00-07 lint enforces it); it may import src/lib and other landed src/domain modules. Time and locale are parameters ("today" is a DayKey, instants are ms numbers). Words the user sees (a serving word, a default meal name) are parameters the caller fills from the catalogue.
+- Parsers and decoders return null or a fallback, never throw, for stored or typed input. Use the names already fixed by src/domain/model.ts (Profile, Targets, SavedTargets, MealTimes, NutrientKey, ExtraKey, DiaryEntry, …); new names are ours, never the reference's (tooling/checks/banned-patterns.json).
+- Use the exact rules and the Verify column of each row as your test vectors; add a test for every trap your tasks own, with the trap id in the test name, e.g. `… (R02.1)`.
+- Integer maths exactly as the rows state (trunc, div, floor-mod; R01.9).
+- Time-zone helpers if needed: inTimeZone from src/test/time.ts (vitest runs in America/New_York).
+- Nutrient keys are the ones in src/domain/model.ts (fibre, monounsaturatedFat, polyunsaturatedFat, …; extras arginine, betaAlanine, betaine, carnitine, citrulline, creatine, hmb, taurine). The catalogue holds ids, storage units and goal data only; display names belong to the UI catalogue later (export the ids so a later slice can key labels as `nutrient.<id>`).
+- Pillar decode: trim, drop unknown, drop duplicates, keep the first 4, empty → protein, carbs, fat, fibre. Meal times use the model's MealTimes (breakfast, lunch, dinner, lateSnack in minutes).
+- groupDiary's section totals: kcal and whole-gram P/C/F from food rows only; a section with no food row has no totals (R05.4). fastsOnDay: completed fasts that ended that day plus the active one only on today (R05.21).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/nutrients src/domain/meals --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md, rows that say "Review: P01-xx" for your tasks) your tests cover, with file > describe > test name. Leave everything uncommitted.
