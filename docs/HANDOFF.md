@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 23:05 IST (Agent 2). Wave 1 landed (7/176 tasks). The user started the new
+Updated: 2026-10-26 23:35 IST (Agent 2). Waves 1 and 2 landed (16/176 tasks; P00 complete). The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -52,23 +52,28 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 1 | P00-08, P00-01, P00-10 (clock, ids, test time, CI pinned + `scripts/ci-local.sh`, bundle budget) | 4b31214 |
 | Wave 1 | P01-01, P01-02 (domain records, day keys and windows) | e081191 |
 | Wave 1 | P00-05, P00-06 (catalogue, typed `t()`, catalogue lint, Intl helpers) | 4ffda80 |
+| Wave 2 | P00-07 (lint boundaries and the copy rule) | b7d7ec4 |
+| Wave 2 | P00-09 (scripted fake AI provider, Playwright globalSetup) | 09c9f45 |
+| Wave 2 | P01-03..06 (energy, body, water units, locale defaults, number parsing, amount expressions) | c16190d |
+| Wave 2 | P00-02..04 (tokens, six accents, theme runtime, contrast sweep, icon set); **P00 done** | 4d279e6 |
 
 ## In progress
 
-Wave 2, launched 2026-10-26 23:10 IST by Agent 2: four builders in `/root/wt/wt-{p00s2,p00s4,p00s5,p01b1}`,
-all detached at `55ad73c`, prompts in `/root/wt/prompts/` (the `docs/handoff/wave2/` texts with the base
-filled in, plus e2e ports: S2 4174, S5 4175 and fake AI 4321). Nothing landed from it yet. If this
-session dies, the worktrees are gone with the container: relaunch wave 2 from `docs/handoff/wave2/`.
-
-Last verified head: `d53111e` (wave 1, 7/176 tasks; P00: 5/10, P01: 2/19).
+Nothing. Wave 2 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
+clean; unit 675/675 in 38 files; check --require-ref 6/6; check:bundle 70.13 kB of 250 kB; e2e 1/1)
+and pushed as b7d7ec4, 09c9f45, c16190d, 4d279e6. **Progress: 16/176 tasks** (P00: 10/10, P01: 6/19).
 
 ## Next
 
-1. Wave 2, after the reset (4 builders, base = branch head): P00 S2 (P00-02..04 tokens, theme,
-   contrast, icons), P00 S4 (P00-07 lint boundaries), P00 S5 (P00-09 fake AI server), P01 wave B S1
-   (P01-03..06 units, `src/domain/units/**`, `src/domain/servings/expression*`).
-2. Wave 3: P01 wave B S2 (P01-07/08), S3 (P01-09..11), S4 (P01-12..16); then P01 wave C, P02, P03,
-   P04 walking skeleton (Demo 1) and P05–P10.
+1. Wave 3 (Agent 2 writes the prompts in `docs/handoff/wave3/`, base = branch head): P01 wave B S2
+   (P01-07/08), S3 (P01-09..11), S4 (P01-12..16).
+2. Then P01 wave C, P02, P03, P04 walking skeleton (Demo 1) and P05–P10.
+
+## Open questions for the user
+
+- Decimal parsing (P01-06, as specified): a lone comma is read as a decimal mark, so "1,000" typed
+  in en-US reads as 1, not 1000 ("0,5" reads 0.5). Changing it means running the comma step only
+  when the locale's decimal mark is a comma. Kept as specified until the user decides.
 
 ## Notes for later waves (from wave-1 builders; put them in the prompts)
 
@@ -93,6 +98,20 @@ Last verified head: `d53111e` (wave 1, 7/176 tasks; P00: 5/10, P01: 2/19).
 - P02-02 and P03-12 codecs: make a grams basis only when grams is finite and above 0; read a
   missing meal as `other`.
 - Time-zone tests: `inTimeZone(tz, fn)` from `src/test/time.ts`; vitest runs in America/New_York.
+- From wave 2: Vitest empties every CSS import (also `?raw`): tests read CSS from disk
+  (`src/ui/testing/tokenSheet.ts`). P04-06's ThemeProvider calls `applyTheme` and must call the
+  returned stop in its cleanup (a new call on the same root already replaces the old listener).
+- Lint (P00-07): boundaries apply to `src/**` only; test files are exempt from rules 2–5. When ui
+  primitives with text props (`label`, `aria-valuetext`) land, add those props to the copy rule's
+  attribute list in `eslint.config.js`. `scripts/lint-fixtures/` is excluded from lint and from
+  `tsconfig.node.json`.
+- Fake AI (P00-09): specs find the server at `PLATEWISE_FAKE_AI_URL` (the app's base URL is that
+  plus `/v1`); give each concurrent builder its own `PLATEWISE_E2E_PORT` and
+  `PLATEWISE_FAKE_AI_PORT`. P03-15's builder checks the food scripts against its reply contract.
+- Units (P01-03..06): type names `EnergyMeasure`, `WeightMeasure`, `HeightMeasure`,
+  `WaterMeasure` (each with a `*_MEASURES` list and an `is*` guard for P02-04); `parseEnergy`
+  returns the display-unit value (store `fromDisplay`); quick-add amounts are a number array;
+  `formatQuantity`/`formatMacro` never group.
 
 ## Usage guard
 

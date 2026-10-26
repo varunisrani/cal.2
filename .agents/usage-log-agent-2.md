@@ -9,3 +9,4 @@ Readings lag a few minutes, so 88 % counts as 90 %. When the newest reading is o
 | Time (IST) | Agent | Account | Usage % | Remaining % | Resets at (IST) | Step |
 |-------------|-------|---------|---------|-------------|------------------|------|
 | 2026-10-26 23:05 | Agent 2 | Account 2 | 1 (reading 23:00) | 99 | 2026-10-27 02:40 | new session; took the turn from Agent 1 (handoff #1, user's choice); machine state rebuilt, head verified; wave 2 next (7/176 tasks) |
+| 2026-10-26 23:35 | Agent 2 | Account 2 | 10 (reading 23:24) | 90 | 2026-10-27 02:40 | wave 2 landed and pushed (b7d7ec4, 09c9f45, c16190d, 4d279e6): 16/176, P00 done; ~0.4 %/min with 4 builders |
