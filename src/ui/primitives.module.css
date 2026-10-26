@@ -1,0 +1,362 @@
+/*
+ * Buttons, cards, sheets, dialogs and toasts (P04-01). Every value comes from tokens.css; the
+ * motion tokens drop to 1 ms under reduced motion, and the one endless animation (the busy
+ * spinner) stops there instead.
+ */
+
+/* ---- Buttons ------------------------------------------------------------------------------ */
+
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  min-inline-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--motion-quick) var(--ease-move),
+    transform var(--motion-quick) var(--ease-move);
+}
+
+.button:active:not(:disabled, [aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.button:disabled,
+.button[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.busy[aria-disabled='true'] {
+  /* Busy is not disabled: keep the label readable under the spinner. */
+  opacity: 1;
+  cursor: progress;
+}
+
+.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.secondary {
+  border-color: var(--line);
+  background: var(--raised);
+  color: var(--text);
+}
+
+.quiet {
+  border-width: 0;
+  background: none;
+  color: var(--accent);
+  padding-inline: var(--space-3);
+}
+
+.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--text-inverse);
+}
+
+.block {
+  display: flex;
+  inline-size: 100%;
+}
+
+.buttonLabel {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.busy .buttonLabel,
+.busy .buttonIcon {
+  /* Opacity, not visibility: the label still names the button while it is busy. */
+  opacity: 0;
+}
+
+.spinner {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  margin-block-start: calc(var(--space-5) / -2);
+  margin-inline-start: calc(var(--space-5) / -2);
+  stroke-dasharray: 26 12;
+  stroke-linecap: round;
+  animation: spin calc(var(--motion-slow) * 2) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+.iconButton {
+  padding: var(--space-2);
+  border-radius: var(--radius-pill);
+}
+
+.buttonIcon {
+  display: inline-flex;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  align-items: center;
+  justify-content: center;
+}
+
+.buttonIcon > svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+/* ---- Card --------------------------------------------------------------------------------- */
+
+.card {
+  display: block;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+}
+
+.cardHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+/* ---- Modal layers (sheets and dialogs) ----------------------------------------------------- */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sheetLayer {
+  z-index: var(--z-sheet);
+  justify-content: flex-end;
+}
+
+.dialogLayer {
+  z-index: var(--z-dialog);
+  justify-content: center;
+  align-items: center;
+  padding-block: calc(var(--safe-top) + var(--space-6)) calc(var(--safe-bottom) + var(--space-6));
+  padding-inline: calc(var(--safe-left) + var(--space-6)) calc(var(--safe-right) + var(--space-6));
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: fade-in var(--motion-base) var(--ease-move);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* ---- Sheet -------------------------------------------------------------------------------- */
+
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-inline-size: 40rem;
+  max-block-size: calc(100dvh - var(--safe-top) - var(--space-6));
+  margin-inline: auto;
+  padding-block-end: var(--safe-bottom);
+  border-start-start-radius: var(--radius-sheet);
+  border-start-end-radius: var(--radius-sheet);
+  background: var(--sheet);
+  box-shadow: var(--shadow-sheet);
+  color: var(--text);
+  animation: rise var(--motion-base) var(--ease-move);
+  transition: transform var(--motion-base) var(--ease-move);
+}
+
+.sheet:focus {
+  outline: none;
+}
+
+.pulling {
+  transition: none;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+.sheetHeader {
+  flex: none;
+  padding-block: var(--space-2) var(--space-1);
+  padding-inline: var(--space-3);
+  touch-action: none;
+}
+
+.grabber {
+  display: block;
+  inline-size: var(--space-8);
+  block-size: var(--space-1);
+  margin: 0 auto var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--line);
+}
+
+.sheetBar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.sheetLeading {
+  justify-self: start;
+}
+
+.sheetTrailing {
+  justify-self: end;
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-align: center;
+}
+
+.sheetBody {
+  flex: 1 1 auto;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--space-2) var(--space-5);
+  padding-inline: var(--space-4);
+}
+
+/* ---- Dialog ------------------------------------------------------------------------------- */
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  inline-size: 100%;
+  max-inline-size: 24rem;
+  max-block-size: 100%;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sheet);
+  background: var(--raised);
+  box-shadow: var(--shadow-raised);
+  color: var(--text);
+  animation: pop var(--motion-base) var(--ease-move);
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.dialogMessage {
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.dialogMessage > p {
+  margin: 0;
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+/* ---- Toast -------------------------------------------------------------------------------- */
+
+.toastRegion {
+  position: fixed;
+  inset-block-start: calc(var(--safe-top) + var(--space-3));
+  inset-inline: var(--space-4);
+  z-index: var(--z-toast);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  max-inline-size: 30rem;
+  margin: 0;
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--raised);
+  box-shadow: var(--shadow-raised);
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  animation: drop-in var(--motion-base) var(--ease-move);
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-50%);
+  }
+}

@@ -1,0 +1,475 @@
+/*
+ * Fields, steppers, segmented controls, switches, the list picker, wheels and date-time inputs
+ * (P04-02). Every value comes from tokens.css. A touch row is 44 px: var(--space-8) +
+ * var(--space-3).
+ */
+
+/* ---- Field -------------------------------------------------------------------------------- */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.fieldLabel {
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.fieldBox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+}
+
+.fieldBox:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.fieldBoxInvalid {
+  border-color: var(--danger);
+}
+
+.fieldInput {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  padding-block: var(--space-2);
+  padding-inline: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-lead);
+}
+
+.fieldInput:focus {
+  outline: none;
+}
+
+.fieldInput::placeholder {
+  color: var(--text-muted);
+}
+
+.fieldUnit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.fieldHint,
+.fieldError {
+  margin: 0;
+  font-size: var(--type-caption);
+}
+
+.fieldHint {
+  color: var(--text-muted);
+}
+
+.fieldError {
+  color: var(--danger);
+  font-weight: var(--weight-medium);
+}
+
+/* ---- Stepper ------------------------------------------------------------------------------ */
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+}
+
+.stepperDisabled {
+  opacity: 0.5;
+}
+
+.stepperButton {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: calc(var(--space-8) + var(--space-3));
+  block-size: calc(var(--space-8) + var(--space-3));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--raised);
+  color: var(--accent);
+  font: inherit;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stepperButton:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.stepperValue {
+  min-inline-size: calc(var(--space-8) + var(--space-6));
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.stepperValue:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- Segmented ---------------------------------------------------------------------------- */
+
+.segmented {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-control);
+  background: var(--line);
+}
+
+.segment {
+  flex: 1 1 0;
+  min-inline-size: 0;
+  min-block-size: calc(var(--space-8) + var(--space-1));
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-control) - var(--space-1));
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-quick) var(--ease-move),
+    color var(--motion-quick) var(--ease-move);
+}
+
+.segmentChecked {
+  background: var(--raised);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.segment:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ---- Switch ------------------------------------------------------------------------------- */
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.switchRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.switchRow:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.switchText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.switchLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.switchDescription {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.switchTrack {
+  position: relative;
+  flex: none;
+  box-sizing: border-box;
+  inline-size: calc(var(--space-8) + var(--space-5));
+  block-size: calc(var(--space-6) + var(--space-1));
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--line);
+  transition: background-color var(--motion-quick) var(--ease-move);
+}
+
+.switchThumb {
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-start: 1px;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border-radius: var(--radius-pill);
+  background: var(--text);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--motion-quick) var(--ease-move),
+    background-color var(--motion-quick) var(--ease-move);
+}
+
+.switchRow[aria-checked='true'] .switchTrack {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.switchRow[aria-checked='true'] .switchThumb {
+  background: var(--accent-ink);
+  transform: translateX(var(--space-6));
+}
+
+/* The thumb travels toward the inline end, which is the left in a right-to-left page. */
+.switchRow[aria-checked='true']:dir(rtl) .switchThumb {
+  transform: translateX(calc(var(--space-6) * -1));
+}
+
+/* ---- List picker -------------------------------------------------------------------------- */
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--raised);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.optionSelected {
+  background: var(--accent-soft);
+}
+
+.optionSelected:hover {
+  background: var(--accent-soft);
+}
+
+.optionText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.optionLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.optionDescription {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+/* A check mark drawn from two borders of a rotated box. */
+.check {
+  flex: none;
+  inline-size: calc(var(--space-2) - 1px);
+  block-size: calc(var(--space-3) + 2px);
+  margin-inline-end: var(--space-1);
+  border-block-end: 2px solid var(--accent);
+  border-inline-end: 2px solid var(--accent);
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.checkOff {
+  visibility: hidden;
+}
+
+/* ---- Wheel -------------------------------------------------------------------------------- */
+
+.wheel {
+  --wheel-row: calc(var(--space-8) + var(--space-3));
+  box-sizing: border-box;
+  position: relative;
+  flex: 1 1 0;
+  min-inline-size: 0;
+  block-size: calc(var(--wheel-rows) * var(--wheel-row));
+}
+
+/* The band behind the middle row. */
+.wheel::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc((var(--wheel-rows) - 1) / 2 * var(--wheel-row));
+  block-size: var(--wheel-row);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  pointer-events: none;
+}
+
+.wheel:focus-within::before {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.wheelStrip {
+  box-sizing: border-box;
+  position: relative;
+  block-size: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: calc((var(--wheel-rows) - 1) / 2 * var(--wheel-row));
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.wheelStrip::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wheelStrip {
+    scroll-behavior: auto;
+  }
+}
+
+.wheelRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: var(--wheel-row);
+  color: var(--text-muted);
+  font-size: var(--type-title);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  scroll-snap-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wheelRow[data-current] {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+
+/* The real control: laid over the strip for assistive tech, invisible and out of the pointer's way. */
+.wheelSelect {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  opacity: 0;
+  pointer-events: none;
+  appearance: none;
+}
+
+/* ---- Date and time ------------------------------------------------------------------------ */
+
+.dateInput {
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-lead);
+}
+
+.dateInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.dateInput:disabled {
+  opacity: 0.5;
+}
+
+.dateTime {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dateTimeInputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dateTimePart {
+  display: flex;
+  flex: 1 1 8rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.dateTimePartLabel {
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+}

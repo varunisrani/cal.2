@@ -19,5 +19,10 @@ export const common = {
     close: 'Close',
     edit: 'Edit',
     add: 'Add',
+    // Built-in words of the UI primitives (src/ui): the stepper buttons and the date-time inputs.
+    decrease: 'Decrease {name}',
+    increase: 'Increase {name}',
+    date: 'Date',
+    time: 'Time',
   },
 } as const satisfies MessageTree;
