@@ -156,17 +156,17 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C1 · BMR (Mifflin-St Jeor, or Katch-McArdle with body fat), TDEE with … (P0)
 
 - **ACC-C1-1** The default profile gets 2 452 kcal, 112 g protein, 406 g carbs, 42 g fat
-  - Review: P01-12
+  - Test: src/domain/goals/formulas.test.ts > formulaPlan > gives the default profile 2 452 kcal, 112 g protein, 406 g carbs, 42 g fat (ACC-C1-1)
 
 ### C2 · Effective targets (P0)
 
 - **ACC-C2-1** Saving 2 000 kcal and 150 g protein auto-balances carbs 283 g and fat 29 g
-  - Review: P01-13
+  - Test: src/domain/goals/targets.test.ts > effectiveTargets > auto-balances carbs 283 g and fat 29 g for saved 2 000 kcal and 150 g protein (ACC-C2-1)
 
 ### C3 · AI plan calculation with strict validation and exact 4/4/9 … (P1)
 
 - **ACC-C3-1** A plan reply of 2 000 / 150 / 215 / 61 is stored as 2 000 / 150 / 215 / 60
-  - Review: P01-14
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: accepted replies > stores 2 000 / 150 / 215 / 61 as 2 000 / 150 / 215 / 60 (R01.2, ACC-C3-1)
 - **ACC-C3-2** An implausible reply leaves the targets unchanged
   - Review: P05-08
 
@@ -187,7 +187,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C6-1** With calories locked, raising protein lowers carbs and fat and keeps calories
   - Review: P05-11
 - **ACC-C6-2** A third macro lock is not added
-  - Review: P01-13
+  - Test: src/domain/goals/locks.test.ts > setMacro > does not add a third macro lock, while the edit still applies (R01.13, ACC-C6-2)
 
 ### C7 · Maintenance estimate row (P1)
 

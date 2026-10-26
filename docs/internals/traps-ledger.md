@@ -9,7 +9,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.1** The weekly tune-up re-runs the AI plan; the reference's unused deterministic corrector is not built (D-16.45)
   - Review: owned by P05-09
 - **R01.2** An AI plan that is out of range, incoherent, missing a macro or implausible is refused; accepted plans satisfy 4P + 4C + 9F = kcal exactly
-  - Review: owned by P01-14
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses a value that is not a number or numeric text (step 1, R01.2)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses raw values outside the ranges, before rounding (step 2, R01.2)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses macros whose energy is too far from kcal (step 3, R01.2)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses protein 300 for the default profile, which allows 78–146 (step 6, R01.2)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: exact energy > gives whole values that sum exactly to kcal for every accepted reply (R01.2)
 - **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
   - Review: owned by P05-01
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
@@ -19,11 +23,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
   - Review: owned by P05-01
 - **R01.7** Plan Ready edits keep calories and macros consistent and mark the plan as edited
-  - Review: owned by P01-13
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives carbs after kcal, protein or fat: 2 000 / 150 / 60 → carbs 215 (R01.7)
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives kcal after carbs: carbs 300 → 2 340 kcal (R01.7)
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > marks the plan touched only when a value changes (R01.7)
 - **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
   - Review: owned by P05-05
 - **R01.9** Truncation and rounding follow the spec exactly; the fat residue uses a true floor-mod
-  - Review: owned by P01-12
+  - Test: src/domain/goals/formulas.test.ts > formulaPlan > truncates every step instead of rounding (R01.9)
+  - Test: src/domain/goals/integers.test.ts > floorMod > gives a remainder with the sign of the divisor, unlike % (R01.9)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > lowers protein until fat can take the remainder kcal needs (R01.9)
 - **R01.10** The optional-goal refresh keeps current values for keys the AI left out, clamps to 0–999 999 and never snaps typed values
   - Review: owned by P03-14
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
@@ -31,7 +39,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Review: owned by P05-10
 - **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
-  - Review: owned by P01-13
+  - Test: src/domain/goals/locks.test.ts > setMacro > pins all three macros from the state before the edit (R01.13)
+  - Test: src/domain/goals/locks.test.ts > setMacro > refuses an edit nothing can absorb and changes nothing (R01.13)
+  - Test: src/domain/goals/locks.test.ts > setMacro > does not add a third macro lock, while the edit still applies (R01.13, ACC-C6-2)
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
   - Review: owned by P05-09
 - **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
