@@ -15,12 +15,14 @@ import { createFastRepo } from './data/repos/fastRepo';
 import { createPhotoRepo } from './data/repos/photoRepo';
 import { createProfileRepo } from './data/repos/profileRepo';
 import { createSavedMealsRepo } from './data/repos/savedMealsRepo';
+import { createSecretsRepo } from './data/repos/secretsRepo';
 import { createSettingsRepo } from './data/repos/settingsRepo';
 import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
 import { systemClock } from './lib/clock';
+import { createAiSetupService } from './services/aiSetup';
 import { ServicesProvider, type Services } from './services/context';
 import { createDiaryService } from './services/diary';
 import { createOnboardingService } from './services/onboarding';
@@ -66,6 +68,7 @@ async function start(): Promise<void> {
   const fastRepo = createFastRepo(db);
   const diaryRepo = createDiaryRepo(db);
   const weightRepo = createWeightRepo(db);
+  const secretsRepo = createSecretsRepo(db);
 
   // A fast left running while tracking is off would keep food logging locked (R05.2).
   await fastRepo.settleOnOpen(systemClock.now()).catch((error: unknown) => {
@@ -86,6 +89,7 @@ async function start(): Promise<void> {
       settingsRepo,
       weightRepo,
     }),
+    aiSetup: createAiSetupService({ settingsRepo, secretsRepo }),
     clock: systemClock,
   };
   const data: DataSources = {

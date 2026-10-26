@@ -1,4 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest';
+import { DEFAULT_AI_SETTINGS, decodeAiSettings, type AiSettings } from '../ai/settings';
 import { planInputsKey } from '../domain/profile/signature';
 import { DEFAULT_GOAL_VALUES } from '../domain/nutrients/goalDefaults';
 import type { PillarKey } from '../domain/nutrients/catalogue';
@@ -313,8 +314,25 @@ describe('readSetting', () => {
     expect(readSetting('menu.layout', layout)).toEqual(layout);
     expect(readSetting('menu.layout', null)).toBeNull();
     expect(readSetting('menu.layout', [])).toBeUndefined();
-    expect(readSetting('ai.settings', { maxTokens: 1_024 })).toEqual({ maxTokens: 1_024 });
+  });
+
+  it('reads the AI settings through the AI layer, null until the person sets AI up', () => {
+    expect(readSetting('ai.settings', null)).toBeNull();
+    expect(readSetting('ai.settings', { maxTokens: 2_048 })).toEqual({
+      ...DEFAULT_AI_SETTINGS,
+      maxTokens: 2_048,
+    });
+    const ollama = {
+      primary: { provider: 'ollama', model: 'qwen3.5:9b' },
+      endpoints: { ollama: { main: 'http://localhost:11434/v1/', standby: '' } },
+    };
+    expect(readSetting('ai.settings', ollama)).toEqual(decodeAiSettings(ollama));
+    expect(readSetting('ai.settings', ollama)?.endpoints.ollama?.main).toBe(
+      'http://localhost:11434/v1',
+    );
     expect(readSetting('ai.settings', 'openai')).toBeUndefined();
+    expect(readSetting('ai.settings', [])).toBeUndefined();
+    expectTypeOf<SettingValue<'ai.settings'>>().toEqualTypeOf<AiSettings | null>();
   });
 
   it('reads the last backup time as epoch ms or null', () => {

@@ -162,6 +162,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: scripts/ai-cors-probe.test.ts > judgeAttempt: one request, one verdict (R03.2) > tells the environment refusing the connection apart from CORS
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Test: src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses plain http to the local network or the internet, with the reason
+  - Test: src/features/ai-setup/choice.test.ts > checkChoice > refuses plain http to another machine and gives the reason (D-16.26, R03.3)
+  - Test: src/services/aiSetup.test.ts > saveChoice > refuses plain http to another machine and saves nothing (D-16.26, R03.3)
+  - Test: src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > refuses http://10.0.0.2:11434/v1 and says why (ACC-E13-1, D-16.26, R03.3)
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
   - Test: src/ai/client.test.ts > complete: the standby (D-16.22, R03.4) > tries the standby when the primary answer fails validation, and returns its value (ACC-E5-1)
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
@@ -212,10 +215,19 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > calls a 429 that says the quota was exceeded quota, not rateLimit
 - **R03.20** Custom: key optional, model required; keys trimmed
   - Test: src/ai/settings.test.ts > missingFor and keyFor: what a role still needs (R03.20) > trims keys, so a pasted newline or spaces never reach a header; blank is no key
+  - Test: src/services/aiSetup.test.ts > saveChoice > stores the primary in ai.settings and the key, trimmed, in its provider slot (R03.20)
+  - Test: src/services/aiSetup.test.ts > saveChoice > reports a Custom server without a model as missing it (R03.20)
+  - Test: src/features/ai-setup/choice.test.ts > checkChoice > needs no key for Ollama, and a model but no key for Custom (R03.20)
+  - Test: src/features/ai-setup/ModelPicker.test.tsx > ModelPicker > gives Custom only the field, and asks for a model while it is blank (R03.20)
+  - Test: src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > asks Custom for its address and model, and makes its key optional (R03.20)
+  - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > blocks Continue for Custom without a model, and opens it once one is typed (R03.20)
 - **R03.21** Ollama accepts free-form model ids
   - Test: src/ai/catalog/presets.test.ts > resolveModel: a saved pick > keeps an Ollama tag typed freely (R03.21, ACC-E13-2)
+  - Test: src/features/ai-setup/ModelPicker.test.tsx > ModelPicker > lets a free-form provider type any model id, such as an Ollama tag (R03.21)
 - **R03.22** Server addresses are trimmed and lose trailing slashes; Ollama without /v1 gets a hint
   - Test: src/ai/endpoint.test.ts > checkServerUrl: the Ollama /v1 hint (R03.22) > accepts an Ollama address without /v1 but suggests adding it
+  - Test: src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > accepts an Ollama address without /v1 with a hint to add it (R03.22)
+  - Test: src/features/ai-setup/choice.test.ts > checkChoice > accepts an Ollama address without /v1 but hints at it (R03.22)
 - **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
   - Test: src/ai/client.test.ts > complete: notes for the AI in the system channel (D-16.24, R03.23) > sends the notes to the primary, the re-ask and the standby (ACC-E11-1)
   - Test: src/ai/tasks/food.test.ts > analyzePhotos: the unit repair request (R03.17, ACC-E9-1) > asks once more for the units of black coffee and applies them (ACC-E9-1)

@@ -1,6 +1,7 @@
 import { mergePartitions } from './catalogue';
 import { about } from './en/about';
 import { ai } from './en/ai';
+import { aiSetup } from './en/aiSetup';
 import { appearance } from './en/appearance';
 import { charts } from './en/charts';
 import { common } from './en/common';
@@ -29,6 +30,7 @@ export const enPartitions = {
   charts,
   about,
   goals,
+  aiSetup,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

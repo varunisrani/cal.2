@@ -7,6 +7,7 @@
 // Each row is `{key, value}` with a plain JSON value; `fasting.on` is a bare boolean because the
 // fasting repository writes that row inside its own transactions.
 
+import { decodeAiSettings, type AiSettings } from '../ai/settings';
 import { isDayKey, type DayKey } from '../domain/dates/dayKey';
 import type { WeekStart } from '../domain/dates/week';
 import { DEFAULT_DIARY_SORT, isDiarySortMode, type DiarySortMode } from '../domain/meals/diary';
@@ -111,7 +112,7 @@ export const REMINDER_KEYS = [
   'remind.water',
 ] as const;
 
-/** A record whose fields another module owns (the add-menu layout, the AI settings). */
+/** A record whose fields another module owns (the add-menu layout). */
 export type StoredRecord = Readonly<Record<string, unknown>>;
 
 // ---- Readers ----------------------------------------------------------------------------------
@@ -225,6 +226,12 @@ function readRecordOrNull(stored: unknown): StoredRecord | null | undefined {
   return isFields(stored) ? stored : undefined;
 }
 
+// The AI layer reads each field on its own and gives a bad one its default (P03-04).
+function readAiSettings(stored: unknown): AiSettings | null | undefined {
+  if (stored === null) return null;
+  return isFields(stored) ? decodeAiSettings(stored) : undefined;
+}
+
 const off = () => false;
 const on = () => true;
 const none = () => null;
@@ -305,8 +312,9 @@ export const SETTING_SPECS = {
   'onboarding.done': setting(off, readFlag),
   'onboarding.termsAccepted': setting(off, readFlag),
 
-  // AI (never keys: those live in `secrets`); null means the AI layer's defaults (P03-04)
-  'ai.settings': setting<StoredRecord | null>(none, readRecordOrNull),
+  // AI (never keys: those live in `secrets`); null until the person sets AI up, which reads as
+  // the AI layer's defaults (P03-04)
+  'ai.settings': setting<AiSettings | null>(none, readAiSettings),
 
   // Storage and backup
   'storage.persistAsked': setting(off, readFlag),

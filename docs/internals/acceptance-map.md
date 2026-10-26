@@ -102,9 +102,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B6 · AI access step (P1)
 
 - **ACC-B6-1** Continue stays disabled until a needed key is entered and the terms are accepted
-  - Review: P05-04
+  - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > keeps Continue disabled until a needed key is entered and the terms are accepted, then stores the choice (ACC-B6-1)
 - **ACC-B6-2** Set up later continues and the plan uses the formulas
-  - Review: P05-04
+  - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > continues with "Set up later" and saves no provider, so the plan uses the formulas (ACC-B6-2)
 
 ### B7 · Building the plan (P1)
 
@@ -492,7 +492,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E13 · Server URLs (P1)
 
 - **ACC-E13-1** An http address on the local network is refused with the reason
-  - Review: P05-04
+  - Test: src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > refuses http://10.0.0.2:11434/v1 and says why (ACC-E13-1, D-16.26, R03.3)
+  - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > refuses a plain-http server on the local network with the reason and holds Continue (ACC-E13-1)
 - **ACC-E13-2** An Ollama model tag can be typed freely
   - Test: src/ai/catalog/presets.test.ts > resolveModel: a saved pick > keeps an Ollama tag typed freely (R03.21, ACC-E13-2)
 
@@ -500,6 +501,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-E14-1** A saved key shows only its first and last four characters
   - Test: src/data/repos/secretsRepo.test.ts > mask (ACC-E14-1) > shows the first four and the last four characters of a 40-character key
+  - Test: src/features/ai-setup/KeyField.test.tsx > KeyField > shows a saved key masked, never whole, and offers to replace it (ACC-E14-1)
 - **ACC-E14-2** A backup file never contains a key
   - Review: P09-13
 

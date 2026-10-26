@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
+import type { AiSetupService } from './aiSetup';
 import type { DiaryService } from './diary';
 import type { OnboardingService } from './onboarding';
 
@@ -7,6 +8,11 @@ import type { OnboardingService } from './onboarding';
 export interface Services {
   readonly diary: DiaryService;
   readonly onboarding: OnboardingService;
+  /**
+   * Saves the AI choice (P05-04). Optional only until every test's stand-in services carry one;
+   * `main.tsx` always provides it.
+   */
+  readonly aiSetup?: AiSetupService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

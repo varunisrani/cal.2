@@ -1,0 +1,145 @@
+/*
+ * The provider form (P05-04, reused by the AI settings page) and the onboarding AI step's terms.
+ * Every value comes from tokens.css; the picker box matches the text fields of src/ui.
+ */
+
+.form {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+/* ---- A labelled native picker ------------------------------------------------------------- */
+
+.select {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.selectLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.selectInput {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-lead);
+}
+
+.selectInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* ---- Lines under a field ------------------------------------------------------------------ */
+
+.line,
+.needed,
+.saved {
+  margin: 0;
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.line {
+  color: var(--text-muted);
+}
+
+.needed {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.saved {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.link {
+  justify-self: start;
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+/* ---- Terms (onboarding) ------------------------------------------------------------------- */
+
+.terms {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.termsTitle {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+}
+
+.termsList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.checkInput {
+  flex: none;
+  inline-size: var(--space-5);
+  block-size: var(--space-5);
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.checkInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.later {
+  display: grid;
+  gap: var(--space-2);
+}
