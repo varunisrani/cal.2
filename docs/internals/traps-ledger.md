@@ -156,7 +156,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Test: src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses plain http to the local network or the internet, with the reason
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
-  - Review: owned by P03-17
+  - Test: src/ai/client.test.ts > complete: the standby (D-16.22, R03.4) > tries the standby when the primary answer fails validation, and returns its value (ACC-E5-1)
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
   - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > is invalid when it is the same provider, model and address as the primary
   - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > lets two Ollama servers run the same model as primary and standby (ACC-E3-2)
@@ -176,6 +176,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.11** Qwen needs enable_thinking false; OpenRouter reasoning is excluded; a reasoning-only reply counts as cut off
   - Test: src/ai/adapters/openaiCompat.test.ts > provider extras (R03.11) > turns Qwen thinking off, and only for Qwen
   - Test: src/ai/adapters/openaiCompat.test.ts > provider extras (R03.11) > always excludes OpenRouter reasoning and names the effort unless it is auto
+  - Test: src/ai/client.test.ts > complete: a cut-off answer is asked for once more (03 §3.8) > asks OpenRouter for low effort on the re-ask only (R03.11)
 - **R03.12** Every image is re-encoded to JPEG; an undecodable one (HEIC outside Safari) fails as image conversion
   - Test: src/ai/image.test.ts > prepareImage: always a fresh JPEG (R03.12) > re-encodes a photo that needs no shrinking and sends the JPEG, not the picked bytes
 - **R03.13** JSON extraction strips fences and takes the first balanced object, aware of strings
@@ -187,13 +188,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/prompts/contract.test.ts > PART_RULES (R03.14) > caps the parts at 20, never a total row, and empty for a label or one simple food
 - **R03.15** A missing serving weight stays unknown and is never repaired
   - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a missing weight stays unknown (R03.15) > describes one serving, never 100 g, when the answer gives no weight
+  - Test: src/ai/tasks/food.test.ts > needsUnitRepair (R03.17) > never asks for a food of unknown weight (R03.15)
 - **R03.16** Unit choices need real positive numbers within max(5 g, 15 %); one bad element voids the list; an empty list is valid
   - Test: src/ai/parse/units.test.ts > readUnits: a missing or mangled list asks for one repair (R03.16) > refuses count: true and count: "2", and the same for grams each
   - Test: src/ai/parse/units.test.ts > readUnits: a usable list (R03.16) > reads an empty list as a complete answer: no units and no repair
   - Test: src/ai/prompts/contract.test.ts > UNIT_RULES (R03.16) > asks for count × gramsEach to match the serving weight and forbids gram units
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
   - Test: src/ai/prompts/food.test.ts > unitRepairPrompt (R03.17) > asks only for the units list of the named food at its weight, to one decimal
-  - Review: owned by P03-18 (the request runs only for zero-macro results with a known weight; its failures are ignored)
+  - Test: src/ai/tasks/food.test.ts > needsUnitRepair (R03.17) > asks only for a flagged list, a known weight and no energy or macros at all
+  - Test: src/ai/tasks/food.test.ts > analyzePhotos: the unit repair request (R03.17, ACC-E9-1) > keeps the first result when the repair request fails
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
   - Test: src/ai/errors.test.ts > readProviderMessage: every body shape (R03.18) > classifies xAI, Mistral and DeepSeek bodies by the text they carry
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > reads Gemini's daily quota from the quota id in the error details (R03.18)
@@ -207,7 +210,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.22** Server addresses are trimmed and lose trailing slashes; Ollama without /v1 gets a hint
   - Test: src/ai/endpoint.test.ts > checkServerUrl: the Ollama /v1 hint (R03.22) > accepts an Ollama address without /v1 but suggests adding it
 - **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
-  - Review: owned by P03-17
+  - Test: src/ai/client.test.ts > complete: notes for the AI in the system channel (D-16.24, R03.23) > sends the notes to the primary, the re-ask and the standby (ACC-E11-1)
+  - Test: src/ai/tasks/food.test.ts > analyzePhotos: the unit repair request (R03.17, ACC-E9-1) > asks once more for the units of black coffee and applies them (ACC-E9-1)
 - **R03.24** Label scaling rounds kcal
   - Test: src/ai/parse/labelReply.test.ts > readLabelReply: per-100 g values scaled to the serving (R03.24) > gives 110 kcal for 333 kcal per 100 g at 33 g: rounded, not cut down to 109
 - **R03.25** Nutrient-goal replies are read tolerantly but keep the person's values for missing keys; a failure never clears goals

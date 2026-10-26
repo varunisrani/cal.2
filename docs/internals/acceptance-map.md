@@ -447,12 +447,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E5 · The standby also runs when the primary's answer fails validation, … (P1)
 
 - **ACC-E5-1** An unreadable answer from the primary is rescued by the standby
-  - Review: P03-17
+  - Test: src/ai/client.test.ts > complete: the standby (D-16.22, R03.4) > tries the standby when the primary answer fails validation, and returns its value (ACC-E5-1)
 
 ### E6 · Cut-off answers are detected and re-asked once in a compact form (P1)
 
 - **ACC-E6-1** A cut-off answer is re-asked once and then succeeds
-  - Review: P03-17
+  - Test: src/ai/client.test.ts > complete: a cut-off answer is asked for once more (03 §3.8) > asks once more with the compact note and returns that answer (ACC-E6-1)
 
 ### E7 · Photos prepared upright, at most 1 600 px, JPEG 0.8, never … (P1)
 
@@ -469,7 +469,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E9 · A second request for serving units only for zero-energy foods with … (P1)
 
 - **ACC-E9-1** Black coffee without units gets a unit list from one extra request; pizza does not trigger one
-  - Review: P03-18
+  - Test: src/ai/tasks/food.test.ts > analyzePhotos: the unit repair request (R03.17, ACC-E9-1) > asks once more for the units of black coffee and applies them (ACC-E9-1)
+  - Test: src/ai/tasks/food.test.ts > analyzePhotos: the unit repair request (R03.17, ACC-E9-1) > does not ask again for a pizza without units (ACC-E9-1)
 
 ### E10 · Every AI failure shown as one friendly message per kind, never the … (P1)
 
@@ -481,7 +482,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E11 · Notes for the AI sent in the system message of every request (D-16.24) (P1)
 
 - **ACC-E11-1** Notes reach the primary, the standby and the compact re-ask
-  - Review: P03-17
+  - Test: src/ai/client.test.ts > complete: notes for the AI in the system channel (D-16.24, R03.23) > sends the notes to the primary, the re-ask and the standby (ACC-E11-1)
 
 ### E12 · Answer length limit for every provider (default 1 024 tokens) and … (P1)
 
