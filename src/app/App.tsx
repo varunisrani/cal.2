@@ -1,9 +1,9 @@
+import { QuickStart } from '../features/onboarding/QuickStart';
 import { systemClock, type Clock } from '../lib/clock';
 import { ToastProvider } from '../ui/Toast';
 import { appState as sharedAppState, AppStateContext, type AppStateStore } from './appState';
 import { Boot } from './Boot';
 import { ErrorBoundary } from './ErrorBoundary';
-import { OnboardingPlaceholder } from './OnboardingPlaceholder';
 import { ShellPortsContext, type ShellPorts } from './ports';
 import type { Router } from './router';
 import { Screen } from './Screen';
@@ -26,7 +26,7 @@ export interface AppProps {
 /** The screen for the route: onboarding alone, or a tab screen over the tab bar. */
 function Shell() {
   const route = useRoute();
-  if (route.kind === 'onboarding') return <OnboardingPlaceholder />;
+  if (route.kind === 'onboarding') return <QuickStart />;
   return (
     <div className={styles.shell}>
       <main className={styles.content} data-ui="shell.content">

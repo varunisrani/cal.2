@@ -105,7 +105,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/draftsRepo.test.ts > analysis draft > does not clear a newer draft when an older attempt clears (R02.10)
   - Review: the analysis flow owned by P06-04
 - **R02.11** Log, Save and manual Save are single-flight
-  - Review: owned by P04-08
+  - Test: src/services/diary.test.ts > logEntry > writes one entry for two rapid calls (R02.11, ACC-D26-1)
 - **R02.12** The active-fast refusal happens at write time for every food write path
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
 - **R02.13** The review's suggested meal follows its picked date and time (D-16.16)

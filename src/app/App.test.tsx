@@ -1,8 +1,11 @@
 import { act, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { common } from '../i18n/en/common';
+import { onboarding } from '../i18n/en/onboarding';
 import { shell } from '../i18n/en/shell';
 import { t } from '../i18n/t';
+import { fixedClock } from '../lib/clock';
+import { ServicesProvider, type Services } from '../services/context';
 import { App } from './App';
 import { createAppState } from './appState';
 import {
@@ -17,27 +20,38 @@ import { createRouter } from './router';
 import { controlledStore } from './testing/controlledStore';
 import { memoryHost } from './testing/memoryHost';
 
+const services: Services = {
+  diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
+  onboarding: { startWithDefaults: vi.fn() },
+  clock: fixedClock(Date.parse('2026-10-26T12:30:00-04:00'), 'America/New_York'),
+};
+
 function renderApp(ports: ShellPorts, initialHash = '') {
   const host = memoryHost(initialHash);
   const router = createRouter(host);
   const reload = vi.fn();
   const view = render(
-    <App ports={ports} router={router} appState={createAppState()} onReload={reload} />,
+    <ServicesProvider services={services}>
+      <App ports={ports} router={router} appState={createAppState()} onReload={reload} />
+    </ServicesProvider>,
   );
   return { host, router, reload, ...view };
 }
 
 describe('App', () => {
-  it('boots to onboarding with the temporary source and shows the app name', () => {
+  it('boots to onboarding with the temporary source and shows the quick start', () => {
     const { host } = renderApp(temporaryPorts());
     expect(screen.getByRole('heading', { level: 1, name: 'Platewise' })).toBeInTheDocument();
+    const { start } = onboarding.onboarding.quickStart;
+    expect(screen.getByRole('button', { name: start })).toBeInTheDocument();
     expect(host.hash()).toBe('#/onboarding');
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('shows only text from the catalogue', () => {
     const { container } = renderApp(temporaryPorts());
-    expect(container.textContent).toBe(t('common.appName'));
+    const { lead, start } = onboarding.onboarding.quickStart;
+    expect(container.textContent).toBe(`${t('common.appName')}${lead}${start}`);
   });
 
   it('shows the skeleton, then Home and the tab bar once the profile and settings are read', () => {

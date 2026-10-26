@@ -397,7 +397,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D26 · One tap logs exactly one entry (P0)
 
 - **ACC-D26-1** Double-tapping Save on manual entry creates one entry
-  - Review: P04-08
+  - Test: src/services/diary.test.ts > logEntry > writes one entry for two rapid calls (R02.11, ACC-D26-1)
 
 ### D27 · Food logging is paused during a fast, with End fast and log (D-16.35) (P1)
 
