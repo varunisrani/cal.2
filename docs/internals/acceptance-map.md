@@ -495,7 +495,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E14 · Keys kept in a separate local store, trimmed, shown masked, never … (P1)
 
 - **ACC-E14-1** A saved key shows only its first and last four characters
-  - Review: P02-12
+  - Test: src/data/repos/secretsRepo.test.ts > mask (ACC-E14-1) > shows the first four and the last four characters of a 40-character key
 - **ACC-E14-2** A backup file never contains a key
   - Review: P09-13
 

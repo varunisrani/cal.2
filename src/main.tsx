@@ -13,6 +13,7 @@ import { createProfileRepo } from './data/repos/profileRepo';
 import { createSettingsRepo } from './data/repos/settingsRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
+import { createStorageAccess } from './data/storage';
 import { systemClock } from './lib/clock';
 import { ServicesProvider, type Services } from './services/context';
 import { createDiaryService } from './services/diary';
@@ -61,9 +62,15 @@ async function start(): Promise<void> {
     console.error('Platewise: ending a fast left running failed', error);
   });
 
+  const storage = createStorageAccess({ settings: settingsRepo });
+
   const services: Services = {
-    // D-16.8: once src/data/storage.ts lands, pass `onFirstEntry: () => requestPersistence()`.
-    diary: createDiaryService({ diaryRepo: createDiaryRepo(db), photoRepo: createPhotoRepo(db) }),
+    // D-16.8: ask the browser to keep our data once, after the first entry is logged.
+    diary: createDiaryService({
+      diaryRepo: createDiaryRepo(db),
+      photoRepo: createPhotoRepo(db),
+      onFirstEntry: () => storage.requestPersistence(),
+    }),
     onboarding: createOnboardingService({
       profileRepo,
       settingsRepo,

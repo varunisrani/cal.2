@@ -198,7 +198,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.26** Any 2xx status counts as success
   - Test: src/ai/transport.test.ts > send: any 2xx is a success (R03.26) > counts 200, 201, 204 and 299 as success, and 300 and 404 as not
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
-  - Review: owned by P02-12
+  - Test: src/data/repos/secretsRepo.test.ts > recovery (R03.27) > reads every slot as unset and empties the table when the device key is gone, without throwing
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
   - Review: owned by P03-03
 - **R03.29** Large photo sets: the payload is estimated and size errors get their own message (message is v1.x, E16)
@@ -366,7 +366,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > deletes nothing while a saved-meal row cannot be read (R06.18)
   - Test: src/data/repos/photoRepo.test.ts > prune > deletes nothing while a restore runs (R06.18)
 - **R06.19** Browser storage can be evicted: request persistence, show it, nudge install and backups
-  - Review: owned by P09-15
+  - Test: src/data/storage.test.ts > requestPersistence (R06.19, D-16.8) > asks the browser once even when asked twice, and shows the answer
+  - Review: the storage card owned by P09-15
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
   - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit

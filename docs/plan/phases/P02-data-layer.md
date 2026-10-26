@@ -1,6 +1,6 @@
 # P02 · Data layer (Dexie schema and repositories)
 
-**Weeks:** 2 · **Tracks:** domain/data/AI · **Depends on:** P01 · **Status:** 🔨 in progress: P02-01..11 and P02-13 landed (12/15, 2026-10-26)
+**Weeks:** 2 · **Tracks:** domain/data/AI · **Depends on:** P01 · **Status:** 🔨 in progress: P02-01..14 landed (14/15, 2026-10-26); P02-15 hooks next
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 
