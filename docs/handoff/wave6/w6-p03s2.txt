@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S2 = P03-03, P03-04 — the provider catalogue and model presets; AI settings (roles, endpoints and standby validity). Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 03 §3.1 and §3.3; decisions D-16.25 and D-16.26 in docs/plan/16-what-we-change.md. Traps owned: R03.21, R03.28 (P03-03), R03.3, R03.5, R03.20, R03.22 (P03-04) — search docs/internals/traps-ledger.md for "owned by P03-03", "P03-04". Acceptance rows owned: ACC-E1-1, ACC-E13-2, ACC-E3-1, ACC-E3-2 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P03/provider-catalogue-and-model-presets.md, docs/notes/P03/ai-settings-roles-endpoints-and-standby-validity.md.
+
+You own:
+- src/ai/catalog/** (providers, presets + tests)
+- src/ai/settings.ts, src/ai/settings.test.ts, src/ai/endpoint.ts, src/ai/endpoint.test.ts
+
+Do not touch:
+- src/ai/errors.ts and src/ai/testing/** (landed: import from them), src/ai/{transport,deadline,retry}* (the P03 S1 builder), src/i18n/**, src/data/** and src/test/** (the P02 builder), src/ui/** (the P04 builder), src/domain/**, src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Pure modules: no fetch, no storage, no React. Settings here are the typed model plus its decode/validate rules (lenient decode: unknown fields dropped, unknown provider or model ids fall back as the row says); the storage itself comes later with P02 (settingsRepo) and P03 wave C.
+- D-16.26 loopback rule: a Custom or Ollama base URL may be http only for `localhost`, `127.0.0.1` and `[::1]` (exactly as the P03-04 row says); everything else must be https, refused with a reason. The fake AI server at http://127.0.0.1:4320/v1 must pass as a Custom provider (e2e relies on it).
+- Provider display names and model ids are data, not copy: keep them in the catalogue modules; any user-visible label that is a sentence goes to the catalogue later (not this slice). Model ids and preset lists are facts about the providers; write their structure, names and comments in our own words.
+- src/ai/errors.ts keeps a key-hint provider list for now; if your catalogue gains a matching property, report it as a follow-up instead of editing errors.ts.
+- Use the exact rules and the Verify column of each row as test vectors, plus the trap cases.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/catalog src/ai/settings.test.ts src/ai/endpoint.test.ts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
