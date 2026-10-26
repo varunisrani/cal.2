@@ -75,6 +75,7 @@ describe('banned names', () => {
       '.github/workflows/ci.yml': NAME,
       '.github/dependabot.yml': NAME,
       'node_modules/x/index.js': NAME,
+      '.git/worktrees/verify/COMMIT_EDITMSG': NAME,
       'dist/app.js': NAME,
       'src/README.md': NAME,
       'src/dist/app.ts': NAME,

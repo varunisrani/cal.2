@@ -4,9 +4,14 @@ import { join } from 'node:path';
 /** Build and test output folders at the product root; never product source. */
 const PRODUCT_OUTPUT_DIRS = new Set(['dist', 'coverage', 'test-results', 'playwright-report']);
 
-/** `node_modules` anywhere, and the build/test output folders at the product root. */
+/**
+ * `node_modules` and `.git` anywhere (a checkout with worktrees keeps their commit messages under
+ * `.git/worktrees/`), and the build/test output folders at the product root.
+ */
 export function isGeneratedProductDir(rel: string, name: string): boolean {
-  return name === 'node_modules' || (rel === name && PRODUCT_OUTPUT_DIRS.has(name));
+  return (
+    name === 'node_modules' || name === '.git' || (rel === name && PRODUCT_OUTPUT_DIRS.has(name))
+  );
 }
 
 export interface WalkOptions {
