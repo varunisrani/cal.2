@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s4b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 wave B slice S4b = P05-11, P05-12 — Settings: goals and nutrition page; the optional nutrient goals editor. Spec: those two rows in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read); research spec 01 §3.7, §3.9, §3.11; decisions D-16.12, D-16.45 and Proposed D-16.57. Traps and acceptance ids: every row whose Review line names P05-11 or P05-12 in docs/internals/traps-ledger.md and docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P05/settings-goals-and-nutrition-page.md, docs/notes/P05/optional-nutrient-goals-editor.md.
+
+You own:
+- src/features/settings/goals/** (GoalsPage, TargetRow, NutrientGoalsSheet + tests; a css module)
+- src/services/goals/targetEdits.ts (+ test): target edits through the P01-13 lock engine, Reset to auto, the tune-up switch (calls the landed tuneUp.turnOn / turnOff and returns their outcome), the goal-reached alert switch, nutrient goal saves; additive `targetEdits` in Services and main.tsx
+- the `goals` record in src/features/settings/registry.ts (group prefs) and your words in the `goals` partition (src/i18n/en/goals.ts, landed with the dialog)
+- moving PlanReady's wheel limits (`planWheel` in src/features/onboarding/steps/PlanReady.tsx) into src/domain/goals/planEdit.ts if you need the same limits; then PlanReady imports them (the only allowed edit there)
+
+Do not touch:
+- src/features/settings/profile/** (another slice, now), src/services/goals/{rebuild,tuneUp,planRequest,planBuilder}.ts (landed: import; the rebuild row calls services.rebuild.rebuild() and words its outcome), src/features/about/** (link to the methods page only), src/ai/**, src/data/** (import only), src/domain/** other than the planEdit move, src/features/log/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (`Services` in src/services/context.tsx, src/main.tsx, src/app/App.tsx, src/i18n/en.ts, src/features/settings/registry.ts): additive edits only; other slices edit them now and the lead merges. New members of `Services` are optional until every stand-in carries them (`aiSetup` and `planBuilder` are required; give stand-ins you touch stubs).
+- Services read the stored AI setup through `createAiAccess` (src/services/aiAccess.ts) and get fetch from `browserFetch` (src/ai/transport.ts) in main.tsx. With fake timers over the test database, fake only setTimeout, setInterval and Date (Dexie and fake-indexeddb need the real setImmediate).
+- Goals page: target rows (kcal, protein, carbs, fat) with lock glyphs and the P01-13 ranges; a refused macro edit says why; "Reset to auto" on locked rows; when the tune-up is on, rows are read-only with an explanation (ACC-C8-3); the Rebuild plan row is always tappable, shows the "inputs changed" nudge from the P01-15 signature (seed the baseline on first open, not on the first change) and words the rebuild outcome (new kcal in the display unit plus the AI's reason; failure: goals unchanged, pointing to AI settings); the maintenance estimate row explains it is a formula estimate; the tune-up switch shows the forced run's outcome in a dialog; the goal-reached alert switch; the methods page link; the entry to the nutrient goals sheet.
+- Nutrient goals sheet: the 29 goals grouped with kind and unit; wheels with the P01-07 ranges or a typing mode (digits only, up to 7) that opens when the value is not on the wheel; typed values clamped 0–999 999, not snapped; the upper-limit hint; vitamin D also in IU.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings/goals src/services/goals/targetEdits.test.ts src/features/onboarding/steps/PlanReady.test.tsx src/domain/goals src/i18n --maxWorkers=1
+- PLATEWISE_REF=/root/reference/fud-ai pnpm check:similarity (explanations are prose)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

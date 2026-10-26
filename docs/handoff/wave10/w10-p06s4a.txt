@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s4a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 slice S4a = P06-01 — the add-menu layout and the "+" menu, wired to the logging surfaces that exist. Spec: the P06-01 row in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.18. Traps and acceptance ids: every row whose Review line names P06-01 (R02.23 among them).
+Task note (before code): docs/notes/P06/add-menu-layout-and-menu.md.
+
+You own:
+- src/domain/food/addMenu.ts (+ test), src/features/log/AddMenu.tsx (+ test), src/i18n/en/menu.ts and its line in src/i18n/en.ts
+- the wiring: Home's "+" (src/features/home, the `home.add` hook) opens AddMenu instead of today's add sheet, keeping manual entry; camera and library open the landed CaptureSheet (src/features/log/capture/) with its picker, and its onAnalyse starts `analysis.start('photo', …)`; describe opens the landed DescribeSheet; AnalysisOverlay (src/features/log/AnalysisOverlay.tsx) is mounted once in the tab frame (src/app/App.tsx, additive); after a reload, a capture draft with photos reopens the sheet
+- methods whose surfaces are not built yet (barcode P06-14, recent / often / saved P06-12, copy day P06-13) stay in the layout but open nothing for now: hide them from the rendered menu behind one clearly named list the later slices delete from
+
+Do not touch:
+- src/services/{analysis,photos,captureDrafts}.ts and src/features/log/{capture/**,AnalysisOverlay.tsx,DescribeSheet.tsx} (landed: import; say so if one needs a change), src/features/log/review/** (another slice, now), src/services/barcode/**, src/ai/**, src/data/** (import only), other src/domain/** (import only), src/features/{settings,onboarding}/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (`Services` in src/services/context.tsx, src/main.tsx, src/app/App.tsx, src/i18n/en.ts): additive edits only; other slices edit them now and the lead merges. New members of `Services` are optional until every stand-in carries them (`aiSetup` and `planBuilder` are required; give stand-ins you touch stubs).
+- With fake timers over the test database, fake only setTimeout, setInterval and Date (Dexie and fake-indexeddb need the real setImmediate).
+- The layout model, sanitising and decoding exactly as the row says (≤ 3 groups, methods once, unknown ids dropped, empty groups dropped, blank names → a generic label, a deliberately empty menu stays empty, restore rules); voice is reserved and hidden in v1. The stored layout setting: reuse an existing settings row if src/data/settingsSchema.ts has one for the menu, else say so in your report (do not edit src/data).
+- Every menu method first clears an armed label scan (P06-17 adds the arming; leave a clearly named hook).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/food src/features/log src/features/home src/app src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s4a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 wave B slice S4a = P05-10 — Settings: personal info page. Spec: the P05-10 row in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read); research spec 01 §3.9; decisions D-16.11, D-16.37 and Proposed D-16.56 (pickers), D-16.80 (the wizard's target check, reuse it). Traps and acceptance ids: every row whose Review line names P05-10 in docs/internals/traps-ledger.md and docs/internals/acceptance-map.md (R01.12 among them).
+Task note (before code): docs/notes/P05/settings-personal-info-page.md.
+
+You own:
+- src/features/settings/profile/** (ProfilePage, WeightSheet, HeightSheet, AllergensSheet + tests; a css module)
+- src/services/profileEdits.ts (+ test): the page's writes (profile fields, units, weight through weightRepo so goal-reached and the profile sync happen there); additive `profileEdits` in Services and main.tsx
+- the `profile` record in src/features/settings/registry.ts (group prefs) and a `profile` partition with its line in src/i18n/en.ts
+
+Do not touch:
+- src/features/settings/{SettingsHub,SettingsScreen,CategoryFrame}.tsx (import), src/features/settings/goals/** (another slice, now), src/features/onboarding/** (import the wizard's pickers only if they fit; do not change them), src/services/goals/**, src/ai/**, src/data/** and src/domain/** (import only), src/features/log/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (`Services` in src/services/context.tsx, src/main.tsx, src/app/App.tsx, src/i18n/en.ts, src/features/settings/registry.ts): additive edits only; other slices edit them now and the lead merges. New members of `Services` are optional until every stand-in carries them (`aiSetup` and `planBuilder` are required; give stand-ins you touch stubs).
+- Services read the stored AI setup through `createAiAccess` (src/services/aiAccess.ts) and get fetch from `browserFetch` (src/ai/transport.ts) in main.tsx. With fake timers over the test database, fake only setTimeout, setInterval and Date (Dexie and fake-indexeddb need the real setImmediate).
+- No edit recomputes targets (R01.12): an edit that changes the plan inputs only raises the rebuild nudge (P01-15 signature) that P05-11's Goals page shows. Weight saved here adds one weigh-in through weightRepo (goal-reached is posted there; the dialog is mounted). Switching the goal to maintain hides pace and goal weight; a goal weight on the wrong side is refused with the explanation and nothing is saved. Body fat 3–60 % in 0.5 steps with Remove; goal body fat only with body fat. Height in cm or ft-in with a unit toggle that writes the height unit and converts.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings src/services/profileEdits.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s3b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 slice S3b = P06-14, P06-17 — the barcode scanner and typed digits; the lookup order and label memory. Start only after the add menu (P06-01) has landed: wire the barcode method there. Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.12; decision D-16.18. Traps and acceptance ids: every row whose Review line names P06-14 or P06-17 (R02.14, R02.15, R02.20 among them).
+Task notes (each before its code): docs/notes/P06/barcode-scanner-and-typed-digits.md, docs/notes/P06/lookup-order-and-label-memory.md.
+
+You own:
+- src/services/barcode/{decoder,lookup}.ts (+ tests), src/domain/food/barcode.ts (+ test), src/features/log/scan/** (ScanSheet, DigitsField + tests), a `scan` partition with its line in src/i18n/en.ts
+- the barcode method in the add menu (remove it from the add menu's not-yet-built list) and passing the armed label hand-off to `analysis.start` as `armedLabel`
+- additive `barcode` in Services and main.tsx
+
+Do not touch:
+- src/services/barcode/{off,fdc,product,http}.ts (landed: import), src/services/analysis.ts (import), src/features/log/review/** (import), src/ai/**, src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (`Services` in src/services/context.tsx, src/main.tsx, src/app/App.tsx, src/i18n/en.ts): additive edits only; other slices edit them now and the lead merges. New members of `Services` are optional until every stand-in carries them (`aiSetup` and `planBuilder` are required; give stand-ins you touch stubs).
+- With fake timers over the test database, fake only setTimeout, setInterval and Date (Dexie and fake-indexeddb need the real setImmediate).
+- BarcodeDetector when present with the row's formats, else zxing-wasm (already a dependency) loaded lazily in its own chunk, never in the initial bundle; frames from a getUserMedia back-camera stream; the first non-empty value used once; "Type the digits" (1–24 digits) always available (D-16.18); camera denied has its own state.
+- Lookup: Open Food Facts first and it wins whenever it has nutrition; only after notFound or noNutrition the saved label (most recent label-sourced entry with the same comparison key) and then FDC when a key is stored; otherwise OFF's error, except a refused FDC key with its own message; the same order for every scan path (R02.15). Call downloadProductPhoto after lookupOff; pass `unnamed` from the catalogue. Label memory: after a miss the error dialog's primary action "Scan label" arms a one-shot hand-off and opens the camera; the next photo analysis consumes it; every other exit clears it (R02.20).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/barcode src/domain/food src/features/log src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file); pnpm check:bundle (zxing stays out of the initial chunk).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
