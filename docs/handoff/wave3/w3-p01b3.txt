@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S3 = P01-09, P01-10, P01-11 — serving units and scaling; ingredient lines and the nutrient stretch; recipe split and combining entries. Spec: those three rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research specs 02 §3.3 and 02 §3.15; decision D-16.20 in docs/plan/16-what-we-change.md. Traps owned: R02.1, R02.2, R02.3, R02.25 (P01-09), R02.4 (P01-10), R02.6, R02.9 (P01-11) — search docs/internals/traps-ledger.md for "owned by P01-09", "P01-10", "P01-11". Acceptance rows owned: ACC-D9-1, ACC-D13-2, ACC-D14-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P01/serving-units-and-scaling.md, docs/notes/P01/ingredient-lines-and-nutrient-stretch.md, docs/notes/P01/recipe-split-and-combining-entries.md.
+
+You own:
+- src/domain/servings/{units,scale,ingredients,recipe}.ts and their .test.ts files
+- src/domain/food/** (combine + tests)
+
+Do not touch:
+- src/domain/servings/expression*, src/domain/units/**, src/domain/model.ts, src/domain/dates/** (landed: import from them, do not edit), src/domain/nutrients/** and src/domain/meals/** (the S2 builder), src/domain/goals/**, src/domain/profile/**, src/domain/adaptive/** (the S4 builder)
+- src/i18n/**, src/lib/**, src/ui/**, src/app/**, e2e/**, scripts/**, eslint.config.js, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure (lint rule 1 enforces it): no React, Dexie, Date.now(), navigator or src/i18n; it may import src/lib and other src/domain modules. So unitLabel cannot read the catalogue: it takes the serving word forms as a parameter (e.g. `servingWords: { one: string; other: string }`) and the UI passes catalogue text later.
+- Use the records in src/domain/model.ts as they are: NutritionDraft is the base of DiaryEntry and SavedMeal; the unknown-weight serving is its own basis kind; unknown nutrients are absent, never 0. Make a grams basis only when grams is finite and above 0. Reuse formatQuantity / parseDecimal from src/domain/units/numbers.ts where a row needs them.
+- D-16.20: combine sums only the nutrients every combined row knows (absent stays absent; never treat a missing value as 0).
+- Scale rules exactly as the P01-09 row says: shown kcal rounded, macros and optional nutrients kept unrounded and rounded only for display (R02.25), a typed value stored as typed ÷ scale with scale ≤ 0 treated as 1 (R02.3).
+- Use the exact rules and the Verify column of each row as test vectors, plus the trap cases.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/servings src/domain/food --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.

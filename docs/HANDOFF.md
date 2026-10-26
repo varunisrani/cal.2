@@ -59,15 +59,16 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## In progress
 
-Nothing. Wave 2 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
-clean; unit 675/675 in 38 files; check --require-ref 6/6; check:bundle 70.13 kB of 250 kB; e2e 1/1)
-and pushed as b7d7ec4, 09c9f45, c16190d, 4d279e6. **Progress: 16/176 tasks** (P00: 10/10, P01: 6/19).
+Wave 3, launched 2026-10-26 23:50 IST by Agent 2: three builders (P01 wave B S2, S3, S4) in
+`/root/wt/wt-{p01b2,p01b3,p01b4}`, prompts in `docs/handoff/wave3/` (base filled in at launch).
+Nothing landed from it yet. If this session dies, relaunch wave 3 from those prompts.
+
+Last verified head: `4d279e6` (wave 2, **16/176 tasks**; P00: 10/10, P01: 6/19).
 
 ## Next
 
-1. Wave 3 (Agent 2 writes the prompts in `docs/handoff/wave3/`, base = branch head): P01 wave B S2
-   (P01-07/08), S3 (P01-09..11), S4 (P01-12..16).
-2. Then P01 wave C, P02, P03, P04 walking skeleton (Demo 1) and P05–P10.
+1. Land wave 3 (P01 wave B S2, S3, S4), then P01 wave C (S5 = P01-17..19, after S2 and S4).
+2. Then P02, P03, P04 walking skeleton (Demo 1) and P05–P10.
 
 ## Open questions for the user
 

@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S4 = P01-12, P01-13, P01-14, P01-15, P01-16 — goal formulas and the maintenance estimate; effective targets, macro locks and plan editing; the plan validator for AI replies; profile rules and the plan-input signature; the adaptive cadence. Spec: those five rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), its "Migrations and fixtures" table and "Compare checklist"; research spec 01 §3.3, §3.6, §3.7, §3.9, §3.10; decisions D-16.11, D-16.12, D-16.45, D-16.56 in docs/plan/16-what-we-change.md. Traps owned: R01.9 (P01-12, P01-14), R01.7, R01.13 (P01-13), R01.2 (P01-14) — search docs/internals/traps-ledger.md for "owned by P01-12" … "P01-16" — and any other trap rows the five rows name (R01.4, R01.5, R01.12, R01.14). Acceptance rows owned: ACC-C1-1, ACC-C2-1, ACC-C3-1, ACC-C6-2 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P01/goal-formulas-and-maintenance-estimate.md, docs/notes/P01/effective-targets-locks-and-plan-editing.md, docs/notes/P01/plan-validator-for-ai-replies.md, docs/notes/P01/profile-rules-and-plan-input-signature.md, docs/notes/P01/adaptive-cadence.md.
+Order: P01-12 first (everything else builds on its formulas), then P01-13 and P01-14, then P01-15 and P01-16.
+
+You own:
+- src/domain/goals/** (formulas, maintenance, targets, locks, planEdit, planValidator + tests, and the fixture src/domain/goals/__fixtures__/profiles.ts)
+- src/domain/profile/** (profile, editRules, signature + tests)
+- src/domain/adaptive/** (cadence + tests)
+
+Do not touch:
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed: import from them, do not edit), src/domain/nutrients/** and src/domain/meals/** (the S2 builder), src/domain/servings/** and src/domain/food/** (the S3 builder)
+- src/i18n/**, src/lib/**, src/ui/**, src/app/**, e2e/**, scripts/**, eslint.config.js, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure (lint rule 1 enforces it): no React, Dexie, Date.now(), navigator or src/i18n; it may import src/lib and other src/domain modules. Pass "now" and the day key in as parameters.
+- Records come from src/domain/model.ts as they are: saved targets are one `saved: Partial<Targets>`, at most two locked macros. Age from src/domain/dates (local birth date, never shifts with the zone). Weight and height limits from src/domain/units/body.ts (WEIGHT_LIMITS, HEIGHT_LIMITS; one range everywhere, D-16.56).
+- P01-14 returns a Result from src/lib/result.ts carrying the rejection step; it never throws on a bad reply. The default profile must give 2 452 kcal, 112 / 406 / 42 g (ACC-C1-1) and the test names should print the worked examples (the phase demo runs `pnpm test src/domain --reporter=verbose`).
+- D-16.12: Android plan-edit ranges everywhere (calories 800–6 000 in steps of 50, macros in steps of 5). D-16.11: a target weight on the wrong side of the current weight is rejected (lose needs target < current, gain needs target > current). D-16.45: same 7-day AI re-run cadence; the unused trend-correction routine is not taken; without a working key the week is still marked checked and nothing changes.
+- Every truncation, the 1.465 multiplier, the +0.2 g/kg cut boost and the true floor-mod (R01.9) must match 01 §3.3 / §3.6 exactly; walk every branch of the reference's profile model in the Compare step.
+- Use the exact rules and the Verify column of each row as test vectors, plus the trap cases. Day-boundary tests run in America/New_York (the vitest TZ) and must also hold in Asia/Tokyo: use inTimeZone from src/test/time.ts.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/goals src/domain/profile src/domain/adaptive --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.

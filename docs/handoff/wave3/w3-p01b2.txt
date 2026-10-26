@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S2 = P01-07, P01-08 — the nutrient catalogue, optional-goal defaults and Home pillars; meal times and diary grouping. Spec: those two rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research specs 01 §3.11, 02 §3.2, 06 §3.4.1; decision D-16.57 in docs/plan/16-what-we-change.md. Traps owned: R05.4, R05.21 (search docs/internals/traps-ledger.md for "owned by P01-08"). Acceptance row owned: ACC-F8-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P01/nutrient-catalogue-and-goal-defaults.md, docs/notes/P01/meal-times-and-diary-grouping.md.
+
+You own:
+- src/domain/nutrients/** (catalogue, goalDefaults, pillars + tests)
+- src/domain/meals/** (times, diary + tests)
+
+Do not touch:
+- src/domain/model.ts, src/domain/dates/**, src/domain/units/**, src/domain/servings/expression* (landed: import from them, do not edit), src/domain/servings/** and src/domain/food/** (the S3 builder), src/domain/goals/**, src/domain/profile/**, src/domain/adaptive/** (the S4 builder)
+- src/i18n/**, src/lib/**, src/ui/**, src/app/**, e2e/**, scripts/**, eslint.config.js, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure (lint rule 1 enforces it): no React, Dexie, Date.now(), navigator or src/i18n; it may import src/lib and other src/domain modules. Text the UI shows comes from the catalogue later: return ids/keys and numbers, not English words.
+- Nutrient keys are the names fixed in src/domain/model.ts (e.g. fibre, monounsaturatedFat, polyunsaturatedFat; extras arginine, betaAlanine, betaine, carnitine, citrulline, creatine, hmb, taurine). Reuse its unions/lists; if model.ts lacks a list you need, define it in your module from model.ts types (do not edit model.ts; report it).
+- D-16.57: the Android column of 01 §3.11 for every optional goal's default, range and step. Custom typed values up to 7 digits, clamped 0–999 999, never snapped.
+- Meal kinds and day keys come from model.ts and src/domain/dates (DayKey is a string alias; dayKey/windows helpers exist). Water and fasts never count in section totals (R05.4); a fast shows on the day it ended, and an active fast only on today (R05.21).
+- Use the exact rules and the Verify column of each row as test vectors, plus the trap cases. Time-of-day tests run in America/New_York (the vitest TZ) and must also hold in Asia/Tokyo: use inTimeZone from src/test/time.ts.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/nutrients src/domain/meals --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
