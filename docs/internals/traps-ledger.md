@@ -44,7 +44,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires once for lose 80 → 79 with target 79.5; a later 79 does not (R01.11)
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires for gain 70 → 72 with target 71, once (R01.11)
-  - Review: every add path owned by P02-08
+  - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > raises goal-reached once when a new latest crosses the lose target (R01.11)
+  - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > keeps the profile weight and raises nothing for a back-dated weigh-in below the target (ACC-C11-2, R01.11)
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Test: src/domain/profile/signature.test.ts > needsRebuild > shows no nudge on first open when no baseline is stored (R01.12)
   - Test: src/domain/profile/signature.test.ts > baselineToSeed > seeds a missing baseline silently with the current key (R01.12)
@@ -254,12 +255,14 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add that was waiting while another transaction started a fast (R05.1)
 - **R05.2** Turning fasting off ends the active fast; an active fast restored with tracking off is ended on open
-  - Review: owned by P02-09
+  - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > switching fasting off ends the running fast, keeps it and the water logs, and leaves no fast to block food (ACC-H10-1, R05.2)
+  - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > keeps the switch as it was when ending the fast fails: one transaction (R05.2)
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
   - Test: src/domain/trackers/fasting.test.ts > checkEdit (R05.3) > refuses editing a completed fast into another's span and changes nothing (R05.3)
   - Test: src/domain/trackers/fasting.test.ts > canStart (R05.3) > refuses a start while one is active (R05.3)
   - Test: src/domain/trackers/fasting.test.ts > endNow (R05.3) > applies the edited start and goal and the end in one result (R05.3)
-  - Review: the atomic write owned by P02-09
+  - Test: src/data/repos/fastRepo.test.ts > start (R05.3) > makes one fast from two starts at the same moment: the check runs inside the write (R05.3)
+  - Test: src/data/repos/fastRepo.test.ts > endNow (R05.3) > applies neither the start nor the end when the edited start overlaps another fast (R05.3)
 - **R05.4** Water and fasts never enter nutrition totals, averages or the recap
   - Test: src/domain/meals/diary.test.ts > section totals > sums food energy and rounds each macro to whole grams (R05.4)
   - Test: src/domain/meals/diary.test.ts > section totals > does not change a section total for a water row in Breakfast (R05.4)
@@ -275,7 +278,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > never fires for a back-dated 79 under target 79.5 (R05.7)
   - Test: src/domain/trackers/goalCrossing.test.ts > latestWeighIn (R05.7) > picks the latest by date, not the last added (R05.7)
 - **R05.8** Weight and body-fat writes sync the profile in the same transaction; deleting the last body-fat reading leaves the profile value
-  - Review: owned by P02-08
+  - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > moves the profile weight to the newest reading only when it differs by more than 0.01 kg (R05.8)
+  - Test: src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > deletes the reading and the profile change together, or neither (R05.8)
+  - Test: src/data/repos/bodyFatRepo.test.ts > deleteReading (R05.8) > keeps the profile value when the last reading is deleted (R05.8)
 - **R05.9** Tracker switches hide entry controls, not history
   - Review: owned by P07-05
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded

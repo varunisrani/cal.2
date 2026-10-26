@@ -220,7 +220,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C11-1** Logging 79.4 kg with a 79.5 kg lose target shows the dialog once
   - Review: P05-14
 - **ACC-C11-2** A back-dated weigh-in below the target shows nothing
-  - Review: P02-08
+  - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > keeps the profile weight and raises nothing for a back-dated weigh-in below the target (ACC-C11-2, R01.11)
 
 ### C12 · Energy unit kcal or kJ for every display and input, stored as kcal (P1)
 
@@ -612,7 +612,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G7 · The profile's weight and body fat follow the latest reading (P1)
 
 - **ACC-G7-1** Deleting the latest weigh-in sets the profile weight to the previous one
-  - Review: P02-08
+  - Test: src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > sets the profile weight to the previous reading when the latest is deleted (ACC-G7-1, R05.8)
 
 ### G8 · Weekly recap of the last completed week against the one before, … (P1)
 
@@ -678,7 +678,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H8 · Fast editor (P1)
 
 - **ACC-H8-1** End fast now applies the edited start and ends the fast in one step
-  - Review: P02-09
+  - Test: src/data/repos/fastRepo.test.ts > endNow (R05.3) > applies the edited start and ends the fast in one step (ACC-H8-1, R05.3)
 
 ### H9 · One active fast, no overlaps, an end never before the start (P1)
 
@@ -688,7 +688,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H10 · Turning fasting off ends the active fast (P1)
 
 - **ACC-H10-1** Switching fasting off ends the active fast and food logging works again
-  - Review: P02-09
+  - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > switching fasting off ends the running fast, keeps it and the water logs, and leaves no fast to block food (ACC-H10-1, R05.2)
 
 ### H11 · Fasting goal-reached alert (P1)
 
