@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 23:35 IST (Agent 2). Waves 1 and 2 landed (16/176 tasks; P00 complete). The user started the new
+Updated: 2026-10-27 00:15 IST (Agent 2). Waves 1–3 landed (26/176 tasks; P00 complete, P01 16/19). The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -56,23 +56,24 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 2 | P00-09 (scripted fake AI provider, Playwright globalSetup) | 09c9f45 |
 | Wave 2 | P01-03..06 (energy, body, water units, locale defaults, number parsing, amount expressions) | c16190d |
 | Wave 2 | P00-02..04 (tokens, six accents, theme runtime, contrast sweep, icon set); **P00 done** | 4d279e6 |
+| Wave 3 | P01-07, P01-08 (nutrient catalogue, goal defaults, pillars; meal times, diary grouping) | 33408fc |
+| Wave 3 | P01-09..11 (serving units and scaling, ingredient lines, recipe split, combine) | 4d6b9ec |
+| Wave 3 | P01-12..16 (formulas, targets and locks, plan validator, profile rules, adaptive cadence) | 1e67ebe |
 
 ## In progress
 
-- Wave 3 (launched 23:50 IST, base 4328770, prompts `docs/handoff/wave3/`): S2 (P01-07/08) and S3
-  (P01-09..11) are back and staged in `/root/wt/verify` (patches `/root/wt/patches/w3-*.patch`); S4
-  (P01-12..16) still running in `/root/wt/wt-p01b4`. Nothing of wave 3 is on `main` yet.
+- Wave 3 landed: verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
+  clean; unit 1012/1012 in 58 files; check --require-ref 6/6; check:bundle 70.13 kB; e2e 1/1) and
+  pushed as 33408fc, 4d6b9ec, 1e67ebe. **Progress: 26/176 tasks** (P00: 10/10, P01: 16/19).
 - Wave 4 (launched 00:05 IST, base f25a8b3, prompts `docs/handoff/wave4/`): P02 S0 (P02-01..03),
   P03 wave A (P03-01/02), P04 S1 (P04-01/02) in `/root/wt/wt-{p02s0,p03a,p04s1}`.
+- Wave 5 (P01 wave C S5 = P01-17..19, prompt `docs/handoff/wave5/`), launched after wave 3 landed.
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
-Last verified head: `4d279e6` (wave 2, **16/176 tasks**; P00: 10/10, P01: 6/19).
-
 ## Next
 
-1. Land wave 3 (P01 wave B S2, S3, S4); then launch P01 wave C (S5 = P01-17..19, needs S2 and S4).
-2. Land wave 4; then P02 wave B (S1–S5), P03 wave B, P04 S2–S4, toward the walking skeleton
+1. Land wave 4 and wave 5 (P01 wave C); then P02 wave B (S1–S5), P03 wave B, P04 S2–S4, toward the walking skeleton
    (Demo 1), then P05–P10.
 
 ## Open questions for the user
@@ -114,6 +115,22 @@ Last verified head: `4d279e6` (wave 2, **16/176 tasks**; P00: 10/10, P01: 6/19).
 - Fake AI (P00-09): specs find the server at `PLATEWISE_FAKE_AI_URL` (the app's base URL is that
   plus `/v1`); give each concurrent builder its own `PLATEWISE_E2E_PORT` and
   `PLATEWISE_FAKE_AI_PORT`. P03-15's builder checks the food scripts against its reply contract.
+- Goals (P01-12..16): the plan's example reply 2 000 / 150 / 215 / 61 is implausible for the
+  default profile (protein allowed 78–146 g, fat 21–63 g, kcal 1 226–4 904); fake-AI plan scripts
+  (P05-15) and P03-14/P05 tests on the default profile must stay inside those ranges.
+  `checkPlan(reply, formulaPlan)` requires the formula plan; the lock engine locks on edit;
+  `applyPlan` is in `goals/locks.ts`, `sameProfile` in `profile/profile.ts`, `remainderCarbs` in
+  `goals/formulas.ts` (P05-05). The domain parts of R01.4, R01.5, R01.12, R01.14 are tested in
+  `src/domain/adaptive` and `src/domain/profile`; their rows stay owned by P05 for the runner and UI.
+  Fixtures: `src/domain/goals/__fixtures__/profiles.ts` (FIXTURE_TODAY 2026-10-26).
+- Servings (P01-09..11): picker ids `'g'` and `'servings'`; P06-08 keeps a typed kcal fraction
+  until Log; P06-06 records the picked unit with `withChoice`; P06-09 judges `canSplit` on the
+  draft as received; `combineEntries` throws a RangeError for fewer than 2 entries and takes the
+  fallback name and "+ K more" text from the caller.
+- Nutrients and meals (P01-07/08): group ids `sugarsAndFats`, `minerals`, `vitamins`, `sports`
+  (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
+  whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
+  `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
 - Units (P01-03..06): type names `EnergyMeasure`, `WeightMeasure`, `HeightMeasure`,
   `WaterMeasure` (each with a `*_MEASURES` list and an `is*` guard for P02-04); `parseEnergy`
   returns the display-unit value (store `fromDisplay`); quick-add amounts are a number array;

@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01c5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave C slice S5 = P01-17, P01-18, P01-19 — the goal evidence pack, the weight forecast, fasting rules and goal crossing. Spec: those three rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests) and its "Compare checklist"; research specs 01 §3.8, 01 §3.12, 05 §3.7. Traps owned: R01.16 (P01-17), R05.7 (P01-19) — search docs/internals/traps-ledger.md for "owned by P01-17" … "P01-19"; the rows also name R01.11 and R05.3 (cover their domain part and say so).
+Task notes (each before its code): docs/notes/P01/goal-evidence-pack.md, docs/notes/P01/weight-forecast.md, docs/notes/P01/fasting-rules-and-goal-crossing.md.
+
+You own:
+- src/domain/forecast/** (evidence, forecast + tests)
+- src/domain/trackers/** (fasting, goalCrossing + tests)
+
+Do not touch:
+- every other path under src/domain/ (landed: model.ts, dates, units, servings, food, nutrients, meals, goals, profile, adaptive — import from them, do not edit; if one needs a change, stop and report it)
+- src/data/**, src/test/**, src/ai/**, src/ui/**, src/app/**, src/i18n/**, src/lib/**, e2e/**, scripts/**, eslint.config.js, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure (lint rule 1 enforces it): no React, Dexie, Date.now(), navigator or src/i18n; pass "now" and today's day key in. It may import src/lib and other src/domain modules.
+- Reuse what landed instead of re-deriving it: effective targets and TDEE from src/domain/goals (formulas.ts, targets.ts; the test fixtures in src/domain/goals/__fixtures__/profiles.ts with FIXTURE_TODAY 2026-10-26), day keys and windows from src/domain/dates, meal grouping and fastsOnDay from src/domain/meals/diary.ts, units from src/domain/units.
+- Missing days are unknown, not zero, and today's diary is excluded from the evidence window (R01.16).
+- Durations: the domain returns numbers (minutes, or hours + minutes), not text; the UI formats them with formatDuration from src/i18n/format.ts ("16h 30m"). Implement the row's formatFast rule as a number split (floored hours and minutes) and test the "45m / 16h / 16h 30m" vectors through formatDuration in your test only if it imports nothing from src/i18n into src/domain code (tests may import it).
+- Fast goal minutes clamped 60–10 080 wherever created, edited or read; half-open intervals with an active end as +∞; overlapping edits refused (R05.3).
+- Use the exact rules and the Verify column of each row as test vectors, plus the trap cases. Day-boundary tests run in America/New_York (the vitest TZ) and must also hold in Asia/Tokyo: use inTimeZone from src/test/time.ts.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/forecast src/domain/trackers --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
