@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S4 = P02-10, P02-11 — the saved meals repository; the Coach message repository. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research specs 02 §3.16 and 04 §3.7; decisions D-16.17 and D-16.29 in docs/plan/16-what-we-change.md. Traps owned: R04.7, R04.8 (P02-11) — search docs/internals/traps-ledger.md for "owned by P02-10", "P02-11". Acceptance rows owned: ACC-D17-1, ACC-I10-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P02/saved-meals-repository.md, docs/notes/P02/coach-message-repository.md.
+
+You own:
+- src/data/repos/savedMealsRepo.ts, src/data/repos/savedMealsRepo.test.ts, src/data/repos/coachRepo.ts, src/data/repos/coachRepo.test.ts
+
+Do not touch:
+- the landed data core (see below), other files in src/data/repos/** and src/data/settingsSchema* (the P02 S1, S2 and S3 builders write settings, profile, diary, photo, drafts, weight, body-fat, water and fast repositories in parallel), src/ai/**, src/ui/**, src/domain/**, src/i18n/**, src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made (P02 wave B, every slice):
+- Repositories live in src/data/repos/ and are the only way features reach data (lint rules 2 and 4). They read through the landed guard (readAll / readOne / guardKey from src/data/guard.ts with the codecs in src/data/codecs.ts) and write ONLY through transact() from src/data/db.ts (a lone table.put can show in live queries before it commits). writeOne refuses a row its codec cannot read; an update refuses when readOne answers corrupt.
+- Live reads use live()/feedOf() from src/data/live.ts; React callers come later (P02-15 hooks), so export plain functions and observables, no React here.
+- Records are the types in src/domain/model.ts; reuse the landed domain rules (src/domain/**) instead of re-deriving them, e.g. day keys from src/domain/dates, meal grouping from src/domain/meals, fasting checks from src/domain/trackers.
+- Tests: a fresh fake database per test with openTestDb / freshDbOptions from src/test/db.ts, records from src/test/factories.ts, live helpers from src/test/live.ts. Fake timers stall Dexie: data tests use real timers and wait on events (watch/ready), never on sleeps. Blobs: build with testBlob and check with isBlobLike (jsdom Blobs come back from fake-indexeddb as plain objects). Vitest runs in America/New_York; use inTimeZone from src/test/time.ts for day-boundary cases.
+- Do not edit the landed data core (src/data/{schema,db,guard,codecs,values,live,useLive,bus}.ts, src/test/{db,live,factories}.ts). If a schema index, codec or factory is missing, work around it inside your own files (e.g. a local helper in your test, a filter instead of an index) and report it; if no workaround is possible, stop and report. The lead lands such core changes once, for every slice.
+- Saved meals keep their photo references through the photo store's reference-checked cleanup (a P02 S2 builder writes src/data/repos/photoRepo.ts in parallel: do not import it; take photo ids as plain data and leave the cleanup call to the lead's integration, reporting where it belongs). A saved meal's order is a number; a missing order reads as 0 (codec default).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
