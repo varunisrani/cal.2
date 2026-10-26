@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave A = P03-01, P03-02 — AI error kinds, classification and messages; the fake fetch and wire fixtures every AI and Coach test will use. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 03 §3.10; decision D-16.31 in docs/plan/16-what-we-change.md. Traps owned: R03.2, R03.18, R03.19 (search docs/internals/traps-ledger.md for "owned by P03-01"; the row also names R03.29). Acceptance rows owned: ACC-E10-1, ACC-E10-2 in docs/internals/acceptance-map.md.
+Task notes (each before its code): the P03-01 and P03-02 slugs listed at the end of docs/plan/phases/P03-ai-layer.md, under docs/notes/P03/.
+
+You own:
+- src/ai/errors.ts, src/ai/errors.test.ts
+- src/ai/testing/** (fakeFetch.ts, fakeFetch.test.ts, wire.ts, and a wire test if you add one)
+- src/i18n/en/ai.ts — a new catalogue partition rooted at `ai` (`export const ai = { ai: {…} }`) with our own message for every failure kind; and src/i18n/en.ts — only the import line and the `ai` entry in enPartitions (shared: report it)
+
+Do not touch:
+- src/data/** and src/test/** (the P02 builder), src/ui/** (the P04 builder), src/domain/**, src/lib/**, src/app/**, src/i18n/** other than the two files above, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Copy is ours: never copy the reference's error messages or marker lists' wording beyond what classification needs (the markers are matching data; name and order them in our own structure). Messages use t() keys from the `ai` partition (TKey from src/i18n/t.ts); plurals follow the catalogue's English rules.
+- `cancelled` is never shown to the person; `bothFailed` names both providers and carries the standby's kind. Classification order exactly as the P03-01 row lists it.
+- Lint rule 3 (P00-07, landed): fetch is allowed only in src/ai/transport.ts, src/services/barcode/**, src/sw/**, tests, e2e, scripts, tooling. The fake fetch is a function you pass in (dependency injection), not a global patch; if src/ai/testing/fakeFetch.ts trips the rule, report it rather than widening the rule.
+- wire.ts builds valid replies for the three wire formats (Gemini candidates with optional thought parts and finish reasons; OpenAI-compatible choices with string or parts content, reasoning fields and finish reasons; Anthropic content blocks and stop reasons) and error bodies; all text in them is ours.
+- Real waits are banned: delays use fake timers (src/test/time.ts helpers). Respect AbortSignal.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.

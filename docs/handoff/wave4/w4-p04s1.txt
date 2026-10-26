@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S1 = P04-01, P04-02 — UI primitives: buttons, cards, sheets, dialogs, toasts; inputs and pickers (Field, Stepper, Segmented, Switch, ListPicker, Wheel, DateTimeField). Spec: those two rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (the "Read in reference" column says which reference files to read, behaviour and structure only), plus its "Files to create" table; docs/plan/16-what-we-change.md §2.5 (our visual language); research spec 05 §3.1.4 (wheels); the conventions in docs/plan/phases/00-layout-and-conventions.md (accessibility row: accessible names, data-ui hooks, reduced motion).
+Task notes (each before its code): the P04-01 and P04-02 slugs listed at the end of docs/plan/phases/P04-shell-and-walking-skeleton.md, under docs/notes/P04/.
+
+You own:
+- src/ui/{Button,Card,Sheet,Dialog,Toast,Field,Stepper,Segmented,Switch,ListPicker,Wheel,DateTimeField}.tsx and their .test.tsx files (IconButton may live in Button.tsx)
+- src/ui/primitives.module.css, src/ui/inputs.module.css
+- src/i18n/en/common.ts — only new generic keys the primitives need (e.g. Done, Close, Cancel, if missing) (shared: report it)
+
+Do not touch:
+- src/ui/tokens.*, src/ui/theme.*, src/ui/contrast.*, src/ui/testing/** (landed; use the tokens via CSS variables, do not edit), src/data/** and src/test/** (the P02 builder), src/ai/** and src/i18n/en/ai.ts (the P03 builder), src/domain/**, src/lib/**, src/app/**, src/i18n/** other than common.ts, e2e/**, scripts/**, eslint.config.js, vite.config.ts, public/**, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- CSS modules on the P00 tokens only (var(--…) from src/ui/tokens.css: colours, radii, spacing, sizes, safe-area insets); no new colour literals. Our own visual language (16 §2.5): solid colours, no gradients or glass effects; never reuse the reference's styling.
+- Copy rule (P00-07, landed lint): no user-visible literal text in .tsx; labels come in as props or from t() keys. The primitives take label/title/message props typed as plain strings already resolved by callers, except fixed generic words (Done, Close…) which come from common.ts via t().
+- Every interactive element takes a data-ui hook prop and has an accessible name; IconButton requires a label. Sheet: title row with a trailing Done, focus trap, Escape closes, focus returns, `dismissable={false}` blocks swipe/backdrop close. Dialog: Escape = cancel. Toast: polite live region, auto-dismiss tested with fake timers. Respect prefers-reduced-motion.
+- Wheel: scroll-snap list from a values array (so weights can be whole + tenth wheels), arrow and Page keys, opens at a given value, a hidden native <select> for assistive tech. DateTimeField: native date and time inputs with `max` support.
+- Vitest empties CSS imports (also ?raw): test behaviour and roles with Testing Library, not styles. Real waits are banned: fake timers.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ui --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list any acceptance rows your tests cover with file > describe > test name). Leave everything uncommitted.

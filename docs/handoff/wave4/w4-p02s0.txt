@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s0 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave A slice S0 = P02-01, P02-02, P02-03 — the Dexie schema with open and upgrade safety, the record guard with quarantine, and the change bus / live queries / other-tab propagation. Spec: those three rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 06 §3.18 and §5; the architecture's data seam in docs/plan/04-architecture.md. Traps owned: R06.4 (P02-01), R06.1, R05.6 (P02-02), R06.3 (P02-03) — search docs/internals/traps-ledger.md for "owned by P02-01" … "P02-03". Acceptance rows owned: ACC-K9-1, ACC-L7-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): the P02-01..03 slugs listed at the end of docs/plan/phases/P02-data-layer.md, under docs/notes/P02/.
+
+You own:
+- src/data/{schema,db,guard,live,useLive,bus}.ts and their .test.ts files
+- src/test/factories.ts (new)
+
+Do not touch:
+- src/domain/** (import record types from src/domain/model.ts; do not edit), src/lib/**, src/i18n/**, src/ui/**, src/app/**, src/ai/** (the P03 builder), e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+- src/data/repos/** (wave B of P02, not now)
+
+Decisions already made:
+- Lint rule 4 (P00-07, landed): indexedDB and Dexie only in src/data/** and tests; features reach data only through repositories later. Dexie 4.4.6 and fake-indexeddb 6.2.5 are installed: use fake-indexeddb in tests (import 'fake-indexeddb/auto' or its IDBFactory per test for isolation). No new dependency.
+- Records are the types in src/domain/model.ts (NutritionDraft is the base of DiaryEntry and SavedMeal; photoIds is one ordered list; DayKey is a string alias). Codecs: make a grams basis only when grams is finite and above 0; read a missing meal as `other`; unknown nutrients stay absent, never 0.
+- A record that cannot be read is dropped from results and copied to `quarantine`, never deleted (R06.1). Every diary change will be one transaction later (R02.24): give db.ts a transaction helper the repositories can use.
+- useLive uses useSyncExternalStore (no new dependency). The bus is a BroadcastChannel('platewise') wrapper for app messages only (erase, reload-needed, goal-reached, settings-loaded); table changes across tabs rely on Dexie's own propagation, and a test proves it.
+- src/test/factories.ts builds valid records for tests across the app (entries, weigh-ins, water, fasts, saved meals, coach messages), using the counting id source and fixed clock from src/lib and src/test/time.ts.
+- Real waits are banned: fake timers and the clock helpers. Vitest runs in America/New_York.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data src/test --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
