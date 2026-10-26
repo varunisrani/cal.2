@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:25 IST (Agent 1, session 3). 69/176 tasks; P00, P01 and P02 complete; the app runs on the
+Updated: 2026-10-27 01:40 IST (Agent 1, session 3). 71/176 tasks; P00, P01 and P02 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -80,20 +80,23 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 8 | P03-07..09 (Gemini, OpenAI-compatible and Anthropic adapters) | 9d8d27d |
 | Wave 8 | P03-03, P03-04 (provider catalogue and presets, AI settings and endpoints; adapters take `ProviderId` from the catalogue) | 8b03cfd |
 | Wave 8 | P04-10..13 (Home with gauge, pillars and diary; manual entry; swipe-delete rows; tab placeholders; Settings hub; D-16.79) | ea9563c |
+| Wave 9 | P03-13, P03-14 (unit choices, parts breakdown, plan/goal/label readers) | 265c9b7 |
 
 ## In progress
 
 Four builders (prompts in `docs/handoff/wave9/`):
-- P03 S4b (P03-13/14 readers), base 7a6e065, `/root/wt/wt-p03s4b`.
-- P03 S5 (P03-15/16 prompts and contract), base 7a6e065, `/root/wt/wt-p03s5`.
+- P07 S3 (P07-10/11 line and bar charts, chart maths), base 8f40663, `/root/wt/wt-p07s3`. At landing:
+  add a `charts` partition to `src/i18n/en.ts` if the builder made one.
+- P03 S5 (P03-15/16 prompts and contract), base 7a6e065, `/root/wt/wt-p03s5`. At landing: point
+  `plan.ts` at `PLAN_REPLY_KEYS` from `src/ai/parse/planReply.ts` (the builder was told the five names).
 - P05 S1 (P05-01..03 wizard state machine and steps), base c0b38bb, `/root/wt/wt-p05s1`.
 - P04-14 walking-skeleton e2e and parity scenario (**Demo 1**), base 19fb709, `/root/wt/wt-p04s6`. After
   landing, the lead runs `parity/walking-skeleton.platewise.json` once through REA (install
   `rea-agents@6.8.0` outside the repo on Node 24 per "Where things are").
-Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c (latest full loop: unit 2303 passed + 2
-expected-fail in 146 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
-the worktrees at their bases and relaunch the same prompts. **Progress: 69/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 12/19, P04 13/14, P05 0/15).
+Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7 (latest full loop: unit 2380 passed + 2
+expected-fail in 151 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
+the worktrees at their bases and relaunch the same prompts. **Progress: 71/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 14/19, P04 13/14, P05 0/15, P07 0/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
