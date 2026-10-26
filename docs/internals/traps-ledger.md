@@ -47,23 +47,29 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R02 · Food logging (`research/02-*.md` §6)
 
 - **R02.1** An unknown food weight stays unknown: a serving-count basis, never 100 g
-  - Review: owned by P01-09
+  - Test: src/domain/servings/scale.test.ts > reopening a saved entry > reopens an unknown-weight entry at its serving count and never offers grams (R02.1)
+  - Test: src/domain/servings/units.test.ts > pickerUnits > offers only the serving count when the weight is unknown, never grams (R02.1)
+  - Test: src/domain/servings/units.test.ts > basisFor and weightKnown > keeps a missing or broken weight a serving count, never 100 g (R02.1)
+  - Test: src/domain/servings/units.test.ts > initialUnit > always opens an unknown weight on the serving count, even with grams-first (R02.1)
 - **R02.2** The unknown-weight basis is its own kind, separate from a unit named serving
-  - Review: owned by P01-09
+  - Test: src/domain/servings/units.test.ts > pickerUnits > treats a recipe "serving" unit with known grams as a unit choice, not the serving count (R02.2)
 - **R02.3** A value typed at a scaled amount is stored divided by the scale; a scale of 0 or less is guarded
-  - Review: owned by P01-09
+  - Test: src/domain/servings/scale.test.ts > fromShown > stores a value typed at the shown amount divided by the scale (R02.3)
+  - Test: src/domain/servings/scale.test.ts > fromShown > treats a scale of 0 or less, or not finite, as 1 (R02.3)
 - **R02.4** With ingredient lines the header is their sum and micronutrients stretch by the gram ratio
-  - Review: owned by P01-10
+  - Test: src/domain/servings/ingredients.test.ts > applyLineChange > takes the header from the lines at the current scale and stretches nutrients to match (R02.4)
 - **R02.5** Header values edited through the unlock are replaced by the next line change (accepted behaviour, tested and hinted)
   - Review: owned by P06-08
 - **R02.6** A logged portion cannot be split again; a split survives line edits with its unit first
-  - Review: owned by P01-11
+  - Test: src/domain/servings/recipe.test.ts > canSplit > is not offered for a portion logged from a split recipe (R02.6)
+  - Test: src/domain/servings/recipe.test.ts > applySplitLineChange > keeps the servings and shows exactly the edited portion after a line edit (R02.6)
 - **R02.7** Saved meals have their own ids (D-16.17); often-eaten groups by normalised name and kcal; reorder hidden while searching
   - Review: owned by P06-12
 - **R02.8** A photo is deleted only when no entry, line, saved meal or draft uses it; cleanup stops if any owner is unreadable
   - Review: owned by P02-07
 - **R02.9** Combine sums every nutrient all rows know (D-16.20) and keeps unknown-weight lines visible
-  - Review: owned by P01-11
+  - Test: src/domain/food/combine.test.ts > combineEntries > makes one line per entry, with 0 g for an unknown weight so the line stays visible (R02.9)
+  - Test: src/domain/food/combine.test.ts > combineEntries > sums a nutrient when every entry knows it and keeps it unknown when one lacks it (D-16.20, R02.9)
 - **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
   - Review: owned by P06-04
 - **R02.11** Log, Save and manual Save are single-flight
@@ -96,7 +102,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
   - Review: owned by P02-06
 - **R02.25** Values are stored unrounded and rounded only on screen, so review, fit check and totals agree
-  - Review: owned by P01-09
+  - Test: src/domain/servings/scale.test.ts > scaleValues > rounds shown kcal and keeps macros, nutrients and extras unrounded (R02.25)
+  - Test: src/domain/servings/scale.test.ts > scaleDraft > stores base × scale unrounded except kcal, so review and logged totals agree (R02.25)
 
 ## R03 · AI providers (`research/03-*.md` §6)
 
