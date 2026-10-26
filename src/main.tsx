@@ -5,12 +5,18 @@ import './ui/tokens.css';
 import { App } from './app/App';
 import type { ShellPorts } from './app/ports';
 import { createRouter, windowHost } from './app/router';
+import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
+import { hasUnreadableData } from './data/guard';
+import { createBodyFatRepo } from './data/repos/bodyFatRepo';
+import { createCoachRepo } from './data/repos/coachRepo';
 import { createDiaryRepo } from './data/repos/diaryRepo';
 import { createFastRepo } from './data/repos/fastRepo';
 import { createPhotoRepo } from './data/repos/photoRepo';
 import { createProfileRepo } from './data/repos/profileRepo';
+import { createSavedMealsRepo } from './data/repos/savedMealsRepo';
 import { createSettingsRepo } from './data/repos/settingsRepo';
+import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
@@ -21,7 +27,8 @@ import { createOnboardingService } from './services/onboarding';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 
 // The composition root: the one place that opens the database, creates each repository once and
-// hands the app the shell's ports and the services. Screens never see a repository.
+// hands the app the shell's ports, the services and the read hooks' data sources. Screens never
+// see a repository.
 
 const container = document.getElementById('root');
 if (!container) throw new Error('Platewise: #root element missing from index.html');
@@ -29,11 +36,12 @@ if (!container) throw new Error('Platewise: #root element missing from index.htm
 const root = createRoot(container);
 const router = createRouter(windowHost());
 
-function render(ports: ShellPorts, services?: Services): void {
+function render(ports: ShellPorts, services?: Services, data?: DataSources): void {
   const app = <App ports={ports} router={router} />;
+  const withData = data ? <DataProvider sources={data}>{app}</DataProvider> : app;
   root.render(
     <StrictMode>
-      {services ? <ServicesProvider services={services}>{app}</ServicesProvider> : app}
+      {services ? <ServicesProvider services={services}>{withData}</ServicesProvider> : withData}
     </StrictMode>,
   );
 }
@@ -56,6 +64,8 @@ async function start(): Promise<void> {
   const profileRepo = createProfileRepo(db);
   const settingsRepo = createSettingsRepo(db);
   const fastRepo = createFastRepo(db);
+  const diaryRepo = createDiaryRepo(db);
+  const weightRepo = createWeightRepo(db);
 
   // A fast left running while tracking is off would keep food logging locked (R05.2).
   await fastRepo.settleOnOpen(systemClock.now()).catch((error: unknown) => {
@@ -67,18 +77,31 @@ async function start(): Promise<void> {
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
     diary: createDiaryService({
-      diaryRepo: createDiaryRepo(db),
+      diaryRepo,
       photoRepo: createPhotoRepo(db),
       onFirstEntry: () => storage.requestPersistence(),
     }),
     onboarding: createOnboardingService({
       profileRepo,
       settingsRepo,
-      weightRepo: createWeightRepo(db),
+      weightRepo,
     }),
     clock: systemClock,
   };
-  render(createShellPorts({ profileRepo, settingsRepo }), services);
+  const data: DataSources = {
+    profileRepo,
+    settingsRepo,
+    diaryRepo,
+    waterRepo: createWaterRepo(db),
+    fastRepo,
+    weightRepo,
+    bodyFatRepo: createBodyFatRepo(db),
+    savedMealsRepo: createSavedMealsRepo(db),
+    coachRepo: createCoachRepo(db),
+    unreadableFlag: () => hasUnreadableData(db),
+    clock: systemClock,
+  };
+  render(createShellPorts({ profileRepo, settingsRepo }), services, data);
 }
 
 void start();
