@@ -437,9 +437,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E4 · Retry 429/503/529 at 1, 2 and 4 s on every format (P1)
 
 - **ACC-E4-1** A busy provider is retried three times before the busy message
-  - Review: P03-06
+  - Test: src/ai/retry.test.ts > withRetries: the ladder (03 §3.9, D-16.23) > gives the busy message after four 503 replies and no fifth request (ACC-E4-1)
 - **ACC-E4-2** No analysis waits longer than the timeout setting
-  - Review: P03-05
+  - Test: src/ai/deadline.test.ts > one time limit for the whole action (D-16.23, R03.6, ACC-E4-2) > ends a four-attempt ladder early, at 180 s exactly
 
 ### E5 · The standby also runs when the primary's answer fails validation, … (P1)
 

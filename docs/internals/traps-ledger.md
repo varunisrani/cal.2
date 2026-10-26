@@ -152,7 +152,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
   - Review: owned by P03-04
 - **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
-  - Review: owned by P03-05
+  - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > reports Cancel during the body read as cancelled, not offline
+  - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > stops one attempt at its 75 s cap, not before, as timeout
+  - Test: src/ai/deadline.test.ts > one time limit for the whole action (D-16.23, R03.6, ACC-E4-2) > ends a four-attempt ladder early, at 180 s exactly
 - **R03.7** Gemini replies can hold several parts and thought parts: join every non-thought part; MAX_TOKENS means cut off
   - Review: owned by P03-07
 - **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none
@@ -194,7 +196,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.25** Nutrient-goal replies are read tolerantly but keep the person's values for missing keys; a failure never clears goals
   - Review: owned by P03-14
 - **R03.26** Any 2xx status counts as success
-  - Review: owned by P03-05
+  - Test: src/ai/transport.test.ts > send: any 2xx is a success (R03.26) > counts 200, 201, 204 and 299 as success, and 300 and 404 as not
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
   - Review: owned by P02-12
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
