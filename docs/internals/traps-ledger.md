@@ -66,6 +66,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > never counts today's entries (R01.16)
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > reads a day with no entries as none, holding no kcal at all (R01.16)
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy > holds none of the names, notes, ingredients, photos, product text or ids of the fixture (R01.16)
+  - Test: src/ai/prompts/evidenceText.test.ts > evidenceText: privacy (R01.16, ACC-C9-1) > never contains a food name, note, ingredient, product text, photo or id of the fixture
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
   - Test: src/data/repos/profileRepo.test.ts > get > calls an unreadable profile corrupt, never missing, and keeps it aside (R01.17)
   - Test: src/data/repos/profileRepo.test.ts > save > refuses to save over an unreadable profile that cannot be kept aside (R01.17)
@@ -176,13 +177,16 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.14** The ingredient breakdown is all or nothing (≤ 20 entries, valid values, ≤ 9 kcal/g fill, coverage 0.5–1.5)
   - Test: src/ai/parse/parts.test.ts > readParts: unknown part weights are filled from the meal (R03.14) > accepts a fill of exactly 9 kcal per gram and drops one of 10
   - Test: src/ai/parse/parts.test.ts > readParts: a usable breakdown replaces the totals (R03.14) > keeps the parts and makes the meal kcal and macros their sums
+  - Test: src/ai/prompts/contract.test.ts > PART_RULES (R03.14) > caps the parts at 20, never a total row, and empty for a label or one simple food
 - **R03.15** A missing serving weight stays unknown and is never repaired
   - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a missing weight stays unknown (R03.15) > describes one serving, never 100 g, when the answer gives no weight
 - **R03.16** Unit choices need real positive numbers within max(5 g, 15 %); one bad element voids the list; an empty list is valid
   - Test: src/ai/parse/units.test.ts > readUnits: a missing or mangled list asks for one repair (R03.16) > refuses count: true and count: "2", and the same for grams each
   - Test: src/ai/parse/units.test.ts > readUnits: a usable list (R03.16) > reads an empty list as a complete answer: no units and no repair
+  - Test: src/ai/prompts/contract.test.ts > UNIT_RULES (R03.16) > asks for count × gramsEach to match the serving weight and forbids gram units
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
-  - Review: owned by P03-18
+  - Test: src/ai/prompts/food.test.ts > unitRepairPrompt (R03.17) > asks only for the units list of the named food at its weight, to one decimal
+  - Review: owned by P03-18 (the request runs only for zero-macro results with a known weight; its failures are ignored)
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
   - Test: src/ai/errors.test.ts > readProviderMessage: every body shape (R03.18) > classifies xAI, Mistral and DeepSeek bodies by the text they carry
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > reads Gemini's daily quota from the quota id in the error details (R03.18)

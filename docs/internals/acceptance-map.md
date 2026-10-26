@@ -206,7 +206,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C9 · The evidence sent with a plan request holds only numbers and … (P1)
 
 - **ACC-C9-1** No food name, note or ingredient appears in a plan request
-  - Review: P03-16
+  - Test: src/ai/prompts/plan.test.ts > planPrompt: the evidence > holds no food name, note or ingredient of the logged entries (ACC-C9-1)
+  - Test: src/ai/prompts/evidenceText.test.ts > evidenceText: privacy (R01.16, ACC-C9-1) > never contains a food name, note, ingredient, product text, photo or id of the fixture
 
 ### C10 · Optional nutrient goals for 29 nutrients with defaults, ranges, … (P1)
 
