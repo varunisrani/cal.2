@@ -137,12 +137,18 @@ describe('banned names', () => {
     const root = trees.make({ [PATTERNS_FILE]: realPatterns });
     const { patterns, errors } = loadPatterns(root);
     expect(errors).toEqual([]);
-    expect(patterns.map((p) => p.id)).toEqual([
-      'product-name',
-      'product-short-name',
-      'author-handle',
-      'package-path',
-      'package-id',
-    ]);
+    const ids = patterns.map((p) => p.id);
+    // The core identity patterns must always be there; more can be added as data.
+    expect(ids).toEqual(
+      expect.arrayContaining([
+        'product-name',
+        'product-short-name',
+        'author-handle',
+        'package-path',
+        'package-id',
+      ]),
+    );
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const p of patterns) expect(p.hint ?? '').not.toBe('');
   });
 });

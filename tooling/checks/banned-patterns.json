@@ -28,5 +28,100 @@
     "pattern": "com\\.apoorvdarshan",
     "flags": "i",
     "hint": "the reference's package id; Platewise has its own"
+  },
+  {
+    "id": "coach-read-tools",
+    "pattern": "\\bget_(body_fat_history|calorie_totals|data_summary|exercise_lift_history|fasting_history|food_entries|training_summary|weight_history|workout_history|workout_plans|workout_preferences)\\b",
+    "hint": "the reference's model-facing Coach tool names; ours are data_overview, food_log, ... (17 \u00a71.5)"
+  },
+  {
+    "id": "coach-proposal-tools",
+    "pattern": "\\b(propose_add_exercise_to_day|propose_custom_exercise|search_exercise_library)\\b",
+    "hint": "the reference's proposal and search tool names; ours are in 17 \u00a71.5"
+  },
+  {
+    "id": "fud-prefixed-identifiers",
+    "pattern": "\\b[Ff]ud[A-Z]\\w*",
+    "hint": "reference-prefixed identifiers (glass components, default accent key)"
+  },
+  {
+    "id": "guard-and-store-classes",
+    "pattern": "\\b(AIErrorMessages|AIRequestErrorPolicy|BarcodeLabelMemory|BarcodeProductLookup|ConsistentDataStore|FoodImagePreprocessor|FoodSubmissionGate|KeychainHelper|LabelScanBarcodeHandoff|MealMicronutrientStretch|PersistedBlobGuard|PersistedJsonGuard|SecureHttpClient|ServingUnitRepairPolicy|ToolResultLimiter)\\b",
+    "hint": "reference class names; use the Platewise module names in 17 \u00a71.6"
+  },
+  {
+    "id": "goal-classes",
+    "pattern": "\\b(AdaptiveGoalResult|AdaptiveGoalService|BuildingPlanStepView|GoalEnergyMath|GoalEvidenceBuilder|HomeTopNutrient|MaintenanceBreakdown|NutritionDayCompleteness|ReturningUserState|WeeklyRecapCalculator|WeightAnalysisService)\\b",
+    "hint": "reference goal and progress types; see 17 \u00a71.6"
+  },
+  {
+    "id": "screen-classes",
+    "pattern": "\\b(CalorieGauge|CalorieHero|CoachExerciseProposal\\w*|CoachProposal(Applier|Collector)|ContextNoteSheet|EditFoodEntry(Sheet|View)|FoodResult(Sheet|View)|IngredientIntakeSection|IngredientLabelParser|MacroVerticalBar|MultiPhotoCaptureSheet|NutritionDetail(Sheet|View)|PendingFoodAnalysisDraft|PhotoCaptureDraftViewModel|WeekEnergyStrip)\\b",
+    "hint": "reference screen and view names; ours are ReviewSheet, EntryEditor, CaptureSheet, DayNutrientsSheet, WeekBar, ..."
+  },
+  {
+    "id": "backup-classes",
+    "pattern": "\\b(CloudBackup(Archive|Coordinator|Restore|Service)|DiaryExporter|DiaryImporter|DriveCloudBackupClient)\\b",
+    "hint": "reference backup and export types; ours live in src/services/backup and src/services/transfer"
+  },
+  {
+    "id": "storage-keys-goals",
+    "pattern": "\\b(acceptedTermsAndPrivacy|adaptiveGoals(Enabled|LastCheckDay|PreviousTargets)|aiAnalysisConsentGiven|goalReachedNotificationsEnabled|hasCompletedOnboarding|lastRecalcGoalSignature|onboardingPlanEdited)\\b",
+    "hint": "reference storage keys; ours are in 17 \u00a71.3"
+  },
+  {
+    "id": "storage-keys-logging",
+    "pattern": "\\b(aminoAcidEstimatesEnabled|favoriteFoodEntries|foodLogSortOrder|foodMeasurementPreferGramsByDefault|lastRecentsSegment|meal(Breakfast|Dinner|Lunch|Snack)StartMinutes|pendingFoodAnalysisDraft|productInfoHiddenFields|productInfoShown|saveMealPhotosToGallery)\\b",
+    "hint": "reference storage keys; ours are in 17 \u00a71.3"
+  },
+  {
+    "id": "storage-keys-home",
+    "pattern": "\\b(appThemeColor|coachChatHistory|fastingDefaultGoalMinutes|fastingGoalNotificationEnabled|homeTopNutrients|progressIncludeToday|waterQuickAddPresetsMl|weekStartsOnMonday|weightDeletionTombstones)\\b",
+    "hint": "reference storage keys; ours are in 17 \u00a71.3"
+  },
+  {
+    "id": "storage-keys-ai",
+    "pattern": "\\b(aiAccessMode|aiFallbackEnabled|aiMaxResponseTokens|aiModelRegistryMigrationVersion|aiRequestTimeoutSeconds|aiUserContext|fallbackBaseURLMigrationVersion|geminiModelMigrationVersion|openRouterReasoningEffort|selected(Text)?(Fallback)?AI(Model|Provider)|separateTextProviderEnabled|textAIFallbackEnabled)\\b",
+    "hint": "reference AI settings keys; ours is one ai.settings record"
+  },
+  {
+    "id": "storage-key-prefixes",
+    "pattern": "\\b((fallback)?[cC]ustomBaseURL|apikey|speechApiKey)_",
+    "hint": "reference per-provider key prefixes; ours are secrets slots and ai.settings.endpoints"
+  },
+  {
+    "id": "reminder-keys",
+    "pattern": "\\b(streakReminder(Enabled|Hour|Minute)|(bodyFatLogReminder|breakfastReminder|dailySummary|dinnerReminder|lunchReminder|waterReminder|weightLogReminder)(Hour|Minute))\\b",
+    "hint": "reference reminder keys; ours are remind.<name> with {on, at}"
+  },
+  {
+    "id": "prompt-flags",
+    "pattern": "\\bhas(Completed|Notified|Seen)(HostedUpsell|MeetDeveloper|ProductHunt|WhatsNew)\\w*",
+    "hint": "reference one-time prompt flags; Platewise has no such prompts in v1"
+  },
+  {
+    "id": "backup-bookkeeping-keys",
+    "pattern": "\\bcloudBackup(AccountEmail|FileId|LastHash)\\b",
+    "hint": "reference cloud-backup keys"
+  },
+  {
+    "id": "ai-error-ids",
+    "pattern": "\\bai\\.error\\.[a-z_]+",
+    "hint": "reference error string ids; ours are AiFailure kinds"
+  },
+  {
+    "id": "export-source-labels",
+    "pattern": "\\b(ai_estimated|manually_edited)\\b",
+    "hint": "reference export labels; ours are ai and manual"
+  },
+  {
+    "id": "default-menu-group-ids",
+    "pattern": "__default_[a-z_]+__",
+    "hint": "reference add-menu group ids; ours are snapScan, describe, reuse"
+  },
+  {
+    "id": "later-phase-keys",
+    "pattern": "\\b(WorkoutPersistedState|importedHealthWorkoutsV1|widget_snapshot_v1|workoutDiaryStateV1)\\b",
+    "hint": "reference workout and widget state names; L2 defines its own"
   }
 ]
