@@ -94,20 +94,24 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.7** Saved meals have their own ids (D-16.17); often-eaten groups by normalised name and kcal; reorder hidden while searching
   - Review: owned by P06-12
 - **R02.8** A photo is deleted only when no entry, line, saved meal or draft uses it; cleanup stops if any owner is unreadable
-  - Review: owned by P02-07
+  - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps a photo shared by an entry and a saved meal when the entry is deleted (ACC-D28-1, R02.8)
+  - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps the saved meal’s copy when an edit removes the photo from the entry (R02.8)
 - **R02.9** Combine sums every nutrient all rows know (D-16.20) and keeps unknown-weight lines visible
   - Test: src/domain/food/combine.test.ts > combineEntries > sums sodium when both entries know it and leaves it unknown when one lacks it (D-16.20, R02.9)
   - Test: src/domain/food/combine.test.ts > combineEntries > adds a visible 0 g line for an unknown-weight entry and sums the known weights (R02.9)
 - **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
-  - Review: owned by P06-04
+  - Test: src/data/repos/draftsRepo.test.ts > analysis draft > refuses a result saved with an old generation as stale (R02.10)
+  - Test: src/data/repos/draftsRepo.test.ts > analysis draft > does not clear a newer draft when an older attempt clears (R02.10)
+  - Review: the analysis flow owned by P06-04
 - **R02.11** Log, Save and manual Save are single-flight
   - Review: owned by P04-08
 - **R02.12** The active-fast refusal happens at write time for every food write path
-  - Review: owned by P02-06
+  - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
 - **R02.13** The review's suggested meal follows its picked date and time (D-16.16)
   - Review: owned by P06-06
 - **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only
-  - Review: owned by P06-17
+  - Test: src/data/barcodeKey.test.ts > barcodeKey > gives a UPC-A and its EAN-13 form the same key (R02.14)
+  - Review: the scan flow owned by P06-17
 - **R02.15** Open Food Facts wins; the saved label and FDC are tried only after not-found or no-nutrition; same order on every scan path
   - Review: owned by P06-17
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
@@ -128,7 +132,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.23** Add-menu decoding drops unknown methods; a menu emptied only by unknown ids falls back to the default; a deliberately empty menu stays empty
   - Review: owned by P06-01
 - **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
-  - Review: owned by P02-06
+  - Test: src/data/repos/diaryRepo.test.ts > add > never replaces a stored row, readable or not, with a new one under the same id (R02.24)
+  - Test: src/data/repos/diaryRepo.test.ts > combine > deletes the originals and adds one entry in one transaction (R02.24)
 - **R02.25** Values are stored unrounded and rounded only on screen, so review, fit check and totals agree
   - Test: src/domain/servings/scale.test.ts > draftAtAmount > stores values unrounded so review, fit check and totals agree (R02.25)
 
@@ -246,7 +251,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R05 · Home, Progress, water and fasting (`research/05-*.md` §6)
 
 - **R05.1** An active fast refuses every food write inside the same transaction
-  - Review: owned by P02-06
+  - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
+  - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add that was waiting while another transaction started a fast (R05.1)
 - **R05.2** Turning fasting off ends the active fast; an active fast restored with tracking off is ended on open
   - Review: owned by P02-09
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
@@ -315,7 +321,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/guard.test.ts > writeOne > refuses the save and leaves the record untouched when the copy fails (R06.1)
   - Review: the banner owned by P09 (K9)
 - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
-  - Review: owned by P02-06
+  - Test: src/data/repos/diaryRepo.test.ts > update > keeps both of two edits made at the same time to different entries (R06.2)
+  - Test: src/data/repos/settingsRepo.test.ts > update > keeps both changes when two updates run at once (R06.2)
 - **R06.3** After every committed write every live query and tab re-reads
   - Test: src/data/live.test.ts > live > ends a subscriber that starts during an open write on the committed value (R06.3)
   - Test: src/data/live.test.ts > other tabs > shows an entry added in one tab in another open tab (ACC-L7-1)
@@ -349,7 +356,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.17** Export "This week" follows the week-start setting
   - Review: owned by P09-10
 - **R06.18** Photo cleanup stops when any referencing record is unreadable and never runs during a restore
-  - Review: owned by P02-07
+  - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > deletes nothing while a saved-meal row cannot be read (R06.18)
+  - Test: src/data/repos/photoRepo.test.ts > prune > deletes nothing while a restore runs (R06.18)
 - **R06.19** Browser storage can be evicted: request persistence, show it, nudge install and backups
   - Review: owned by P09-15
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
