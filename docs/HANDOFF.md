@@ -55,9 +55,12 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## In progress
 
-Nothing. Wave 1 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
-clean; unit 293/293 in 25 files; check --require-ref 6/6; check:bundle 68.00 kB of 250 kB; e2e 1/1)
-and pushed as 4b31214, e081191, 4ffda80. **Progress: 7/176 tasks** (P00: 5/10, P01: 2/19).
+Wave 2, launched 2026-10-26 23:10 IST by Agent 2: four builders in `/root/wt/wt-{p00s2,p00s4,p00s5,p01b1}`,
+all detached at `55ad73c`, prompts in `/root/wt/prompts/` (the `docs/handoff/wave2/` texts with the base
+filled in, plus e2e ports: S2 4174, S5 4175 and fake AI 4321). Nothing landed from it yet. If this
+session dies, the worktrees are gone with the container: relaunch wave 2 from `docs/handoff/wave2/`.
+
+Last verified head: `d53111e` (wave 1, 7/176 tasks; P00: 5/10, P01: 2/19).
 
 ## Next
 

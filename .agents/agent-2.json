@@ -5,7 +5,7 @@
   "usage_pct": 1,
   "remaining_pct": 99,
   "resets_at": "2026-10-27T02:40:00+05:30",
-  "last_check": "2026-10-26T23:05:00+05:30",
-  "current_step": "7/176 tasks; took the turn (handoff #1 from Agent 1, user's choice); head verified, launching wave 2 (4 builders)",
-  "last_commit": "d53111e"
+  "last_check": "2026-10-26T23:10:00+05:30",
+  "current_step": "7/176 tasks; wave 2 running (4 builders: P00 S2/S4/S5, P01 wave B S1) at 55ad73c",
+  "last_commit": "55ad73c"
 }
