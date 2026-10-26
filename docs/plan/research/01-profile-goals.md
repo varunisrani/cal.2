@@ -79,10 +79,10 @@ per 7 calendar days and never retries a failing provider on every app open.
 Third-party protocol names used by this area: none directly. The AI goal calculation goes through
 the AI-providers area; its reply is a JSON object whose keys `calories`, `protein`, `carbs`, `fat`,
 `reason` are our own contract (not a vendor protocol). The optional-nutrient reply keys
-(`fiber`, `sugar`, `added_sugar`, `saturated_fat`, `cholesterol`, `caffeine`, `sodium`,
-`potassium`, `trans_fat`, `calcium`, `iron`, `magnesium`, `zinc`, `vitamin_a`, `vitamin_c`,
-`vitamin_d`, `vitamin_b12`, `vitamin_e`, `vitamin_k`, `folate`, `omega_3`, `creatine`,
-`beta_alanine`, `l_citrulline`, `l_carnitine`, `l_arginine`, `taurine`, `betaine`, `hmb`) are
+(`added_sugar`, `beta_alanine`, `betaine`, `caffeine`, `calcium`, `cholesterol`, `creatine`,
+`fiber`, `folate`, `hmb`, `iron`, `l_arginine`, `l_carnitine`, `l_citrulline`, `magnesium`,
+`omega_3`, `potassium`, `saturated_fat`, `sodium`, `sugar`, `taurine`, `trans_fat`,
+`vitamin_a`, `vitamin_b12`, `vitamin_c`, `vitamin_d`, `vitamin_e`, `vitamin_k`, `zinc`) are
 likewise ours to rename.
 
 ## 3. Behaviour
