@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Platewise mark: a plate seen from above (rim and well) with a leaf in the well. -->
+  <rect width="512" height="512" rx="112" fill="#0b1210"/>
+  <circle cx="256" cy="256" r="188" fill="#62cc85"/>
+  <circle cx="256" cy="256" r="134" fill="#1d7a43"/>
+  <path d="M200 312 L178 334" stroke="#62cc85" stroke-width="12" stroke-linecap="round"/>
+  <path d="M200 312 C175.9 251.3 249.1 178.1 322 190 C333.9 262.9 260.7 336.1 200 312 Z" fill="#62cc85"/>
+  <path d="M222 290 L300 212" stroke="#1d7a43" stroke-width="9" stroke-linecap="round"/>
+</svg>

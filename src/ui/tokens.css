@@ -1,0 +1,213 @@
+/*
+ * Platewise design tokens: every colour, radius, space, type size, shadow, duration and layer of
+ * the app. Components read these properties and never carry values of their own.
+ *
+ * The root element carries two attributes, written by applyTheme() in theme.ts:
+ *   data-theme  = dark | light   (no attribute: dark, the default)
+ *   data-accent = one of the six presets in tokens.ts (no or unknown attribute: basil)
+ *
+ * Colours are 6-digit hex so the contrast sweep in contrast.test.ts can read them; translucent
+ * values use rgb(r g b / a). Solid colours only: no gradients anywhere.
+ */
+
+/* Scales: the same in both themes. */
+:root {
+  /* Corner radii. */
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --radius-sheet: 24px;
+  --radius-pill: 999px;
+
+  /* Spacing, named by 4 px steps. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Type: the system font stack only (no web fonts); sizes in rem so they follow the browser's
+     text size, from 11 px to 48 px at the default 16 px. */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji';
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --type-label: 0.6875rem; /* 11 px */
+  --type-small: 0.8125rem; /* 13 px */
+  --type-body: 0.9375rem; /* 15 px */
+  --type-lead: 1.0625rem; /* 17 px */
+  --type-title: 1.25rem; /* 20 px */
+  --type-heading: 1.5rem; /* 24 px */
+  --type-display: 2rem; /* 32 px */
+  --type-figure: 2.5rem; /* 40 px */
+  --type-hero: 3rem; /* 48 px */
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-tight: 1.15;
+  --leading-body: 1.45;
+
+  /* Motion. */
+  --motion-quick: 120ms;
+  --motion-base: 200ms;
+  --motion-slow: 320ms;
+  --ease-standard: cubic-bezier(0.3, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.15, 0.6, 0.25, 1);
+
+  /* Stacking layers. */
+  --layer-content: 0;
+  --layer-sticky: 10;
+  --layer-tabbar: 20;
+  --layer-sheet: 30;
+  --layer-dialog: 40;
+  --layer-toast: 50;
+
+  /* Safe-area insets (notches, home indicator); index.html sets viewport-fit=cover. */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-quick: 0ms;
+    --motion-base: 0ms;
+    --motion-slow: 0ms;
+  }
+}
+
+/* Dark theme, the default: a deep green-black neutral base. */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0b1210;
+  --card: #131c18;
+  --raised: #1a2520;
+  --sheet: #16201b;
+  --line: #2b3832;
+  --text: #e9f1eb;
+  --text-muted: #97a89f;
+  --text-inverse: #0b1210;
+  --danger: #ff8f8f;
+  --success: #5ed1b0;
+  --focus: #9fd8ff;
+  --scrim: rgb(3 7 5 / 0.62);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.36), 0 6px 18px rgb(0 0 0 / 0.28);
+  --shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 12px 28px rgb(0 0 0 / 0.34);
+  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.45);
+}
+
+/* Light theme. */
+[data-theme='light'] {
+  color-scheme: light;
+  --page: #f3f6f1;
+  --card: #ffffff;
+  --raised: #fbfcfa;
+  --sheet: #fdfefc;
+  --line: #d6ded8;
+  --text: #0f1813;
+  --text-muted: #4b5952;
+  --text-inverse: #f5f8f5;
+  --danger: #b3262c;
+  --success: #0d7563;
+  --focus: #1b5fae;
+  --scrim: rgb(9 16 12 / 0.38);
+  --shadow-card: 0 1px 2px rgb(15 24 19 / 0.06), 0 6px 18px rgb(15 24 19 / 0.07);
+  --shadow-raised: 0 2px 6px rgb(15 24 19 / 0.08), 0 12px 28px rgb(15 24 19 / 0.1);
+  --shadow-sheet: 0 -8px 32px rgb(15 24 19 / 0.14);
+}
+
+/*
+ * Accent presets (D-16.1). Each sets the accent (fills, marks, accent text), the text colour
+ * placed on it and a translucent wash for tracks. A preset's first block holds its dark values;
+ * its second block, with both attributes, outranks the first in the light theme.
+ */
+
+/* Basil: also the fallback for a missing or unknown accent, in both themes. */
+:root,
+[data-accent='basil'] {
+  --accent: #62cc85;
+  --accent-ink: #06130b;
+  --accent-soft: rgb(98 204 133 / 0.2);
+}
+[data-theme='light'],
+[data-theme='light'][data-accent='basil'] {
+  --accent: #1d7a43;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(29 122 67 / 0.14);
+}
+
+/* Saffron. */
+[data-accent='saffron'] {
+  --accent: #f0b43c;
+  --accent-ink: #1b1203;
+  --accent-soft: rgb(240 180 60 / 0.2);
+}
+[data-theme='light'][data-accent='saffron'] {
+  --accent: #8a6200;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(138 98 0 / 0.14);
+}
+
+/* Lagoon. */
+[data-accent='lagoon'] {
+  --accent: #4fc2df;
+  --accent-ink: #03141a;
+  --accent-soft: rgb(79 194 223 / 0.2);
+}
+[data-theme='light'][data-accent='lagoon'] {
+  --accent: #0a6e8a;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(10 110 138 / 0.14);
+}
+
+/* Beet. */
+[data-accent='beet'] {
+  --accent: #ef7aa8;
+  --accent-ink: #1e0712;
+  --accent-soft: rgb(239 122 168 / 0.2);
+}
+[data-theme='light'][data-accent='beet'] {
+  --accent: #a3255d;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(163 37 93 / 0.14);
+}
+
+/* Ember. */
+[data-accent='ember'] {
+  --accent: #ff9a52;
+  --accent-ink: #1f0b03;
+  --accent-soft: rgb(255 154 82 / 0.2);
+}
+[data-theme='light'][data-accent='ember'] {
+  --accent: #a64a0c;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(166 74 12 / 0.14);
+}
+
+/* Ink. */
+[data-accent='ink'] {
+  --accent: #a1abff;
+  --accent-ink: #0c0e26;
+  --accent-soft: rgb(161 171 255 / 0.2);
+}
+[data-theme='light'][data-accent='ink'] {
+  --accent: #3c47b3;
+  --accent-ink: #ffffff;
+  --accent-soft: rgb(60 71 179 / 0.14);
+}
+
+/* The page itself, so the bare app already shows the theme. */
+html {
+  background-color: var(--page);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: var(--leading-body);
+}
+
+body {
+  margin: 0;
+}

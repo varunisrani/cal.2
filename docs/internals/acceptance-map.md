@@ -47,14 +47,18 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-A8-1** Choosing Light keeps the light theme even when the device is dark
   - Review: P04-06
 - **ACC-A8-2** In System mode a device theme change applies without a reload
-  - Review: P00-03
+  - Test: src/ui/theme.test.ts > applyTheme > follows the operating system live in System mode
 
 ### A9 · Six solid accent presets of our own (Basil default, Saffron, … (P1)
 
 - **ACC-A9-1** Picking Ember recolours every accent element at once
   - Review: P09-02
 - **ACC-A9-2** Every accent passes the contrast sweep in both themes
-  - Review: P00-03
+  - Test: src/ui/contrast.test.ts > token contrast sweep > %s theme with %s: text at least 7:1 on every surface
+  - Test: src/ui/contrast.test.ts > token contrast sweep > %s theme with %s: muted text at least 4.5:1 on every surface
+  - Test: src/ui/contrast.test.ts > token contrast sweep > %s theme with %s: accent at least 3:1 against card
+  - Test: src/ui/contrast.test.ts > token contrast sweep > %s theme with %s: accent-ink at least 4.5:1 on accent
+  - Test: src/ui/contrast.test.ts > token contrast sweep > %s theme with %s: danger at least 4.5:1 on card
 
 ### A10 · Start-up skeleton until the profile and settings are read, so … (P0)
 
