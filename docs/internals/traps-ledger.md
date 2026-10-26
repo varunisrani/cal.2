@@ -131,11 +131,16 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
   - Review: owned by P06-15 (OFF) and P06-16 (FDC)
 - **R02.17** A photo batch with an unreadable or oversized file is refused whole
-  - Review: owned by P06-03
+  - Test: src/features/log/capture/CaptureSheet.test.tsx > CaptureSheet > refuses a pick with a 30 MiB photo whole: a message, no card and nothing stored (ACC-D4-2, R02.17)
+  - Test: src/services/captureDrafts.test.ts > add: a pick is kept whole or not at all (R02.17) > refuses the whole pick when one file is over 25 MiB, and stores nothing (ACC-D4-2)
 - **R02.18** The FDC key goes only in a header; keys with non-printable characters are refused locally; all-caps names use English casing
   - Review: owned by P06-16
 - **R02.19** One photo storage rule (≤ 2 048 px at 0.8 only when smaller); restored photos are never re-encoded; thumbnails are upright
-  - Review: owned by P06-02
+  - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > stores a 4 000 px photo as a 2 048 px JPEG at 0.80 when that copy is smaller
+  - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > keeps the original bytes of a large photo whose 2 048 px copy is not smaller
+  - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > leaves a 1 000 px photo untouched, and one exactly at 2 048 px too
+  - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > writes a 320 px JPEG thumbnail at 0.76 from the upright picture
+  - Test: src/services/photos.test.ts > stored photos are never rewritten (R02.19) > makes a missing thumbnail for a restored 4 000 px photo and leaves its bytes as they were
 - **R02.20** The capture note is stored on the entry; the label-scan barcode is armed once and cleared on every other exit
   - Review: owned by P06-17
 - **R02.21** Saving an untouched entry keeps its exact timestamp

@@ -1,8 +1,10 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
+import type { CaptureDraftService } from './captureDrafts';
 import type { DiaryService } from './diary';
 import type { OnboardingService } from './onboarding';
+import type { PhotoService } from './photos';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
 export interface Services {
@@ -13,6 +15,13 @@ export interface Services {
    * `main.tsx` always provides it.
    */
   readonly aiSetup?: AiSetupService;
+  /**
+   * Stores new photos and makes their display copies (P06-02). Optional only until every test's
+   * stand-in services carry one; `main.tsx` always provides it.
+   */
+  readonly photos?: PhotoService;
+  /** The capture sheet's draft (P06-03); optional for the same reason. */
+  readonly captureDrafts?: CaptureDraftService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

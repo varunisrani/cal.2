@@ -261,9 +261,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D4 · Photo capture (P1)
 
 - **ACC-D4-1** Picking 12 photos keeps 10 and says so
-  - Review: P06-03
+  - Test: src/features/log/capture/CaptureSheet.test.tsx > CaptureSheet > keeps the first 10 of 12 picked photos and says 2 were left out (ACC-D4-1)
+  - Test: src/services/captureDrafts.test.ts > add: up to 10 photos (ACC-D4-1) > keeps the first 10 of 12 picked photos and counts the 2 left out
 - **ACC-D4-2** One oversized photo refuses the whole batch
-  - Review: P06-03
+  - Test: src/features/log/capture/CaptureSheet.test.tsx > CaptureSheet > refuses a pick with a 30 MiB photo whole: a message, no card and nothing stored (ACC-D4-2, R02.17)
+  - Test: src/services/captureDrafts.test.ts > add: a pick is kept whole or not at all (R02.17) > refuses the whole pick when one file is over 25 MiB, and stores nothing (ACC-D4-2)
 
 ### D5 · Analysing overlay with Cancel (P1)
 
@@ -414,7 +416,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D28-1** Deleting an entry keeps a photo still used by a saved meal
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps a photo shared by an entry and a saved meal when the entry is deleted (ACC-D28-1, R02.8)
 - **ACC-D28-2** An undecodable HEIC photo is refused with a message
-  - Review: P06-02
+  - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > refuses a photo the browser cannot decode, as HEIC outside Safari, and writes nothing (ACC-D28-2)
+  - Test: src/features/log/capture/CaptureSheet.test.tsx > CaptureSheet > says plainly when this browser cannot open a photo, as HEIC outside Safari (ACC-D28-2, D-16.21)
 
 ## E · AI providers and analysis
 

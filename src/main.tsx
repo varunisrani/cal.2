@@ -11,6 +11,7 @@ import { hasUnreadableData } from './data/guard';
 import { createBodyFatRepo } from './data/repos/bodyFatRepo';
 import { createCoachRepo } from './data/repos/coachRepo';
 import { createDiaryRepo } from './data/repos/diaryRepo';
+import { createDraftsRepo } from './data/repos/draftsRepo';
 import { createFastRepo } from './data/repos/fastRepo';
 import { createPhotoRepo } from './data/repos/photoRepo';
 import { createProfileRepo } from './data/repos/profileRepo';
@@ -23,9 +24,11 @@ import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
+import { createCaptureDraftService } from './services/captureDrafts';
 import { ServicesProvider, type Services } from './services/context';
 import { createDiaryService } from './services/diary';
 import { createOnboardingService } from './services/onboarding';
+import { createPhotoService } from './services/photos';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 
 // The composition root: the one place that opens the database, creates each repository once and
@@ -76,6 +79,8 @@ async function start(): Promise<void> {
   });
 
   const storage = createStorageAccess({ settings: settingsRepo });
+  const photoRepo = createPhotoRepo(db);
+  const photos = createPhotoService({ photoRepo });
 
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
@@ -90,6 +95,12 @@ async function start(): Promise<void> {
       weightRepo,
     }),
     aiSetup: createAiSetupService({ settingsRepo, secretsRepo }),
+    photos,
+    captureDrafts: createCaptureDraftService({
+      photos,
+      draftsRepo: createDraftsRepo(db),
+      photoRepo,
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

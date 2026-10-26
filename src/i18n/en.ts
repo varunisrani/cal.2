@@ -3,6 +3,7 @@ import { about } from './en/about';
 import { ai } from './en/ai';
 import { aiSetup } from './en/aiSetup';
 import { appearance } from './en/appearance';
+import { capture } from './en/capture';
 import { charts } from './en/charts';
 import { common } from './en/common';
 import { display } from './en/display';
@@ -26,6 +27,7 @@ export const enPartitions = {
   onboarding,
   home,
   log,
+  capture,
   settings,
   charts,
   about,
