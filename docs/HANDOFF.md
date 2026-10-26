@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 21:55 IST (Agent 1, session 3). 56/176 tasks; P00 and P01 complete; the app runs on the real
-database. One builder (P02-15) runs into the 75 % band; the next waves wait for the 00:20 IST reset.
+Updated: 2026-10-26 22:10 IST (Agent 1, session 3). 57/176 tasks; P00, P01 and P02 complete; the app runs on the
+real database. Nothing in flight; the next waves wait for the 00:20 IST reset.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -75,19 +75,17 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 8227428 |
 | Wave 6 | P04-08, P04-09 (diary service, quick start, `src/main.tsx` composition root on the real database, `onboarding` partition) | cfb32cf |
 | Wave 6 | P02-12, P02-14 (secrets under a device key, erase everything, persistence and estimates; D-16.78; persistence wired after the first entry) | 86b4ad7 |
+| Wave 7 | P02-15 (feature hooks over a DataProvider; `LiveState<T>` convention). P02 done | 322a3f7 |
 
 ## In progress
 
-**Wave 7**: one builder, P02-15 feature hooks (`docs/handoff/wave7/w7-p02c.txt`, base 1dc2830,
-`/root/wt/wt-p02c`), launched 21:52 IST at 67 % usage as the last builder before the reset. Wave 6 fully
-landed (latest full loop on 86b4ad7's stack: unit 1969 passed + 2 expected-fail in 126 files, check 6/6,
-bundle 121.34 kB, e2e 1/1). If this container is gone, re-create the worktree at 1dc2830 and relaunch.
-**Progress: 56/176 tasks** (P00 10/10, P01 19/19, P02 14/15, P03 4/19, P04 9/14).
+Nothing in flight. P02-15 verified on its stacked head (unit 1991 passed + 2 expected-fail in 128 files,
+check 6/6, bundle 123.08 kB, e2e 1/1) and pushed as 322a3f7. **Progress: 57/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 4/19, P04 9/14). Usage 68 % at 21:51 IST; no builders until the 00:20 IST reset.
 
 ## Next
 
-1. Land P02-15 when it returns (75–89 % band: small tasks only, no new builders).
-2. After the 00:20 IST reset (new prompts needed, same pattern as `docs/handoff/wave6/`): P04 wave B S5
+1. After the 00:20 IST reset (new prompts needed, same pattern as `docs/handoff/wave6/`): P04 wave B S5
    (P04-10..13: Home with gauge, pillars and diary; manual entry; tab placeholders) on the hooks and
    services, then P04-14 walking-skeleton e2e and parity scenario = **Demo 1**; in parallel P03 wave B
    S2 (P03-03/04 catalog, settings, endpoint), S3 (P03-07..09 adapters), S4 (P03-10..14 image, parse),
@@ -95,6 +93,11 @@ bundle 121.34 kB, e2e 1/1). If this container is gone, re-create the worktree at
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From wave 7 (hooks): every hook returns `LiveState<T>`; none suspends; `useSettings(keys)` returns
+  only the named keys (compared by content); `useTargets(today?)` → missing | corrupt | ok {profile,
+  formula, targets} (pass `useToday()`); `DataSources` holds read methods only; screens import types
+  (`LiveState`, `ProfileRead`) from `src/data/hooks`. To count runs of an async repository read with
+  `countRuns`, wrap it in `Dexie.Promise.resolve(...)`.
 - From wave 6:
   - Secrets/erase/storage (P02-12/14): device key in meta (`wrapKey`); slot names match
     `/^[a-z0-9][a-z0-9._-]{0,63}$/`; `WrapKeyChangedError` for a save racing a key change; erase returns

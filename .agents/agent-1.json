@@ -6,6 +6,6 @@
   "remaining_pct": 32,
   "resets_at": "2026-10-27T00:20:00+05:30",
   "last_check": "2026-10-26T21:52:00+05:30",
-  "current_step": "56/176 tasks; P02-15 hooks running (last builder before the reset)",
-  "last_commit": "1dc2830"
+  "current_step": "57/176 tasks; P02 done; nothing in flight; next round after the 00:20 IST reset",
+  "last_commit": "322a3f7"
 }
