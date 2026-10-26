@@ -1,0 +1,32 @@
+[
+  {
+    "id": "product-name",
+    "pattern": "fud[\\s._-]*ai",
+    "flags": "i",
+    "hint": "the product is Platewise"
+  },
+  {
+    "id": "product-short-name",
+    "pattern": "\\bfud\\b",
+    "flags": "i",
+    "hint": "the product is Platewise"
+  },
+  {
+    "id": "author-handle",
+    "pattern": "apoorv",
+    "flags": "i",
+    "hint": "the reference author's handle never appears in product code"
+  },
+  {
+    "id": "package-path",
+    "pattern": "calorie[\\s._-]*tracker",
+    "flags": "i",
+    "hint": "name it after Platewise concepts, e.g. diary or log"
+  },
+  {
+    "id": "package-id",
+    "pattern": "com\\.apoorvdarshan",
+    "flags": "i",
+    "hint": "the reference's package id; Platewise has its own"
+  }
+]

@@ -7,3 +7,17 @@ playwright-report/
 *.log
 .env
 .env.*
+
+# The repo root's .gitignore was written for a Python project. Re-include folder names that
+# Platewise uses for source code (for example src/lib/ or tooling/checks/lib/).
+!lib/
+!lib64/
+!parts/
+!var/
+!build/
+!downloads/
+!eggs/
+!wheels/
+!target/
+!instance/
+!env/
