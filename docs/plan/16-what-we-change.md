@@ -136,6 +136,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.78 | Short API keys in Settings (P02-12) | Keys of 8 characters or fewer are shown in full | Shown as dots only; longer keys show the first 4 and last 4 characters |
 | D-16.79 | Manual entry with bad macro text (P04-11) | Unreadable or negative macro text saves as 0 | Save is blocked with a field error; a negative fibre still means unknown |
 | D-16.80 | Wizard target and pace with maintain (P05-01) | "Maintain skips target and pace" | Both steps stay in the sequence (D-16.63 indices fixed): with maintain the target check is skipped, Pace shows its maintain confirmation and the profile keeps no pace or target weight. The target check compares the weights as shown (tenths in the person's unit); a unit switch holds a value the new wheel cannot show to the wheel's end |
+| D-16.81 | Chart maths and bar layout (P07-10, P07-11) | Downsampling rounds the bucket up to whole days and can end a point short; the bar axis ends at the highest value; labels are thinned from the oldest day | A long series is cut into exactly `limit` equal runs of calendar days; dense bars use gap = width ÷ (3n − 1) and bar = 2 × gap, so a whole range always fits; the bar axis ends on a round tick at or above max(highest day, goal); labels are thinned from the newest day (the oldest may go unlabelled); a missing day takes no slot; the inspector is pointer-only, the hidden table serves keyboard and screen readers |
 
 ### 2.8 Not in 1.0
 

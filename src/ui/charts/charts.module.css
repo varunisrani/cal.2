@@ -1,0 +1,150 @@
+/*
+ * Charts: SVG drawn with the tokens of tokens.css. Every colour is a custom property read here,
+ * so a theme or accent change repaints the charts without drawing them again.
+ */
+
+.chart {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+}
+
+.frame {
+  position: relative;
+  width: 100%;
+}
+
+/* The press surface: sideways drags are ours, vertical ones stay the page's scroll (R05.16). */
+.plot {
+  position: relative;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.plotArea {
+  fill: var(--accent-soft);
+  opacity: 0.35;
+}
+
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.guide {
+  stroke: var(--line);
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+
+.tickLabel,
+.dateLabel {
+  fill: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+}
+
+.line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.area {
+  fill: var(--accent);
+  fill-opacity: 0.12;
+}
+
+.dot {
+  fill: var(--accent);
+}
+
+.goal {
+  stroke: var(--success);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 4;
+}
+
+.cursor {
+  stroke: var(--accent);
+  stroke-opacity: 0.6;
+  stroke-width: 1.25;
+  stroke-dasharray: 3 3;
+}
+
+.ring {
+  fill: var(--card);
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+.bar {
+  fill: var(--accent);
+}
+
+.bar[data-dimmed] {
+  fill-opacity: 0.4;
+}
+
+.tooltip {
+  position: absolute;
+  top: var(--space-1);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  box-sizing: border-box;
+  padding: var(--space-1) var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  box-shadow: var(--shadow-raised);
+  pointer-events: none;
+  text-align: center;
+}
+
+.tooltipDate,
+.tooltipValue {
+  max-width: 100%;
+  overflow: hidden;
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipDate {
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  font-weight: var(--weight-medium);
+}
+
+.tooltipValue {
+  color: var(--text);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Read by screen readers, not shown. */
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

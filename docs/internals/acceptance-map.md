@@ -592,7 +592,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G3 · Weight card (P1)
 
 - **ACC-G3-1** The weight chart shows the goal line and a tooltip when pressed
-  - Review: P07-10
+  - Test: src/ui/charts/LineChart.test.tsx > LineChart > draws the goal line and shows a tooltip on the nearest point while pressed and dragged (ACC-G3-1)
 - **ACC-G3-2** A change under 0.05 kg reads 0.0 without a sign
   - Review: P07-12
 
@@ -633,7 +633,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G10 · Calorie history bars with a goal line and inspector (P1)
 
 - **ACC-G10-1** A full year of bars fits the chart and the last day can be inspected
-  - Review: P07-11
+  - Test: src/ui/charts/BarChart.test.tsx > BarChart > fits a full year of bars inside a 360 px plot and inspects the last day (ACC-G10-1, R05.15)
 
 ### G11 · Macro and nutrient averages per logged day (P1)
 

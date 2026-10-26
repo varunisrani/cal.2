@@ -321,11 +321,20 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
 - **R05.15** Dense calorie charts always fit so the newest day stays reachable
-  - Review: owned by P07-11
+  - Test: src/domain/progress/chartMath.test.ts > barLayout > fits every bar inside the plot so the newest day stays reachable (R05.15)
+  - Test: src/ui/charts/BarChart.test.tsx > BarChart > fits a full year of bars inside a 360 px plot and inspects the last day (ACC-G10-1, R05.15)
 - **R05.16** Only clearly horizontal drags scrub charts; pointer state stays local; long series are downsampled
-  - Review: owned by P07-10
+  - Test: src/ui/charts/LineChart.test.tsx > LineChart > does not scrub on a vertical drag (R05.16)
+  - Test: src/ui/charts/LineChart.test.tsx > LineChart > does not scrub on a diagonal drag that is not clearly sideways (R05.16)
+  - Test: src/ui/charts/LineChart.test.tsx > LineChart > renders again only when the nearest point changes (R05.16)
+  - Test: src/ui/charts/LineChart.test.tsx > LineChart > averages a year of daily weigh-ins into 30 points (R05.16)
+  - Test: src/domain/progress/chartMath.test.ts > downsample > turns 365 daily readings into 30 points averaged in time and value (R05.16)
+  - Test: src/domain/progress/chartMath.test.ts > isClearlyHorizontal > lets only drags well over half again as wide as they are tall scrub (R05.16)
+  - Test: src/ui/charts/BarChart.test.tsx > BarChart > leaves a pinned tooltip alone during a vertical drag (R05.16)
+  - Test: src/ui/charts/BarChart.test.tsx > BarChart > scrubs across the bars on a sideways drag and clears on release (R05.16)
 - **R05.17** Macro averages divide by logged days, the calorie average by days with energy; missing days are gaps; Count today shifts the window
-  - Review: owned by P07-16
+  - Test: src/ui/charts/BarChart.test.tsx > BarChart > draws no bar for a missing day or a day without food (R05.17)
+  - Review: owned by P07-16 (the averages)
 - **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
   - Review: owned by P07-03
 - **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights
