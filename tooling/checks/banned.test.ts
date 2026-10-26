@@ -72,6 +72,8 @@ describe('banned names', () => {
       'docs/plan/00-decisions.md': NAME,
       [`docs/${SHORT}.md`]: NAME,
       'pnpm-lock.yaml': NAME,
+      '.github/workflows/ci.yml': NAME,
+      '.github/dependabot.yml': NAME,
       'node_modules/x/index.js': NAME,
       'dist/app.js': NAME,
       'src/README.md': NAME,
@@ -79,7 +81,9 @@ describe('banned names', () => {
     });
     const res = await runBanned(contextFor(root));
     // Output folders are skipped at the product root only.
+    // Only workflow files are exempt under .github/ (they must name the reference to fetch it).
     expect([...new Set(res.findings.map((f) => f.file))].sort()).toEqual([
+      '.github/dependabot.yml',
       'src/README.md',
       'src/dist/app.ts',
     ]);

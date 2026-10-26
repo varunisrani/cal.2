@@ -5,8 +5,12 @@ import { result, type CheckContext, type CheckResult, type Finding } from './lib
 
 export const PATTERNS_FILE = 'tooling/checks/banned-patterns.json';
 
-/** Files that may name the reference: credits, agent notes and the plan docs. */
+/**
+ * Files that may name the reference: credits, agent notes, the plan docs, and the CI workflows,
+ * which must name the reference repository to fetch it for the similarity check.
+ */
 const EXEMPT = [
+  '.github/workflows/**',
   'README.md',
   'AGENTS.md',
   'CLAUDE.md',

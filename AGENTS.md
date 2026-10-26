@@ -29,7 +29,7 @@ none of the original's code, text or assets.
   enforces it. Reference names may appear only in `README.md`, `AGENTS.md`, `CLAUDE.md`,
   `THIRD_PARTY_NOTICES.md` and `docs/`.
 
-## Commands (from `platewise/`)
+## Commands (from the repository root)
 
 ```bash
 pnpm install --frozen-lockfile

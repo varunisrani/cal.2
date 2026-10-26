@@ -1,0 +1,72 @@
+name: Platewise
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: platewise-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REF_REPOSITORY: apoorvdarshan/fud-ai
+  REF_COMMIT: 10e14b67116c52b515d2389621266e32b3a99840
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.28.0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Fetch the clean-room reference (outside the workspace)
+        working-directory: ${{ runner.temp }}
+        run: |
+          git init --quiet ref
+          git -C ref fetch --quiet --depth 1 "https://github.com/${REF_REPOSITORY}.git" "${REF_COMMIT}"
+          git -C ref checkout --quiet --detach FETCH_HEAD
+          test "$(git -C ref rev-parse HEAD)" = "${REF_COMMIT}"
+          echo "PLATEWISE_REF=${RUNNER_TEMP}/ref" >> "$GITHUB_ENV"
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format
+        run: pnpm fmt:check
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Clean-room guards
+        run: pnpm check --require-ref
+
+      - name: Build
+        run: pnpm build
+
+      - name: Install the Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: pnpm e2e

@@ -1,12 +1,12 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 (lead agent, session 1).
+Updated: 2026-10-26 (lead agent, session 1). Work paused by the user after the plan landed; build wave 1 had not landed.
 
 ## Where things are
 
 | Item | State |
 |---|---|
-| Branch | `claude/elegant-cannon-peaxt4` in `varunisrani/Ai1`; everything lives in `platewise/` |
+| Repository | `varunisrani/cal.2`, branch `main` (moved from the `platewise/` folder of `varunisrani/Ai1`, branch `claude/elegant-cannon-peaxt4`, with its history). Paths in the plan docs that start with `platewise/` now mean the repository root |
 | Reference | `~/reference/fud-ai` at `10e14b67116c52b515d2389621266e32b3a99840` (re-clone and check out that commit if the container was reset) |
 | REA | `~/rea-lab/rea` wraps `npx -y rea-agents@6.8.0` on Node 24.22.1 (`nvm install 24.22.1` if missing). Evidence and captures live in `~/rea-lab/`; nothing of it is in the repo |
 | Plan | `docs/plan/` (start at `README.md` once the planner lands it) |
@@ -23,19 +23,19 @@ Updated: 2026-10-26 (lead agent, session 1).
 
 ## In progress
 
-- Planner sub-agent: feature inventory, naming and glossary, roadmap, phase-wise plan, phase files,
-  traps ledger, acceptance map.
-- CI workflow is parked at `/root/wt/platewise-ci.yml`. It goes into
-  `.github/workflows/platewise-ci.yml` once `pnpm check --require-ref` is green (it needs the
-  traps ledger).
+Nothing. The plan has landed: `docs/plan/` holds 11 phase files (P00–P10, 176 tasks), the
+traps ledger and the acceptance map. Decisions D-16.1 to D-16.66 are confirmed. CI is
+`.github/workflows/ci.yml`.
 
 ## Next
 
-1. Land the plan; add the planner's banned-pattern proposals to
-   `tooling/checks/banned-patterns.json`; land CI.
-2. Wave 1 (parallel, no shared files): P00 leftovers (tokens and brand, i18n catalogue, fake AI
-   provider), P01 domain core, P02 data layer, P03 AI layer.
-3. Then P04 walking skeleton (Demo 1), and P05–P09 in waves of up to 4 builders.
+1. Wave 1 (no shared files): P00 S1 (P00-08 clock and ids, P00-01 CI refinements, P00-10 bundle
+   budget), P00 S2 (P00-02..04 tokens, theme, icons), P00 S3 (P00-05/06 i18n), and P01 wave A
+   (P01-01/02 domain types and dates). A first attempt at the three P00 slices was stopped
+   unfinished when the user paused the build, and nothing of it landed. Start them again from
+   the phase file.
+2. Then the remaining P00 slices, P01 wave B, P02 and P03, in waves of up to four builders, then
+   P04 walking skeleton (Demo 1) and P05–P10.
 
 ## How to resume
 
