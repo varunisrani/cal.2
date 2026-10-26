@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s3c (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 slice S3c = P05-08, P05-09 — the rebuild plan service; the weekly tune-up runner. Spec: those two rows in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read); research spec 01 §3.6 (Applying) and the tune-up sections; decision D-16.45 in docs/plan/16-what-we-change.md and Proposed D-16.60 in docs/plan/18-phase-wise-build-plan.md. Traps: R01.4 (P05-08), R01.1, R01.5, R01.14 (P05-09), as their Review lines say in docs/internals/traps-ledger.md. Acceptance ids: ACC-C3-1, ACC-C3-2, ACC-C4-1, ACC-C4-2 (P05-08), ACC-C8-1, ACC-C8-2 (P05-09), where their Review lines name these tasks.
+Task notes (each before its code): docs/notes/P05/rebuild-plan-service.md, docs/notes/P05/weekly-tune-up-runner.md.
+
+You own:
+- src/services/goals/rebuild.ts, rebuild.test.ts, tuneUp.ts, tuneUp.test.ts (new folder src/services/goals/)
+- src/app/useTuneUp.ts, src/app/useTuneUp.test.ts
+- a goals-services partition only if a message must be words (prefer returning kinds and numbers; the Settings page P05-11 shows them)
+
+Do not touch:
+- src/services/{context.tsx,onboarding.ts,diary.ts,shell.ts} and src/main.tsx (another slice adds the AI setup service there now; the lead wires yours at landing: export a create function that takes its deps), src/app/App.tsx (the lead mounts useTuneUp at landing), src/ai/** (landed: import only — requestPlan and requestNutrientGoals in src/ai/tasks/planning.ts), src/domain/** (import only: the P01-16 tune-up reducer, P01-15 rebuild baseline and signature, P01-17 buildEvidence), src/data/** (import only), src/features/**, src/i18n/** other than your own partition, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Services are plain TypeScript with deps injected: the repositories (profile, settings, weight, body fat, diary as buildEvidence needs), a clock, and `aiAccess: () => Promise<{ settings: AiSettings; keys: ProviderKeys }>` for the stored AI setup (src/ai/settings.ts types; the lead wires it to the `ai.settings` row and the secrets repository being added now). Failures are values.
+- Rebuild (R01.4, D-16.45): snapshot the profile and switches, build the evidence pack, call requestPlan with its own deadline; apply only if the stored profile and switches equal the snapshot exactly; applying sets all four saved targets, clears every lock and stores the rebuild baseline; then refresh the optional nutrient goals (a failure keeps them) and, when the tune-up is on, mark today checked. Success returns the new calorie target and the AI's reason; failure returns the failure kind and leaves the goals unchanged; no formula fallback here.
+- Tune-up (R01.1, R01.5, R01.14, D-16.45): drive the P01-16 reducer; run on app open and on visibilitychange → visible once onboarding is done; single-flight (overlapping triggers dropped: three visibility events in a row cause one AI call); apply, drop or mark as the reducer says; save the pre-tune-up plan once and restore it when the switch goes off; enabling clears locks and forces a run whose outcome (changed, unchanged with a short reason, could not reach the provider) the caller shows. useTuneUp wires it to the app lifecycle with document visibility injected for tests.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/goals src/app/useTuneUp.test.ts --maxWorkers=1 (fake fetch from src/ai/testing/fakeFetch.ts, fake-indexeddb repositories as other service tests do, fake timers)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

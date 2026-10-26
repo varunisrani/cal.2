@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s3a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave A slice S3a = P06-15, P06-16 — the Open Food Facts client; the FoodData Central client. (The scanner P06-14 and the lookup order P06-17 follow in another slice.) Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §2 (the OFF field list) and §3.12. Traps: R02.16 (both), R02.18 (P06-16), and the client side of any other row whose Review line names P06-15 or P06-16 in docs/internals/traps-ledger.md; acceptance ids whose Review line names them in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P06/open-food-facts-client.md, docs/notes/P06/fooddata-central-client.md.
+
+You own:
+- src/services/barcode/off.ts, off.test.ts, fdc.ts, fdc.test.ts, and a shared helper module under src/services/barcode/ if both need one (for example the result type and the serving-weight parsing)
+- test fixtures under src/services/barcode/__fixtures__/ (every product, name and number ours)
+
+Do not touch:
+- src/services/barcode/{decoder,lookup}.ts and src/features/log/scan/** (the next slice), src/domain/** (import only; src/domain/food/barcode.ts is the next slice's), src/data/** (import only: the secrets repository holds the FDC key in the `fdc` slot, FDC_SLOT), src/ai/** (import only), src/services/** outside barcode/, src/features/**, src/app/**, src/main.tsx, src/i18n/** (no screen words in this slice: failures are kinds, the screen maps them later), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Clients are pure TypeScript with fetch injected (deps.fetch; src/ai/testing/fakeFetch.ts serves the tests; the fetch allow-list already covers src/services/barcode/**). Failures are values (Result from src/lib/result.ts) with the kinds named in the rows (invalid, notFound, rateLimited, unavailable, unexpected, noNutrition, offline, timeout, network; keyRefused for FDC). The result is a NutritionDraft-shaped product (src/domain/model) with source barcode and the product's name, brand and units, ready for the review sheet.
+- OFF: the code trimmed, 1–24 ASCII digits else invalid with no request, sent as scanned; `lc` = the browser language; the exact field list; status mapping, mapping of servings and per-100 g values, kJ → kcal × 0.23900573614, minerals and vitamins from grams to mg / mcg, optional values to 0.1, the units rules, name and brand rules: all as the row says.
+- FDC: no request without a stored key and an all-digit code; a key with a character outside 0x21–0x7E is refused locally; the key goes only in the X-Api-Key header (never a URL or a log line; R02.18); 15 s timeout; every GTIN spelling OR-ed; only Branded (or untyped) foods whose GTIN matches; serving weight from the unit codes and household text in the row; label and per-100 g sets never mixed when the weight is unknown (R02.16); all-caps names in English casing.
+- The 15 s timeout uses an AbortSignal you create; the user's cancel signal can be passed in too.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/barcode --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
