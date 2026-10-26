@@ -1,5 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
+import { Dexie } from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
+import { DataProvider, type DataSources } from '../data/DataProvider';
 import { common } from '../i18n/en/common';
 import { onboarding } from '../i18n/en/onboarding';
 import { shell } from '../i18n/en/shell';
@@ -26,13 +28,31 @@ const services: Services = {
   clock: fixedClock(Date.parse('2026-10-26T12:30:00-04:00'), 'America/New_York'),
 };
 
+/** Reads that never finish: the tab screens stay on their loading state. */
+const pending = () => new Dexie.Promise<never>(() => {});
+const data: DataSources = {
+  profileRepo: { get: pending },
+  settingsRepo: { snapshot: pending, loaded: pending() },
+  diaryRepo: { byDay: pending, between: pending },
+  waterRepo: { byDay: pending },
+  fastRepo: { between: pending, active: pending },
+  weightRepo: { between: pending },
+  bodyFatRepo: { between: pending },
+  savedMealsRepo: { list: pending },
+  coachRepo: { list: pending },
+  unreadableFlag: pending,
+  clock: services.clock,
+};
+
 function renderApp(ports: ShellPorts, initialHash = '') {
   const host = memoryHost(initialHash);
   const router = createRouter(host);
   const reload = vi.fn();
   const view = render(
     <ServicesProvider services={services}>
-      <App ports={ports} router={router} appState={createAppState()} onReload={reload} />
+      <DataProvider sources={data}>
+        <App ports={ports} router={router} appState={createAppState()} onReload={reload} />
+      </DataProvider>
     </ServicesProvider>,
   );
   return { host, router, reload, ...view };

@@ -1,0 +1,13 @@
+/* The Coach tab (a placeholder until P08). Every value comes from tokens.css. */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}

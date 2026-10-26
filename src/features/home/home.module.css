@@ -1,0 +1,245 @@
+/*
+ * Home (P04-10..12; P07 adds the week bar and more rows): the page, the summary card with the
+ * gauge and pillars, the diary's meal sections and rows, and the floating add button. Every value
+ * comes from tokens.css; logical properties throughout. The tab bar's size comes from the shell
+ * (`--tabbar-height`, `--tabbar-gap`), with fallbacks for a page drawn without it.
+ */
+
+.page {
+  --fab-size: 3.5rem;
+  --fab-gap: var(--space-4);
+
+  display: grid;
+  gap: var(--space-4);
+  /* The last row clears the floating add button as well as the tab bar. */
+  padding-block-end: calc(var(--fab-size) + var(--fab-gap));
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+/* ---- Summary: gauge and pillars ---------------------------------------------------------- */
+
+.summary {
+  display: grid;
+  gap: var(--space-5);
+  padding-block: var(--space-5);
+}
+
+.pillars {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+/* ---- Diary ------------------------------------------------------------------------------- */
+
+.diary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.diaryHeading {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.empty {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.meal {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.mealHeader {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline: var(--space-1);
+}
+
+.mealName {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+/* Totals keep to the leading side, clear of the floating button. */
+.mealTotals {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-2);
+  max-inline-size: 70%;
+  margin: 0;
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.mealEnergy {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+.mealMacros {
+  color: var(--text-muted);
+}
+
+/* One rounded card per meal; rows separated by hairlines. */
+.rows {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+/* ---- Entry row --------------------------------------------------------------------------- */
+
+.entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.emoji {
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.entryText {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.entryLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.entryName {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.entryTime {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+}
+
+.entryEnergy {
+  flex: none;
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.entryMacros {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Floating add button ----------------------------------------------------------------- */
+
+.fabSlot {
+  position: fixed;
+  z-index: var(--z-fab);
+  inset-inline-end: calc(var(--safe-right) + var(--space-5));
+  inset-block-end: calc(
+    var(--safe-bottom) + var(--tabbar-height, 4rem) + var(--tabbar-gap, var(--space-3)) * 2 +
+      var(--fab-gap)
+  );
+}
+
+/* Two classes, so the round button wins over the menu's own trigger style. */
+.fabSlot .fab {
+  justify-content: center;
+  inline-size: var(--fab-size);
+  block-size: var(--fab-size);
+  min-block-size: 0;
+  padding: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  box-shadow: var(--shadow-raised);
+  transition: transform var(--motion-quick) var(--ease-move);
+}
+
+.fabSlot .fab:active {
+  transform: scale(0.94);
+}
+
+.fabSlot .fab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* ---- While the day is read --------------------------------------------------------------- */
+
+.placeholder {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.placeholderSummary,
+.placeholderRow {
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.placeholderSummary {
+  block-size: calc(var(--space-8) * 8);
+}
+
+.placeholderRow {
+  block-size: calc(var(--space-8) * 2);
+}

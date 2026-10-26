@@ -5,10 +5,17 @@ import { createAppState } from '../../app/appState';
 import type { ReadStore, ShellPorts } from '../../app/ports';
 import { createRouter } from '../../app/router';
 import { memoryHost } from '../../app/testing/memoryHost';
+import { DataProvider, type DataSources } from '../../data/DataProvider';
+import { hasUnreadableData } from '../../data/guard';
+import { createBodyFatRepo } from '../../data/repos/bodyFatRepo';
+import { createCoachRepo } from '../../data/repos/coachRepo';
 import { createDiaryRepo } from '../../data/repos/diaryRepo';
+import { createFastRepo } from '../../data/repos/fastRepo';
 import { createPhotoRepo } from '../../data/repos/photoRepo';
 import { createProfileRepo } from '../../data/repos/profileRepo';
+import { createSavedMealsRepo } from '../../data/repos/savedMealsRepo';
 import { createSettingsRepo } from '../../data/repos/settingsRepo';
+import { createWaterRepo } from '../../data/repos/waterRepo';
 import { createWeightRepo } from '../../data/repos/weightRepo';
 import { profileDefaults } from '../../domain/profile/profile';
 import { mergePartitions } from '../../i18n/catalogue';
@@ -147,19 +154,33 @@ describe('quick start on a fresh database (P04-09)', () => {
     const profileRepo = createProfileRepo(test.db);
     const settingsRepo = createSettingsRepo(test.db, { locale: 'en-GB', bus: test.bus });
     const weightRepo = createWeightRepo(test.db, { bus: test.bus });
+    const diaryRepo = createDiaryRepo(test.db);
     const services: Services = {
-      diary: createDiaryService({
-        diaryRepo: createDiaryRepo(test.db),
-        photoRepo: createPhotoRepo(test.db),
-      }),
+      diary: createDiaryService({ diaryRepo, photoRepo: createPhotoRepo(test.db) }),
       onboarding: createOnboardingService({ profileRepo, settingsRepo, weightRepo }),
+      clock,
+    };
+    // Home reads the day through the hooks once the quick start is done.
+    const data: DataSources = {
+      profileRepo,
+      settingsRepo,
+      diaryRepo,
+      waterRepo: createWaterRepo(test.db),
+      fastRepo: createFastRepo(test.db),
+      weightRepo,
+      bodyFatRepo: createBodyFatRepo(test.db),
+      savedMealsRepo: createSavedMealsRepo(test.db),
+      coachRepo: createCoachRepo(test.db),
+      unreadableFlag: () => hasUnreadableData(test.db),
       clock,
     };
     const ports = createShellPorts({ profileRepo, settingsRepo });
     const host = memoryHost(initialHash);
     const view = render(
       <ServicesProvider services={services}>
-        <App ports={ports} router={createRouter(host)} appState={createAppState()} />
+        <DataProvider sources={data}>
+          <App ports={ports} router={createRouter(host)} appState={createAppState()} />
+        </DataProvider>
       </ServicesProvider>,
     );
     return { test, ports, host, view, profileRepo, settingsRepo, weightRepo };

@@ -134,6 +134,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.76 | Unreadable stored data (P02-01, P02-02) | One store of JSON blobs; a failed safety copy blocks every later write to the key | One table per record type, so a bad row costs only that row; the quarantine is a table written in the same transaction; a failed copy refuses only that one write |
 | D-16.77 | Fasting switched off by a restore or import (P02-09) | No start-up check | settleOnOpen ends any running fast at start-up while fasting is off, so a restored fast never blocks food logging |
 | D-16.78 | Short API keys in Settings (P02-12) | Keys of 8 characters or fewer are shown in full | Shown as dots only; longer keys show the first 4 and last 4 characters |
+| D-16.79 | Manual entry with bad macro text (P04-11) | Unreadable or negative macro text saves as 0 | Save is blocked with a field error; a negative fibre still means unknown |
 
 ### 2.8 Not in 1.0
 

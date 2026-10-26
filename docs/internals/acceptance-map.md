@@ -246,12 +246,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D2-1** A manual entry appears under its meal and the gauge updates
   - Review: P04-14
 - **ACC-D2-2** Energy typed in kJ is stored as kcal
-  - Review: P04-11
+  - Test: src/features/log/ManualSheet.test.tsx > ManualSheet > saves 2 093 kJ as 500 kcal (ACC-D2-2)
 
 ### D3 · "+" menu with three default groups (Snap & scan, Describe, Reuse) … (P0)
 
 - **ACC-D3-1** The + menu offers Enter manually
-  - Review: P04-10
+  - Test: src/features/home/HomePage.test.tsx > HomePage > offers Enter manually in the + menu, which opens the manual sheet over Home (ACC-D3-1)
 - **ACC-D3-2** The default menu shows the three groups and their methods
   - Review: P06-01
 
@@ -516,14 +516,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F3 · Energy gauge with the eaten amount and left, over, goal reached or … (P0)
 
 - **ACC-F3-1** With 1 200 of 2 000 kcal eaten the gauge reads 800 left
-  - Review: P04-10
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary gauge > reads 800 left with 1 200 of 2 000 kcal eaten, and sweeps 108° (ACC-F3-1)
 - **ACC-F3-2** Over the goal the gauge stays full and reads the excess
-  - Review: P04-10
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary gauge > stays full and reads 100 over at 2 100 of 2 000 kcal (ACC-F3-2)
 
 ### F4 · Nutrient pillars (P0)
 
 - **ACC-F4-1** Home shows protein, carbs, fat and fibre pillars by default
-  - Review: P04-10
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary pillars > shows protein, carbs, fat and fibre against their goals, in that order (ACC-F4-1)
 - **ACC-F4-2** A sodium pillar shows how far over its limit the day is
   - Review: P07-03
 
@@ -540,7 +540,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F7 · Diary grouped by meal with food-only section totals (P0)
 
 - **ACC-F7-1** Entries appear under their meal with that meal's total
-  - Review: P04-10
+  - Test: src/features/home/Diary.test.tsx > Diary > shows a 300 kcal breakfast under Breakfast with the section total 300 (ACC-F7-1)
 - **ACC-F7-2** Newest first shows repeated meal sections in time order
   - Review: P07-05
 
@@ -559,7 +559,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F10 · Empty-day message (P0)
 
 - **ACC-F10-1** A day without entries shows the empty message
-  - Review: P04-10
+  - Test: src/features/home/Diary.test.tsx > Diary > shows the empty card on a day with nothing logged (ACC-F10-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage > shows the empty card on a day with nothing logged (ACC-F10-1)
 
 ### F11 · "+" button opening food methods, Water and fasting entries (P0)
 
@@ -776,7 +777,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J1 · Settings hub with categories in a fixed order, back link, pages … (P0)
 
 - **ACC-J1-1** The hub lists its categories and each opens with a back link
-  - Review: P04-13
+  - Test: src/features/settings/SettingsHub.test.tsx > SettingsHub > opens a category from its row, under a back link labelled Settings (ACC-J1-1)
 - **ACC-J1-2** The hub shows every v1 category in order
   - Review: P09-01
 
