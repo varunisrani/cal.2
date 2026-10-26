@@ -9,7 +9,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.1** The weekly tune-up re-runs the AI plan; the reference's unused deterministic corrector is not built (D-16.45)
   - Review: owned by P05-09
 - **R01.2** An AI plan that is out of range, incoherent, missing a macro or implausible is refused; accepted plans satisfy 4P + 4C + 9F = kcal exactly
-  - Review: owned by P01-14
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: worked examples > stores {2000, 150, 215, 61} as 2 000 / 150 / 215 / 60 with 4P + 4C + 9F = 2 000 (ACC-C3-1, R01.2)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: worked examples > refuses protein 300 for the default profile (allowed 78–146)
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: worked examples > refuses the incoherent {2000, 150, 400, 80} at the coherence step
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: shape (step 1) > refuses a missing macro
+  - Test: src/domain/goals/planValidator.test.ts > checkPlan: exact energy sweep > gives 4P + 4C + 9F = kcal for every accepted reply in a sweep of coherent replies
 - **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
   - Review: owned by P05-01
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
@@ -19,11 +23,16 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
   - Review: owned by P05-01
 - **R01.7** Plan Ready edits keep calories and macros consistent and mark the plan as edited
-  - Review: owned by P01-13
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > keeps 4P + 4C + 9F within 3 kcal of kcal after any edit (R01.7)
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives carbs when kcal, protein or fat change: kcal 2 000, P 150, F 60 → carbs 215
+  - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives kcal when carbs change: carbs 300 → kcal 2 340
 - **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
   - Review: owned by P05-05
 - **R01.9** Truncation and rounding follow the spec exactly; the fat residue uses a true floor-mod
-  - Review: owned by P01-12
+  - Test: src/domain/goals/formulas.test.ts > integer maths (R01.9) > keeps a floor-mod in 0…n−1 where % goes negative: floorMod(-1, 4) = 3
+  - Test: src/domain/goals/formulas.test.ts > formulaPlan > cuts protein and fat instead of rounding them (R01.9)
+  - Test: src/domain/goals/targets.test.ts > autoBalance > shares what is left by formula energy with integer division at each step (R01.9)
+  - Test: src/domain/goals/planValidator.test.ts > fatWithResidue (R01.9) > uses a true floor-mod when the target is below the remainder
 - **R01.10** The optional-goal refresh keeps current values for keys the AI left out, clamps to 0–999 999 and never snaps typed values
   - Review: owned by P03-14
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
@@ -31,7 +40,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Review: owned by P05-10
 - **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
-  - Review: owned by P01-13
+  - Test: src/domain/goals/locks.test.ts > materialise > takes all three macros from one snapshot instead of writing them one by one (R01.13)
+  - Test: src/domain/goals/locks.test.ts > setMacro > refuses a macro edit when kcal and both other macros are locked, and nothing changes (R01.13)
+  - Test: src/domain/goals/locks.test.ts > setKcal > spreads a new total over free macros, the last one absorbing rounding, and locks kcal
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
   - Review: owned by P05-09
 - **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
