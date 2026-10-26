@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave A = P03-01, P03-02 — AI error kinds, classification and messages; the fake fetch and wire fixtures every later AI and Coach test uses. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference files to read for P03-01, then their tests; P03-02 has no reference reading); research spec 03 §3.10; decision D-16.31 in docs/plan/16-what-we-change.md. Traps owned: R03.2, R03.18, R03.19 (P03-01). Acceptance ids: ACC-E10-1, ACC-E10-2.
+Task notes (each before its code): docs/notes/P03/error-kinds-classification-and-messages.md, docs/notes/P03/fake-fetch-and-wire-fixtures.md.
+
+You own:
+- src/ai/errors.ts, src/ai/errors.test.ts
+- src/ai/testing/** (fakeFetch.ts, fakeFetch.test.ts, wire.ts, and a wire test if you add one)
+- src/i18n/en/ai.ts — a new catalogue partition rooted at ai (export const ai = { ai: {…} }) with one message key per failure kind; the lead adds it to src/i18n/en.ts when it lands (do not edit en.ts; import the partition directly in your tests)
+
+Do not touch:
+- src/domain/**, src/data/** (another builder, at the same time), src/ui/**, src/i18n/en/common.ts, src/i18n/en/display.ts (the P04 builders, at the same time), src/i18n/** other than ai.ts, src/app/**, src/main.tsx, public/**, index.html, e2e/**, playwright.config.ts, scripts/**
+- eslint.config.js (if a lint rule blocks you, stop and report it instead of changing the config)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- The fetch boundary: only src/ai/transport.ts (P03-05, later) may call the global fetch (P00-07 lint). fakeFetch builds a function with fetch's signature that tests inject into the code under test; it never reads, replaces or stubs globalThis.fetch, window.fetch or self.fetch. Types such as `typeof fetch`, Request, Response and Headers are fine.
+- Messages are catalogue keys in src/i18n/en/ai.ts in our own words; provider text is never shown to the user (only Coach's Details view may show it later, D-16.31, with any stored key redacted). The message for every kind is a key, never the body. Write all copy yourself; never reuse the reference's wording.
+- classify(status, bodyText) checks in the row's order; read error bodies in every shape the row lists (error.message, error as a string, detail, plain text). fromNetwork: user abort → cancelled, our deadline → timeout, navigator.onLine === false → offline (take onLine as an injected value or read it through a small seam so tests need no global stubs), anything else → connection, with the "key may have been refused" hint for the providers the row names.
+- fakeFetch: match by URL pattern, queued replies in order (status, headers, JSON or text body, optional delay honoured by fake timers, or a thrown TypeError), record every request (URL, headers, parsed body), respect AbortSignal (an aborted signal rejects with an AbortError), and an unmatched URL fails the test loudly. wire.ts builds valid replies for the Gemini, OpenAI-compatible and Anthropic formats (with thought/reasoning parts and finish/stop reasons) and error bodies; every sample text in it is ours.
+- Real waits are banned: fake timers only.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
