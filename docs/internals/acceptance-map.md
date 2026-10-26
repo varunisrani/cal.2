@@ -291,7 +291,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D9 · Serving units (P1)
 
 - **ACC-D9-1** An entry with an unknown weight reopens at its serving count and never shows grams
-  - Review: P01-09
+  - Test: src/domain/servings/scale.test.ts > initialAmount > reopens an unknown weight saved at 2 servings at 2 servings and never shows grams (R02.1)
 - **ACC-D9-2** Switching from slices to grams keeps the amount
   - Review: P06-07
 
@@ -321,14 +321,15 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D13-1** Adding a 100 kcal line raises the meal total by 100
   - Review: P06-09
 - **ACC-D13-2** Removing a line scales sodium by the remaining weight
-  - Review: P01-10
+  - Test: src/domain/servings/ingredients.test.ts > applyLineChange > scales sodium by 300/400 when a 100 g line leaves a 400 g meal (R02.4)
 
 ### D14 · Split into servings (1–50), hidden for portions that were already … (P1)
 
 - **ACC-D14-1** Splitting a 2 kg pot into 8 offers a 250 g serving
-  - Review: P01-11
+  - Test: src/domain/servings/recipe.test.ts > splitRecipe > splits a 2 kg pot into 8: a 250 g serving first, selected with count 1
 - **ACC-D14-2** A re-logged portion offers no split
-  - Review: P06-09
+  - Test: src/domain/servings/recipe.test.ts > canSplit > refuses a re-logged portion, which would divide the portion again (R02.6)
+  - Review: the review sheet's split button owned by P06-09
 
 ### D15 · Combine selected entries into one meal that sums every nutrient … (P1)
 
