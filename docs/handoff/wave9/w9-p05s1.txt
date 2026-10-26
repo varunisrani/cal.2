@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 wave A slice S1 = P05-01, P05-02, P05-03 — the onboarding wizard state machine and its steps from Welcome to Reminders. Spec: those three rows in docs/plan/phases/P05-onboarding-and-goals.md (read the named reference parts for behaviour only, then their tests); research spec 01 §3.1–3.4; decisions D-16.11, D-16.15, D-16.37, D-16.56, D-16.63 in docs/plan/16-what-we-change.md. Trap owned: R01.3 (P05-01); R01.6 and R01.8 are behaviours your state machine proves (the domain halves already landed). Acceptance ids: ACC-B3-1, ACC-B4-1 (P05-01), ACC-B1-1, ACC-B2-1, ACC-B11-2 (P05-02), ACC-B2-2, ACC-B5-1 (P05-03).
+Task notes (each before its code): docs/notes/P05/wizard-state-machine.md, docs/notes/P05/wizard-steps-welcome-to-body-fat.md, docs/notes/P05/wizard-steps-activity-to-reminders.md.
+
+You own:
+- src/features/onboarding/wizard.ts (+ test), WizardPage.tsx (+ test), onboarding.module.css, steps/{Welcome,Sex,Birthday,Body,BodyFat,Activity,Goal,Target,Pace,Reminders}.tsx and their tests
+- src/i18n/en/onboarding.ts: add the wizard's keys (the partition already exists and is merged in src/i18n/en.ts; keep the quick-start keys)
+
+Do not touch:
+- src/features/onboarding/QuickStart.tsx (stays until P05-07 wires the wizard and deletes it), src/features/home/**, src/features/log/**, src/features/settings/**, src/features/progress/**, src/features/coach/** and src/app/** (another builder, now), src/ai/** (two builders, now), src/ui/**, src/data/**, src/services/**, src/domain/**, src/lib/**, src/main.tsx, src/i18n/** other than onboarding.ts, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- The wizard is not routed yet: P05-07 wires it to #/onboarding and the services later. Build WizardPage as a self-contained component driven by the wizard state machine, with the steps 10–12 (AI access, Building plan, Plan ready) left as typed placeholders the P05 S2 slice fills; Back and Continue rules for them still live in the state machine per the P05-01 row (Back disabled on Welcome and Building plan; from Plan ready back to AI access; a late Building-plan completion after leaving is ignored, R01.8).
+- State is canonical (cm, kg, fractions) and converted only for display (R01.3), using src/domain/units (body.ts wheels, defaults.ts), src/domain/profile (defaults, editRules.checkGoalWeight for the target, D-16.11), src/domain/goals/formulas.ts for the Pace days estimate, and src/domain/dates for the birthday (today − 25 years default, never in the future). Weight wheels 20–250 kg / 50–500 lb (D-16.56); body fat 3–60 % in 0.5 steps.
+- Use the landed primitives (Wheel, Segmented, Card, Button, DateTimeField, Switch, ProgressBar, Icon) and tokens; every interactive element has a data-ui hook (wizard.continue, wizard.back, step-specific ones). Copy rule: all words in the onboarding partition, written by us (the Welcome tour in our own words).
+- Reminders step (D-16.15): explains meal reminders, a button that asks for notification permission through an injected function (only a grant turns reminders on; a denial explains how to allow it later), and Continue to skip; do not schedule anything.
+- Tests: Testing Library; src/test/setup.ts runs cleanup; for user-event with fake timers stub jest as described in docs/HANDOFF.md; real waits are banned.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/onboarding src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
