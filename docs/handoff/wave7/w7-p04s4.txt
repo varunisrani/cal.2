@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S4 = P04-08, P04-09 — the diary service (first cut); the temporary quick start. Spec: those two rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (the "Read in reference" column names what to read: behaviour only), plus its "Files to create" table; decision D-16.8 in docs/plan/16-what-we-change.md. Trap owned: R02.11 (P04-08) — search docs/internals/traps-ledger.md for "owned by P04-08", "P04-09". Acceptance row owned: ACC-D26-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P04/diary-service-first-cut.md, docs/notes/P04/temporary-quick-start.md.
+
+You own:
+- src/services/diary.ts, src/services/diary.test.ts
+- src/services/quickStart.ts, src/services/quickStart.test.ts (new: the quick-start action, so the screen never touches repositories)
+- src/features/onboarding/QuickStart.tsx, src/features/onboarding/QuickStart.test.tsx
+- src/i18n/en/onboarding.ts — a new partition rooted at `onboarding`; and src/i18n/en.ts — only its import line and the `onboarding` entry in enPartitions (shared: report it)
+
+Do not touch:
+- src/app/** and src/services/appData* (the P04 S3 builder is writing the shell and its data service in parallel: do not wire the onboarding route; the lead wires QuickStart into it at land time), src/data/** (landed repositories: use them from services only), src/domain/**, src/ui/** (landed primitives: import them), src/ai/**, src/lib/**, src/i18n/** other than the two files above, e2e/**, playwright.config.ts, scripts/**, eslint.config.js, vite.config.ts, public/**, index.html, src/main.tsx, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Lint rule 2 (landed): src/features/** must not import **/data/db or **/data/repos. Services (src/services/**) may. So the data work lives in the services: diary.ts uses diaryRepo (namespace functions, db first) and photoRepo.releaseIfUnused; quickStart.ts uses the factory repositories createProfileRepo(db), createSettingsRepo(db, {bus}) and createWeightRepo(db, …). Services take their dependencies as arguments (the database or the repositories), so tests pass a fresh test database (openTestDb from src/test/db.ts) and the shell injects the real ones later.
+- QuickStart is a screen with props: it calls an injected action (e.g. `onStart: () => Promise<void>` built from quickStart.ts) and then `onDone()`; it never imports the router. Its heading is the app name (t('common.appName')) so the e2e smoke test keeps passing once the lead wires it; the "Start with defaults" button and any other copy come from the `onboarding` partition; data-ui hooks on every control; Button's busy state blocks repeat presses.
+- The quick-start action saves the default profile (src/domain/profile: P01-15 defaults) with units from the browser locale (defaultUnits from src/domain/units/defaults.ts; the locale is a parameter, the caller passes navigator.language), marks onboarding done, and seeds the first weigh-in (createWeightRepo's seedFirst) — all as the P04-09 row says; if a profile already exists it does nothing harmful.
+- diary.ts as the P04-08 row says: a single-flight gate per action (R02.11), FastActiveError → {kind: 'fastActive'} and nothing written, deleteEntry releases unreferenced photos, the D-16.8 persistence hook called once after the first successful log. Every transact() body in src/data must be async (already true in the repositories; do not call transact from services unless you need it, and then pass an async function).
+- Data tests: fake timers stall Dexie — use real timers and wait on events; fake timers only for pure logic.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services src/features src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
