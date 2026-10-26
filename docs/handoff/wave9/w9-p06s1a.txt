@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s1a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave A slice S1a = P06-02, P06-03 — the photo storage service; the capture sheet and capture drafts. (P06-04/05 analysis and the describe sheet follow in another slice.) Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.9, §3.19; decision D-16.21 in docs/plan/16-what-we-change.md. Traps owned: R02.19 (P06-02), R02.17 (P06-03). Acceptance ids: those whose Review line names P06-02 or P06-03 in docs/internals/acceptance-map.md (ACC-D28-2, ACC-D4-1, ACC-D4-2).
+Task notes (each before its code): docs/notes/P06/photo-storage-service.md, docs/notes/P06/capture-sheet-and-capture-drafts.md (check the phase file's notes list and use its names if they differ).
+
+You own:
+- src/lib/imageCodec.ts, src/lib/imageCodec.test.ts
+- src/services/photos.ts, src/services/photos.test.ts, src/services/captureDrafts.ts, src/services/captureDrafts.test.ts
+- src/features/log/capture/** (CaptureSheet, PhotoCard + tests; a css module)
+- src/i18n/en/capture.ts (new partition) and its one line in src/i18n/en.ts (other slices add lines there now; the lead merges them)
+- additive edits only: `photos` and `captureDrafts` in `Services` (src/services/context.tsx) and their wiring in src/main.tsx (another slice adds `aiSetup` there now; the lead merges)
+
+Do not touch:
+- src/data/** (import the landed photo and drafts repositories: createPhotoRepo, createDraftsRepo, CaptureDraft, CAPTURE_KEY; if one needs a change, say so in your report), src/ai/** (P03-10 prepares photos for the AI separately: do not reuse it for storage), src/domain/**, src/app/**, src/features/{home,onboarding,settings,ai-setup,about,goals}/**, src/features/log/** outside capture/, src/ui/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule).
+- src/lib/imageCodec.ts is injectable: decode, scale and encode on createImageBitmap (imageOrientation from-image) with OffscreenCanvas and a canvas fallback; tests use a fake codec (jsdom has neither), so the service rules are tested without real pixels.
+- Storage rule (R02.19, D-16.21): an image the browser cannot decode (HEIC outside Safari) is refused as `unsupportedImage` with nothing written; longest side over 2 048 px → re-encoded upright as JPEG 0.80 capped at 2 048 and kept only when smaller than the original, else the original bytes; a 320 px JPEG 0.76 upright thumbnail; previews decode at 720 px, the viewer at most 2 048. Restored photos are never re-encoded.
+- Capture: Camera is `<input type=file accept=image/* capture=environment>`, Library a multiple file input; the set is capped at 10 with a notice; a file that cannot be read or is over 25 MiB refuses the whole batch with a message and stores nothing (R02.17); "N of 10 photos"; remove buttons (removing the last closes the sheet); the plate-built-in-steps switch is enabled and sent only with two or more photos; a multi-line note; Analyse is disabled while photos are still being stored and calls an `onAnalyse({photoIds, note, progressive})` prop for now (the analysis service arrives in P06-04); Cancel clears the draft.
+- captureDrafts.ts keeps photos stored before Analyse as the capture draft (P02-13) so a reload restores the sheet; writes are serialised; a clear invalidates in-flight imports; a failed batch removes its own blobs.
+- The sheet is not reachable from the app yet (the add menu is P06-01): test it on its own.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/lib/imageCodec.test.ts src/services/photos.test.ts src/services/captureDrafts.test.ts src/features/log/capture src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
