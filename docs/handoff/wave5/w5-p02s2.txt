@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S2 = P02-06, P02-07, P02-13 — the diary repository; the photo store with reference-checked cleanup; the drafts repository. Spec: those three rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.10, §3.19, §3.20; decisions D-16.35 (End fast and log), D-16.46 (drafts survive a reload) in docs/plan/16-what-we-change.md. Traps owned: R02.12, R02.24, R05.1, R06.2 (P02-06), R02.8, R06.18 (P02-07); R02.10 (drafts) is a behaviour your tests prove. Acceptance ids: ACC-D27-2 (P02-06), ACC-D28-1 (P02-07).
+Task notes (each before its code): docs/notes/P02/diary-repository.md, docs/notes/P02/photo-store-and-reference-checked-cleanup.md, docs/notes/P02/drafts-repository.md.
+
+You own:
+- src/data/repos/diaryRepo.ts, photoRepo.ts, draftsRepo.ts and their tests
+- a small pure helper for the normalised barcode key if you need one (src/data/barcodeKey.ts + test)
+
+Do not touch:
+- src/data/repos/** other than your three repositories (two other builders add settings, profile, weight, body-fat, water and fast repositories at the same time)
+- src/data/{schema,db,codecs,guard,live,useLive,bus}.ts and their tests, src/test/{factories,db}.ts (landed P02-01..03: import, do not edit; if one truly needs a change, stop and report it)
+- src/domain/**, src/lib/**, src/ai/**, src/ui/**, src/i18n/**, src/app/** (another builder is writing the shell now), src/main.tsx, src/services/**, src/features/**, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Every change is one read-write Dexie transaction that reads, changes and writes (R06.2). A transaction that calls writeOne, removeRows or keepAside from src/data/guard.ts must include GUARD_TABLES (quarantine, meta); deletes go through removeRows (copy-or-refuse over unreadable rows). Reads go through readAll / readOne, so unreadable rows are dropped from results and kept (R06.1).
+- No database singleton: every repository is created from a Dexie instance (openDb result) the caller passes in; boot (P04-07) owns the one instance.
+- Use the domain rules, never re-derive them: src/domain/model.ts types and guards, src/lib/ids.ts for new ids, src/lib/clock.ts or a now parameter for time (no Date.now() in repositories), src/domain/dates for day keys.
+- Tests: openTestDb() from src/test/db.ts gives a fresh fake IndexedDB per call; factories from src/test/factories.ts; reads schedule their quarantine copy on a 0 ms timer, so await settleQuarantine(db) (advance fake timers first); use countRuns for exact live-query waits; resolve test promises from inside a transaction via Dexie.ignoreTransaction. Real waits are banned.
+- diaryRepo: every write that creates a food row opens one transaction over entries and fasts (plus GUARD_TABLES), reads for an active fast, and throws FastActiveError before writing anything when one exists (R05.1, R02.12); endFastAndAdd ends the fast and adds the entry in the same transaction (D-16.35). combine(newEntry, removedIds) takes the entry built by combineEntries from src/domain/food/combine.ts (it has no id: assign one) and removes the originals through removeRows in the same transaction. dayKey and barcodeKey are derived on write; latestLabelFor matches a UPC-A against its EAN-13 form.
+- photoRepo: blobs are deleted only when nothing references them; references() covers entries (including ingredient lines), saved meals and both drafts, and returns unknown (delete nothing) if any of those rows cannot be read; releaseIfUnused and prune do nothing while meta.restoring is set. jsdom Blobs do not survive fake-indexeddb (they come back as plain objects): store and compare bytes or a blob-shaped value in tests, and say how you handled it in the note.
+- draftsRepo: the analysis draft is one record with a generation counter (begin returns the previous draft's photo ids; saveResult with an old generation returns stale; clear with an old generation does not clear a newer draft); the capture draft has its own record; operations are serialised.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/repos src/data/barcodeKey.test.ts --maxWorkers=1 (drop the second path if you add no helper)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S3 = P02-08, P02-09 — the weight and body-fat repositories; the water and fasting repositories. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.5.3–3.5.5 and §3.7. Traps owned: R05.8 (P02-08), R05.2 (P02-09); also R01.11 (goal reached from every add path, P02-08) and R05.3 (fast edits atomic, P02-09), whose domain halves landed in src/domain/trackers. Acceptance ids: ACC-C11-2, ACC-G7-1 (P02-08), ACC-H8-1, ACC-H10-1 (P02-09).
+Task notes (each before its code): docs/notes/P02/weight-and-body-fat-repositories.md, docs/notes/P02/water-and-fasting-repositories.md.
+
+You own:
+- src/data/repos/weightRepo.ts, bodyFatRepo.ts, waterRepo.ts, fastRepo.ts and their tests
+
+Do not touch:
+- src/data/repos/** other than your four repositories (two other builders add settings, profile, diary, photo and drafts repositories at the same time)
+- src/data/{schema,db,codecs,guard,live,useLive,bus}.ts and their tests, src/test/{factories,db}.ts (landed P02-01..03: import, do not edit; if one truly needs a change, stop and report it)
+- src/domain/**, src/lib/**, src/ai/**, src/ui/**, src/i18n/**, src/app/** (another builder is writing the shell now), src/main.tsx, src/services/**, src/features/**, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Every change is one read-write Dexie transaction that reads, changes and writes (R06.2). A transaction that calls writeOne, removeRows or keepAside from src/data/guard.ts must include GUARD_TABLES (quarantine, meta); deletes go through removeRows (copy-or-refuse over unreadable rows). Reads go through readAll / readOne, so unreadable rows are dropped from results and kept (R06.1).
+- No database singleton: every repository is created from a Dexie instance (openDb result) the caller passes in; boot (P04-07) owns the one instance.
+- Use the domain rules, never re-derive them: src/domain/model.ts types and guards, src/lib/ids.ts for new ids, src/lib/clock.ts or a now parameter for time (no Date.now() in repositories), src/domain/dates for day keys.
+- Tests: openTestDb() from src/test/db.ts gives a fresh fake IndexedDB per call; factories from src/test/factories.ts; reads schedule their quarantine copy on a 0 ms timer, so await settleQuarantine(db) (advance fake timers first); use countRuns for exact live-query waits; resolve test promises from inside a transaction via Dexie.ignoreTransaction. Real waits are banned.
+- addWeighIn({at, kg}) runs in one transaction with profile: evaluate crossesGoal(latestWeighIn(stored), added, profile.goal, profile.goalWeightKg) from src/domain/trackers/goalCrossing.ts BEFORE writing; the profile weight becomes the latest weigh-in by date when it differs by more than 0.01 kg; return {entry, goalReached}; when true also post {type: 'goal-reached', kg} on the bus (src/data/bus.ts), so every add path raises it (R01.11). A weigh-in only syncs the weight: it does not call withWeight or clear a goal weight (only the Settings weight save does that, as in the reference). deleteWeighIn re-syncs to the new latest; seedFirst is idempotent. Body fat keeps the profile value on the latest reading; deleting the last one leaves the profile as it was.
+- fastRepo: every operation validates against the stored list with src/domain/trackers/fasting.ts (canStart, checkEdit, endNow, newFast) inside one transaction and returns the domain's refusal (active, overlap, missing, notActive) instead of throwing (R05.3). setTracking(on, now) writes the settings row with key fasting.on (17-naming §1.3; a plain boolean value, the settings slice uses the same row) through writeOne in the same transaction that ends (not deletes) an active fast when turning off; settleOnOpen(now) ends an active fast when tracking is off. The profile record and the settings rows are written through the guard (include GUARD_TABLES).
+- waterRepo: add (ml >= 1, the 5 000 ml cap is the caller's, src/domain/units/water.ts) and delete; queries by day.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/repos --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,32 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S1 = P02-04, P02-05 — the settings schema and repository; the profile repository. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference parts to read); research spec 06 §2 and §3.2–3.10; setting keys in docs/plan/17-naming-and-glossary.md §1.3 (use exactly those keys); decisions D-16.41 and D-16.61 (reminders: all off; defaults 08:00 / 12:00 / 19:00 / 20:00 / 14:00) in docs/plan/16-what-we-change.md. Trap owned: R01.17 (P02-05); also R05.13 (toggleHiddenTab) and R06.22 (loaded) are behaviours your tests prove.
+Task notes (each before its code): docs/notes/P02/settings-repository-and-schema.md, docs/notes/P02/profile-repository.md.
+
+You own:
+- src/data/settingsSchema.ts and its test
+- src/data/repos/settingsRepo.ts, src/data/repos/profileRepo.ts and their tests
+
+Do not touch:
+- src/data/repos/** other than your two repositories (two other builders add diary, photo, drafts, weight, body-fat, water and fast repositories at the same time)
+- src/data/{schema,db,codecs,guard,live,useLive,bus}.ts and their tests, src/test/{factories,db}.ts (landed P02-01..03: import, do not edit; if one truly needs a change, stop and report it)
+- src/domain/**, src/lib/**, src/ai/**, src/ui/**, src/i18n/**, src/app/** (another builder is writing the shell now), src/main.tsx, src/services/**, src/features/**, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Every change is one read-write Dexie transaction that reads, changes and writes (R06.2). A transaction that calls writeOne, removeRows or keepAside from src/data/guard.ts must include GUARD_TABLES (quarantine, meta); deletes go through removeRows (copy-or-refuse over unreadable rows). Reads go through readAll / readOne, so unreadable rows are dropped from results and kept (R06.1).
+- No database singleton: every repository is created from a Dexie instance (openDb result) the caller passes in; boot (P04-07) owns the one instance.
+- Use the domain rules, never re-derive them: src/domain/model.ts types and guards, src/lib/ids.ts for new ids, src/lib/clock.ts or a now parameter for time (no Date.now() in repositories), src/domain/dates for day keys.
+- Tests: openTestDb() from src/test/db.ts gives a fresh fake IndexedDB per call; factories from src/test/factories.ts; reads schedule their quarantine copy on a 0 ms timer, so await settleQuarantine(db) (advance fake timers first); use countRuns for exact live-query waits; resolve test promises from inside a transaction via Dexie.ignoreTransaction. Real waits are banned.
+- Every v1 setting has a key (17-naming §1.3), a default and a validator; decoders reuse the domain's: meal times (src/domain/meals/times.ts), Home pillars stored as an array (decodePillars), quick-add amounts (decodeQuickAdd, src/domain/units/water.ts), unit settings (src/domain/units/*), optional nutrient goals (src/domain/nutrients/goalDefaults.ts), the default fast goal (decodeFastGoal, src/domain/trackers/fasting.ts), the tune-up switch on when absent and its kept plan (null = nothing kept, {} = an all-automatic plan, see src/domain/adaptive/cadence.ts), the rebuild baseline (the signature string of src/domain/profile/signature.ts). An invalid stored value reads as its default and is quarantined, never silently overwritten.
+- settingsRepo: get, set (validated), update(key, fn) as one read-modify-write transaction (two concurrent callers keep both changes), toggleHiddenTab(tab, hidden) reading the stored set inside the write (R05.13), snapshot(), and loaded: a promise that resolves once the first snapshot is in memory (R06.22). The fasting slice writes the fasting.on row itself inside its own transaction with the same key and value shape, so keep that row a plain boolean.
+- profileRepo: get() → missing / ok / corrupt through the guard; save(profile) quarantines a corrupt stored record first (R01.17); update(fn) refuses to run on a corrupt record. Birth dates stay local day keys. Profile edits never recompute targets (R01.12): the repository stores what it is given.
+- The shell (src/app/ports.ts, being written now) will be adapted to these repositories by a later slice; do not import src/app.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/settingsSchema.test.ts src/data/repos --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
