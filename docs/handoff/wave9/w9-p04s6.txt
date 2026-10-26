@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s6 (detached at <BASE>, dependencies installed; do not install anything into the repo). Work only there.
+
+Task: P04 wave C = P04-14 — the walking-skeleton e2e test and its REA parity scenario (Demo 1). Spec: that row in docs/plan/phases/P04-shell-and-walking-skeleton.md; docs/plan/02-rea-workflow.md §4 (scenario files) and §5 (rules). No reference reading (our own flow): say so in the note.
+Task note (before code): docs/notes/P04/walking-skeleton-e2e-and-parity-scenario.md.
+
+You own:
+- e2e/walking-skeleton.spec.ts (new)
+- parity/walking-skeleton.platewise.json (new folder at the repository root)
+
+Do not touch:
+- src/** (landed; if the flow exposes a real bug, stop and report it with the failing step instead of changing product code), e2e/smoke.spec.ts, e2e/fake-ai/**, playwright.config.ts (if the Pixel 7 project needs a config change, report it), tooling/**, scripts/**, eslint.config.js, index.html, public/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- The flow, on the Pixel 7 viewport (Playwright's devices['Pixel 7'] in the spec via test.use): fresh load → quick start ("Start with defaults") → Home shows 0 eaten → "+" → Enter manually → name "Toast", 250 kcal → the entry appears under its meal and the gauge reads 250 → reload → it is still there → swipe-delete with confirmation → the empty state. Assert with roles, names and data-ui hooks, never with CSS classes or text the catalogue may change carelessly; read words through the catalogue where you assert copy.
+- The data-ui hooks that exist: quick start's button (read src/features/onboarding/QuickStart.tsx), home.add, home.add.manual, home.gauge, home.summary, home.diary, home.diary.empty, home.meal.<meal>, manual, manual.{name,energy,save,cancel}, entry.row (its keyboard delete button is entry.row.delete), entry.delete (the dialog) with entry.delete.confirm and entry.delete.cancel. Use the keyboard delete button or a pointer drag for the swipe; both must lead to the dialog.
+- The meal under which the entry lands depends on the clock: freeze the page's time (page.clock or an init script) so the meal is deterministic, or assert "under one meal section" without naming it. No real sleeps: wait on locators.
+- parity/walking-skeleton.platewise.json is REA's declarative capture-browser-scenario input for the same flow: stable data-ui selectors, a timeout_ms on every step, identical environment and capture blocks (accessibility tree, screenshots, URL; page errors and network events recorded), a fixed base URL on loopback. To match REA's real input shape, you may download the REA package outside the repo (for example `cd /root/rea-lab && npm pack rea-agents@6.8.0` and read its tool schema and docs there); never copy REA files into the repo. Validate your JSON against that schema with a throwaway script in your scratch space; the lead runs it once through REA.
+- The e2e must pass three times in a row (`--repeat-each=3` or three runs), alone.
+
+Tests (one worker; never the full suites):
+- pnpm build, then PLATEWISE_E2E_PORT=4180 PLATEWISE_FAKE_AI_PORT=4327 pnpm exec playwright test e2e/walking-skeleton.spec.ts --workers=1 --repeat-each=3 --output /root/wt/e2e-p04s6
+- the smoke spec still passes with the same command for e2e/smoke.spec.ts
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file; parity/ is a product folder for the banned-name check).
+
+Final report as the rules file says: the exact runs and counts, the schema check you did, and anything in the flow that looked wrong. Leave everything uncommitted.
