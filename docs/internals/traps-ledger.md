@@ -35,7 +35,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
   - Review: owned by P05-09
 - **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
-  - Review: owned by P01-02
+  - Test: src/domain/dates/age.test.ts > ageOn > gives the same age in Asia/Tokyo for a birthday stored as a key (R01.15)
+  - Test: src/domain/dates/age.test.ts > ageOn > clamps a birth date in the future to 0
 - **R01.16** The evidence pack is numbers and dates only, excludes today, treats missing days as unknown and leaves out workout calories
   - Review: owned by P01-17
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
@@ -215,7 +216,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.4** Water and fasts never enter nutrition totals, averages or the recap
   - Review: owned by P01-08
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
-  - Review: owned by P01-02
+  - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
+  - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
   - Review: owned by P02-02
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
