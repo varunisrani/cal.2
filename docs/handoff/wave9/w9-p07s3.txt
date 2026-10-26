@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave A slice S3 = P07-10, P07-11 — the line chart with its maths, and the bar chart. Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference lines and tests to read, for geometry and behaviour only); research spec 05 §3.5.3–3.5.7. Traps owned: R05.16 (P07-10), R05.15 (P07-11). Acceptance ids: ACC-G3-1 (P07-10), ACC-G10-1 (P07-11).
+Task notes (each before its code): docs/notes/P07/line-chart.md, docs/notes/P07/bar-chart.md.
+
+You own:
+- src/domain/progress/chartMath.ts (+ test), src/ui/charts/** (LineChart, BarChart, a shared helper if needed, + tests), a small src/i18n/en/charts.ts partition rooted at charts if the charts need built-in words (tooltip and table labels; the lead adds it to src/i18n/en.ts at landing)
+
+Do not touch:
+- every other file under src/ui/ and src/domain/ (landed: import, do not edit), src/features/** (other builders, now), src/ai/** (another builder, now), src/data/**, src/services/**, src/app/**, src/main.tsx, src/i18n/** other than charts.ts, e2e/**, parity/** (another builder, now), playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- chartMath.ts is pure (no React, no clock): padding, nice ticks, downsampling into equal date buckets averaged in time and value with the span limits, x labels, and the bar geometry (bar ≤ 60 wide, gap 4 shrinking to 1, then bar and gap 2 : 1 so the whole range fits and the newest day stays reachable; labels thinned to ≥ 40 px with the last day kept), all per the rows; day keys from src/domain/dates.
+- Charts are our own SVG components on the P00 tokens (accent line and soft area, dashed goal line in the success colour, rounded bar tops in the accent); no chart library; never copy the reference's geometry code, only its rules as the rows state them. Every chart has a hidden table for screen readers and values as text. Only clearly horizontal drags scrub (|dx| > 1.5 |dy|); tap pins the bar tooltip, a second tap or a tap elsewhere clears. Absent days are gaps, never zero bars.
+- The charts read CSS variables, so an accent change applies without a remount. Copy rule applies to .tsx: words come from the catalogue (your charts partition or existing keys) or props.
+- Tests: Testing Library plus pure tests for chartMath; pointer events through fireEvent; src/test/setup.ts runs cleanup; no real waits.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/progress src/ui/charts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
