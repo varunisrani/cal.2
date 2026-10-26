@@ -90,6 +90,7 @@ export function fakeAppData(): FakeAppData {
           return state.status === 'ready' ? state.value : { kind: 'missing' };
         },
       },
+      onboarding: { startWithDefaults: vi.fn(async () => undefined) },
     },
     settings,
     profile,

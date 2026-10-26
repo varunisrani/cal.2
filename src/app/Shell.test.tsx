@@ -63,6 +63,19 @@ describe('Shell', () => {
     expect(content()).not.toHaveAttribute('data-tab-bar');
   });
 
+  it('starts with the defaults from the onboarding screen and then shows Home', async () => {
+    const fake = fakeAppData();
+    fake.settings.ready(settingsWith());
+    fake.profile.ready({ kind: 'missing' });
+    render(<Shell />, {
+      wrapper: shellWrapper({ router: routerAt('#/onboarding'), data: fake.data }),
+    });
+    await userEvent.click(screen.getByRole('button', { name: 'Start with defaults' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Home' })).toBeInTheDocument();
+    expect(fake.data.onboarding.startWithDefaults).toHaveBeenCalledTimes(1);
+    expect(fake.data.onboarding.startWithDefaults).toHaveBeenCalledWith(navigator.language);
+  });
+
   it('shows the Settings screen for a nested Settings address', () => {
     const fake = fakeAppData();
     fake.finishedSetup();

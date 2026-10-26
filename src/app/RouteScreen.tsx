@@ -1,10 +1,14 @@
+import { QuickStart } from '../features/onboarding/QuickStart';
 import { t } from '../i18n/t';
+import { useAppData } from './appDataContext';
 import { PlaceholderPage } from './PlaceholderPage';
-import type { Route } from './router';
+import { HOME_ROUTE, type Route } from './router';
+import { useRoute } from './useRoute';
 
 /**
- * The screen for a route. Every screen is a placeholder until the feature tasks replace its
- * line here (P04-09 onboarding, P04-10 Home, P04-13 Progress, Coach and the Settings hub).
+ * The screen for a route. Onboarding is the temporary quick start (P04-09); the others are
+ * placeholders until the feature tasks replace their line here (P04-10 Home, P04-13 Progress,
+ * Coach and the Settings hub).
  */
 export function RouteScreen({ route }: { readonly route: Route }) {
   switch (route.name) {
@@ -17,6 +21,18 @@ export function RouteScreen({ route }: { readonly route: Route }) {
     case 'settings':
       return <PlaceholderPage data-ui="screen.settings" heading={t('common.tabs.settings')} />;
     case 'onboarding':
-      return <PlaceholderPage data-ui="screen.onboarding" heading={t('common.appName')} />;
+      return <OnboardingScreen />;
   }
+}
+
+/** The quick start, storing the setup through the app's data and then showing Home. */
+function OnboardingScreen() {
+  const { onboarding } = useAppData();
+  const { navigate } = useRoute();
+  return (
+    <QuickStart
+      onStart={() => onboarding.startWithDefaults(navigator.language)}
+      onDone={() => navigate(HOME_ROUTE)}
+    />
+  );
 }

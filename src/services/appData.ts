@@ -9,6 +9,7 @@ import type { LiveFeed } from '../data/live';
 import { createProfileRepo, type ProfileRead } from '../data/repos/profileRepo';
 import { createSettingsRepo } from '../data/repos/settingsRepo';
 import type { HideableTab, Settings } from '../data/settingsSchema';
+import { quickStartAction } from './quickStart';
 
 export type { ProfileRead } from '../data/repos/profileRepo';
 
@@ -30,10 +31,16 @@ export interface AppProfile {
   get(): Promise<ProfileRead>;
 }
 
-/** What the shell reads: settings and the profile. */
+export interface AppOnboarding {
+  /** Stores the starting setup with units from `localeTag` (the temporary quick start, P04-09). */
+  startWithDefaults(localeTag: string): Promise<unknown>;
+}
+
+/** What the shell reads, plus the first-run action the onboarding screen needs. */
 export interface AppData {
   readonly settings: AppSettings;
   readonly profile: AppProfile;
+  readonly onboarding: AppOnboarding;
 }
 
 export type AppOpening =
@@ -53,7 +60,8 @@ export async function connectAppData(options: OpenOptions = {}): Promise<AppOpen
   } catch (error) {
     return { kind: 'failed', problem: error instanceof DbOpenError ? error.kind : 'failed' };
   }
-  const settings = createSettingsRepo(db, { bus: options.bus ?? appBus() });
+  const bus = options.bus ?? appBus();
+  const settings = createSettingsRepo(db, { bus });
   const profile = createProfileRepo(db);
   return {
     kind: 'open',
@@ -64,6 +72,10 @@ export async function connectAppData(options: OpenOptions = {}): Promise<AppOpen
         toggleHiddenTab: settings.toggleHiddenTab,
       },
       profile: { feed: profile.feed, get: profile.get },
+      onboarding: {
+        startWithDefaults: (localeTag) =>
+          quickStartAction({ db, profile, settings, bus }, localeTag)(),
+      },
     },
     close() {
       settings.close();
