@@ -109,7 +109,13 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
 
 ## Resume notes
 
-(The new session writes what it found when it verified the snapshot.)
+- 2026-10-26 19:30 IST, Agent 1 session 3 (work branch `claude/sleepy-euler-3qif2i`, created at
+  d53111e = `main`). Fresh container: re-cloned the reference at 10e14b6, `pnpm install
+  --frozen-lockfile`, `/root/wt/{patches,builder-rules.md,extract-patch.sh,land-patches.sh}` and
+  `/root/rea-lab/{evidence,parity,captures}` re-created. REA wrapper and Node 24 not re-installed
+  (not needed for wave 2). On d53111e: lint, fmt:check, typecheck clean; `check --require-ref` 6/6
+  PASS (similarity 122 files, banned 24 patterns, assets 0, licences 8, traps 162, acceptance 152).
+  Usage 0 % (reading 19:27), window resets 2026-10-27 00:20 IST. Lock set to ACTIVE.
 
 ## How to resume
 

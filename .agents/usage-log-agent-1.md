@@ -13,3 +13,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-26 19:10 | Agent 1 | Account 1 | 76 (reading 19:08) | 24 | 2026-10-26 21:20 | wave 1 landed and pushed (4b31214, e081191, 4ffda80): 7/176 tasks; wave 2 after the reset |
 | 2026-10-26 19:19 | Agent 1 | Account 1 | 76 (reading 19:19) | 24 | 2026-10-26 21:20 | idle rate ~0 (no builders); CI run 5 green on dc4efdd; wave 2 prompts ready, launch after the reset |
 | 2026-10-26 19:23 | Agent 1 | Account 1 | 76 (reading 19:19) | 24 | 2026-10-26 21:20 | session 2 ends: code pushed to main, routines off; Agent 1 continues in a new session (handoff #1) |
+| 2026-10-26 19:30 | Agent 1 | Account 1 | 0 (reading 19:27) | 100 | 2026-10-27 00:20 | session 3 (new session) resumed in a fresh container; d53111e verified green; lock ACTIVE; wave 2 next |

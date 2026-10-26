@@ -1,7 +1,7 @@
 {
   "turn": "AGENT_1",
-  "status": "PAUSED",
-  "updated_at": "2026-10-26T19:23:19+05:30",
+  "status": "ACTIVE",
+  "updated_at": "2026-10-26T19:30:00+05:30",
   "by": "AGENT_1",
-  "note": "Session 2 of Agent 1 stopped at 76 % on the user's request; the user starts Agent 1 in a new session (0 %). New session: verify the head, set status ACTIVE, arm your own routines, launch wave 2 (docs/HANDOFF.md)."
+  "note": "Agent 1 new session (session 3) resumed: head d53111e verified green; wave 2 launching (4 builders)."
 }
