@@ -1,0 +1,43 @@
+{
+  "code": "0071234567896",
+  "status": 1,
+  "status_verbose": "product found",
+  "product": {
+    "product_name": "Toasted Barley Crisps",
+    "generic_name": "Baked barley snack",
+    "brands": "Kestrel Valley, Northfield Foods",
+    "quantity": "180 g",
+    "product_quantity": "180",
+    "product_quantity_unit": "g",
+    "serving_size": "30 g (about 14 crisps)",
+    "serving_quantity": "30",
+    "nutriments": {
+      "energy_100g": 1904,
+      "energy-kcal_100g": 455,
+      "energy-kcal_serving": 136,
+      "proteins_100g": 9.4,
+      "carbohydrates_100g": "61,5",
+      "fat_100g": 18,
+      "fat_serving": 5.2,
+      "sugars_100g": 4.1,
+      "fiber_100g": 7.3,
+      "saturated-fat_100g": 2.1,
+      "sodium_serving": 0.4,
+      "sodium_100g": 1.3,
+      "calcium_100g": 0.05,
+      "vitamin-d_100g": 0.000004,
+      "beta-alanine_serving": 0.8,
+      "caffeine_100g": -1
+    },
+    "ingredients_text": "Barley flour, sunflower oil, oat flakes, sea salt",
+    "ingredients_text_with_allergens": "<span class=\"allergen\">Barley</span> flour, sunflower oil, <span class=\"allergen\">oat</span> flakes, sea salt",
+    "allergens_tags": ["en:gluten", "en:Gluten", "fr:avoine"],
+    "traces_tags": ["en:sesame-seeds"],
+    "labels_tags": ["en:vegan", "en:no_added_sugar"],
+    "categories_tags": ["en:snacks", "en:salty-snacks", "en:crisps"],
+    "nutriscore_grade": "c",
+    "ecoscore_grade": "not-applicable",
+    "nova_group": "3",
+    "image_front_url": "https://images.openfoodfacts.org/images/products/007/123/456/7896/front_en.3.400.jpg"
+  }
+}

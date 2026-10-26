@@ -1,0 +1,63 @@
+{
+  "totalHits": 3,
+  "currentPage": 1,
+  "totalPages": 1,
+  "foods": [
+    {
+      "fdcId": 7001001,
+      "description": "HONEY OAT RINGS",
+      "dataType": "Branded",
+      "gtinUpc": "00012345678912",
+      "brandOwner": "BRIGHTFIELD MILLS INC.",
+      "brandName": "BRIGHTFIELD",
+      "foodCategory": "Cereal",
+      "servingSize": 30,
+      "servingSizeUnit": "GRM",
+      "foodNutrients": [
+        { "nutrientId": 1008, "unitName": "KCAL", "value": 390 },
+        { "nutrientId": 1003, "unitName": "G", "value": 9 }
+      ]
+    },
+    {
+      "fdcId": 7001002,
+      "description": "Maple oat rings, reference sample",
+      "dataType": "Foundation",
+      "gtinUpc": "00012345678905",
+      "foodNutrients": [{ "nutrientId": 1008, "unitName": "KCAL", "value": 370 }]
+    },
+    {
+      "fdcId": 7001003,
+      "description": "MAPLE OAT RINGS",
+      "dataType": "Branded",
+      "gtinUpc": "00012345678905",
+      "brandOwner": "BRIGHTFIELD MILLS INC.",
+      "brandName": "BRIGHTFIELD",
+      "ingredients": "WHOLE GRAIN OATS, MAPLE SYRUP, CORN STARCH, SALT, CALCIUM CARBONATE.",
+      "foodCategory": "Cereal",
+      "servingSize": 30,
+      "servingSizeUnit": "GRM",
+      "householdServingFullText": "1 cup (30g)",
+      "foodNutrients": [
+        { "nutrientId": 1003, "unitName": "G", "value": 12 },
+        { "nutrientId": 1004, "unitName": "G", "value": 6 },
+        { "nutrientId": 1005, "unitName": "G", "value": 72 },
+        { "nutrientId": 1008, "unitName": "KCAL", "value": 380 },
+        { "nutrientId": 2000, "unitName": "G", "value": 20 },
+        { "nutrientId": 1235, "unitName": "G", "value": 15 },
+        { "nutrientId": 1079, "unitName": "G", "value": 9 },
+        { "nutrientId": 1087, "unitName": "MG", "value": 400 },
+        { "nutrientId": 1089, "unitName": "MG", "value": 12 },
+        { "nutrientId": 1090, "unitName": "MG", "value": 120 },
+        { "nutrientId": 1093, "unitName": "MG", "value": 500 },
+        { "nutrientId": 1110, "unitName": "IU", "value": 400 },
+        { "nutrientId": 1162, "unitName": "MG", "value": -1 },
+        { "nutrientId": 1177, "unitName": "UG", "value": 300 },
+        { "nutrientId": 1178, "unitName": "UG", "value": 2 },
+        { "nutrientId": 1253, "unitName": "MG", "value": 0 },
+        { "nutrientId": 1257, "unitName": "G", "value": 0 },
+        { "nutrientId": 1008, "unitName": "KCAL", "value": 999 },
+        { "nutrientId": 1090, "unitName": "MG", "value": 999 }
+      ]
+    }
+  ]
+}

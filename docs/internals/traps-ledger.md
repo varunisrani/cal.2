@@ -130,16 +130,29 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Review: owned by P06-06
 - **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only
   - Test: src/data/barcodeKey.test.ts > barcodeKey > gives a UPC-A and its EAN-13 form the same key (R02.14)
+  - Test: src/services/barcode/fdc.test.ts > gtinSpellings and sameGtin (R02.14) > spells 012345678905 as scanned, without zeros and padded to 13 and 14 digits
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: the exact Branded match (R02.14, R02.16) > ignores a fuzzy hit with another GTIN
   - Review: the scan flow owned by P06-17
 - **R02.15** Open Food Facts wins; the saved label and FDC are tried only after not-found or no-nutrition; same order on every scan path
   - Review: owned by P06-17
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
-  - Review: owned by P06-15 (OFF) and P06-16 (FDC)
+  - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > reads our fixture per serving, preferring per-serving values to scaled per-100 g ones
+  - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > scales per-100 g values by 0.3 for a 30 g serving
+  - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > converts kJ-only energy to kcal and rounds kcal to a whole number
+  - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > turns grams into mg and mcg and rounds optional values to 0.1
+  - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > takes the serving from its quantity, else its text, else 100 g, and never below 1 g
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: serving weight and the two value sets (R02.16) > keeps label values without a serving weight as one serving of unknown weight
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: serving weight and the two value sets (R02.16) > uses exactly 100 g of the per-100 g values when they cover more than the label
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: serving weight and the two value sets (R02.16) > lets label values win and reads the weight from the household text
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: serving weight and the two value sets (R02.16) > keeps a serving under 1 g as given
 - **R02.17** A photo batch with an unreadable or oversized file is refused whole
   - Test: src/features/log/capture/CaptureSheet.test.tsx > CaptureSheet > refuses a pick with a 30 MiB photo whole: a message, no card and nothing stored (ACC-D4-2, R02.17)
   - Test: src/services/captureDrafts.test.ts > add: a pick is kept whole or not at all (R02.17) > refuses the whole pick when one file is over 25 MiB, and stores nothing (ACC-D4-2)
 - **R02.18** The FDC key goes only in a header; keys with non-printable characters are refused locally; all-caps names use English casing
-  - Review: owned by P06-16
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: nothing is sent without a key and a GTIN (R02.18) > refuses a key with a character a header cannot carry, without a request
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: nothing is sent without a key and a GTIN (R02.18) > sends nothing without a stored key
+  - Test: src/services/barcode/fdc.test.ts > lookupFdc: the request (R02.18) > puts the key in the X-Api-Key header and nowhere else
+  - Test: src/services/barcode/fdc.test.ts > englishTitleCase (R02.18) > gives "GREEK YOGURT" as "Greek Yogurt" and keeps the dotted i under a Turkish locale
 - **R02.19** One photo storage rule (≤ 2 048 px at 0.8 only when smaller); restored photos are never re-encoded; thumbnails are upright
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > stores a 4 000 px photo as a 2 048 px JPEG at 0.80 when that copy is smaller
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > keeps the original bytes of a large photo whose 2 048 px copy is not smaller

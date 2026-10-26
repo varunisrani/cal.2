@@ -1,6 +1,6 @@
 # P06 · Logging flows
 
-**Weeks:** 3 · **Tracks:** domain/data/AI (photo store, analysis, barcode services); UI (menu, capture, review, edit, reuse) · **Depends on:** P01, P02, P03, P04 (P05 for the allergen list and the provider form) · **Status:** 🔨 in progress: P06-02, P06-03 landed (2/20, 2026-10-27)
+**Weeks:** 3 · **Tracks:** domain/data/AI (photo store, analysis, barcode services); UI (menu, capture, review, edit, reuse) · **Depends on:** P01, P02, P03, P04 (P05 for the allergen list and the provider form) · **Status:** 🔨 in progress: P06-02, P06-03, P06-15, P06-16 landed (4/20, 2026-10-27)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 
