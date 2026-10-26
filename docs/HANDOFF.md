@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 02:12 IST (Agent 1, session 3). 92/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 02:35 IST (Agent 1, session 3). 94/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -84,25 +84,29 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 9 | P03-15, P03-16 (food prompts and reply contract; plan, evidence, nutrient-goal and fit-check prompts) | 257f9e3 |
 | Wave 9 | P04-14 (walking-skeleton e2e and parity scenario, **Demo 1**; REA run `ev_c3bb14174fc42289d23b57c70cf7fc53ff404f6c6ec6b25b7ab42e95b35d6020`: 27/27 steps, no page errors). P04 done | 3d521f9 |
 | Wave 9 | P05-01..03 (wizard state machine; steps Welcome to Reminders; D-16.80) | 21565b4 |
+| Wave 9 | P07-10, P07-11 (line and bar charts, chart maths; D-16.81) | 7fbe51e |
+| Wave 9 | P03-17, P03-18 (client pipeline; food and planning tasks with unit repair) | 10a5f62 |
+| Wave 9 | P03-19 (gated browser CORS probe). P03 done | 83ee202 |
+| Wave 9 | P05-06, P05-13, P05-14 (Plan ready, methods page, goal-reached dialog) | 8456a60 |
+| Wave 9 | P05-04 (AI access step, provider form, `aiSetup` service; D-16.82) | f6bd162 |
+| Wave 9 | P06-02, P06-03 (photo storage, capture sheet and drafts) | a66e465 |
+| Wave 9 | P05-08, P05-09 (rebuild and tune-up services, wired; `aiAccess`, `browserFetch`) | 0478616 |
+| Wave 9 | P06-15, P06-16 (Open Food Facts and FoodData Central clients) | 57b504a |
+| Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
 
 ## In progress
 
-Two builders (prompts in `docs/handoff/wave9/`); no new builders this window (usage 70 % at 02:09 IST):
-- P05 S3b (P05-05 Building plan and plan builder, P05-07 completion: the wizard goes on the onboarding
-  route, the quick start goes, Demo 1's spec and scenario walk the wizard), base 012fcff (= 8456a60 plus
-  the P05-04 patch, now landed as f6bd162), `/root/wt/wt-p05s3b`. At landing: point its AI-setup reader
-  at `src/services/aiAccess.ts` (`createAiAccess`) if it wrote its own; it may export `browserFetch`
-  from `src/ai/transport.ts` (identical to the landed change); merge `Services` / `main.tsx` / `App.tsx`
-  with the landed `rebuild`, `tuneUp`, `photos`, `captureDrafts` lines; then run the Demo 1 scenario
-  through REA again.
+One builder (prompt in `docs/handoff/wave9/`); no new builders this window (usage 72 % at 02:15 IST):
 - P06 S1b (P06-04 analysis service and overlay, P06-05 describe sheet), base 99249d1 (= 49ffc21 plus the
-  P06-02/03 patch, now landed as a66e465), `/root/wt/wt-p06s1b`. Same at landing: `createAiAccess`,
-  `browserFetch`, additive `Services` / `main.tsx` merges.
+  P06-02/03 patch, now landed as a66e465), `/root/wt/wt-p06s1b`. At landing: use `createAiAccess`
+  (`src/services/aiAccess.ts`) if it wrote its own reader; `browserFetch` is exported already; merge
+  `Services` / `main.tsx` additively; give the new service a stub in the stand-ins (`aiSetup` and
+  `planBuilder` are required now).
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
-restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a (latest full
-loop: unit 2978 passed + 2 expected-fail in 194 files, check 6/6, bundle 164.05 kB, e2e 2/2). If this
+restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3 (latest
+full loop: unit 3002 passed + 2 expected-fail in 196 files, check 6/6, bundle 177.32 kB, e2e 2/2). If this
 container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-92/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 9/15, P06 4/20, P07 2/17).
+94/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 11/15, P06 4/20, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -125,6 +129,15 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (Building plan and completion, P05 S3b): `buildPlan({profile, today, units, cancel?})`;
+  `planBuilder.ts` has its own `storedAiAccess` beside `src/services/aiAccess.ts`'s `createAiAccess`
+  (unify them in the next slice that touches either). `complete(answers, {now, restored?})`: `restored`
+  skips weigh-in, body fat, tune-up defaults and sort mode (P09-14 can narrow it); `units.energy` is not
+  written at completion; the rebuild baseline is not stored at completion (the Goals page seeds it on
+  first open). The notification permission request lives in `OnboardingRoute.tsx` until P09-09. Dexie
+  starts live queries with `setTimeout(…, 0)`: with fake timers fake only setTimeout, setInterval and
+  Date and step them (`untilShownOnFakeTimers` in the onboarding tests; a shared helper would help).
+  ACC-B9-1's "Progress shows the first weigh-in" half waits for P07's Progress page.
 - From wave 9 (rebuild and tune-up, P05 S3c): `createRebuildService` / `createTuneUpRunner` take one
   `PlanServiceDeps` (`src/services/goals/planRequest.ts`); outcomes are kinds and numbers (P05-11 words
   them and calls `turnOn` / `turnOff`). A tune-up that applies also stores the rebuild baseline. Each
