@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:30 IST (Agent 2). Waves 1–3 and P03 wave A landed (28/176 tasks). The user started the new
+Updated: 2026-10-27 00:35 IST (Agent 2). P00 and P01 complete, P03 wave A landed (31/176 tasks). The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -60,15 +60,15 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 3 | P01-09..11 (serving units and scaling, ingredient lines, recipe split, combine) | 4d6b9ec |
 | Wave 3 | P01-12..16 (formulas, targets and locks, plan validator, profile rules, adaptive cadence) | 1e67ebe |
 | Wave 4 | P03-01, P03-02 (AI failure kinds, classification and messages; fake fetch and wire fixtures) | 731fc23 |
+| Wave 5 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing); **P01 done** | see git log |
 
 ## In progress
 
-- Landed since wave 3: P03 wave A (731fc23; ci-local on that head: unit 1062/1062 + 1 expected
-  fail in 61 files, check 6/6, bundle 71.00 kB, e2e 1/1). **Progress: 28/176 tasks** (P00 10/10,
-  P01 16/19, P03 2/19).
+- Landed since wave 3: P03 wave A (731fc23) and P01 wave C (ci-local on that head: unit
+  1164/1164 + 1 expected fail in 65 files, check 6/6, bundle 71.00 kB, e2e 1/1). **Progress:
+  31/176 tasks** (P00 10/10, P01 19/19, P03 2/19).
 - Running: P02 S0 (P02-01..03, `/root/wt/wt-p02s0`) and P04 S1 (P04-01/02, `/root/wt/wt-p04s1`)
-  from `docs/handoff/wave4/` (base f25a8b3); P01 wave C S5 (P01-17..19, `/root/wt/wt-p01c5`) from
-  `docs/handoff/wave5/` (base 8ea4190); P03 wave B S1 (P03-05/06, `/root/wt/wt-p03s1`) from
+  from `docs/handoff/wave4/` (base f25a8b3); P03 wave B S1 (P03-05/06, `/root/wt/wt-p03s1`) from
   `docs/handoff/wave6/` (base aa146d1).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
@@ -117,6 +117,12 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 - Fake AI (P00-09): specs find the server at `PLATEWISE_FAKE_AI_URL` (the app's base URL is that
   plus `/v1`); give each concurrent builder its own `PLATEWISE_E2E_PORT` and
   `PLATEWISE_FAKE_AI_PORT`. P03-15's builder checks the food scripts against its reply contract.
+- Forecast and trackers (P01-17..19): food days come from the entry's stored `dayKey`, readings
+  from `dayKeyOf(at)`; confidence reasons are counts (P03-16 writes the sentences); the shared
+  window helpers live in `forecast/evidence.ts`; `startFast` takes the new id; `endNow` names its
+  fast and refuses with `ended`/`missing`; fast length text comes from `formatDuration` (domain
+  returns `splitMinutes`). The domain parts of R05.3 (P02-09) and R01.11 (P02-08) are tested in
+  `src/domain/trackers`.
 - Goals (P01-12..16): the plan's example reply 2 000 / 150 / 215 / 61 is implausible for the
   default profile (protein allowed 78–146 g, fat 21–63 g, kcal 1 226–4 904); fake-AI plan scripts
   (P05-15) and P03-14/P05 tests on the default profile must stay inside those ranges.
