@@ -26,7 +26,8 @@
     "check:licenses": "tsx tooling/checks/runAll.ts --only licenses",
     "check:traps": "tsx tooling/checks/runAll.ts --only traps",
     "check:acceptance": "tsx tooling/checks/runAll.ts --only acceptance",
-    "check:bundle": "tsx scripts/bundle-budget.ts"
+    "check:bundle": "tsx scripts/bundle-budget.ts",
+    "probe:cors": "tsx scripts/ai-cors-probe.ts"
   },
   "dependencies": {
     "dexie": "4.4.6",

@@ -150,9 +150,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 
 - **R03.1** Anthropic needs its direct-browser header or the reply has no CORS header
   - Test: src/ai/adapters/anthropic.test.ts > buildAnthropic: headers (R03.1) > sends the browser-access header, the key and the version on every request (ACC-E2-1)
+  - Test: scripts/ai-cors-probe.test.ts > the direct-browser header check (R03.1) > needs the header when the same request without it is refused
 - **R03.2** Browser network failures are opaque; offline, our deadline and Cancel are told apart, with a hint where providers drop CORS on errors
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > adds the refused-key hint for providers that hide it behind CORS
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > reports an offline device as offline, and anything else as connection
+  - Test: scripts/ai-cors-probe.test.ts > judgeAttempt: one request, one verdict (R03.2) > tells the environment refusing the connection apart from CORS
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Test: src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses plain http to the local network or the internet, with the reason
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
