@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 02:45 IST (Agent 1, session 3). 96/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 05:25 IST (Agent 1, session 3). 96/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -97,13 +97,12 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-No builders running. The window's usage is spent down to the stop band (74 % at 02:23 IST); waiting for
-the 05:20 IST reset. Wave 10 prompts are ready in `docs/handoff/wave10/` (fill `<BASE>` with the head at
-launch): P05 S4a (P05-10 personal info page), P05 S4b (P05-11/12 goals page, nutrient goals sheet),
-P06 S4a (P06-01 add menu, wiring the capture and describe sheets and the analysis overlay), P06 S2a
-(P06-06..08 review sheet). P06 S3b (P06-14 scanner, P06-17 lookup order and label memory) waits for P06
-S4a to land. At landing: `registry.ts`, `Services`, `main.tsx`, `App.tsx` and `en.ts` take lines from
-several slices; merge them by hand.
+Window reset at 05:20 IST (next reset 10:20 IST). Four builders, wave 10 (prompts in `docs/handoff/wave10/`),
+all at base c26b203: P05 S4a (P05-10 personal info, `/root/wt/wt-p05s4a`), P05 S4b (P05-11/12 goals page and
+nutrient goals sheet, `/root/wt/wt-p05s4b`), P06 S4a (P06-01 add menu and its wiring, `/root/wt/wt-p06s4a`),
+P06 S2a (P06-06..08 review sheet, `/root/wt/wt-p06s2a`). P06 S3b (P06-14/17) waits for P06 S4a to land. At
+landing: `registry.ts`, `Services`, `main.tsx`, `App.tsx` and `en.ts` take lines from several slices; merge
+them by hand. The container restarted at 05:23 IST with `/root/reference`, `/root/wt` and `~/rea-lab` intact.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
 restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
 (latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
