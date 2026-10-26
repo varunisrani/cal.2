@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:50 IST (Agent 2). P00 and P01 complete; P03 wave A and P04 S1 landed (33/176 tasks). The user started the new
+Updated: 2026-10-27 01:05 IST (Agent 2). P00 and P01 complete; 38/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -62,21 +62,24 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 4 | P03-01, P03-02 (AI failure kinds, classification and messages; fake fetch and wire fixtures) | 731fc23 |
 | Wave 5 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing); **P01 done** | 20c0983 |
 | Wave 4 | P04-01, P04-02 (UI primitives: buttons, sheets, dialogs, toasts, inputs, wheels, date-time fields) | bd36cd2 |
+| Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 916b62f |
+| Wave 4 | P02-01..03 (schema and safe open, record guard and quarantine, live queries and bus) | e61199b |
 
 ## In progress
 
-- Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2; ci-local on
-  that head: unit 1267/1267 + 1 expected fail in 78 files, check 6/6, bundle 71.03 kB, e2e 1/1).
-  **Progress: 33/176 tasks** (P00 10/10, P01 19/19, P03 2/19, P04 2/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave4|wave6/`): P02 S0
-  (P02-01..03, base f25a8b3), P03 wave B S1 (P03-05/06, base aa146d1), P03 wave B S2 (P03-03/04,
-  base 369d003), P04 S2 (P04-03, base db84874).
+- Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
+  (916b62f), P02 S0 (e61199b; ci-local on that head: unit 1401/1401 + 1 expected fail in 90 files,
+  check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 38/176 tasks** (P00 10/10, P01 19/19,
+  P02 3/15, P03 4/19, P04 2/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave6|wave7/`): P03 wave B S2
+  (P03-03/04, base 369d003), P04 S2 (P04-03, base db84874), P02 wave B S1 (P02-04/05) and S2
+  (P02-06/07/13), base 6ff78c0.
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P02 S0, P03 S1/S2, P04 S2 as they come back; then P02 wave B (S1–S5), P03 wave B S3–S5,
+1. Land P03 S2, P04 S2, P02 S1, P02 S2 as they come back; then P02 wave B S3–S5, P03 wave B S3–S5,
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -141,6 +144,17 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- Data core (P02-01..03): repositories write only through `transact()` (it adds quarantine and
+  meta); `writeOne` refuses a row its codec cannot read; codecs in `src/data/codecs.ts`; test
+  helpers `src/test/{db,live,factories}.ts`. Fake timers stall Dexie: data tests use real timers
+  and wait on events. Blobs in tests: `testBlob` + `isBlobLike`. Follow-ups: add
+  `additionalHooks: '(useLive)'` to the exhaustive-deps rule; the `unreadableData` flag is never
+  cleared yet (K9 banner task); P02-05 update refuses a corrupt read; P02-14 wipe is the only
+  `deleteDatabase` caller; the cross-tab test names Dexie's channel `x-storagemutated-1`.
+- AI transport (P03-05/06): `send(url, init, {deadline, attemptCapMs?, provider?, keySent?,
+  fetch?})`, `startDeadline({timeoutMs, cancel?})` in ms (caller converts `timeoutSec`); one
+  deadline per action, `dispose()` at the end; `attemptCapFor('fixed'|'userServer')`. P03-17 sends
+  everything through `sendWithRetry` and checks `deadline.throwIfStopped()` between steps.
 - UI primitives (P04-01/02): `data-ui` is a required prop, parts are `<hook>.<part>`; disabled and
   busy controls use `aria-disabled`; form sheets (P04-11) pass `dismissable={false} hideDone`;
   P04-07 mounts `ToastProvider` once; weight wheels round tenths (R05.10, P05/P07 callers); no
