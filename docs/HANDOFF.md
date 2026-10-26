@@ -1,6 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 21:35 IST (Agent 1, session 3). Rolling waves (48/176 tasks; P00 and P01 complete).
+Updated: 2026-10-26 21:50 IST (Agent 1, session 3). Rolling waves (54/176 tasks; P00 and P01 complete; the app
+runs on the real database).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -70,34 +71,44 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 5 | P02-04, P02-05 (settings schema and repository, profile repository) | 9aefd7c |
 | Wave 5 | P02-06, P02-07, P02-13 (diary repository, photo store, drafts; `src/data/barcodeKey.ts`, `src/test/blobs.ts`) | 192db24 |
 | Wave 5 | P02-08, P02-09 (weight, body fat, water and fasting repositories; D-16.77) | d8caa8a |
+| Wave 6 | P02-10, P02-11 (saved meals, Coach messages) | 797e1f1 |
+| Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 8227428 |
+| Wave 6 | P04-08, P04-09 (diary service, quick start, `src/main.tsx` composition root on the real database, `onboarding` partition) | cfb32cf |
 
 ## In progress
 
-**Wave 6** (launched 2026-10-26 21:33 IST, base 2d893e7, prompts in `docs/handoff/wave6/`), four builders
-in `/root/wt/wt-{p04s4,p02s4,p02s5,p03b1}`:
-- P04 S4 (P04-08/09 diary service, quick start, and the real database wired into the shell via
-  `src/main.tsx` and `src/services/shell.ts`);
-- P02 S4 (P02-10/11 saved meals, Coach messages); P02 S5 (P02-12/14 secrets with a wrapping key,
-  erase everything, persistence and storage estimates); P03 B S1 (P03-05/06 transport, deadlines,
-  retry ladder).
-At landing: add the `onboarding` partition to `src/i18n/en.ts`; wire `requestPersistence`
-(P02-14) as the diary service's `onFirstEntry` in `src/main.tsx`.
-
-Latest landing (9aefd7c, 192db24, d8caa8a) verified on the stacked head with the full loop: unit 1806
-passed + 2 expected-fail in 112 files, check 6/6, bundle 77.76 kB, e2e 1/1. If this container is gone,
-re-create the four worktrees at 2d893e7 and relaunch the same prompts. **Progress: 48/176 tasks**
-(P00 10/10, P01 19/19, P02 10/15, P03 2/19, P04 7/14).
+**Wave 6**, one builder left: P02 S5 (P02-12/14 secrets with a wrapping key, erase everything,
+persistence and storage estimates), `docs/handoff/wave6/w6-p02s5.txt`, base 2d893e7,
+`/root/wt/wt-p02s5`. At landing: in `src/main.tsx` pass `onFirstEntry: () => requestPersistence()` to
+`createDiaryService` (a comment marks the spot). Landed from wave 6: 797e1f1, 8227428, cfb32cf (latest
+full loop: unit 1922 passed + 2 expected-fail in 122 files, check 6/6, bundle 121.07 kB, e2e 1/1).
+**Progress: 54/176 tasks** (P00 10/10, P01 19/19, P02 12/15, P03 4/19, P04 9/14).
 
 ## Next
 
-1. Land wave 6 as it returns. Usage was 56 % at 21:24 IST: after wave 6 the 75 % band is near, so no
-   new builders until the 00:20 IST reset unless usage reads well below 70 %.
+1. Land P02-12/14 when it returns. No new builders until the 00:20 IST reset unless usage reads well
+   below 70 % (59 % at 21:29 IST, about 0.5 points a minute with four builders).
 2. After the reset: P02-15 hooks (all repositories landed), P04 wave B S5 (P04-10..13 Home, log,
    tab placeholders) and P04-14 walking-skeleton e2e = **Demo 1**; P03 wave B S2..S5 (catalog and
    settings, adapters, image and parse, prompts), then P03 wave C; P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From wave 6:
+  - Diary service: `logEntry(draft, {loggedAt, meal, source, photoIds?})` → `logged | fastActive | ignored`;
+    one log gate per service, delete gated per id; storage errors reject and reopen the gate.
+    `Services = {diary, onboarding, clock}` via `ServicesProvider` / `useServices` (src/services/context.tsx).
+    `startWithDefaults` stores units explicitly, so a later browser-language change never flips them.
+    `main.tsx` renders twice (skeleton, then inside the provider). Initial JS is 121 kB gzip now (the
+    data layer loads at start-up): consider lazy chunks for later features to keep headroom.
+  - Saved meals: `move(from, to)` takes positions (an id-based move would be safer for P06-12);
+    Home can build the saved-ids set from `list()` instead of `isSaved` per row.
+  - Coach store: order = time, then a stored sequence, then id; `append(message, generation)` stores
+    nothing after a reset (P08-09); the repository assigns ids, the caller passes `at`.
+  - AI transport: `startDeadline({timeoutSeconds, cancel})` throws for a non-positive timeout (the
+    30–600 s clamp and 180 s default belong to P03-04); P03-03 adds a self-hosted flag per provider for
+    `attemptCapMs`; P03-17 creates one Deadline per action and calls `end()`.
+  - Nothing listens yet for the bus messages `reload-needed` or `erase` (a shell follow-up).
 - From waves 4–5 (shell and repositories):
   - Shell (P04-04..07): `src/app/ports.ts` = `ReadStore<T>` (undefined = not loaded),
     `ShellSettings {appearance, accent, hiddenTabs}`, `BootState {status: openError | needsOnboarding |

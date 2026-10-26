@@ -6,6 +6,6 @@
   "remaining_pct": 41,
   "resets_at": "2026-10-27T00:20:00+05:30",
   "last_check": "2026-10-26T21:30:00+05:30",
-  "current_step": "48/176 tasks; wave 6 running (P04-08/09, P02-10/11, P02-12/14, P03-05/06)",
-  "last_commit": "2d893e7"
+  "current_step": "54/176 tasks; P02-12/14 running; no new builders until the reset",
+  "last_commit": "cfb32cf"
 }
