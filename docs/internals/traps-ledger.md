@@ -66,7 +66,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > reads a day with no entries as none, holding no kcal at all (R01.16)
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy > holds none of the names, notes, ingredients, photos, product text or ids of the fixture (R01.16)
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
-  - Review: owned by P02-05
+  - Test: src/data/repos/profileRepo.test.ts > get > calls an unreadable profile corrupt, never missing, and keeps it aside (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > save > refuses to save over an unreadable profile that cannot be kept aside (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > update > refuses to run on an unreadable profile, leaving it as it was and kept aside (R01.17)
 - **R01.18** Height and weight units default together from the browser locale (D-16.10)
   - Test: src/domain/units/defaults.test.ts > defaultUnits > seeds height and weight together from the locale (R01.18)
 
@@ -283,7 +285,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/app/TabBar.test.tsx > TabBar > draws nothing until the hidden-tab setting is read, so a hidden tab never flashes in
   - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears
   - Test: src/app/TabBar.test.tsx > TabBar > goes to Home when the app opens on a hidden tab
-  - Review: the one-tab-at-a-time stored write owned by P02-04
+  - Test: src/data/repos/settingsRepo.test.ts > toggleHiddenTab > hides Coach without undoing Progress hidden since the screen last read (R05.13)
 - **R05.14** Today is recomputed at local midnight and on return to the foreground
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
@@ -355,7 +357,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches
-  - Review: owned by P09-01
+  - Test: src/data/repos/settingsRepo.test.ts > loaded > resolves with the first snapshot only after a write in flight has landed (R06.22)
+  - Review: the settings screens owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue
   - Test: src/i18n/lint.test.ts > lintCatalogue > fails an unclosed plural
