@@ -55,7 +55,12 @@ Session 2 has stopped: its routines are disabled or deleted and it pushes nothin
 
 ## In progress
 
-Nothing. Wave 1 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
+**Wave 2** (session 3, launched 2026-10-26 19:31 IST, base f67065d): four builders in
+`/root/wt/wt-{p00s2,p00s4,p00s5,p01b1}` from the prompts in `docs/handoff/wave2/` — P00 S2
+(P00-02..04), P00 S4 (P00-07), P00 S5 (P00-09), P01 wave B S1 (P01-03..06). If this container is
+gone, re-create the worktrees at f67065d and relaunch the same prompts (nothing is landed yet).
+
+Previously: wave 1 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
 clean; unit 293/293 in 25 files; check --require-ref 6/6; check:bundle 68.00 kB of 250 kB; e2e 1/1)
 and pushed as 4b31214, e081191, 4ffda80. **Progress: 7/176 tasks** (P00: 5/10, P01: 2/19).
 
