@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:55 IST (Agent 1, session 3). 63/176 tasks; P00, P01 and P02 complete; the app runs on the
+Updated: 2026-10-27 01:05 IST (Agent 1, session 3). 65/176 tasks; P00, P01 and P02 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -78,21 +78,21 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 7 | P02-15 (feature hooks over a DataProvider; `LiveState<T>` convention). P02 done | 322a3f7 |
 | Wave 8 | P03-10..12 (image preparation, JSON extraction, food reply parser; reply key constants) | bca540b |
 | Wave 8 | P03-07..09 (Gemini, OpenAI-compatible and Anthropic adapters) | 9d8d27d |
+| Wave 8 | P03-03, P03-04 (provider catalogue and presets, AI settings and endpoints; adapters take `ProviderId` from the catalogue) | 8b03cfd |
 
 ## In progress
 
 Four builders:
-- Wave 8 (base d38d4fb, `docs/handoff/wave8/`): P04 S5 (P04-10..13 Home, manual entry, entry row, tab
-  placeholders, Settings hub) in `/root/wt/wt-p04s5`; P03 S2 (P03-03/04 catalogue, AI settings,
-  endpoints) in `/root/wt/wt-p03s2`. At landing: add the `home`, `log` and `settings` partitions to
-  `src/i18n/en.ts`; point `ProviderId` in `src/ai/adapters/request.ts` at the catalogue's ids if they
-  match.
-- Wave 9 (base 7a6e065, `docs/handoff/wave9/`): P03 S4b (P03-13/14 units, parts, plan/goal/label
-  readers) in `/root/wt/wt-p03s4b`; P03 S5 (P03-15/16 prompts and contract) in `/root/wt/wt-p03s5`.
-Landed this window: bca540b, 9d8d27d (full loop on the stack: unit 2160 passed + 2 expected-fail in 135
+- Wave 8 (base d38d4fb): P04 S5 (P04-10..13 Home, manual entry, entry row, tab placeholders, Settings hub)
+  in `/root/wt/wt-p04s5`. At landing: add the `home`, `log` and `settings` partitions to
+  `src/i18n/en.ts`.
+- Wave 9 (`docs/handoff/wave9/`): P03 S4b (P03-13/14 readers, base 7a6e065, `/root/wt/wt-p03s4b`); P03 S5
+  (P03-15/16 prompts and contract, base 7a6e065, `/root/wt/wt-p03s5`); P05 S1 (P05-01..03 wizard state
+  machine and steps, base c0b38bb, `/root/wt/wt-p05s1`).
+Landed this window: bca540b, 9d8d27d, 8b03cfd (latest full loop: unit 2233 passed + 2 expected-fail in 139
 files, check 6/6, bundle 123.08 kB, e2e 1/1). If this container is gone, re-create the worktrees at their
-bases and relaunch the same prompts. **Progress: 63/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03
-10/19, P04 9/14).
+bases and relaunch the same prompts. **Progress: 65/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03
+12/19, P04 9/14, P05 0/15).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -107,6 +107,12 @@ whether to fast-forward `main` to the work branch.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From wave 8 (AI catalogue and settings): `decodeAiSettings` is ready for the `ai.settings` row of
+  `src/data/settingsSchema.ts` (plug it in when P05 S2 / P09 use it); the preset-upgrade marker lives in
+  `meta.presetUpgradeVersion` (the caller saves settings when `changed` and stores the version); an empty
+  standby slot means the provider's default address. Several default models reason by default (GPT-6,
+  grok-4.3, Anthropic 5.5): with the 1 024-token cap the client (P03-17) or adapters may need each
+  vendor's low/no-reasoning switch; re-check in the P10-12 live check, with DeepSeek/Cerebras vision.
 - From wave 7 (hooks): every hook returns `LiveState<T>`; none suspends; `useSettings(keys)` returns
   only the named keys (compared by content); `useTargets(today?)` → missing | corrupt | ok {profile,
   formula, targets} (pass `useToday()`); `DataSources` holds read methods only; screens import types
