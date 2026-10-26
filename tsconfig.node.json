@@ -15,5 +15,6 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tooling", "e2e", "scripts"]
+  "include": ["vite.config.ts", "playwright.config.ts", "tooling", "e2e", "scripts"],
+  "exclude": ["scripts/lint-fixtures"]
 }

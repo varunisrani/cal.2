@@ -1,8 +1,9 @@
+import { t } from '../i18n/t';
+
 export function App() {
   return (
     <main data-ui="app-root">
-      <h1>Platewise</h1>
-      <p>Walking skeleton. Features land phase by phase.</p>
+      <h1>{t('common.appName')}</h1>
     </main>
   );
 }
