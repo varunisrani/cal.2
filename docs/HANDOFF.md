@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:40 IST (Agent 1, session 3). 71/176 tasks; P00, P01 and P02 complete; the app runs on the
+Updated: 2026-10-27 01:15 IST (Agent 1, session 3). 73/176 tasks; P00, P01 and P02 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -81,22 +81,22 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 8 | P03-03, P03-04 (provider catalogue and presets, AI settings and endpoints; adapters take `ProviderId` from the catalogue) | 8b03cfd |
 | Wave 8 | P04-10..13 (Home with gauge, pillars and diary; manual entry; swipe-delete rows; tab placeholders; Settings hub; D-16.79) | ea9563c |
 | Wave 9 | P03-13, P03-14 (unit choices, parts breakdown, plan/goal/label readers) | 265c9b7 |
+| Wave 9 | P03-15, P03-16 (food prompts and reply contract; plan, evidence, nutrient-goal and fit-check prompts) | 257f9e3 |
 
 ## In progress
 
 Four builders (prompts in `docs/handoff/wave9/`):
 - P07 S3 (P07-10/11 line and bar charts, chart maths), base 8f40663, `/root/wt/wt-p07s3`. At landing:
   add a `charts` partition to `src/i18n/en.ts` if the builder made one.
-- P03 S5 (P03-15/16 prompts and contract), base 7a6e065, `/root/wt/wt-p03s5`. At landing: point
-  `plan.ts` at `PLAN_REPLY_KEYS` from `src/ai/parse/planReply.ts` (the builder was told the five names).
+- P03 S6 (P03-17 client, then P03-18 food and planning tasks), base 257f9e3, `/root/wt/wt-p03s6`.
 - P05 S1 (P05-01..03 wizard state machine and steps), base c0b38bb, `/root/wt/wt-p05s1`.
 - P04-14 walking-skeleton e2e and parity scenario (**Demo 1**), base 19fb709, `/root/wt/wt-p04s6`. After
   landing, the lead runs `parity/walking-skeleton.platewise.json` once through REA (install
   `rea-agents@6.8.0` outside the repo on Node 24 per "Where things are").
-Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7 (latest full loop: unit 2380 passed + 2
-expected-fail in 151 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
-the worktrees at their bases and relaunch the same prompts. **Progress: 71/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 14/19, P04 13/14, P05 0/15, P07 0/17).
+Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3 (latest full loop: unit 2475 passed + 2
+expected-fail in 158 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
+the worktrees at their bases and relaunch the same prompts. **Progress: 73/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 16/19, P04 13/14, P05 0/15, P07 0/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -105,9 +105,8 @@ whether to fast-forward `main` to the work branch.
 ## Next
 
 1. Land waves 8–9 as they return (see In progress).
-2. Then: P04-14 walking-skeleton e2e and parity scenario (= **Demo 1**, after P04 S5), P03 wave C
-   (P03-17 client, P03-18 tasks, P03-19 CORS probe; after P03 S2, S4b, S5), P05 onboarding and goals,
-   P06–P10.
+2. Then: P03-19 CORS probe (independent; next free core), P05 S2–S4 onboarding and goals (P05-04..15),
+   the rest of P07, P06 (needs P03-18), P08–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
@@ -119,6 +118,11 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (prompts): every builder in `src/ai/prompts/` returns `{ system, prompt }` without the
+  notes for the AI (the client appends them, D-16.24); `compactRetryNote(maxTokens, 'json' | 'prose')`
+  is in `shared.ts`; the label scan is the photo request plus a hint (D-16.62); the fit check keeps the
+  newest 12 meals; the kJ line is in the plan and fit-check prompts only. The prompt limits and plan keys
+  come from the readers (`MAX_UNIT_CHOICES`, `MAX_PARTS`, `PLAN_REPLY_KEYS`).
 - From wave 8 (AI catalogue and settings): `decodeAiSettings` is ready for the `ai.settings` row of
   `src/data/settingsSchema.ts` (plug it in when P05 S2 / P09 use it); the preset-upgrade marker lives in
   `meta.presetUpgradeVersion` (the caller saves settings when `changed` and stores the version); an empty
