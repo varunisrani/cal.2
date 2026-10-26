@@ -1,8 +1,8 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 19:25 IST (Agent 1, session 2, last entry). Wave 1 landed (7/176 tasks). At the
-user's request the code is on `main`, and Agent 1 moves to a **new session** (fresh usage window).
-Session 2 has stopped: its routines are disabled or deleted and it pushes nothing more.
+Updated: 2026-10-26 23:05 IST (Agent 2). Wave 1 landed (7/176 tasks). The user started the new
+session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
+pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## New session: start here
 
@@ -93,7 +93,8 @@ and pushed as 4b31214, e081191, 4ffda80. **Progress: 7/176 tasks** (P00: 5/10, P
 
 ## Usage guard
 
-One agent (Agent 1); no second account. `.agents/turn.json` (lock), `.agents/agent-1.json` (status)
+Two agents: Agent 1 (Account 1, session 2 stopped at 76 %, `READY`) and Agent 2 (Account 2, this
+session, holds the turn). `.agents/turn.json` (lock), `.agents/agent-1.json` (status)
 and `.agents/usage-log-agent-1.md` (one row per check, IST) follow the skill's two-agent protocol, so
 a second agent can join with `.agents/wait-for-turn.sh AGENT_2`. Bands: below 75 % builders allowed;
 75–89 % no new builders, small tasks only, this page after every step; at 88 % read stop builders,
@@ -105,11 +106,16 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
 
 | # | When (IST) | From → to | Tasks | Why | State left |
 |---|---|---|---|---|---|
-| 1 | 2026-10-26 19:25 | Agent 1 session 2 → Agent 1 new session | 7/176 | The user moved Agent 1 to a new session with a fresh usage window (session 2 at 76 %) | Head green and pushed to `main` and the work branch; nothing in flight, no patches; wave 2 prompts in `docs/handoff/wave2/` |
+| 1 | 2026-10-26 19:25 | Agent 1 session 2 → new session (taken by Agent 2 at 23:05) | 7/176 | The user moved the work to a new session with a fresh usage window (session 2 at 76 %); the user named it Agent 2 | Head green and pushed to `main` and the work branch; nothing in flight, no patches; wave 2 prompts in `docs/handoff/wave2/` |
 
 ## Resume notes
 
-(The new session writes what it found when it verified the snapshot.)
+- 2026-10-26 23:05 IST, Agent 2 (new session, Account 2, usage 1 %): fresh container. Re-cloned the
+  reference at `10e14b67`, `pnpm install --frozen-lockfile` (6.5 s), made `/root/wt` and
+  `/root/rea-lab`, copied the builder rules and landing scripts. Verified `d53111e`: lint clean,
+  fmt:check clean, typecheck clean, `check --require-ref` 6/6 PASS (similarity 123 files, banned 24
+  patterns, traps 162, acceptance 152). **Matches** what session 2 reported. Lock → `AGENT_2 ACTIVE`;
+  wave 2 launched next.
 
 ## How to resume
 

@@ -1,7 +1,7 @@
 {
-  "turn": "AGENT_1",
-  "status": "PAUSED",
-  "updated_at": "2026-10-26T19:23:19+05:30",
-  "by": "AGENT_1",
-  "note": "Session 2 of Agent 1 stopped at 76 % on the user's request; the user starts Agent 1 in a new session (0 %). New session: verify the head, set status ACTIVE, arm your own routines, launch wave 2 (docs/HANDOFF.md)."
+  "turn": "AGENT_2",
+  "status": "ACTIVE",
+  "updated_at": "2026-10-26T23:05:00+05:30",
+  "by": "AGENT_2",
+  "note": "The user started this session as Agent 2 and gave it the turn (Agent 1 session 2 stopped at 76 %). A2 verified d53111e and launches wave 2 (P00 S2/S4/S5, P01 wave B S1). Agent 1: none of your files touched; stay READY and wait with .agents/wait-for-turn.sh AGENT_1."
 }
