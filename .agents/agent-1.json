@@ -1,11 +1,11 @@
 {
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
-  "state": "ACTIVE",
+  "state": "READY",
   "usage_pct": 76,
   "remaining_pct": 24,
   "resets_at": "2026-10-26T21:20:00+05:30",
-  "last_check": "2026-10-26T19:19:52+05:30",
-  "current_step": "wave 1 landed (7/176), GitHub CI run 5 green on dc4efdd; waiting for the 21:20 IST reset to launch wave 2 (prompts ready)",
+  "last_check": "2026-10-26T19:23:19+05:30",
+  "current_step": "7/176 tasks; session 2 stopped (user moved Agent 1 to a new session); new session: follow docs/HANDOFF.md 'New session: start here'",
   "last_commit": "4ffda80"
 }

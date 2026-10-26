@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p00s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P00 slice S5 = P00-09 — the scripted OpenAI-compatible fake AI provider for e2e and parity runs. Spec: row P00-09 in docs/plan/phases/P00-foundations.md; docs/plan/02-rea-workflow.md §4 step 2; D-16.26 (loopback rule) in docs/plan/16-what-we-change.md. No reference reading (tooling); all reply text in the scripts is ours: say so in the note.
+Task note (before code): docs/notes/P00/fake-ai-provider-server.md.
+
+You own:
+- e2e/fake-ai/** (server.ts, server.test.ts, global-setup.ts, scripts/{food-ok,busy-then-ok,cut-then-ok,coach-tool,garbage}.json)
+- playwright.config.ts
+
+Do not touch:
+- src/**, public/**, index.html, eslint.config.js, scripts/** (other builders this wave), vite.config.ts (already includes e2e/fake-ai/**/*.test.ts), docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- node:http only (no new dependency). Bind 127.0.0.1, port from PLATEWISE_FAKE_AI_PORT (default 4320). POST /v1/chat/completions answers from the loaded script in order ({status, body, delayMs?}); an empty or exhausted script answers 500 with a clear message. CORS: preflight 204 with Access-Control-Allow-Origin: *, allow headers authorization and content-type, methods POST/GET/OPTIONS; every reply carries the allow-origin header. It records each request: headers without authorization, and the JSON body. Control routes POST /__script (a named script from e2e/fake-ai/scripts/ or an inline one), GET /__requests, POST /__reset.
+- Export a start function returning {port, url, close} so tests start it on port 0; global-setup.ts starts it for Playwright and returns the teardown.
+- server.test.ts begins with `// @vitest-environment node` and uses fake timers for delayMs (no real waits; the vitest test TZ is America/New_York, irrelevant here).
+- playwright.config.ts: add globalSetup; set testMatch: '**/*.spec.ts' so Playwright never runs the Vitest files in e2e/fake-ai/; add the html reporter with open: 'never' next to list (CI uploads playwright-report/ on failure).
+- Script replies are OpenAI chat-completion shaped; the food reply is a JSON food analysis written by us (any plausible dish), the coach-tool script is one tool_call round then a text answer, cut-then-ok uses finish_reason "length" first.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run e2e/fake-ai --maxWorkers=1
+- e2e: pnpm build, then pnpm exec playwright test --workers=1 --output /root/wt/e2e-p00s5 (only the smoke spec exists; prove globalSetup starts and stops the server and that no *.test.ts is collected)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.

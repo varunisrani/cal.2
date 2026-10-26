@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p00s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P00 slice S4 = P00-07 — lint boundaries and the copy rule. Spec: row P00-07 in docs/plan/phases/P00-foundations.md; the architecture's seams in docs/plan/04-architecture.md (pure domain, one AI seam, data only through repositories). No reference reading (tooling): say so in the note.
+Task note (before code): docs/notes/P00/lint-boundaries-and-the-copy-rule.md.
+
+You own:
+- eslint.config.js
+- scripts/lint-fixtures/** (domainImportsReact.ts, featureImportsRepo.tsx, featureFetch.tsx, literalCopy.tsx, plus a clean fixture that uses t()), scripts/lint-rules.test.ts
+- src/app/App.tsx and src/app/App.test.tsx — make the existing placeholder obey the copy rule: heading via t('common.appName'); move or drop the placeholder paragraph (if you keep it, put it in a new partition src/i18n/en/shell.ts rooted at `shell`, and add only its import line and enPartitions entry to src/i18n/en.ts — shared: report it)
+
+Do not touch:
+- src/ui/**, public/**, index.html, src/main.tsx, src/i18n/en/appearance.ts (the P00-02..04 builder), e2e/** and playwright.config.ts (the P00-09 builder), src/domain/** (the P01 units builder)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json, vite.config.ts
+
+Decisions already made:
+- The five rules of the P00-07 row, with only built-in rules and the plugins already installed (no-restricted-imports / no-restricted-globals / no-restricted-syntax).
+- Rule 1 allows src/domain → src/lib (src/lib imports nothing; P01-14 returns a Result) and src/domain → src/i18n is NOT allowed (keep the domain locale-free; it may use Intl directly).
+- fetch is allowed in src/ai/transport.ts, src/services/barcode/**, src/sw/**, tests (*.test.ts[x], src/test/**), e2e/**, scripts/**, tooling/**. indexedDB and dexie only in src/data/** and tests.
+- Copy rule message: "put user-visible text in the catalogue". JSX text containing a letter, and string literals in aria-label, title, placeholder and alt, in src/{app,ui,features}/**/*.tsx. Test files are exempt.
+- lint-rules.test.ts uses the ESLint API (new ESLint({ overrideConfigFile }) / lintText with a virtual filePath inside the guarded folder) and expects exactly the intended rule id per fixture; the clean fixture passes. The fixtures folder must not make `pnpm lint` fail on the real tree (ignore it in the config and lint it only through the test).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run scripts/lint-rules.test.ts src/app --maxWorkers=1
+- pnpm lint on the whole tree must stay green.
+- before you finish: fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.

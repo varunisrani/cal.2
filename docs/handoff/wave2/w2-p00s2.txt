@@ -1,0 +1,33 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p00s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P00 slice S2 = P00-02, P00-03, P00-04 — design tokens with six accent presets, the theme runtime and WCAG contrast sweep, and our own brand icon set. Spec: rows P00-02, P00-03, P00-04 in docs/plan/phases/P00-foundations.md (plus "Files to create/update"); D-16.1 in docs/plan/16-what-we-change.md. Reference reading: P00-02 only, and only after writing your values, open A/ui/theme/Color.kt (and I/Views/Theme.swift) to confirm none of our values or preset names match; never sample its palette. P00-04: never open the reference's app icon or store graphics.
+Task notes (each before its code): docs/notes/P00/design-tokens.md, docs/notes/P00/theme-runtime-and-contrast-check.md, docs/notes/P00/brand-icon-set.md.
+
+You own:
+- src/ui/tokens.css, src/ui/tokens.ts, src/ui/tokens.test.ts, src/ui/theme.ts, src/ui/theme.test.ts, src/ui/contrast.ts, src/ui/contrast.test.ts
+- public/icons/** (mark.svg, mark-maskable.svg and the five PNGs), scripts/render-icons.ts
+- index.html — only the favicon / touch-icon links (keep theme-color in step with your dark page colour)
+- src/main.tsx — only: import './ui/tokens.css' and apply the stored-default theme (System appearance, basil) with applyTheme before render
+- src/i18n/en/appearance.ts — a new catalogue partition for the accent labels (and appearance labels if you need them), rooted at `appearance` (`export const appearance = { appearance: {…} }`); and src/i18n/en.ts — only the import line and the `appearance` entry in enPartitions (shared: report it)
+
+Do not touch:
+- src/app/** and eslint.config.js (the P00-07 builder), e2e/** and playwright.config.ts (the P00-09 builder), src/domain/** (the P01 units builder)
+- src/i18n/** other than the two files above, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- D-16.1: six accents basil (default), saffron, lagoon, beet, ember, ink; each sets --accent, --accent-ink, --accent-soft; solid colours, no gradients. Dark theme is the default (deep green-black neutral); light under [data-theme=light]. Radii 12/18/24/999; spacing 4/8/12/16/20/24/32; system font stack only; sizes 11–48; safe-area insets as variables. Choose every value yourself.
+- Contrast targets (P00-03), no exceptions: text on page and card ≥ 7:1, muted ≥ 4.5:1, accent vs card ≥ 3:1, accent-ink on accent ≥ 4.5:1, danger on card ≥ 4.5:1, in both themes × every accent. The test parses tokens.css.
+- tokens.ts exports the preset ids, DEFAULT_ACCENT and each preset's label key typed as TKey (import type { TKey } from '../i18n/t').
+- applyTheme({appearance:'system'|'light'|'dark', accent}, root, media) returns an unsubscribe; System follows prefers-color-scheme live; updates <meta name=theme-color> to the page colour.
+- Icon: a plate seen from above with a small leaf, our own geometry, Basil colours. render-icons.ts renders the PNGs with Playwright Chromium (pre-installed; never run playwright install), deterministic: two runs give byte-identical PNGs; it checks each PNG's IHDR size.
+- Copy rule: no user-visible literal text in .tsx outside the catalogue (the lint for it lands with P00-07 in parallel).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ui --maxWorkers=1
+- icons: pnpm exec tsx scripts/render-icons.ts twice, then git status / cmp to prove identical output; pnpm check:assets
+- e2e smoke still passes: pnpm build, then pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p00s2
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.

@@ -1,7 +1,7 @@
 {
   "turn": "AGENT_1",
-  "status": "ACTIVE",
-  "updated_at": "2026-10-26T18:50:03+05:30",
+  "status": "PAUSED",
+  "updated_at": "2026-10-26T19:23:19+05:30",
   "by": "AGENT_1",
-  "note": "One lead agent (Agent 1, this cloud session); no second account yet. Wave 1 running: P00 S1, P00 S3, P01 wave A."
+  "note": "Session 2 of Agent 1 stopped at 76 % on the user's request; the user starts Agent 1 in a new session (0 %). New session: verify the head, set status ACTIVE, arm your own routines, launch wave 2 (docs/HANDOFF.md)."
 }

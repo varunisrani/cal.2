@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01b1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave B slice S1 = P01-03, P01-04, P01-05, P01-06 — energy units, body units and locale defaults, water units and quick-add amounts, number parsing / quantity formatting / amount expressions. Spec: those four rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research specs 01 §3.2, 02 §3.3, 05 §3.6, 06 §3.3; decisions D-16.10, D-16.37, D-16.39, D-16.56 in docs/plan/16-what-we-change.md. Traps owned by these tasks: search docs/internals/traps-ledger.md for "owned by P01-03", "P01-04", "P01-05", "P01-06" (e.g. R06.20, R05.10, R01.18, R02.22).
+Task notes (each before its code): docs/notes/P01/energy-units-kcal-and-kj.md, docs/notes/P01/body-units-and-locale-defaults.md, docs/notes/P01/water-units-and-quick-add-amounts.md, docs/notes/P01/number-parsing-quantity-formatting-and-amount-expressions.md.
+
+You own:
+- src/domain/units/** (energy, body, defaults, water, numbers + tests)
+- src/domain/servings/expression.ts, src/domain/servings/expression.test.ts
+
+Do not touch:
+- src/ui/**, public/**, index.html, src/main.tsx, src/app/**, eslint.config.js, e2e/**, playwright.config.ts, scripts/** (other builders this wave)
+- src/domain/model.ts and src/domain/dates/** (landed; import from them, do not edit), src/i18n/**, src/lib/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now() or navigator; it may import src/lib and other src/domain modules, never src/i18n. Locale is a parameter (a BCP 47 tag); derive the locale's grouping and decimal marks with Intl.NumberFormat(locale).formatToParts inside src/domain/units/numbers.ts and reuse that helper from energy/water parsing.
+- Parsers return null for invalid input (no throws). Storage units: kcal, kg, cm, ml.
+- One weight range everywhere: 20–250 kg / 50–500 lb (D-16.56); body fat is not in this slice.
+- Use the exact rules and the Verify column of each row as your test vectors; add the trap cases.
+- Time-zone helpers if ever needed: inTimeZone from src/test/time.ts (vitest runs in America/New_York).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/units src/domain/servings --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id your tests cover with its file > describe > test name). Leave everything uncommitted.
