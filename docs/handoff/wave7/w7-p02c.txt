@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02c (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave C = P02-15 — the feature hooks: the only data API screens use for reading. Spec: that row in docs/plan/phases/P02-data-layer.md (no reference reading: say so in the note); the lint message in eslint.config.js ("Screens read through src/data/hooks and act through src/services").
+Task note (before code): docs/notes/P02/feature-hooks.md.
+
+You own:
+- src/data/hooks.ts and src/data/hooks.test.ts (a .tsx test is fine), plus a small data context (src/data/DataProvider.tsx: provider + the hook that reads it) and its test
+- shared, only the lines needed: src/main.tsx, to wrap the app in your provider with the repositories it already creates (report it)
+
+Do not touch:
+- every other file under src/data/ (landed: import, do not edit), src/test/** (landed helpers: use them), src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/ui/**, src/ai/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- No database singleton: the repositories reach the hooks through your provider; src/main.tsx (the composition root) creates them once and passes them in. Tests render with a provider over openTestDb().
+- Each hook is a thin useLive call (src/data/useLive.ts) over a landed repository read, with no business rules: useProfile, useSettings(keys) (suspends, or reports loading, until settingsRepo.loaded), useDayEntries(dayKey), useEntriesBetween(a, b), useDayWater(dayKey), useFasts(a, b), useActiveFast(), useWeighIns(a, b), useBodyFat(a, b), useSavedMeals(), useCoachMessages(), useTargets() (profile plus effectiveTargets/formulaPlan from src/domain/goals with today from the caller or the clock), useUnreadableFlag() (meta.unreadableData). Use the repositories' read methods (they return Dexie promise chains, which live queries need); secretsRepo is not read through hooks.
+- Pick one loading convention for every hook (for example { status: 'loading' } | { status: 'ready', value } | { status: 'error', error }) and say it in the note; later UI slices code against it.
+- Tests: renderHook with fake-indexeddb; a write after mount re-renders with the new data; useSettings waits for loaded; useTargets follows a saved-target change; unmount stops the subscription (countRuns from src/test/db.ts); settleQuarantine after reads; Dexie.ignoreTransaction where needed; no real waits.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/hooks.test.ts src/data/DataProvider.test.tsx --maxWorkers=1 (adjust to your file names)
+- e2e smoke still passes: pnpm build, then PLATEWISE_E2E_PORT=4178 PLATEWISE_FAKE_AI_PORT=4325 pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p02c
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.
