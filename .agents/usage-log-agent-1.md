@@ -23,3 +23,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-26 21:35 | Agent 1 | Account 1 | 56 (reading 21:24) | 44 | 2026-10-27 00:20 | 48/176 tasks (P04-04..07, P02-04..09/13 landed); wave 6 launched (4 builders); last round before the 75 % band |
 | 2026-10-26 21:30 | Agent 1 | Account 1 | 59 (reading 21:29) | 41 | 2026-10-27 00:20 | 48/176 tasks; wave 6 running (4 builders); expect ~75 % near 22:00, next check in 20 min |
 | 2026-10-26 21:55 | Agent 1 | Account 1 | 67 (reading 21:46) | 33 | 2026-10-27 00:20 | 56/176 tasks (wave 6 landed: 797e1f1, 8227428, cfb32cf, 86b4ad7); one builder (P02-15) running; no more until the reset |
+| 2026-10-26 21:52 | Agent 1 | Account 1 | 68 (reading 21:51) | 32 | 2026-10-27 00:20 | 56/176 tasks; P02-15 running (one builder); no more builders until the reset |
