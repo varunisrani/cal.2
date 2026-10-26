@@ -170,14 +170,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C3-1** A plan reply of 2 000 / 150 / 215 / 61 is stored as 2 000 / 150 / 215 / 60
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: accepted replies > stores 2 000 / 150 / 215 / 61 as 2 000 / 150 / 215 / 60 (R01.2, ACC-C3-1)
 - **ACC-C3-2** An implausible reply leaves the targets unchanged
-  - Review: P05-08
+  - Test: src/services/goals/rebuild.test.ts > rebuild: failures leave the plan as it was > leaves the targets for an implausible plan: protein 300 for this body (ACC-C3-2)
 
 ### C4 · Rebuild plan (P1)
 
 - **ACC-C4-1** Rebuild shows the new calorie target and the AI's reason
-  - Review: P05-08
+  - Test: src/services/goals/rebuild.test.ts > rebuild: a stored plan > stores all four targets, clears every lock and returns the kcal and the reason (ACC-C4-1)
 - **ACC-C4-2** Editing the profile while a rebuild runs discards its result
-  - Review: P05-08
+  - Test: src/services/goals/rebuild.test.ts > rebuild: a profile changed during the call (R01.4) > drops the plan when %s changed, leaving targets and locks (R01.4, ACC-C4-2)
 
 ### C5 · "Inputs changed" nudge on Rebuild when goal inputs changed since … (P1)
 
@@ -199,9 +199,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C8 · Weekly tune-up (Adaptive Goals) (P1)
 
 - **ACC-C8-1** Opening the app 7 days after the last check rebuilds the plan once
-  - Review: P05-09
+  - Test: src/services/goals/tuneUp.test.ts > check: when a check is due (D-16.45) > rebuilds the plan once when the app opens 7 days after the last check (ACC-C8-1)
 - **ACC-C8-2** Turning the tune-up off restores the plan from before its first change
-  - Review: P05-09
+  - Test: src/services/goals/tuneUp.test.ts > the plan from before the tune-up (R01.14) > restores the plan from before the first tune-up after two runs (R01.14, ACC-C8-2)
 - **ACC-C8-3** While it is on, tapping a target explains why it cannot be edited
   - Review: P05-11
 

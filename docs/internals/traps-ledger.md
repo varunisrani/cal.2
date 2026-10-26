@@ -7,7 +7,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R01 · Profile, onboarding and goals (`research/01-*.md` §6)
 
 - **R01.1** The weekly tune-up re-runs the AI plan; the reference's unused deterministic corrector is not built (D-16.45)
-  - Review: owned by P05-09
+  - Test: src/services/goals/tuneUp.test.ts > check: failures keep the plan and count as the check (R01.5, D-16.45) > changes nothing without an AI plan and still marks the week: no formula fallback (R01.1, D-16.45)
 - **R01.2** An AI plan that is out of range, incoherent, missing a macro or implausible is refused; accepted plans satisfy 4P + 4C + 9F = kcal exactly
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses a value that is not a number or numeric text (step 1, R01.2)
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses raw values outside the ranges, before rounding (step 2, R01.2)
@@ -21,12 +21,17 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when %s changed during the call (R01.4)
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when the profile is gone (R01.4)
-  - Review: rebuild wiring owned by P05-08
+  - Test: src/services/goals/rebuild.test.ts > rebuild: a profile changed during the call (R01.4) > drops the plan when %s changed, leaving targets and locks (R01.4, ACC-C4-2)
+  - Test: src/services/goals/tuneUp.test.ts > check: replies that come too late (R01.4) > drops the reply and marks nothing when the profile changed during the call (R01.4)
 - **R01.5** The tune-up never hammers a failing provider: failures mark the week, rebuilds and onboarding set the check day, runs are single-flight
   - Test: src/domain/adaptive/cadence.test.ts > settle > marks today on a failure while still on, and keeps the plan (R01.5)
   - Test: src/domain/adaptive/cadence.test.ts > plan > runs once for three visible events in a row (R01.5)
   - Test: src/domain/adaptive/cadence.test.ts > plan > sets the check day to today when onboarding completes (R01.5)
-  - Review: tune-up wiring owned by P05-09
+  - Test: src/services/goals/tuneUp.test.ts > check: when a check is due (D-16.45) > makes one AI call for three visible events in a row (R01.5)
+  - Test: src/services/goals/tuneUp.test.ts > check: failures keep the plan and count as the check (R01.5, D-16.45) > marks today and keeps the plan when the provider refuses the key (R01.5)
+  - Test: src/services/goals/tuneUp.test.ts > check: failures keep the plan and count as the check (R01.5, D-16.45) > marks nothing for a failure that arrives after the switch went off (R01.5)
+  - Test: src/services/goals/rebuild.test.ts > rebuild: the weekly tune-up (R01.5) > counts as this week’s check while the tune-up is on (R01.5)
+  - Test: src/app/useTuneUp.test.ts > useTuneUp > turns an open and three visible events during its run into one AI call (R01.5)
 - **R01.6** The wizard refuses a target weight on the wrong side of the current weight (D-16.11)
   - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a lose target at or above the current weight (R01.6, D-16.11)
   - Test: src/domain/profile/editRules.test.ts > checkGoalWeight > refuses a gain target at or below the current weight (R01.6, D-16.11)
@@ -70,7 +75,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
   - Test: src/domain/adaptive/cadence.test.ts > settle > keeps the first plan on the first success and the same snapshot on the second (R01.14)
   - Test: src/domain/adaptive/cadence.test.ts > turnOff > restores the plan from before the first tune-up after two runs (R01.14)
-  - Review: tune-up wiring owned by P05-09
+  - Test: src/services/goals/tuneUp.test.ts > the plan from before the tune-up (R01.14) > restores the plan from before the first tune-up after two runs (R01.14, ACC-C8-2)
 - **R01.15** Birthdays are local dates; age is clamped at 0 and never shifts with the time zone
   - Test: src/domain/dates/age.test.ts > ageOn > gives the same age in Asia/Tokyo for a birthday stored as a key (R01.15)
   - Test: src/domain/dates/age.test.ts > ageOn > clamps a birth date in the future to 0

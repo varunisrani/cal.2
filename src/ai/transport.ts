@@ -82,7 +82,10 @@ export async function send(
   }
 }
 
-/** The browser's `fetch`, called as a plain function so it never gets the wrong `this`. */
-function browserFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+/**
+ * The browser's `fetch`, called as a plain function so it never gets the wrong `this`. The
+ * composition root hands it to the services that take a `fetch` (they never use the global).
+ */
+export function browserFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   return fetch(input, init);
 }

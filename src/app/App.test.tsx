@@ -48,12 +48,12 @@ const data: DataSources = {
   bus,
 };
 
-function renderApp(ports: ShellPorts, initialHash = '') {
+function renderApp(ports: ShellPorts, initialHash = '', withServices: Services = services) {
   const host = memoryHost(initialHash);
   const router = createRouter(host);
   const reload = vi.fn();
   const view = render(
-    <ServicesProvider services={services}>
+    <ServicesProvider services={withServices}>
       <DataProvider sources={data}>
         <App ports={ports} router={router} appState={createAppState()} onReload={reload} />
       </DataProvider>
@@ -112,6 +112,21 @@ describe('App', () => {
     expect(
       screen.getByRole('heading', { level: 1, name: common.common.tabs.progress }),
     ).toBeInTheDocument();
+  });
+
+  it('starts the weekly tune-up once the tab frame shows, and never on onboarding (P05-09)', () => {
+    const check = vi.fn().mockResolvedValue({ kind: 'unchanged', why: 'notDue' });
+    const tuneUp = { check, turnOn: vi.fn(), turnOff: vi.fn() };
+    const onboardingBoot = controlledStore<BootState>({ status: 'needsOnboarding' });
+    const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
+    const first = renderApp({ boot: onboardingBoot, settings }, '', { ...services, tuneUp });
+    expect(check).not.toHaveBeenCalled();
+    first.unmount();
+
+    const readyBoot = controlledStore<BootState>({ status: 'ready' });
+    renderApp({ boot: readyBoot, settings }, '#/home', { ...services, tuneUp });
+    expect(check).toHaveBeenCalledTimes(1);
+    expect(check).toHaveBeenCalledWith('open');
   });
 
   it('puts every screen inside the toast provider', () => {

@@ -3,6 +3,8 @@ import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { DiaryService } from './diary';
+import type { RebuildService } from './goals/rebuild';
+import type { TuneUpRunner } from './goals/tuneUp';
 import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
 
@@ -22,6 +24,10 @@ export interface Services {
   readonly photos?: PhotoService;
   /** The capture sheet's draft (P06-03); optional for the same reason. */
   readonly captureDrafts?: CaptureDraftService;
+  /** Rebuilds the plan with the AI (P05-08); optional for the same reason. */
+  readonly rebuild?: RebuildService;
+  /** The weekly tune-up (P05-09): one runner for the app; optional for the same reason. */
+  readonly tuneUp?: TuneUpRunner;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }
@@ -38,6 +44,11 @@ export function ServicesProvider({ services, children }: ServicesProviderProps) 
 }
 
 /** The app's services, from the nearest `ServicesProvider`. */
+/** The services when a provider is above, else null (the shell renders before they exist). */
+export function useOptionalServices(): Services | null {
+  return useContext(ServicesContext);
+}
+
 export function useServices(): Services {
   const services = useContext(ServicesContext);
   if (!services) throw new Error('useServices: no ServicesProvider above this component');

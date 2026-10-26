@@ -22,11 +22,16 @@ import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
+import { browserFetch } from './ai/transport';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createCaptureDraftService } from './services/captureDrafts';
 import { ServicesProvider, type Services } from './services/context';
+import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
+import { createRebuildService } from './services/goals/rebuild';
+import { createTuneUpRunner } from './services/goals/tuneUp';
+import type { PlanServiceDeps } from './services/goals/planRequest';
 import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
@@ -81,6 +86,17 @@ async function start(): Promise<void> {
   const storage = createStorageAccess({ settings: settingsRepo });
   const photoRepo = createPhotoRepo(db);
   const photos = createPhotoService({ photoRepo });
+  const bodyFatRepo = createBodyFatRepo(db);
+  const planDeps: PlanServiceDeps = {
+    profileRepo,
+    settingsRepo,
+    weightRepo,
+    bodyFatRepo,
+    diaryRepo,
+    clock: systemClock,
+    aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+    fetch: browserFetch,
+  };
 
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
@@ -101,6 +117,8 @@ async function start(): Promise<void> {
       draftsRepo: createDraftsRepo(db),
       photoRepo,
     }),
+    rebuild: createRebuildService(planDeps),
+    tuneUp: createTuneUpRunner(planDeps),
     clock: systemClock,
   };
   const data: DataSources = {
@@ -110,7 +128,7 @@ async function start(): Promise<void> {
     waterRepo: createWaterRepo(db),
     fastRepo,
     weightRepo,
-    bodyFatRepo: createBodyFatRepo(db),
+    bodyFatRepo,
     savedMealsRepo: createSavedMealsRepo(db),
     coachRepo: createCoachRepo(db),
     unreadableFlag: () => hasUnreadableData(db),
