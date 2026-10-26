@@ -6,6 +6,6 @@
   "remaining_pct": 100,
   "resets_at": "2026-10-27T05:20:00+05:30",
   "last_check": "2026-10-27T00:23:00+05:30",
-  "current_step": "57/176 tasks; window reset; launching wave 8 (P04-10..13, P03-03/04, P03-07..09, P03-10..12)",
-  "last_commit": "e00d741"
+  "current_step": "57/176 tasks; wave 8 running (P04-10..13, P03-03/04, P03-07..09, P03-10..12)",
+  "last_commit": "d38d4fb"
 }

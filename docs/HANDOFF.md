@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 22:10 IST (Agent 1, session 3). 57/176 tasks; P00, P01 and P02 complete; the app runs on the
-real database. Nothing in flight; the next waves wait for the 00:20 IST reset.
+Updated: 2026-10-27 00:25 IST (Agent 1, session 3). 57/176 tasks; P00, P01 and P02 complete; the app runs on the
+real database. New usage window (resets 05:20 IST); wave 8 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -79,17 +79,17 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Nothing in flight. P02-15 verified on its stacked head (unit 1991 passed + 2 expected-fail in 128 files,
-check 6/6, bundle 123.08 kB, e2e 1/1) and pushed as 322a3f7. **Progress: 57/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 4/19, P04 9/14). Usage 68 % at 21:51 IST; no builders until the 00:20 IST reset.
+**Wave 8** (launched 2026-10-27 00:24 IST after the reset, base d38d4fb, prompts in `docs/handoff/wave8/`),
+four builders in `/root/wt/wt-{p04s5,p03s2,p03s3,p03s4}`: P04 S5 (P04-10..13 Home, manual entry, entry
+row, tab placeholders, Settings hub), P03 S2 (P03-03/04 catalogue, AI settings, endpoints), P03 S3
+(P03-07..09 adapters), P03 S4a (P03-10..12 image, JSON, food reply parser). At landing: add the `home`,
+`log` and `settings` partitions to `src/i18n/en.ts`. If this container is gone, re-create the four
+worktrees at d38d4fb and relaunch the same prompts. **Progress: 57/176 tasks** (P00 10/10, P01 19/19,
+P02 15/15, P03 4/19, P04 9/14).
 
 ## Next
 
-1. After the 00:20 IST reset: launch **wave 8** from `docs/handoff/wave8/` (prompts ready; base = branch
-   head; worktrees `/root/wt/wt-{p04s5,p03s2,p03s3,p03s4}`): P04 S5 (P04-10..13 Home, manual entry,
-   entry row, tab placeholders, Settings hub), P03 S2 (P03-03/04 catalogue, AI settings, endpoints),
-   P03 S3 (P03-07..09 adapters), P03 S4a (P03-10..12 image, JSON, food reply parser). At landing: add
-   the `home`, `log` and `settings` partitions to `src/i18n/en.ts`.
+1. Land wave 8 as it returns (see In progress).
 2. Wave 9: P04-14 walking-skeleton e2e and parity scenario (= **Demo 1**, after P04 S5), P03-13/14
    (units, parts, plan/goal/label readers), P03-15/16 (prompts and contract: contract.ts reuses the
    key constants exported by foodReply.ts), then P03 wave C (P03-17..19), P05 onboarding and goals,
