@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
+import type { AnalysisService } from './analysis';
 import type { CaptureDraftService } from './captureDrafts';
 import type { DiaryService } from './diary';
 import type { PlanBuilder } from './goals/planBuilder';
@@ -29,6 +30,8 @@ export interface Services {
   readonly rebuild?: RebuildService;
   /** The weekly tune-up (P05-09): one runner for the app; optional for the same reason. */
   readonly tuneUp?: TuneUpRunner;
+  /** The food analysis and its draft (P06-04); optional for the same reason. */
+  readonly analysis?: AnalysisService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

@@ -1,0 +1,114 @@
+/*
+ * The analysis overlay (P06-04) and the describe sheet (P06-05). Every value comes from
+ * tokens.css; logical properties throughout. The spinner is the one endless animation and stops
+ * under reduced motion.
+ */
+
+/* ---- Overlay -------------------------------------------------------------------------------- */
+
+/* Above every sheet: an analysis can start from one. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-dialog);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-block: calc(var(--safe-top) + var(--space-6)) calc(var(--safe-bottom) + var(--space-6));
+  padding-inline: calc(var(--safe-left) + var(--space-6)) calc(var(--safe-right) + var(--space-6));
+  background: var(--scrim);
+}
+
+.panel {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  inline-size: min(100%, 20rem);
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--sheet);
+  box-shadow: var(--shadow-card);
+}
+
+.panel:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.photo {
+  display: block;
+  inline-size: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-card);
+  background: var(--raised);
+  object-fit: cover;
+}
+
+.status {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-align: center;
+}
+
+.spinner {
+  inline-size: calc(var(--space-8) * 2);
+  block-size: calc(var(--space-8) * 2);
+  stroke: var(--accent);
+  stroke-dasharray: 90 36;
+  stroke-linecap: round;
+  animation: spin calc(var(--motion-slow) * 2) linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+/* ---- Describe sheet ------------------------------------------------------------------------ */
+
+.describe {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.describeLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+/* Three lines to start with, growing to five, then it scrolls. */
+.describeInput {
+  min-block-size: calc(3lh + 2 * var(--space-3));
+  max-block-size: calc(5lh + 2 * var(--space-3));
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  field-sizing: content;
+  overflow-y: auto;
+  resize: none;
+}
+
+.describeInput::placeholder {
+  color: var(--text-muted);
+}
+
+.describeInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}

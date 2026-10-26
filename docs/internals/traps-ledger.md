@@ -124,7 +124,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
   - Test: src/data/repos/draftsRepo.test.ts > analysis draft > refuses a result saved with an old generation as stale (R02.10)
   - Test: src/data/repos/draftsRepo.test.ts > analysis draft > does not clear a newer draft when an older attempt clears (R02.10)
-  - Review: the analysis flow owned by P06-04
+  - Test: src/services/analysis.test.ts > late results (R02.10) > never shows a result that arrives after a newer start, and lets its photos go
+  - Test: src/services/analysis.test.ts > late results (R02.10) > drops a result whose write lands after a newer start began
+  - Test: src/services/analysis.test.ts > late results (R02.10) > clears again a draft written just as Cancel was pressed
+  - Test: src/services/analysis.test.ts > late results (R02.10) > drops the draft waiting for review when a new analysis starts, with its photos
 - **R02.11** Log, Save and manual Save are single-flight
   - Test: src/services/diary.test.ts > logEntry > writes one entry for two rapid calls (R02.11, ACC-D26-1)
 - **R02.12** The active-fast refusal happens at write time for every food write path

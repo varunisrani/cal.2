@@ -35,7 +35,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### A5 · The tab bar hides while a food analysis overlay is showing (P1)
 
 - **ACC-A5-1** During an analysis the tab bar is not visible and it returns afterwards
-  - Review: P06-04
+  - Test: src/features/log/AnalysisOverlay.test.tsx > AnalysisOverlay > hides the tab bar during an analysis and brings it back afterwards (ACC-A5-1)
 
 ### A6 · Floating capsule tab bar with a selected pill that slides to the … (P1)
 
@@ -272,9 +272,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D5 · Analysing overlay with Cancel (P1)
 
 - **ACC-D5-1** Cancel stops the analysis with no error message
-  - Review: P06-04
+  - Test: src/services/analysis.test.ts > Cancel (ACC-D5-1) > stops the request with no error, and lets the photos and the capture record go
+  - Test: src/features/log/AnalysisOverlay.test.tsx > AnalysisOverlay > closes on Cancel with no error message, and the tab bar comes back (ACC-D5-1)
 - **ACC-D5-2** Retry repeats the same request after a failure
-  - Review: P06-04
+  - Test: src/services/analysis.test.ts > failure and Retry (ACC-D5-2) > shows the failure's message, keeps the photos, and Retry sends the same request again
+  - Test: src/features/log/AnalysisOverlay.test.tsx > AnalysisOverlay > shows the failure with Retry, which sends the same request again (ACC-D5-2)
 
 ### D6 · Typed meal description with rotating examples (P1)
 
