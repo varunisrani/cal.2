@@ -3,9 +3,11 @@
 // again after every committed write that changes it, in this tab or another (R06.3). Every hook
 // returns a `LiveState`, so a screen switches on `status` ('loading' | 'ready' | 'error'); none
 // suspends. No business rules live here: the repositories decide what a read returns and in which
-// order, and src/domain does the arithmetic.
+// order, and src/domain does the arithmetic. `useGoalReached` is the one exception to the shape:
+// it hears a bus message instead of reading a table.
 
 import { Dexie } from 'dexie';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { dayKeyOf, type DayKey } from '../domain/dates/dayKey';
 import { formulaPlan } from '../domain/goals/formulas';
 import { effectiveTargets } from '../domain/goals/targets';
@@ -20,6 +22,7 @@ import type {
   WaterLog,
   WeighIn,
 } from '../domain/model';
+import { appBus } from './bus';
 import { useDataSources } from './DataProvider';
 import type { LiveState } from './live';
 import type { ProfileRead } from './repos/profileRepo';
@@ -144,4 +147,23 @@ export function useTargets(today?: DayKey): LiveState<TargetsRead> {
 export function useUnreadableFlag(): LiveState<boolean> {
   const { unreadableFlag } = useDataSources();
   return useLive(() => unreadableFlag(), [unreadableFlag]);
+}
+
+/**
+ * Calls `onReached` with the weight, in kg, whenever a new weigh-in carries the weight across the
+ * goal weight: the weight repository's `goal-reached` message, from whichever screen added it
+ * (R01.11). Screens hear the bus only through this, never through src/data/bus.ts.
+ */
+export function useGoalReached(onReached: (kg: number) => void): void {
+  const { bus } = useDataSources();
+  const latest = useRef(onReached);
+  useLayoutEffect(() => {
+    latest.current = onReached;
+  });
+  useEffect(() => {
+    const source = bus ?? appBus();
+    return source.subscribe((message) => {
+      if (message.type === 'goal-reached') latest.current(message.kg);
+    });
+  }, [bus]);
 }

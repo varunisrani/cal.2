@@ -1,8 +1,10 @@
 import { act, render, screen } from '@testing-library/react';
 import { Dexie } from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
+import { createBus } from '../data/bus';
 import { DataProvider, type DataSources } from '../data/DataProvider';
 import { common } from '../i18n/en/common';
+import { goals } from '../i18n/en/goals';
 import { onboarding } from '../i18n/en/onboarding';
 import { shell } from '../i18n/en/shell';
 import { t } from '../i18n/t';
@@ -30,6 +32,7 @@ const services: Services = {
 
 /** Reads that never finish: the tab screens stay on their loading state. */
 const pending = () => new Dexie.Promise<never>(() => {});
+const bus = createBus({ channel: null });
 const data: DataSources = {
   profileRepo: { get: pending },
   settingsRepo: { snapshot: pending, loaded: pending() },
@@ -42,6 +45,7 @@ const data: DataSources = {
   coachRepo: { list: pending },
   unreadableFlag: pending,
   clock: services.clock,
+  bus,
 };
 
 function renderApp(ports: ShellPorts, initialHash = '') {
@@ -89,6 +93,25 @@ describe('App', () => {
     expect(screen.getByRole('navigation')).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(4);
     expect(document.documentElement.dataset.accent).toBe('ember');
+  });
+
+  it('shows the goal-reached dialog over a tab screen when a weigh-in reaches the goal', () => {
+    const boot = controlledStore<BootState>({ status: 'ready' });
+    const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
+    renderApp({ boot, settings }, '#/progress');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+
+    act(() => {
+      bus.post({ type: 'goal-reached', kg: 79.4 });
+      bus.post({ type: 'goal-reached', kg: 79.4 });
+    });
+    const dialog = screen.getByRole('alertdialog', { name: goals.goals.reached.title });
+    expect(dialog).toBeVisible();
+    expect(screen.getAllByRole('alertdialog')).toHaveLength(1);
+    // The tab screen stays underneath.
+    expect(
+      screen.getByRole('heading', { level: 1, name: common.common.tabs.progress }),
+    ).toBeInTheDocument();
   });
 
   it('puts every screen inside the toast provider', () => {

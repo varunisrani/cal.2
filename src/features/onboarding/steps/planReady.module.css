@@ -1,0 +1,102 @@
+/*
+ * Plan ready (P05-06): the big energy number, the three macro cards, the low-energy card and the
+ * picker sheet's body. Every value comes from tokens.css; logical properties throughout.
+ */
+
+.energy,
+.macro {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  transition: border-color var(--motion-quick) var(--ease-move);
+}
+
+.energy:hover,
+.macro:hover {
+  border-color: var(--accent);
+}
+
+.energy:focus-visible,
+.macro:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.energy {
+  padding-block: var(--space-5);
+  padding-inline: var(--space-4);
+}
+
+.energyValue {
+  color: var(--accent);
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.energyCaption,
+.macroLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+}
+
+.macros {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.macro {
+  padding-block: var(--space-3);
+  padding-inline: var(--space-2);
+}
+
+.macroValue {
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  border-color: var(--danger);
+}
+
+.warningIcon {
+  flex: none;
+  color: var(--danger);
+}
+
+.warningText {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.warningTitle {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+}
+
+.actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+}
+
+.editor {
+  display: grid;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}

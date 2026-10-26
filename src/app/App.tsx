@@ -1,3 +1,4 @@
+import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
 import { QuickStart } from '../features/onboarding/QuickStart';
 import { systemClock, type Clock } from '../lib/clock';
 import { ToastProvider } from '../ui/Toast';
@@ -23,7 +24,10 @@ export interface AppProps {
   readonly onReload?: () => void;
 }
 
-/** The screen for the route: onboarding alone, or a tab screen over the tab bar. */
+/**
+ * The screen for the route: onboarding alone, or a tab screen over the tab bar with the
+ * goal-reached dialog, which every weigh-in path raises (R01.11).
+ */
 function Shell() {
   const route = useRoute();
   if (route.kind === 'onboarding') return <QuickStart />;
@@ -33,6 +37,7 @@ function Shell() {
         <Screen route={route} />
       </main>
       <TabBar />
+      <GoalReachedDialog />
     </div>
   );
 }

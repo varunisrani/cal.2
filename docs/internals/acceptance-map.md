@@ -116,9 +116,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B8 · Plan Ready (P1)
 
 - **ACC-B8-1** Changing protein re-derives carbs so the plan still adds up
-  - Review: P05-06
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives carbs when protein changes to 150 (ACC-B8-1, R01.7)
 - **ACC-B8-2** A plan under 1 200 kcal shows the warning
-  - Review: P05-06
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > warns under 1 200 kcal: 1 150 shows it, 1 200 does not (ACC-B8-2)
 
 ### B9 · Finishing onboarding saves the profile and plan, seeds the first … (P0)
 
@@ -221,7 +221,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C11 · Goal-reached dialog when a new latest weigh-in crosses the goal, … (P1)
 
 - **ACC-C11-1** Logging 79.4 kg with a 79.5 kg lose target shows the dialog once
-  - Review: P05-14
+  - Test: src/features/goals/GoalReachedDialog.test.tsx > GoalReachedDialog > shows the dialog once when 79.4 kg crosses a 79.5 kg lose target (ACC-C11-1, R01.11)
 - **ACC-C11-2** A back-dated weigh-in below the target shows nothing
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > keeps the profile weight and raises nothing for a back-dated weigh-in below the target (ACC-C11-2, R01.11)
 

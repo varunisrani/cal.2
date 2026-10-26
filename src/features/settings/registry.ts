@@ -5,6 +5,7 @@
 import type { ComponentType } from 'react';
 import { tabRoute, type TabRoute } from '../../app/router';
 import type { IconName } from '../../ui/icons';
+import { MethodsPage } from '../about/MethodsPage';
 import type { TxKey } from '../home/text';
 
 /** The hub's two cards: the person's preferences, then information about the app. */
@@ -42,8 +43,17 @@ export function defineCategories(specs: readonly CategorySpec[]): readonly Setti
   });
 }
 
-/** Every category, in hub order. Empty until P05-10 registers the first pages. */
-export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories([]);
+/** Every category, in hub order. */
+export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories([
+  // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
+  {
+    id: 'methods',
+    titleKey: 'about.methods.title',
+    icon: 'info',
+    group: 'info',
+    page: MethodsPage,
+  },
+]);
 
 /** The category whose page `nested` (the segments under `#/settings`) shows, if any. */
 export function categoryFor(

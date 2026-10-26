@@ -37,6 +37,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives carbs after kcal, protein or fat: 2 000 / 150 / 60 → carbs 215 (R01.7)
   - Test: src/domain/goals/planEdit.test.ts > editPlan > re-derives kcal after carbs: carbs 300 → 2 340 kcal (R01.7)
   - Test: src/domain/goals/planEdit.test.ts > editPlan > marks the plan touched only when a value changes (R01.7)
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives carbs when protein changes to 150 (ACC-B8-1, R01.7)
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives kcal when carbs change to 300 (R01.7)
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > marks the plan edited and says the tune-up will start off (R01.7)
 - **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
   - Test: src/features/onboarding/wizard.test.ts > building the plan > ignores a completion that arrives after the person left (R01.8)
   - Test: src/features/onboarding/wizard.test.ts > Continue and Back > does nothing on Back from Welcome or Building plan
@@ -53,6 +56,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires for gain 70 → 72 with target 71, once (R01.11)
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > raises goal-reached once when a new latest crosses the lose target (R01.11)
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > keeps the profile weight and raises nothing for a back-dated weigh-in below the target (ACC-C11-2, R01.11)
+  - Test: src/features/goals/GoalReachedDialog.test.tsx > GoalReachedDialog > shows the dialog once when 79.4 kg crosses a 79.5 kg lose target (ACC-C11-1, R01.11)
+  - Test: src/data/hooks.test.tsx > useGoalReached > hears the weight repository when a new weigh-in reaches the goal, once (R01.11)
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Test: src/domain/profile/signature.test.ts > needsRebuild > shows no nudge on first open when no baseline is stored (R01.12)
   - Test: src/domain/profile/signature.test.ts > baselineToSeed > seeds a missing baseline silently with the current key (R01.12)
@@ -403,6 +408,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Review: the storage card owned by P09-15
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
   - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > shows kJ to a kJ reader and keeps the exact kcal when the wheel is saved untouched (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches

@@ -135,6 +135,8 @@ export interface WizardState {
   /** Counts visits to Building plan; a plan is accepted only for the current one. */
   readonly buildRun: number;
   readonly plan: WizardPlan | null;
+  /** Plan ready's last button was pressed: onboarding completes from here (P05-07). */
+  readonly finished: boolean;
 }
 
 /**
@@ -191,6 +193,7 @@ export function startWizard(today: DayKey, units: WizardUnits): WizardState {
     aiReady: false,
     buildRun: 0,
     plan: null,
+    finished: false,
   };
 }
 
@@ -322,7 +325,8 @@ export type WizardAction =
       readonly plan: Targets;
       readonly aiUnavailable: boolean;
     }
-  | { readonly type: 'planEdit'; readonly field: PlanField; readonly value: number };
+  | { readonly type: 'planEdit'; readonly field: PlanField; readonly value: number }
+  | { readonly type: 'finish' };
 
 function moveOn(state: WizardState): WizardState {
   if (!canContinue(state)) return state;
@@ -435,5 +439,9 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
         ...state,
         plan: { ...state.plan, draft: editPlan(state.plan.draft, action.field, action.value) },
       };
+    case 'finish':
+      // Only Plan ready with a plan can finish, and only once.
+      if (state.step !== 'planReady' || state.plan === null || state.finished) return state;
+      return { ...state, finished: true };
   }
 }

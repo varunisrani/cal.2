@@ -1,0 +1,85 @@
+/*
+ * The About pages (P05-13): the calculation methods page, drawn under a Settings page title or
+ * inside a sheet. Every value comes from tokens.css; logical properties throughout.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.intro {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.body {
+  display: grid;
+  gap: var(--space-3);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.body p {
+  margin: 0;
+}
+
+.name {
+  font-weight: var(--weight-semibold);
+}
+
+.muted {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.equation {
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding-block: var(--space-2);
+  padding-inline: 0 var(--space-3);
+  border-block-end: 1px solid var(--line);
+  text-align: start;
+}
+
+.table thead th {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+}
+
+.table tbody th {
+  font-weight: var(--weight-medium);
+}
+
+.list,
+.sources {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: var(--space-5);
+}
+
+.sources a {
+  color: var(--accent);
+}
+
+.sources cite {
+  font-style: italic;
+}

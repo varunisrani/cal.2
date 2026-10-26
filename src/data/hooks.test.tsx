@@ -10,6 +10,7 @@ import { fixedClock, type Clock } from '../lib/clock';
 import { countRuns, openTestDb } from '../test/db';
 import { FACTORY_NOW, makeCoachMessage, makeEntry, makeProfile } from '../test/factories';
 import { DataProvider, type DataSources } from './DataProvider';
+import { createBus } from './bus';
 import { hasUnreadableData, settleQuarantine } from './guard';
 import {
   useActiveFast,
@@ -19,6 +20,7 @@ import {
   useDayWater,
   useEntriesBetween,
   useFasts,
+  useGoalReached,
   useProfile,
   useSavedMeals,
   useSettings,
@@ -68,7 +70,12 @@ async function setUp(clock: Clock = fixedClock(FACTORY_NOW, 'America/New_York'))
     savedMealsRepo: createSavedMealsRepo(db),
     coachRepo: createCoachRepo(db),
   };
-  const sources: DataSources = { ...repos, unreadableFlag: () => hasUnreadableData(db), clock };
+  const sources: DataSources = {
+    ...repos,
+    unreadableFlag: () => hasUnreadableData(db),
+    clock,
+    bus,
+  };
   closers.push(async () => {
     await settleQuarantine(db);
     db.close();
@@ -462,5 +469,55 @@ describe('subscriptions', () => {
     });
     expect(witness.value()).toHaveLength(1);
     expect(counted.runs()).toBe(runs);
+  });
+});
+
+describe('useGoalReached', () => {
+  it('hears the weight repository when a new weigh-in reaches the goal, once (R01.11)', async () => {
+    const { repos, sources } = await setUp();
+    await repos.profileRepo.save(makeProfile({ goal: 'lose', weightKg: 80, goalWeightKg: 79.5 }));
+    await repos.weightRepo.addWeighIn({ at: FACTORY_NOW - DAY_MS, kg: 80 });
+    const heard = vi.fn<(kg: number) => void>();
+    renderHook(() => useGoalReached(heard), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <DataProvider sources={sources}>{children}</DataProvider>
+      ),
+    });
+
+    await act(async () => {
+      await repos.weightRepo.addWeighIn({ at: FACTORY_NOW, kg: 79.4 });
+    });
+    expect(heard).toHaveBeenCalledExactlyOnceWith(79.4);
+
+    // Past the goal already: no new crossing, nothing heard.
+    await act(async () => {
+      await repos.weightRepo.addWeighIn({ at: FACTORY_NOW + 1, kg: 79.3 });
+    });
+    expect(heard).toHaveBeenCalledTimes(1);
+  });
+
+  it('ignores other messages, calls the newest listener and stops on unmount', () => {
+    const bus = createBus({ channel: null });
+    const first = vi.fn<(kg: number) => void>();
+    const second = vi.fn<(kg: number) => void>();
+    const sources = { bus } as unknown as DataSources;
+    const view = renderHook((listener: (kg: number) => void) => useGoalReached(listener), {
+      initialProps: first,
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <DataProvider sources={sources}>{children}</DataProvider>
+      ),
+    });
+
+    act(() => bus.post({ type: 'settings-loaded' }));
+    expect(first).not.toHaveBeenCalled();
+
+    view.rerender(second);
+    act(() => bus.post({ type: 'goal-reached', kg: 64 }));
+    expect(first).not.toHaveBeenCalled();
+    expect(second).toHaveBeenCalledExactlyOnceWith(64);
+
+    view.unmount();
+    bus.post({ type: 'goal-reached', kg: 63 });
+    expect(second).toHaveBeenCalledTimes(1);
   });
 });

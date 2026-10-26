@@ -2,8 +2,8 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of onboarding (src/features/onboarding): the wizard's frame and its steps from Welcome
- * to Reminders (P05-01..03), and the temporary quick start (P04-09, deleted by P05-07), whose
- * heading is the app's name (`common.appName`).
+ * to Reminders (P05-01..03) and Plan ready (P05-06), and the temporary quick start (P04-09,
+ * deleted by P05-07), whose heading is the app's name (`common.appName`).
  */
 export const onboarding = {
   onboarding: {
@@ -172,6 +172,50 @@ export const onboarding = {
       unsupported:
         'This browser cannot show notifications, so reminders stay off. Adding Platewise to your home screen may help.',
       skip: 'Not now? Continue, and nothing is switched on.',
+    },
+    planReady: {
+      title: 'Your daily plan',
+      subtitle: 'Tap a number to change it.',
+      energyCaption: {
+        kcal: 'kcal a day',
+        kJ: 'kJ a day',
+      },
+      macro: {
+        protein: 'Protein',
+        carbs: 'Carbs',
+        fat: 'Fat',
+      },
+      grams: '{amount} g',
+      tuneUp:
+        'Once a week Platewise looks at your logs and weigh-ins and adjusts these numbers. You can switch the weekly tune-up off in Settings.',
+      tuneUpEdited:
+        'You changed the plan, so the weekly tune-up starts switched off and your numbers stay as they are. You can switch it on in Settings.',
+      aiUnavailable:
+        "Your AI couldn't be reached, so this plan comes from the standard formulas. You can rebuild it with your AI later in Settings.",
+      low: {
+        title: 'A very low target',
+        body: 'Eating under {amount} a day is best done with advice from a doctor.',
+      },
+      methods: 'How is this calculated?',
+      finish: 'Start tracking',
+      edit: {
+        kcal: 'Daily calories',
+        kJ: 'Daily kilojoules',
+        protein: 'Daily protein',
+        carbs: 'Daily carbs',
+        fat: 'Daily fat',
+        lowest: 'Protein and fat alone need {amount}. Lower one of them to go further down.',
+        highest: 'Carbs would drop to 0 g above this. Raise the energy target to go higher.',
+      },
+      unit: {
+        kcal: 'kcal',
+        kJ: 'kJ',
+        g: 'g',
+      },
+      amount: {
+        kcal: '{amount} kcal',
+        kJ: '{amount} kJ',
+      },
     },
   },
 } as const satisfies MessageTree;

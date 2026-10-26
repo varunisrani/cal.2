@@ -1,5 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
+import type { Bus } from './bus';
 import type { BodyFatRepo } from './repos/bodyFatRepo';
 import type { CoachRepo } from './repos/coachRepo';
 import type { DiaryRepo } from './repos/diaryRepo';
@@ -29,6 +30,8 @@ export interface DataSources {
   readonly unreadableFlag: () => Promise<boolean>;
   /** Where "today" comes from when a hook is not given a day. */
   readonly clock: Clock;
+  /** Where app messages such as `goal-reached` are heard; the app's own bus when left out. */
+  readonly bus?: Pick<Bus, 'subscribe'>;
 }
 
 const DataContext = createContext<DataSources | null>(null);

@@ -67,6 +67,7 @@ describe('startWizard', () => {
       aiReady: false,
       buildRun: 0,
       plan: null,
+      finished: false,
     });
     expect(wizardProfile(state)).toEqual(defaults);
   });
@@ -417,5 +418,28 @@ describe('reminders', () => {
     expect(remindersOn(start)).toBe(false);
     expect(remindersOn(run(start, { type: 'remindersAnswered', answer: 'denied' }))).toBe(false);
     expect(remindersOn(run(start, { type: 'remindersAnswered', answer: 'granted' }))).toBe(true);
+  });
+});
+
+describe('finishing', () => {
+  it('sets finished only on Plan ready with a plan, once', () => {
+    const ready = run(at('buildingPlan', { buildRun: 1 }), {
+      type: 'planBuilt',
+      run: 1,
+      plan: PLAN,
+      aiUnavailable: false,
+    });
+    const finished = run(ready, { type: 'finish' });
+
+    expect(finished.finished).toBe(true);
+    expect(finished.step).toBe('planReady');
+    expect(finished.plan).toEqual(ready.plan);
+    expect(run(finished, { type: 'finish' })).toBe(finished);
+
+    // Anywhere else, or on Plan ready without a plan, nothing happens.
+    const pace = at('pace');
+    expect(run(pace, { type: 'finish' })).toBe(pace);
+    const empty = at('planReady');
+    expect(run(empty, { type: 'finish' })).toBe(empty);
   });
 });
