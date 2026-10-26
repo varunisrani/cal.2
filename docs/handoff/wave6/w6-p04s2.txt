@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S2 = P04-03 — primitives: gauge, pillar, progress bar, stat badge, menu, swipe row, and our own icon set. Spec: row P04-03 in docs/plan/phases/P04-shell-and-walking-skeleton.md (the "Read in reference" column says which reference parts to read: geometry and behaviour only), plus its "Files to create" table; docs/plan/16-what-we-change.md §2.5 (our visual language); the conventions in docs/plan/phases/00-layout-and-conventions.md (accessibility: names, data-ui hooks, values drawn as graphics are also text, reduced motion). Acceptance row owned: ACC-L9-2 in docs/internals/acceptance-map.md.
+Task note (before code): docs/notes/P04/primitives-gauge-pillar-menu-swipe-row-icons.md.
+
+You own:
+- src/ui/{Gauge,Pillar,ProgressBar,StatBadge,Menu,SwipeRow}.tsx and their .test.tsx files
+- src/ui/icons/** (index.tsx, index.test.tsx)
+- src/ui/display.module.css
+
+Do not touch:
+- the landed primitives and helpers in src/ui (Button, Card, Sheet, Dialog, Toast, Field, Stepper, Segmented, Switch, ListPicker, Wheel, DateTimeField, modal.ts, primitives.ts, stylesheets.test.ts, primitives.module.css, inputs.module.css, tokens.*, theme.*, contrast.*, testing/**): import and reuse them (cx, partHook, clamp from src/ui/primitives.ts; the focus helpers in modal.ts); if one needs a change, stop and report it
+- src/i18n/** except: src/i18n/en/common.ts — only new generic keys the primitives need (e.g. Back, Delete) (shared: report it)
+- src/ai/** (two P03 builders), src/data/** and src/test/** (the P02 builder), src/domain/**, src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, public/**, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Same conventions as the landed primitives: CSS modules on the P00 tokens only (var(--…); no colour literals, gradients or blur — add display.module.css to the source check in src/ui/stylesheets.test.ts only if that test reads a file list you can extend without editing it; otherwise report it), a required typed `data-ui` prop with parts named `<hook>.<part>`, aria-disabled for disabled controls, prefers-reduced-motion respected.
+- Copy rule (lint): no user-visible literal text in .tsx; labels come in as props or from t() keys. Values drawn as graphics (gauge, pillar, bars) are also available as text for screen readers, equal to the visible value.
+- Gauge geometry exactly as the row says (upper half circle, dashed arc, fill = 180° × min(eaten ÷ goal, 1), nothing when goal ≤ 0). SwipeRow never deletes by itself: release past the threshold calls onRequestDelete and the caller confirms; travel capped at 72 % of the width; a visible delete button for keyboard users.
+- Icons: our own inline SVG drawn for Platewise (the listed set), one consistent stroke style on currentColor, aria-hidden by default with an optional label; never open or trace the reference's icons or illustrations.
+- Vitest empties CSS imports: test behaviour, roles, SVG geometry (path/arc maths) and text with Testing Library, not styles. Real waits are banned: fake timers.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ui --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list acceptance rows your tests cover with file > describe > test name). Leave everything uncommitted.
