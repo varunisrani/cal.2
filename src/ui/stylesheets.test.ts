@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { readProductFile, readTokensCss } from './testing/tokenSheet';
 
 // Vitest empties CSS imports, so the primitives' stylesheets are checked as text.
-const SHEETS = ['src/ui/primitives.module.css', 'src/ui/inputs.module.css'] as const;
+const SHEETS = [
+  'src/ui/primitives.module.css',
+  'src/ui/inputs.module.css',
+  'src/ui/display.module.css',
+] as const;
 
 /** Custom properties a stylesheet defines (`--name:`). */
 const definedIn = (css: string) => new Set([...css.matchAll(/(--[\w-]+)\s*:/g)].map((m) => m[1]));

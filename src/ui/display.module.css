@@ -1,0 +1,402 @@
+/*
+ * Gauge, pillars, progress bars, stat badges, menus and swipe rows. Platewise's own look
+ * (16 §2.5): solid token colours, the accent for every progress mark on a soft accent track, no
+ * gradients or translucent glass. Every value comes from tokens.css; transitions use the token
+ * durations, which drop to 0 ms under reduced motion.
+ */
+
+/* Gauge. */
+
+.gauge {
+  box-sizing: border-box;
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  max-inline-size: calc(var(--space-8) * 7.5);
+  margin-inline: auto;
+  container-type: inline-size;
+}
+
+.gaugeDrawing {
+  grid-area: 1 / 1;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: 2 / 1;
+  overflow: visible;
+}
+
+.gaugeTrack {
+  stroke: var(--accent-soft);
+}
+
+.gaugeFill {
+  stroke: var(--accent);
+}
+
+/* The reveal only lends its shape: any opaque colour works under an alpha mask. */
+.gaugeMask {
+  mask-type: alpha;
+}
+
+.gaugeReveal {
+  stroke: var(--accent);
+  transition: stroke-dasharray var(--motion-slow) var(--ease-out);
+}
+
+.gaugeReadout {
+  grid-area: 1 / 1;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-inline-size: 76%;
+  padding-block-start: 16cqi;
+  text-align: center;
+}
+
+.gaugeHeading {
+  color: var(--text-muted);
+  font-size: var(--type-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.05em;
+  line-height: var(--leading-tight);
+  text-transform: uppercase;
+}
+
+/* Shrinks with the number of characters instead of wrapping. */
+.gaugeValue {
+  --gauge-chars: 5;
+  max-inline-size: 100%;
+  color: var(--accent);
+  font-size: min(var(--type-hero), 20cqi, calc(110cqi / var(--gauge-chars)));
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.gaugeStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-size: var(--type-small);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+/* Pillar. */
+
+.pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.pillarValue {
+  max-inline-size: 100%;
+  overflow: hidden;
+  color: var(--accent);
+  font-size: var(--type-lead);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.pillarTube {
+  flex: none;
+  inline-size: var(--space-4);
+  block-size: calc(var(--space-8) * 2);
+}
+
+.pillarTrack {
+  fill: var(--accent-soft);
+}
+
+.pillarFill {
+  fill: var(--accent);
+  transition:
+    y var(--motion-slow) var(--ease-out),
+    height var(--motion-slow) var(--ease-out);
+}
+
+.pillarName,
+.pillarStatus {
+  max-inline-size: 100%;
+  overflow: hidden;
+  font-size: var(--type-label);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pillarName {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+
+.pillarStatus {
+  margin-block-start: calc(var(--space-2) * -1);
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.pillarStatus[data-over] {
+  color: var(--accent);
+}
+
+/* Progress bar. */
+
+.bar {
+  --bar-share: 0;
+  position: relative;
+  block-size: calc(var(--space-1) + 2px);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-soft);
+}
+
+.barFill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: calc(var(--bar-share) * 100%);
+  border-radius: inherit;
+  background-color: var(--accent);
+  transition: inline-size var(--motion-base) var(--ease-out);
+}
+
+/* Stat badge: value drawn over its label (the label comes first in reading order). */
+
+.badge {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 2px;
+  min-inline-size: 0;
+  margin: 0;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  container-type: inline-size;
+}
+
+.badgeValue,
+.badgeLabel {
+  margin: 0;
+  overflow: hidden;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.badgeValue {
+  color: var(--text);
+  font-size: clamp(calc(var(--type-title) * 0.5), 15cqi, var(--type-title));
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-bold);
+}
+
+.badgeLabel {
+  color: var(--text-muted);
+  font-size: clamp(calc(var(--type-small) * 0.7), 11cqi, var(--type-small));
+  font-weight: var(--weight-medium);
+  text-overflow: ellipsis;
+}
+
+/* Menu. */
+
+.menuAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.menu {
+  box-sizing: border-box;
+  position: absolute;
+  z-index: calc(var(--layer-tabbar) + 1);
+  display: flex;
+  flex-direction: column;
+  inline-size: calc(var(--space-8) * 7.5);
+  max-inline-size: calc(100vw - var(--space-8));
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background-color: var(--raised);
+  color: var(--text);
+  box-shadow: var(--shadow-raised);
+  animation: unfold var(--motion-quick) var(--ease-out);
+}
+
+.menu[data-placement='below'] {
+  inset-block-start: calc(100% + var(--space-2));
+}
+
+.menu[data-placement='above'] {
+  inset-block-end: calc(100% + var(--space-2));
+}
+
+.menu[data-align='start'] {
+  inset-inline-start: 0;
+}
+
+.menu[data-align='end'] {
+  inset-inline-end: 0;
+}
+
+.menuRow {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menuRow:hover,
+.menuRow:focus {
+  background-color: var(--accent-soft);
+  outline: none;
+}
+
+.menuRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.menuRow[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.menuRow[data-back] {
+  color: var(--accent);
+}
+
+.menuRowIcon,
+.menuRowEnd {
+  display: inline-flex;
+  flex: none;
+  font-size: var(--type-lead);
+}
+
+.menuRowIcon {
+  color: var(--accent);
+}
+
+.menuRowEnd {
+  color: var(--text-muted);
+}
+
+.menuRowLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.menuSeparator {
+  block-size: 1px;
+  margin-block: var(--space-1);
+  margin-inline: var(--space-2);
+  background-color: var(--line);
+}
+
+/* Swipe row. */
+
+.swipeRow {
+  position: relative;
+  overflow: hidden;
+}
+
+/* Grows from the trailing edge into the room the row has left behind. */
+.swipeStrip {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: var(--danger);
+  color: var(--text-inverse);
+  font-size: var(--type-title);
+}
+
+.swipeContent {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  touch-action: pan-y;
+  transition: transform var(--motion-base) var(--ease-out);
+}
+
+.swipeContent[data-moving] {
+  transition: none;
+}
+
+.swipeMain {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* Two classes, so the muted colour wins over the quiet button's accent in any load order. */
+.swipeRow .swipeDelete {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* Focus mode: the button stays out of sight until the row holds focus. */
+.swipeRow[data-delete='focus'] .swipeDelete {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: var(--space-1);
+  margin-block: auto;
+  background-color: var(--card);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.swipeRow[data-delete='focus']:focus-within .swipeDelete {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Motion. */
+
+@keyframes unfold {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gaugeReveal,
+  .pillarFill,
+  .barFill,
+  .swipeContent {
+    transition: none;
+  }
+
+  .menu {
+    animation: none;
+  }
+}
