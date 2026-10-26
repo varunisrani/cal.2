@@ -59,16 +59,21 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## In progress
 
-Wave 3, launched 2026-10-26 23:50 IST by Agent 2: three builders (P01 wave B S2, S3, S4) in
-`/root/wt/wt-{p01b2,p01b3,p01b4}`, prompts in `docs/handoff/wave3/` (base filled in at launch).
-Nothing landed from it yet. If this session dies, relaunch wave 3 from those prompts.
+- Wave 3 (launched 23:50 IST, base 4328770, prompts `docs/handoff/wave3/`): S2 (P01-07/08) and S3
+  (P01-09..11) are back and staged in `/root/wt/verify` (patches `/root/wt/patches/w3-*.patch`); S4
+  (P01-12..16) still running in `/root/wt/wt-p01b4`. Nothing of wave 3 is on `main` yet.
+- Wave 4 (launched 00:05 IST, base f25a8b3, prompts `docs/handoff/wave4/`): P02 S0 (P02-01..03),
+  P03 wave A (P03-01/02), P04 S1 (P04-01/02) in `/root/wt/wt-{p02s0,p03a,p04s1}`.
+- If this session dies, the worktrees and patches are gone with the container: relaunch the
+  unlanded slices from their prompts.
 
 Last verified head: `4d279e6` (wave 2, **16/176 tasks**; P00: 10/10, P01: 6/19).
 
 ## Next
 
-1. Land wave 3 (P01 wave B S2, S3, S4), then P01 wave C (S5 = P01-17..19, after S2 and S4).
-2. Then P02, P03, P04 walking skeleton (Demo 1) and P05–P10.
+1. Land wave 3 (P01 wave B S2, S3, S4); then launch P01 wave C (S5 = P01-17..19, needs S2 and S4).
+2. Land wave 4; then P02 wave B (S1–S5), P03 wave B, P04 S2–S4, toward the walking skeleton
+   (Demo 1), then P05–P10.
 
 ## Open questions for the user
 
