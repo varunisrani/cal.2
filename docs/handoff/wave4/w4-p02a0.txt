@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02a0 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave A slice S0 = P02-01, P02-02, P02-03 — the Dexie schema with open and upgrade safety; the record guard and quarantine; the change bus, live queries and other tabs. Spec: those three rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests; read only the named lines of the big files); research spec 06 §3.18 and §5; the P02 goal paragraph (one transaction per change, quarantine never silently replaces, every committed write reaches every live query and tab). Traps owned: R06.4 (P02-01), R05.6, R06.1 (P02-02), R06.3 (P02-03). Acceptance ids: ACC-K9-1 (P02-02), ACC-L7-1 (P02-03).
+Task notes (each before its code): docs/notes/P02/dexie-schema-open-and-upgrade-safety.md, docs/notes/P02/record-guard-and-quarantine.md, docs/notes/P02/change-bus-live-queries-and-other-tabs.md.
+
+You own:
+- src/data/{schema,db,guard,live,useLive,bus}.ts and their .test.ts(x) files
+- src/test/factories.ts (and its test if you add one)
+
+Do not touch:
+- src/domain/** (landed: import from it, do not edit; another builder adds src/domain/forecast and src/domain/trackers at the same time), src/ui/**, src/i18n/** (the P04 builders), src/app/**, src/main.tsx, src/services/**, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Dexie 4 and fake-indexeddb 6 are installed (dev dependency); tests use fake-indexeddb (import 'fake-indexeddb/auto' or an IDBFactory per test so tests do not share a database). The P00-07 lint lets src/data/** and tests use IndexedDB and Dexie; nothing else may.
+- The database is named platewise, version 1, tables and indexes exactly as P02-01 lists. The upgrade registry is empty for now, with a test that a future step keeps data. An open or upgrade failure becomes a typed DbOpenError and the database is never deleted (R06.4); versionchange closes the connection and posts reload-needed on the bus.
+- Codecs are lenient: unknown fields dropped, unknown enum values coerced to the field default, int or decimal numbers accepted; an unreadable record is dropped from results and never deleted; writeOne over a corrupt record quarantines the raw value first in the same transaction, else refuses the write. Codec rules from earlier waves: make a grams basis only when grams is finite and above 0; read a missing meal as other; store the Home pillar list as an array (decodePillars in src/domain/nutrients/pillars.ts accepts it).
+- Use the domain's record types and guards from src/domain/model.ts; factories build every record with overridable defaults and pass the codecs.
+- useLive is a React hook on useSyncExternalStore with a loading state; no new dependency. The bus is a BroadcastChannel('platewise') wrapper for erase, reload-needed, goal-reached and settings-loaded.
+- Real waits are banned: drive Dexie with awaited promises and fake timers where time matters.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data src/test --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md rows that say "Review: <your task ids>") your tests cover, with file > describe > test name. Leave everything uncommitted.

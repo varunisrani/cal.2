@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S2 = P04-03 — UI primitives: gauge, pillar, progress bar, stat badge, menu, swipe row, and our own icon set. Spec: that row in docs/plan/phases/P04-shell-and-walking-skeleton.md (read the named reference parts for geometry and behaviour only, then restyle per docs/plan/16-what-we-change.md §2.5). Acceptance id: ACC-L9-2 (docs/internals/acceptance-map.md).
+Task note (before code): docs/notes/P04/primitives-gauge-pillar-menu-swipe-row-icons.md.
+
+You own:
+- src/ui/{Gauge,Pillar,ProgressBar,StatBadge,Menu,SwipeRow}.tsx and their .test.tsx, src/ui/display.module.css
+- src/ui/icons/** (index.tsx + test)
+- src/i18n/en/display.ts — a new catalogue partition rooted at display (export const display = { display: {…} }) for built-in words such as Back and Delete; the lead adds it to src/i18n/en.ts when it lands (do not edit en.ts; for your own tests, import the partition directly or pass labels as props)
+
+Do not touch:
+- src/ui/{Button,Card,Sheet,Dialog,Toast,Field,Stepper,Segmented,Switch,ListPicker,Wheel,DateTimeField}*, src/ui/primitives.module.css, src/ui/inputs.module.css, src/i18n/en/common.ts (the P04-01/02 builder, at the same time)
+- src/ui/{tokens.css,tokens.ts,theme.ts,contrast.ts} and their tests (landed; build on the tokens, do not edit), src/i18n/en.ts, src/i18n/** other than display.ts
+- src/domain/**, src/data/**, src/app/**, src/main.tsx, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- React 19 function components, CSS modules on the P00 tokens; no new dependency; no colour literals outside tokens. Respect prefers-reduced-motion.
+- The copy rule (P00-07 lint) applies to every .tsx here: no literal user-visible text; labels arrive as props or come from t(). Values shown visually are also exposed as text to screen readers.
+- Gauge: upper half-circle dashed arc in SVG, track in --accent-soft, fill sweeping 180° × min(eaten ÷ goal, 1), nothing when goal ≤ 0, centre slots for heading, value and status. Pillar: vertical tube 16 × 64 filling bottom-up, minimum visible fill equal to its width, capped at 100 %. SwipeRow: release past the threshold calls onRequestDelete once (the caller confirms; no delete inside the row), travel capped at 72 % of the width, a visible delete button for keyboard users. Menu: drop-down anchored to a button, nested pages with a Back row, roving focus.
+- Icons: every icon is our own geometry drawn for Platewise on a 24 grid with currentColor strokes; never open or trace the reference's icons or a third-party icon set. aria-hidden unless a label is given.
+- Tests use Testing Library and fake timers; pointer gestures through fireEvent/user-event pointer events, no real waits.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ui --maxWorkers=1 (the P04-01/02 builder adds files to src/ui at the same time in its own worktree; yours only see yours)
+- e2e smoke still passes: pnpm build, then pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p04s2 (set PLATEWISE_E2E_PORT=4175 and PLATEWISE_FAKE_AI_PORT=4322 so you do not clash with another builder)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md rows that say "Review: <your task ids>") your tests cover, with file > describe > test name. Leave everything uncommitted.

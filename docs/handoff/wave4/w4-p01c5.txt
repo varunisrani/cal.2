@@ -1,0 +1,29 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p01c5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P01 wave C slice S5 = P01-17, P01-18, P01-19 — the goal evidence pack; the weight forecast; fasting rules and goal crossing. Spec: those three rows in docs/plan/phases/P01-domain-core.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); research specs 01 §3.8 and §3.12, 05 §3.7. Traps owned: R01.16 (P01-17), R05.7 (P01-19) in docs/internals/traps-ledger.md; your goal-crossing tests also serve R01.11 and your overlap/edit tests R05.3 (name them in the test titles so the lead can map them).
+Task notes (each before its code): docs/notes/P01/goal-evidence-pack.md, docs/notes/P01/weight-forecast.md, docs/notes/P01/fasting-rules-and-goal-crossing.md.
+
+You own:
+- src/domain/forecast/** (evidence, forecast + tests)
+- src/domain/trackers/** (fasting, goalCrossing + tests)
+
+Do not touch:
+- every other path under src/domain/ (landed: import from it, do not edit) — in particular use src/domain/goals (formulas for TDEE, targets for the effective kcal), src/domain/profile, src/domain/meals, src/domain/nutrients, src/domain/dates rather than re-deriving them
+- src/data/** (the P02 builder), src/ui/**, src/i18n/** (the P04 builders), src/app/**, src/main.tsx, public/**, index.html, eslint.config.js, e2e/**, playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/domain is pure: no React, Dexie, Date.now(), navigator or src/i18n; time is a parameter (today as a DayKey, now as ms). Use the names fixed by src/domain/model.ts; new names are ours, never the reference's.
+- The evidence pack holds numbers and dates only: no food name, note, photo, ingredient or exercise name ever enters it (R01.16); test it by serialising the pack and searching for the fixture's names. Workout, measurement and energy inputs are optional parameters reserved for later phases; energy confidence is 0 in v1.
+- Integer and rounding rules exactly as the rows state (trunc of TDEE, round of averages).
+- formatFast returns text ("45m", "16h", "16h 30m") per the row; it is the one string helper here (unit letters only, no catalogue words). Durations elsewhere use formatDuration in src/i18n/format.ts.
+- Goal crossing fires only when a previous latest exists, the new reading is not older than it, and the goal is lose (previous > target ≥ new) or gain (previous < target ≤ new); never for maintain or the first reading. Note for P02-08 (not yours): it must evaluate crossesGoal before withWeight from src/domain/profile/editRules.ts clears a contradicted target.
+- Fasting goal minutes clamp to 60–10 080 wherever a fast or the default goal is created, edited or read.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/forecast src/domain/trackers --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id (docs/internals/acceptance-map.md rows that say "Review: <your task ids>") your tests cover, with file > describe > test name. Leave everything uncommitted.
