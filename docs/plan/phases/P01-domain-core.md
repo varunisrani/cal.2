@@ -1,6 +1,6 @@
 # P01 · Domain core (pure TypeScript)
 
-**Weeks:** 1–2 · **Tracks:** domain/data/AI (this phase); the UI track may start P04 S1–S2 primitives in parallel · **Depends on:** P00 · **Status:** 🔨 in progress: P01-01..16 landed (16/19, 2026-10-26); wave C (P01-17..19) next
+**Weeks:** 1–2 · **Tracks:** domain/data/AI (this phase); the UI track may start P04 S1–S2 primitives in parallel · **Depends on:** P00 · **Status:** ✅ done: all 19 tasks landed in waves 1–4 (2026-10-26)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

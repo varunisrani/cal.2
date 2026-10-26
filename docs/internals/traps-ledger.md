@@ -42,7 +42,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R01.10** The optional-goal refresh keeps current values for keys the AI left out, clamps to 0–999 999 and never snaps typed values
   - Review: owned by P03-14
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
-  - Review: owned by P02-08
+  - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires once for lose 80 → 79 with target 79.5; a later 79 does not (R01.11)
+  - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires for gain 70 → 72 with target 71, once (R01.11)
+  - Review: every add path owned by P02-08
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Test: src/domain/profile/signature.test.ts > needsRebuild > shows no nudge on first open when no baseline is stored (R01.12)
   - Test: src/domain/profile/signature.test.ts > baselineToSeed > seeds a missing baseline silently with the current key (R01.12)
@@ -60,7 +62,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/dates/age.test.ts > ageOn > gives the same age in Asia/Tokyo for a birthday stored as a key (R01.15)
   - Test: src/domain/dates/age.test.ts > ageOn > clamps a birth date in the future to 0
 - **R01.16** The evidence pack is numbers and dates only, excludes today, treats missing days as unknown and leaves out workout calories
-  - Review: owned by P01-17
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > never counts today's entries (R01.16)
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: the food window > reads a day with no entries as none, holding no kcal at all (R01.16)
+  - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy > holds none of the names, notes, ingredients, photos, product text or ids of the fixture (R01.16)
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
   - Review: owned by P02-05
 - **R01.18** Height and weight units default together from the browser locale (D-16.10)
@@ -241,7 +245,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.2** Turning fasting off ends the active fast; an active fast restored with tracking off is ended on open
   - Review: owned by P02-09
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
-  - Review: owned by P02-09
+  - Test: src/domain/trackers/fasting.test.ts > checkEdit (R05.3) > refuses editing a completed fast into another's span and changes nothing (R05.3)
+  - Test: src/domain/trackers/fasting.test.ts > canStart (R05.3) > refuses a start while one is active (R05.3)
+  - Test: src/domain/trackers/fasting.test.ts > endNow (R05.3) > applies the edited start and goal and the end in one result (R05.3)
+  - Review: the atomic write owned by P02-09
 - **R05.4** Water and fasts never enter nutrition totals, averages or the recap
   - Test: src/domain/meals/diary.test.ts > section totals > sums food energy and rounds each macro to whole grams (R05.4)
   - Test: src/domain/meals/diary.test.ts > section totals > does not change a section total for a water row in Breakfast (R05.4)
@@ -254,7 +261,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
   - Review: owned by P02-02
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
-  - Review: owned by P01-19
+  - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > never fires for a back-dated 79 under target 79.5 (R05.7)
+  - Test: src/domain/trackers/goalCrossing.test.ts > latestWeighIn (R05.7) > picks the latest by date, not the last added (R05.7)
 - **R05.8** Weight and body-fat writes sync the profile in the same transaction; deleting the last body-fat reading leaves the profile value
   - Review: owned by P02-08
 - **R05.9** Tracker switches hide entry controls, not history
