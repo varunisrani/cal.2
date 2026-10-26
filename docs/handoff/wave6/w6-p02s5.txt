@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S5 = P02-12, P02-14 — the secrets repository with a non-extractable wrapping key; erase everything, persistence and storage estimates. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference parts to read); research spec 06 §3.15 and §5; decisions D-16.7, D-16.8, D-16.51 in docs/plan/16-what-we-change.md. Traps owned: R03.27 (P02-12); R06.19 (persistence) is a behaviour your tests prove. Acceptance id: ACC-E14-1 (P02-12).
+Task notes (each before its code): docs/notes/P02/secrets-repository.md, docs/notes/P02/erase-persistence-and-storage-estimates.md.
+
+You own:
+- src/data/crypto.ts, src/data/repos/secretsRepo.ts, src/data/wipe.ts, src/data/storage.ts and their tests
+
+Do not touch:
+- every other file under src/data/ (landed, or written now by the saved-meals/Coach builder: import landed modules, do not edit), src/test/** (landed helpers: use them; add a small helper file only if you must, and report it), src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/main.tsx (the P04 builder, now), src/ai/** (the P03 builder, now), src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Every change is one read-write Dexie transaction (R06.2); a transaction that calls writeOne, removeRows or keepAside (src/data/guard.ts) includes GUARD_TABLES; deletes go through removeRows; reads go through readAll / readOne. No database singleton: repositories take the Dexie instance from the caller. Use src/lib/ids.ts, a clock or now parameter (no Date.now() in repositories) and the domain types in src/domain/model.ts.
+- Tests: openTestDb() from src/test/db.ts, factories from src/test/factories.ts, Blobs from src/test/blobs.ts (jsdom Blobs do not survive fake-indexeddb), settleQuarantine after reads, countRuns for live-query waits, Dexie.ignoreTransaction to leave a transaction scope. Real waits are banned.
+- crypto.ts: a non-extractable AES-GCM 256 key generated once and kept in meta (structured clone of the CryptoKey; prove fake-indexeddb round-trips it in your environment, or say what you did instead), strings encrypted with a fresh 12-byte IV. Use globalThis.crypto.subtle; take it through a small seam if tests need it.
+- secretsRepo: set(slot, value) trims and stores {iv, data}; blank deletes; get(slot); slots() lists the slots holding a key without their values; slots are provider ids and fdc. A missing wrapping key or a value that fails to decrypt makes every slot read unset and clears the table; nothing throws at start-up. mask(value): first 4, "…", last 4 (8 characters or fewer: dots only). The stored bytes never contain the plain key. Export and backup never read this table (a P09 test will enforce it).
+- wipe.ts eraseEverything(): posts erase on the bus (other tabs close and show a notice), closes our connection, deletes the database, deletes Cache Storage entries and localStorage keys with the platewise- prefix (never foreign ones); a blocked delete is retried once after the broadcast, then reported. Take indexedDB, caches and localStorage through injectable seams so tests run without globals.
+- storage.ts (D-16.8, R06.19): requestPersistence() calls navigator.storage.persist() once and records the answer (a second call does not ask again); persistenceStatus(); estimate() (quota, usage); a missing navigator.storage gives status unknown, never a throw. The diary service will call requestPersistence after the first entry (wired by the lead).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/crypto.test.ts src/data/repos/secretsRepo.test.ts src/data/wipe.test.ts src/data/storage.test.ts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

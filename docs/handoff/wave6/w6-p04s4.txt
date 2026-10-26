@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S4 = P04-08, P04-09 — the diary service (first cut) and the temporary quick start, plus wiring the real database into the shell so the app runs on stored data. Spec: those two rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (read the named reference parts, then their tests); the shell's ports in src/app/ports.ts; decisions D-16.8 (persistence after the first entry) in docs/plan/16-what-we-change.md. Trap owned: R02.11 (P04-08). Acceptance id: ACC-D26-1.
+Task notes (each before its code): docs/notes/P04/diary-service-first-cut.md, docs/notes/P04/temporary-quick-start.md (the wiring goes in the quick-start note).
+
+You own:
+- src/services/diary.ts, src/services/onboarding.ts (startWithDefaults), src/services/shell.ts (the repositories adapted to the shell's ports) and a services context (src/services/context.tsx: a provider and useServices) with their tests
+- src/features/onboarding/QuickStart.tsx and its test; src/i18n/en/onboarding.ts — a new partition rooted at onboarding; the lead adds it to src/i18n/en.ts at landing (do not edit en.ts; import the partition directly in tests)
+- src/main.tsx (the composition root)
+- shared, only the lines needed: src/app/App.tsx (or the file that renders #/onboarding) to render QuickStart instead of OnboardingPlaceholder and to sit inside the services provider; delete src/app/OnboardingPlaceholder.tsx if nothing else uses it. Report these.
+
+Do not touch:
+- src/data/** (landed repositories: import them; two other builders add saved-meal, Coach, secrets, wipe and storage modules at the same time), src/domain/**, src/lib/**, src/ui/**, src/ai/** (another builder), src/app/** beyond the lines above, src/i18n/** other than onboarding.ts, e2e/** (the smoke spec must keep passing unchanged), playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens (src/app, src/features, src/ui) never import repositories (P00-07 lint); they act through src/services. src/main.tsx is the composition root: openDb (a DbOpenError becomes boot status openError and nothing is deleted), create the repositories once, call fastRepo.settleOnOpen(now) after opening, build the ShellPorts with src/services/shell.ts (live: a store returns the same snapshot object until something changes; boot = needsOnboarding until the profile exists and onboarding.done is set, then ready; settings = appearance, accent, hiddenTabs from the settings repository), and render App inside the services provider.
+- diary.ts: logEntry(draft, ctx) builds a DiaryEntry (new id, dayKey, kcal rounded, other values unrounded) and writes through diaryRepo.add; a single-flight gate per action ignores repeat calls while one is in flight (R02.11); FastActiveError becomes {kind: 'fastActive'}; deleteEntry(id) removes the entry and releases the photos it dropped through photoRepo.releaseIfUnused; after the first successful log it calls an onFirstEntry callback from the context once (D-16.8) — src/data/storage.ts is being written now, so main.tsx wires that callback to requestPersistence when it lands; for now main.tsx passes nothing. P06 extends this file.
+- onboarding.ts startWithDefaults(now, locale): saves the default profile (src/domain/profile/profile.ts) with units from the locale (src/domain/units/defaults.ts) into the profile and settings repositories, seeds the first weigh-in (weightRepo.seedFirst), sets onboarding.done, all before the shell reads ready; then the router goes to Home (still a placeholder).
+- QuickStart: one screen with the app name as its heading (t('common.appName')) so e2e/smoke.spec.ts still finds it, a short line of our own copy and a "Start with defaults" button (Button from src/ui, data-ui hook). P05-07 deletes this file later.
+- Tests: Testing Library with fake repositories or openTestDb; src/test/setup.ts runs cleanup; user-event with fake timers needs the jest stub described in docs/HANDOFF.md; no real waits.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services src/features src/app --maxWorkers=1
+- e2e smoke: pnpm build, then PLATEWISE_E2E_PORT=4177 PLATEWISE_FAKE_AI_PORT=4324 pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p04s4; also check by hand in Chromium (a throwaway script in your scratch space, not in the repo) that a fresh load shows the quick start, the button leads to Home, and a reload stays on Home.
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

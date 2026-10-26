@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03b1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S1 = P03-05, P03-06 — the transport and deadlines; the retry ladder. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.9; decisions D-16.23 and D-16.60 in docs/plan/16-what-we-change.md. Traps owned: R03.6, R03.26 (P03-05); R03.18 (daily-quota metadata survives retries) is a behaviour your retry tests prove. Acceptance ids: ACC-E4-2 (P03-05), ACC-E4-1 (P03-06).
+Task notes (each before its code): docs/notes/P03/transport-and-deadlines.md, docs/notes/P03/retry-ladder.md.
+
+You own:
+- src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts and their tests
+
+Do not touch:
+- src/ai/errors.ts, src/ai/testing/** (landed P03-01/02: import, do not edit), src/data/** (two other builders, now), src/services/**, src/features/**, src/app/**, src/main.tsx (the P04 builder, now), src/domain/**, src/lib/**, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- transport.ts is the only module that calls the global fetch for AI (the P00-07 lint allows exactly this file). send(url, init, deadline, attemptCapMs) takes an optional fetch implementation so tests inject fakeFetch from src/ai/testing/fakeFetch.ts; it never touches globalThis.fetch in tests. It accepts any 2xx (R03.26), reads the body as text, maps thrown errors with fromNetwork from src/ai/errors.ts passing stoppedBy from the Deadline (so our deadline reads as timeout and the person's Cancel as cancelled, R03.6), and never logs headers or bodies.
+- deadline.ts: one Deadline per user action from the timeout setting (D-16.23) combining the Cancel signal and the overall timer into one AbortSignal, reporting remaining time and which one fired. Per-attempt cap: 75 s for fixed cloud providers, the remaining budget for Ollama and Custom (D-16.60).
+- retry.ts: retry only 429, 503 and 529, waiting 1 s, 2 s and 4 s, at most four attempts, on every format and entry point; ignore Retry-After; never retry network errors or other statuses; a wait that would pass the deadline stops early with the last error; after the last attempt classify from the last response (classify in src/ai/errors.ts) so daily-quota details survive (R03.18). Cancel during a wait stops at once.
+- Fake timers for every wait and cap; check error.name, never instanceof DOMException (jsdom realms). Real waits are banned.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

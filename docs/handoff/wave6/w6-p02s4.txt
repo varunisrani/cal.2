@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S4 = P02-10, P02-11 — the saved meals repository; the Coach message repository. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference parts to read); research specs 02 §3.16, 04 §3.7; decisions D-16.17 and D-16.29 in docs/plan/16-what-we-change.md. Traps owned: R04.7, R04.8 (P02-11). Acceptance ids: ACC-D17-1 (P02-10), ACC-I10-1 (P02-11).
+Task notes (each before its code): docs/notes/P02/saved-meals-repository.md, docs/notes/P02/coach-message-repository.md.
+
+You own:
+- src/data/repos/savedMealsRepo.ts, src/data/repos/coachRepo.ts and their tests
+
+Do not touch:
+- every other file under src/data/ (landed, or written now by the secrets/wipe/storage builder: import landed modules, do not edit), src/test/** (landed helpers: use them), src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/main.tsx (the P04 builder, now), src/ai/** (the P03 builder, now), src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Every change is one read-write Dexie transaction (R06.2); a transaction that calls writeOne, removeRows or keepAside (src/data/guard.ts) includes GUARD_TABLES; deletes go through removeRows; reads go through readAll / readOne. No database singleton: repositories take the Dexie instance from the caller. Use src/lib/ids.ts, a clock or now parameter (no Date.now() in repositories) and the domain types in src/domain/model.ts.
+- Tests: openTestDb() from src/test/db.ts, factories from src/test/factories.ts, Blobs from src/test/blobs.ts (jsdom Blobs do not survive fake-indexeddb), settleQuarantine after reads, countRuns for live-query waits, Dexie.ignoreTransaction to leave a transaction scope. Real waits are banned.
+- savedMealsRepo: snapshots with their own ids and an order (D-16.17); toggleFromEntry(entry) removes the saved meal whose originEntryId is that entry, else appends a copy with a new id; isSaved(entryId); remove(id) through removeRows; move(from, to) clamped to the list; edits to the original entry never change the snapshot. Saved meals keep their photos (photoRepo.references already counts the savedMeals table).
+- coachRepo: one record per message (id, role, text, at, thumb?: Blob, state?); appends go through an in-process queue so concurrent appends keep call order; after each append only the newest 200 remain, the oldest deleted in the same transaction (R04.7, D-16.29); list() oldest first; patch(id, changes) for retry state; reset() deletes every message and bumps the conversation generation in meta; generation(). A Coach message with an unknown role is unreadable (the codec already says so): quarantined and skipped, never overwritten (R04.8).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data/repos/savedMealsRepo.test.ts src/data/repos/coachRepo.test.ts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
