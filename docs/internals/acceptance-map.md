@@ -11,26 +11,28 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### A1 · Bottom tab bar in a fixed order (P0)
 
 - **ACC-A1-1** The four tabs appear in that order and switching back to Home returns to where you were
-  - Review: P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > shows Home, Progress, Coach and Settings in that order, each named and hooked (ACC-A1-1)
+  - Test: src/app/Shell.test.tsx > Shell > switching back to Home returns to where Home was scrolled (ACC-A1-1)
 
 ### A2 · Hash routes for tabs and nested Settings pages (P0)
 
 - **ACC-A2-1** Pressing Back with two sheets open closes only the top one
-  - Review: P04-04
+  - Test: src/app/router.test.ts > router > closes only the top sheet when Back is pressed with two sheets open (ACC-A2-1)
 - **ACC-A2-2** An unknown address opens Home
-  - Review: P04-04
+  - Test: src/app/router.test.ts > router > replaces an unknown address with #/home without adding a history entry (ACC-A2-2)
 
 ### A3 · Progress and Coach can be hidden (P1)
 
 - **ACC-A3-1** Hiding Coach while viewing it moves you to Home and the tab disappears
-  - Review: P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears (ACC-A3-1, R05.13)
+  - Test: src/app/App.test.tsx > App > leaves Coach for Home when Coach is hidden from Settings while on screen (ACC-A3-1)
 - **ACC-A3-2** A hidden tab never flashes into the bar while the app starts
-  - Review: P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > never draws a hidden tab while the app starts (ACC-A3-2, R05.13)
 
 ### A4 · Tapping Settings while inside a Settings page returns to the … (P1)
 
 - **ACC-A4-1** From a nested Settings page, tapping the Settings tab shows the hub
-  - Review: P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > shows the Settings hub when Settings is tapped on a nested page (ACC-A4-1)
 
 ### A5 · The tab bar hides while a food analysis overlay is showing (P1)
 
@@ -40,12 +42,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### A6 · Floating capsule tab bar with a selected pill that slides to the … (P1)
 
 - **ACC-A6-1** The selected tab is marked visually and for screen readers (`aria-current`)
-  - Review: P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > marks the tab on screen with aria-current, and only that one (ACC-A6-1)
 
 ### A8 · Appearance (P1)
 
 - **ACC-A8-1** Choosing Light keeps the light theme even when the device is dark
-  - Review: P04-06
+  - Test: src/app/ThemeProvider.test.tsx > ThemeProvider > keeps the light theme on a dark device once Light is chosen (ACC-A8-1)
 - **ACC-A8-2** In System mode a device theme change applies without a reload
   - Test: src/ui/theme.test.ts > applyTheme > follows the operating system live in System mode
 
@@ -63,14 +65,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### A10 · Start-up skeleton until the profile and settings are read, so … (P0)
 
 - **ACC-A10-1** No calorie numbers appear before the stored profile has been read
-  - Review: P04-07
+  - Test: src/app/Boot.test.tsx > Boot > draws no Home numbers before the profile read resolves (R05.12, ACC-A10-1)
 - **ACC-A10-2** A Settings page shows a spinner, not default switches, until settings are loaded
   - Review: P09-01
 
 ### A11 · "Today" moves to the new day at local midnight and when the app … (P1)
 
 - **ACC-A11-1** Leaving the app open past midnight switches Home to the new day
-  - Review: P04-07
+  - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day one second after 23:59:59 (ACC-A11-1, R05.14)
 
 ## B · Onboarding and profile
 

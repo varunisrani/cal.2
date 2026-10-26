@@ -315,11 +315,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
   - Review: owned by P07-12
 - **R05.12** No fallback goals flash before the profile is read
-  - Review: owned by P04-07
+  - Test: src/app/Boot.test.tsx > Boot > draws no Home numbers before the profile read resolves (R05.12, ACC-A10-1)
 - **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time
-  - Review: owned by P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > hides only Coach when the stored list holds home and coach (R05.13)
+  - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears (ACC-A3-1, R05.13)
+  - Test: src/app/TabBar.test.tsx > TabBar > never draws a hidden tab while the app starts (ACC-A3-2, R05.13)
+  - Test: src/services/appData.test.ts > connectAppData > hides one tab while keeping the stored state of the other (R05.13)
 - **R05.14** Today is recomputed at local midnight and on return to the foreground
-  - Review: owned by P04-07
+  - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day one second after 23:59:59 (ACC-A11-1, R05.14)
+  - Test: src/app/TodayProvider.test.tsx > TodayProvider > updates on visibilitychange after the date changed while timers were asleep
 - **R05.15** Dense calorie charts always fit so the newest day stays reachable
   - Review: owned by P07-11
 - **R05.16** Only clearly horizontal drags scrub charts; pointer state stays local; long series are downsampled
