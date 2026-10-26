@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:15 IST (Agent 2). Waves 1–3 landed (26/176 tasks; P00 complete, P01 16/19). The user started the new
+Updated: 2026-10-27 00:30 IST (Agent 2). Waves 1–3 and P03 wave A landed (28/176 tasks). The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -59,15 +59,17 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 3 | P01-07, P01-08 (nutrient catalogue, goal defaults, pillars; meal times, diary grouping) | 33408fc |
 | Wave 3 | P01-09..11 (serving units and scaling, ingredient lines, recipe split, combine) | 4d6b9ec |
 | Wave 3 | P01-12..16 (formulas, targets and locks, plan validator, profile rules, adaptive cadence) | 1e67ebe |
+| Wave 4 | P03-01, P03-02 (AI failure kinds, classification and messages; fake fetch and wire fixtures) | 731fc23 |
 
 ## In progress
 
-- Wave 3 landed: verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
-  clean; unit 1012/1012 in 58 files; check --require-ref 6/6; check:bundle 70.13 kB; e2e 1/1) and
-  pushed as 33408fc, 4d6b9ec, 1e67ebe. **Progress: 26/176 tasks** (P00: 10/10, P01: 16/19).
-- Wave 4 (launched 00:05 IST, base f25a8b3, prompts `docs/handoff/wave4/`): P02 S0 (P02-01..03),
-  P03 wave A (P03-01/02), P04 S1 (P04-01/02) in `/root/wt/wt-{p02s0,p03a,p04s1}`.
-- Wave 5 (P01 wave C S5 = P01-17..19, prompt `docs/handoff/wave5/`), launched after wave 3 landed.
+- Landed since wave 3: P03 wave A (731fc23; ci-local on that head: unit 1062/1062 + 1 expected
+  fail in 61 files, check 6/6, bundle 71.00 kB, e2e 1/1). **Progress: 28/176 tasks** (P00 10/10,
+  P01 16/19, P03 2/19).
+- Running: P02 S0 (P02-01..03, `/root/wt/wt-p02s0`) and P04 S1 (P04-01/02, `/root/wt/wt-p04s1`)
+  from `docs/handoff/wave4/` (base f25a8b3); P01 wave C S5 (P01-17..19, `/root/wt/wt-p01c5`) from
+  `docs/handoff/wave5/` (base 8ea4190); P03 wave B S1 (P03-05/06, `/root/wt/wt-p03s1`) from
+  `docs/handoff/wave6/` (base aa146d1).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
@@ -131,6 +133,12 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- AI errors (P03-01/02): `fromNetwork(err, {stoppedBy, online, provider, keySent})`; P03-05 passes
+  `stoppedBy` so a cap is never read as a cancel. The key-hint provider list is in `errors.ts`
+  (P03-03 may move it to the catalogue). Details are capped at 600 characters; `redactKeys` masks
+  keys of 8+ characters (P08-09). Messages name "Settings › AI providers" and "Give up after": if
+  P09 renames them, update `src/i18n/en/ai.ts`. `createFakeFetch()` fails a test on an unmatched
+  or used-up request even when the code swallows it (`takeProblems()` to collect on purpose).
 - Units (P01-03..06): type names `EnergyMeasure`, `WeightMeasure`, `HeightMeasure`,
   `WaterMeasure` (each with a `*_MEASURES` list and an `is*` guard for P02-04); `parseEnergy`
   returns the display-unit value (store `fromDisplay`); quick-add amounts are a number array;
