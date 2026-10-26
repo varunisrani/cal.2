@@ -300,7 +300,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.22** Settings pages wait for stored values before showing switches
   - Review: owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
-  - Review: owned by P00-05
+  - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue
+  - Test: src/i18n/lint.test.ts > lintCatalogue > fails an unclosed plural
+  - Test: src/i18n/lint.test.ts > lintCatalogue > fails a key defined in two partitions
 - **R06.24** Photo compression replaces only smaller, unchanged originals, never during a restore, and reports interruptions as failures
   - Review: owned by v1.x item K8 (Compress photos, P2)
 
