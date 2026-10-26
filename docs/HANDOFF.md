@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 02:35 IST (Agent 1, session 3). 94/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 02:45 IST (Agent 1, session 3). 96/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -92,21 +92,23 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 9 | P06-02, P06-03 (photo storage, capture sheet and drafts) | a66e465 |
 | Wave 9 | P05-08, P05-09 (rebuild and tune-up services, wired; `aiAccess`, `browserFetch`) | 0478616 |
 | Wave 9 | P06-15, P06-16 (Open Food Facts and FoodData Central clients) | 57b504a |
+| Wave 9 | P06-04, P06-05 (analysis service and overlay, describe sheet; one shared drafts repository) | de1e2fe |
 | Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
 
 ## In progress
 
-One builder (prompt in `docs/handoff/wave9/`); no new builders this window (usage 72 % at 02:15 IST):
-- P06 S1b (P06-04 analysis service and overlay, P06-05 describe sheet), base 99249d1 (= 49ffc21 plus the
-  P06-02/03 patch, now landed as a66e465), `/root/wt/wt-p06s1b`. At landing: use `createAiAccess`
-  (`src/services/aiAccess.ts`) if it wrote its own reader; `browserFetch` is exported already; merge
-  `Services` / `main.tsx` additively; give the new service a stub in the stand-ins (`aiSetup` and
-  `planBuilder` are required now).
+No builders running. The window's usage is spent down to the stop band (74 % at 02:23 IST); waiting for
+the 05:20 IST reset. Wave 10 prompts are ready in `docs/handoff/wave10/` (fill `<BASE>` with the head at
+launch): P05 S4a (P05-10 personal info page), P05 S4b (P05-11/12 goals page, nutrient goals sheet),
+P06 S4a (P06-01 add menu, wiring the capture and describe sheets and the analysis overlay), P06 S2a
+(P06-06..08 review sheet). P06 S3b (P06-14 scanner, P06-17 lookup order and label memory) waits for P06
+S4a to land. At landing: `registry.ts`, `Services`, `main.tsx`, `App.tsx` and `en.ts` take lines from
+several slices; merge them by hand.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
-restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3 (latest
-full loop: unit 3002 passed + 2 expected-fail in 196 files, check 6/6, bundle 177.32 kB, e2e 2/2). If this
+restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
+(latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
 container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-94/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 11/15, P06 4/20, P07 2/17).
+96/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 11/15, P06 6/20, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -115,9 +117,9 @@ whether to fast-forward `main` to the work branch.
 ## Next
 
 1. Land waves 8–9 as they return (see In progress).
-2. Then (next window): P05-10..12 settings pages (wave B), P05-15 e2e; P06 S3b (P06-14 scanner, P06-17
-   lookup order and label memory), P06 S4 (P06-01 add menu, 12, 13, 18), then P06 waves B–C; the rest
-   of P07; P08–P10.
+2. Next window (after the 05:20 IST reset): launch the four wave 10 prompts at the head; P06 S3b after P06
+   S4a lands; then P05-15 e2e, P06 S4b (P06-12 reuse, P06-13 copy day, P06-18 product block / allergen line /
+   label text), P06 S2b (P06-09/10), P06 wave C (P06-11, P06-19, P06-20); the rest of P07; P08–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
@@ -129,6 +131,13 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (analysis, P06 S1b): `analysis.start(kind, inputs)`; `armedLabel` on photo inputs (P06-17
+  passes the hand-off; `fromSavedLabel` is always false until then); the barcode is stamped onto
+  `draft.product` (P06-17 may replace that helper); `closeReview()` serves Log and Cancel for P06-06 and
+  photos are released only through `releaseIfUnused`; the overlay flag follows the state, so the tab bar is
+  back behind the failure dialog. `analysis.restore()` runs after the first render in main.tsx. Not mounted
+  yet: `<AnalysisOverlay />` (P06-01 mounts it), `CaptureSheet.onAnalyse` → `analysis.start('photo', …)`
+  and the describe sheet (P06-01), the review from `reviewReady` (P06-06).
 - From wave 9 (Building plan and completion, P05 S3b): `buildPlan({profile, today, units, cancel?})`;
   `planBuilder.ts` has its own `storedAiAccess` beside `src/services/aiAccess.ts`'s `createAiAccess`
   (unify them in the next slice that touches either). `complete(answers, {now, restored?})`: `restored`
