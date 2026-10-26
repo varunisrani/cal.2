@@ -135,7 +135,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.1** Anthropic needs its direct-browser header or the reply has no CORS header
   - Review: owned by P03-09
 - **R03.2** Browser network failures are opaque; offline, our deadline and Cancel are told apart, with a hint where providers drop CORS on errors
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > adds the refused-key hint for providers that hide it behind CORS
+  - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > reports an offline device as offline, and anything else as connection
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Review: owned by P03-04
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
@@ -167,9 +168,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
   - Review: owned by P03-18
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > readProviderMessage: every body shape (R03.18) > classifies xAI, Mistral and DeepSeek bodies by the text they carry
+  - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > reads Gemini's daily quota from the quota id in the error details (R03.18)
 - **R03.19** Classification order is fixed: 401/403, credits, daily quota, quota, 404, 429, 503/529, generic
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > keeps the order: key before credit, credit before daily quota, quota before status
+  - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > calls a 429 that says the quota was exceeded quota, not rateLimit
 - **R03.20** Custom: key optional, model required; keys trimmed
   - Review: owned by P03-04
 - **R03.21** Ollama accepts free-form model ids

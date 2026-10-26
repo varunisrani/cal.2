@@ -471,9 +471,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E10 · Every AI failure shown as one friendly message per kind, never the … (P1)
 
 - **ACC-E10-1** A refused key shows the paste-a-valid-key message
-  - Review: P03-01
+  - Test: src/ai/errors.test.ts > messages (ACC-E10-1, ACC-E10-2) > shows the paste-a-valid-key message for a refused key (ACC-E10-1)
 - **ACC-E10-2** A provider error body never appears on screen
-  - Review: P03-01
+  - Test: src/ai/errors.test.ts > messages (ACC-E10-1, ACC-E10-2) > never shows the provider body, whatever its shape (ACC-E10-2)
 
 ### E11 · Notes for the AI sent in the system message of every request (D-16.24) (P1)
 
