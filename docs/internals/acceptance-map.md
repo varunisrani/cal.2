@@ -134,8 +134,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 ### B11 · Unit defaults from the browser locale (P1)
 
-- **ACC-B11-1** With an en-US browser the wizard starts in lb and ft-in
+- **ACC-B11-1** The unit defaults for an en-US browser are lb and ft-in, and kg and cm for en-GB
   - Review: P01-04
+- **ACC-B11-2** A fresh wizard in an en-US browser shows weight in lb
+  - Review: P05-02
 
 ### B12 · Personal info in Settings (P1)
 

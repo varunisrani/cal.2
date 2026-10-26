@@ -81,5 +81,5 @@ confirms it.
 | [research/](research/) | Behaviour specs 01–07 (our words; read-only for builders) |
 | [../internals/checks.md](../internals/checks.md) | The guards and their row formats |
 | [../internals/traps-ledger.md](../internals/traps-ledger.md) | 162 traps, each owned by a task or a later phase |
-| [../internals/acceptance-map.md](../internals/acceptance-map.md) | 225 acceptance ids for the 152 P0/P1 features, plus known gaps |
+| [../internals/acceptance-map.md](../internals/acceptance-map.md) | 226 acceptance ids for the 152 P0/P1 features, plus known gaps |
 | [../notes/_template.md](../notes/_template.md) | The task-note template |

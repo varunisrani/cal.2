@@ -387,6 +387,6 @@ these names are case-sensitive identifiers):
 ]
 ```
 
-Checked on 2026-10-26: every pattern matches the reference (between 4 and 766 hits each) and has zero
+Status 2026-10-26: these 19 entries are now in `tooling/checks/banned-patterns.json` (24 patterns in all) and `pnpm check:banned` passes. Checked before adding: every pattern matches the reference (between 4 and 766 hits each) and has zero
 findings in the product tree outside the exempt docs. Re-run `pnpm check:banned` after adding them.
 Tests that need one of these words build it from pieces.
