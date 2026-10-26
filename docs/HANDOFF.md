@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:15 IST (Agent 1, session 3). 73/176 tasks; P00, P01 and P02 complete; the app runs on the
+Updated: 2026-10-27 01:25 IST (Agent 1, session 3). 77/176 tasks; P00, P01, P02 and P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -37,7 +37,7 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 |---|---|
 | Repository | `varunisrani/cal.2`; `main` = `claude/focused-brahmagupta-9l3emz` (session 2's work branch) at the commit that carries this page. Push to the branch your session names, or `main` when the user says so; never force-push. Moved from the `platewise/` folder of `varunisrani/Ai1`, branch `claude/elegant-cannon-peaxt4`, with its history. Paths in the plan docs that start with `platewise/` now mean the repository root |
 | Reference | `~/reference/fud-ai` at `10e14b67116c52b515d2389621266e32b3a99840` (re-clone and check out that commit if the container was reset) |
-| REA | `~/rea-lab/rea` wraps `npx -y rea-agents@6.8.0` on Node 24.22.1 (`nvm install 24.22.1` if missing). Evidence and captures live in `~/rea-lab/`; nothing of it is in the repo |
+| REA | `~/rea-lab/rea` wraps `npx -y rea-agents@6.8.0` on Node 24.22.1 (no nvm here: `npm install --prefix ~/rea-lab/node24 node@24.22.1`, and the wrapper puts `~/rea-lab/node24/node_modules/node/bin` first on PATH). Evidence and captures live in `~/rea-lab/`; nothing of it is in the repo |
 | Plan | `docs/plan/` (start at `README.md`) |
 | Handoff kit | `docs/handoff/builder-rules.md` (builder rules), `docs/handoff/wave2/` (the wave-2 prompts, landed; a pattern for later waves) |
 
@@ -82,6 +82,8 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 8 | P04-10..13 (Home with gauge, pillars and diary; manual entry; swipe-delete rows; tab placeholders; Settings hub; D-16.79) | ea9563c |
 | Wave 9 | P03-13, P03-14 (unit choices, parts breakdown, plan/goal/label readers) | 265c9b7 |
 | Wave 9 | P03-15, P03-16 (food prompts and reply contract; plan, evidence, nutrient-goal and fit-check prompts) | 257f9e3 |
+| Wave 9 | P04-14 (walking-skeleton e2e and parity scenario, **Demo 1**; REA run `ev_c3bb14174fc42289d23b57c70cf7fc53ff404f6c6ec6b25b7ab42e95b35d6020`: 27/27 steps, no page errors). P04 done | 3d521f9 |
+| Wave 9 | P05-01..03 (wizard state machine; steps Welcome to Reminders; D-16.80) | 21565b4 |
 
 ## In progress
 
@@ -89,14 +91,15 @@ Four builders (prompts in `docs/handoff/wave9/`):
 - P07 S3 (P07-10/11 line and bar charts, chart maths), base 8f40663, `/root/wt/wt-p07s3`. At landing:
   add a `charts` partition to `src/i18n/en.ts` if the builder made one.
 - P03 S6 (P03-17 client, then P03-18 food and planning tasks), base 257f9e3, `/root/wt/wt-p03s6`.
-- P05 S1 (P05-01..03 wizard state machine and steps), base c0b38bb, `/root/wt/wt-p05s1`.
-- P04-14 walking-skeleton e2e and parity scenario (**Demo 1**), base 19fb709, `/root/wt/wt-p04s6`. After
-  landing, the lead runs `parity/walking-skeleton.platewise.json` once through REA (install
-  `rea-agents@6.8.0` outside the repo on Node 24 per "Where things are").
-Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3 (latest full loop: unit 2475 passed + 2
-expected-fail in 158 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
-the worktrees at their bases and relaunch the same prompts. **Progress: 73/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 16/19, P04 13/14, P05 0/15, P07 0/17).
+- P05 S2a (P05-04 AI access step, shared provider form, `aiSetup` service, `ai.settings` row), base
+  21565b4, `/root/wt/wt-p05s2a`.
+- P05 S3a (P05-06 Plan ready, P05-13 methods page, P05-14 goal-reached dialog; a `finish` action in
+  `wizard.ts`), base 21565b4, `/root/wt/wt-p05s3a`. At landing: both add a partition line to
+  `src/i18n/en.ts`; merge the two lines.
+Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4 (latest full loop:
+unit 2541 passed + 2 expected-fail in 166 files, check 6/6, bundle 135.93 kB, e2e 2/2). If this container is gone, re-create
+the worktrees at their bases and relaunch the same prompts. **Progress: 77/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 16/19, P04 14/14, P05 3/15, P07 0/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -105,8 +108,11 @@ whether to fast-forward `main` to the work branch.
 ## Next
 
 1. Land waves 8–9 as they return (see In progress).
-2. Then: P03-19 CORS probe (independent; next free core), P05 S2–S4 onboarding and goals (P05-04..15),
-   the rest of P07, P06 (needs P03-18), P08–P10.
+2. Then: P03-19 CORS probe (independent; next free core). After P03-18 lands: P05-05 Building plan
+   with P05-07 completion (point the onboarding route at the wizard, delete the quick start, and move
+   `e2e/walking-skeleton.spec.ts` and `parity/walking-skeleton.platewise.json` from quick start to the
+   wizard with "Set up later"), then P05-08/09 rebuild and tune-up, P05-10..12 settings pages, P05-15
+   e2e; P06 (needs P03-18); the rest of P07; P08–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
@@ -118,6 +124,20 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (wizard, P05 S1): P05-07 renders `WizardPage` with `today` and `requestNotifications` and
+  completes from `wizardProfile(state)`, `remindersOn(state)` and `state.units` (via `onStateChange`);
+  on a granted reminder answer turn on `remind.master` and the three meal reminders at their defaults.
+  Steps open with `StepHeader` and take `StepProps`; Building plan reads `state.buildRun` and dispatches
+  `planBuilt` for that run; drop the `onboarding.wizard.pending.*` keys once all late steps exist.
+  `BODY_FAT_WHEEL` (3–60 %, 0.5) lives in `wizard.ts` for now: move it next to `WEIGHT_WHEEL` in
+  `src/domain/units/body.ts` when a domain slice is open. Unit words (kg, lb, cm, ft, in, %) are in the
+  onboarding partition until a shared units partition exists.
+- From wave 9 (Demo 1, P04-14): the parity scenario's `environment` and `capture` blocks are the template
+  P10-01/02 copy unchanged; `browser.executable_path` is this machine's
+  `/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` (REA requires an absolute path): the P10-03 runner
+  fills it in. REA has no clock, reload or drag actions (the scenario uses any meal section, a `goto`
+  and keyboard delete). REA runs: serve `dist/` with `vite preview --host 127.0.0.1 --port 4173
+  --strictPort`, then `~/rea-lab/rea capture-browser-scenario <file> --format json`.
 - From wave 9 (prompts): every builder in `src/ai/prompts/` returns `{ system, prompt }` without the
   notes for the AI (the client appends them, D-16.24); `compactRetryNote(maxTokens, 'json' | 'prose')`
   is in `shared.ts`; the label scan is the photo request plus a hint (D-16.62); the fit check keeps the
