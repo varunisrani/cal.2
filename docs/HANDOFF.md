@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:24 IST (Agent 2). P00 and P01 complete; 52/176 tasks. The user started the new
+Updated: 2026-10-27 01:37 IST (Agent 2). P00 and P01 complete; 56/176 tasks; the app opens, sets up with defaults and shows Home. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -71,27 +71,30 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 7 | P02-08, P02-09 (weight, body-fat, water and fasting repositories; lead cross-repo test) | 0c64ce7 |
 | Wave 7 | P02-10, P02-11 (saved meals, Coach messages) | dc092de |
 | Wave 7 | P04-08, P04-09 (diary service with one log at a time; temporary quick start) | 002fde4 |
+| Wave 7 | P04-04..07 (hash router and sheets, tab bar, live theme, boot gate, today clock, crash card) | 321a511 |
+| Wave 7 | P04-09 wiring: the onboarding route shows the quick start, then Home (lead) | 472dbc6 |
 
 ## In progress
 
-- Landed since wave 3: P03 A (731fc23), P01 C (20c0983), P04 S1 (bd36cd2), P03 S1 (916b62f),
-  P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8), P02 S1 (31694df), P02 S2 (6ee9257),
-  P02 S3 (0c64ce7), P02 S4 (dc092de), P04 S4 (002fde4; ci-local on that head: unit 1812/1812 + 1
-  expected fail in 117 files, check 6/6, bundle 71.14 kB, e2e 1/1). **Progress: 52/176 tasks**
-  (P00 10/10, P01 19/19, P02 12/15, P03 6/19, P04 5/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P04 S3 (P04-04..07 app
-  shell + `src/services/appData.ts`, base 4c1c65d) and P02 S5 (P02-12/14 secrets, erase, storage,
-  base 71e00bb).
-- At P04 S3 land time: wire `<QuickStart onStart={quickStartAction({db, profile, settings},
-  navigator.language)} onDone={() => navigate('#/home')} />` into the onboarding route (memoised
-  per AppData), create the diary service once in the shell, keep the e2e smoke heading; both
-  slices add a line to `src/i18n/en.ts` (merge by hand).
-- If this session dies, the worktrees and patches are gone with the container: relaunch the
-  unlanded slices from their prompts.
+- Landed since wave 3: P03 A, P01 C, P04 S1, P03 S1, P02 S0, P03 S2, P04 S2, P02 S1–S4, P04 S4,
+  P04 S3 (321a511) and the quick-start wiring (472dbc6; ci-local on that head: unit 1919/1919 + 1
+  expected fail in 127 files, check 6/6, bundle 117.22 kB, e2e 1/1; the production build walked in
+  Chromium from an empty database to Home). **Progress: 56/176 tasks** (P00 10/10, P01 19/19,
+  P02 12/15, P03 6/19, P04 9/14).
+- Running: P02 S5 (P02-12/14 secrets, erase, storage) in `/root/wt/wt-p02s5`, base 71e00bb,
+  prompt `docs/handoff/wave7/w7-p02s5.txt`.
+- Usage: Agent 2 at 70 % (01:36 IST); no new builders this window (75 % band near). The window
+  resets at 02:40 IST; the hourly auto-continue resumes then.
+- If this session dies, the worktrees and patches are gone with the container: relaunch P02 S5
+  from its prompt.
 
 ## Next
 
-1. Land P04 S3 (wire QuickStart) and P02 S5; then P02-15 hooks, P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
+1. Land P02 S5. After the reset: P02-15 data hooks (wrap the factory and namespace repositories;
+   AppData can then shrink), P03 wave B S3–S5 (adapters, image and parsing, prompts), P04 wave B
+   (P04-10..13: Home, manual entry, diary rows, placeholders and the settings hub; screens plug in
+   by replacing their line in `src/app/RouteScreen.tsx`), then P04-14 (walking-skeleton e2e and
+   parity scenario, Demo 1), P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -156,6 +159,14 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- App shell (P04-04..07): screens use `useRoute()` (navigate, showTab, openSheet, closeSheet)
+  and `useSheet(id)`; Home sits under every tab in history, onboarding stands alone; AppData (from
+  `src/services/appData.ts`) is read with `useAppData()`; `App` takes `open` and `router` props for
+  tests (fakes in `src/app/testing/`). Follow-ups: theme before first paint (a small cache in
+  `main.tsx`), the `reload-needed` message has no owner, scroll restore for late-loading screens,
+  a typed address leaves one extra history entry. The stylesheet source check
+  (`src/ui/stylesheets.test.ts`) does not fit `src/app/shell.module.css` (per-element custom
+  properties) or `onboarding.module.css` (no motion): extend the check or leave them out.
 - Lint rule 2: screens (`src/app`, `src/ui`, `src/features`) never import `**/data/db` or
   `**/data/repos`; they use services (`src/services/**`, which may) and data hooks. The shell's
   data lives in `src/services/appData.ts` (P04 S3) behind a React context.
