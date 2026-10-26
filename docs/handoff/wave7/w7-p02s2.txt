@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S2 = P02-06, P02-07, P02-13 — the diary repository; the photo store with reference-checked cleanup; the drafts repository. Spec: those three rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 02 §3.10, §3.19, §3.20; decisions D-16.35 and D-16.46 in docs/plan/16-what-we-change.md. Traps owned: R02.12, R02.24, R05.1, R06.2 (P02-06), R02.8, R06.18 (P02-07) — search docs/internals/traps-ledger.md for "owned by P02-06", "P02-07", "P02-13"; the P02-13 row also names R02.10. Acceptance rows owned: ACC-D27-2, ACC-D28-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P02/diary-repository.md, docs/notes/P02/photo-store-and-reference-checked-cleanup.md, docs/notes/P02/drafts-repository.md.
+
+You own:
+- src/data/repos/diaryRepo.ts, src/data/repos/diaryRepo.test.ts, src/data/repos/photoRepo.ts, src/data/repos/photoRepo.test.ts, src/data/repos/draftsRepo.ts, src/data/repos/draftsRepo.test.ts
+
+Do not touch:
+- the landed data core (see below), other files in src/data/repos/** and src/data/settingsSchema* (the P02 S1 builder writes settings and profile), src/ai/** (a P03 builder), src/ui/** (a P04 builder), src/domain/**, src/i18n/**, src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made (P02 wave B, every slice):
+- Repositories live in src/data/repos/ and are the only way features reach data (lint rules 2 and 4). They read through the landed guard (readAll / readOne / guardKey from src/data/guard.ts with the codecs in src/data/codecs.ts) and write ONLY through transact() from src/data/db.ts (a lone table.put can show in live queries before it commits). writeOne refuses a row its codec cannot read; an update refuses when readOne answers corrupt.
+- Live reads use live()/feedOf() from src/data/live.ts; React callers come later (P02-15 hooks), so export plain functions and observables, no React here.
+- Records are the types in src/domain/model.ts; reuse the landed domain rules (src/domain/**) instead of re-deriving them, e.g. day keys from src/domain/dates, meal grouping from src/domain/meals, fasting checks from src/domain/trackers.
+- Tests: a fresh fake database per test with openTestDb / freshDbOptions from src/test/db.ts, records from src/test/factories.ts, live helpers from src/test/live.ts. Fake timers stall Dexie: data tests use real timers and wait on events (watch/ready), never on sleeps. Blobs: build with testBlob and check with isBlobLike (jsdom Blobs come back from fake-indexeddb as plain objects). Vitest runs in America/New_York; use inTimeZone from src/test/time.ts for day-boundary cases.
+- Do not edit the landed data core (src/data/{schema,db,guard,codecs,values,live,useLive,bus}.ts, src/test/{db,live,factories}.ts). If a schema index, codec or factory is missing, stop and report it instead of editing (the lead lands such changes once, for every slice).
+- Every diary change is one transaction (R02.24): an entry and its photo references move together; a decode failure never replaces stored entries. Photos are deleted only when no entry, saved meal or draft still references them (reference-checked cleanup, R02.8).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
