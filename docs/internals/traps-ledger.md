@@ -121,7 +121,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.1** Anthropic needs its direct-browser header or the reply has no CORS header
   - Review: owned by P03-09
 - **R03.2** Browser network failures are opaque; offline, our deadline and Cancel are told apart, with a hint where providers drop CORS on errors
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > fromNetwork > reports our own cancel as cancelled, whatever the error and the network
+  - Test: src/ai/errors.test.ts > fromNetwork > reports our deadline as a timeout
+  - Test: src/ai/errors.test.ts > fromNetwork > tells an abort and a timeout apart by name when no context says which fired
+  - Test: src/ai/errors.test.ts > fromNetwork > reports offline when the device says so
+  - Test: src/ai/errors.test.ts > fromNetwork > adds the refused-key hint for providers whose errors look like lost connections (R03.2)
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Review: owned by P03-04
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
@@ -153,9 +157,16 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
   - Review: owned by P03-18
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > failureMessage > never shows the provider body, which is kept only as detail (R03.18)
+  - Test: src/ai/errors.test.ts > classify > reads a quota with a per-day sign as the daily quota, from the Gemini quotaId too
+  - Test: src/ai/errors.test.ts > classify > reads the vendor body shapes: error.message, a string error, detail and plain text
+  - Review: daily-quota detail kept through every retry, P03-06
 - **R03.19** Classification order is fixed: 401/403, credits, daily quota, quota, 404, 429, 503/529, generic
-  - Review: owned by P03-01
+  - Test: src/ai/errors.test.ts > classify > reads 402 and credit wording as credits, ahead of quota and status rules
+  - Test: src/ai/errors.test.ts > classify > keeps a refused key ahead of credit wording
+  - Test: src/ai/errors.test.ts > classify > reads quota-exceeded wording as quota, not a rate limit, even on a 429
+  - Test: src/ai/errors.test.ts > classify > maps 404, 429, 503 and 529 by status when no wording applies
+  - Test: src/ai/errors.test.ts > classify > falls back to generic for 500, 418 and a 400 it does not recognise
 - **R03.20** Custom: key optional, model required; keys trimmed
   - Review: owned by P03-04
 - **R03.21** Ollama accepts free-form model ids
