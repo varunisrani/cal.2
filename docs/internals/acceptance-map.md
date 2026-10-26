@@ -932,7 +932,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-L9-1** Automated accessibility checks find no serious problems on the main screens
   - Review: P10-07
 - **ACC-L9-2** The gauge's value is readable by a screen reader
-  - Review: P04-03
+  - Test: src/ui/Gauge.test.tsx > Gauge > reads the visible value and status to a screen reader (ACC-L9-2)
 
 ### L10 · Initial JavaScript at most 250 KB gzip (P1)
 

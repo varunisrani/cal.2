@@ -1,0 +1,378 @@
+/*
+ * Display primitives: gauge, pillar, progress bar, stat badge, menu and swipe row. Colours,
+ * radii, spacing and timings come from tokens.css; the motion tokens drop to 1 ms under
+ * prefers-reduced-motion, so every transition here follows that setting.
+ */
+
+/* Gauge: a dashed half arc with the readout inside it. */
+.gauge {
+  position: relative;
+  width: min(100%, 16.5rem);
+  margin-inline: auto;
+  container-type: inline-size;
+}
+
+.gaugeArc {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.gaugeTrack,
+.gaugeFill {
+  fill: none;
+  stroke-linecap: butt;
+}
+
+.gaugeTrack {
+  stroke: var(--accent-soft);
+}
+
+.gaugeFill {
+  stroke: var(--accent);
+}
+
+/* The mask reads the sweep's alpha, so its stroke colour does not matter. */
+.gaugeMask {
+  mask-type: alpha;
+}
+
+.gaugeSweep {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: butt;
+  transition: stroke-dasharray var(--motion-count) var(--ease-move);
+}
+
+.gaugeReadout {
+  position: absolute;
+  inset: 26% 16% 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-1);
+  text-align: center;
+}
+
+.gaugeHeading {
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.06em;
+  line-height: var(--leading-tight);
+}
+
+.gaugeValue {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--accent);
+  font-size: min(var(--type-display), 18cqi);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gaugeStatus {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+/* Pillar: a 16 × 64 tube (Pillar.tsx computes the fill in the same px). */
+.pillar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.pillarValue {
+  color: var(--accent);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.pillarTube {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 16px;
+  height: 64px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-soft);
+}
+
+.pillarFill {
+  width: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+  transition: height var(--motion-count) var(--ease-move);
+}
+
+.pillarLabel {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font-size: var(--type-micro);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pillarStatus {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pillar[data-over] .pillarStatus {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+/* Progress bar. */
+.progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-soft);
+}
+
+.progressFill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+  transition: width var(--motion-base) var(--ease-move);
+}
+
+/* Stat badge: the type follows the tile's width instead of wrapping. */
+.badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-control);
+  background-color: var(--accent-soft);
+  container-type: inline-size;
+}
+
+.badgeValue,
+.badgeLabel {
+  max-width: 100%;
+  overflow: hidden;
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.badgeValue {
+  color: var(--text);
+  font-size: clamp(0.75rem, 14cqi, var(--type-title));
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+}
+
+.badgeLabel {
+  color: var(--text-muted);
+  font-size: clamp(0.625rem, 10cqi, var(--type-micro));
+  font-weight: var(--weight-medium);
+}
+
+/* Menu: a raised panel anchored to its button. */
+.menuAnchor {
+  position: relative;
+  display: inline-flex;
+}
+
+.menuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.menuTrigger:focus-visible,
+.menuRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.menu {
+  position: absolute;
+  z-index: var(--z-fab);
+  width: min(15rem, calc(100vw - 2 * var(--space-4)));
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background-color: var(--raised);
+  box-shadow: var(--shadow-raised);
+  animation: menu-in var(--motion-quick) var(--ease-move);
+}
+
+.menu[data-placement='below'] {
+  top: calc(100% + var(--space-2));
+  transform-origin: top;
+}
+
+.menu[data-placement='above'] {
+  bottom: calc(100% + var(--space-2));
+  transform-origin: bottom;
+}
+
+.menu[data-align='start'] {
+  inset-inline-start: 0;
+}
+
+.menu[data-align='end'] {
+  inset-inline-end: 0;
+}
+
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.menuRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.menuRow:hover,
+.menuRow:focus {
+  background-color: var(--accent-soft);
+}
+
+.menuRowIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--text-muted);
+}
+
+.menuRowLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menuRowEnd {
+  flex: none;
+  color: var(--accent);
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: var(--space-1) var(--space-2);
+  background-color: var(--line);
+}
+
+/* Swipe row: the strip and the delete button sit under the sliding content. */
+.swipeRow {
+  --swipe-reveal: 4.5rem;
+
+  position: relative;
+  overflow: hidden;
+}
+
+.swipeStrip {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  width: 0;
+  background-color: var(--danger);
+  transition: width var(--motion-base) var(--ease-move);
+}
+
+.swipeSlide {
+  position: relative;
+  z-index: 1;
+  background-color: var(--card);
+  touch-action: pan-y;
+  transition: transform var(--motion-base) var(--ease-move);
+}
+
+.swipeStrip[data-dragging],
+.swipeSlide[data-dragging] {
+  transition: none;
+  user-select: none;
+}
+
+.swipeDelete {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--swipe-reveal);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text-inverse);
+  cursor: pointer;
+}
+
+/* On the danger strip the inverse text colour is the one that stands out. */
+.swipeDelete:focus-visible {
+  outline: 2px solid var(--text-inverse);
+  outline-offset: -4px;
+}
+
+.swipeRow[data-revealed] .swipeStrip {
+  width: var(--swipe-reveal);
+}
+
+.swipeRow[data-revealed] .swipeSlide {
+  transform: translateX(calc(-1 * var(--swipe-reveal)));
+}
+
+.swipeRow[data-revealed]:dir(rtl) .swipeSlide {
+  transform: translateX(var(--swipe-reveal));
+}

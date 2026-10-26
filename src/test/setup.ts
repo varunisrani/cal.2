@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest';
 import 'fake-indexeddb/auto';
+import { cleanup } from '@testing-library/react';
 import { afterEach, vi } from 'vitest';
 import { getTimeZone, setTimeZone } from './time';
 
@@ -7,6 +8,8 @@ import { getTimeZone, setTimeZone } from './time';
 const pinnedTimeZone = getTimeZone();
 
 afterEach(() => {
+  // Vitest runs without globals, so Testing Library cannot register its own cleanup.
+  cleanup();
   vi.useRealTimers();
   setTimeZone(pinnedTimeZone);
 });
