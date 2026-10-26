@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p02s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P02 wave B slice S3 = P02-08, P02-09 — the weight and body-fat repositories; the water and fasting repositories. Spec: those two rows in docs/plan/phases/P02-data-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 05 §3.5.3 and §3.7; decisions D-16.35, D-16.37, D-16.38, D-16.39 in docs/plan/16-what-we-change.md. Traps owned: R01.11, R05.8 (P02-08), R05.2, R05.3 (P02-09) — search docs/internals/traps-ledger.md for "owned by P02-08", "P02-09". Acceptance rows owned: ACC-C11-2, ACC-G7-1, ACC-H8-1, ACC-H10-1 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P02/weight-and-body-fat-repositories.md, docs/notes/P02/water-and-fasting-repositories.md.
+
+You own:
+- src/data/repos/weightRepo.ts, src/data/repos/weightRepo.test.ts, src/data/repos/bodyFatRepo.ts, src/data/repos/bodyFatRepo.test.ts, src/data/repos/waterRepo.ts, src/data/repos/waterRepo.test.ts, src/data/repos/fastRepo.ts, src/data/repos/fastRepo.test.ts
+
+Do not touch:
+- the landed data core (see below), other files in src/data/repos/** and src/data/settingsSchema* (the P02 S1 and S2 builders write settings, profile, diary, photo and drafts repositories in parallel), src/ai/**, src/ui/** (a P04 builder), src/domain/**, src/i18n/**, src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made (P02 wave B, every slice):
+- Repositories live in src/data/repos/ and are the only way features reach data (lint rules 2 and 4). They read through the landed guard (readAll / readOne / guardKey from src/data/guard.ts with the codecs in src/data/codecs.ts) and write ONLY through transact() from src/data/db.ts (a lone table.put can show in live queries before it commits). writeOne refuses a row its codec cannot read; an update refuses when readOne answers corrupt.
+- Live reads use live()/feedOf() from src/data/live.ts; React callers come later (P02-15 hooks), so export plain functions and observables, no React here.
+- Records are the types in src/domain/model.ts; reuse the landed domain rules (src/domain/**) instead of re-deriving them, e.g. day keys from src/domain/dates, meal grouping from src/domain/meals, fasting checks from src/domain/trackers.
+- Tests: a fresh fake database per test with openTestDb / freshDbOptions from src/test/db.ts, records from src/test/factories.ts, live helpers from src/test/live.ts. Fake timers stall Dexie: data tests use real timers and wait on events (watch/ready), never on sleeps. Blobs: build with testBlob and check with isBlobLike (jsdom Blobs come back from fake-indexeddb as plain objects). Vitest runs in America/New_York; use inTimeZone from src/test/time.ts for day-boundary cases.
+- Do not edit the landed data core (src/data/{schema,db,guard,codecs,values,live,useLive,bus}.ts, src/test/{db,live,factories}.ts). If a schema index, codec or factory is missing, work around it inside your own files (e.g. a local helper in your test, a filter instead of an index) and report it; if no workaround is possible, stop and report. The lead lands such core changes once, for every slice.
+- The domain rules already exist: fasting checks (canStart, checkEdit, endNow, clampGoalMin, activeFast) in src/domain/trackers/fasting.ts, goal crossing (crossesGoal, reachesGoalOnAdd, latestByTime) in src/domain/trackers/goalCrossing.ts, weight ranges in src/domain/units/body.ts, water amounts in src/domain/units/water.ts (custom capped at 5 000 ml, D-16.39). The repositories apply them inside one transaction and store nothing on a refusal (R05.3).
+- A goal-reached announcement goes on the bus from src/data/bus.ts as `goal-reached` with {weighInId, kg}, once, from one place for every add path (R01.11).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/data --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
