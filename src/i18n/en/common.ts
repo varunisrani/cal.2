@@ -19,5 +19,9 @@ export const common = {
     close: 'Close',
     edit: 'Edit',
     add: 'Add',
+    date: 'Date',
+    time: 'Time',
+    decrease: 'Decrease {name}',
+    increase: 'Increase {name}',
   },
 } as const satisfies MessageTree;

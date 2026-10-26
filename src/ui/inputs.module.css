@@ -1,0 +1,425 @@
+/*
+ * Fields, steppers, segmented controls, switches, option lists, wheels and date inputs.
+ * Platewise's own look (16 §2.5): solid token colours, no gradients or translucent glass.
+ */
+
+/* Read by screen readers, not drawn. */
+.visuallyHidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Field. */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fieldLabel {
+  padding: 0;
+  color: var(--text);
+  font-size: var(--type-small);
+  font-weight: var(--weight-semibold);
+}
+
+.fieldControl {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fieldInput {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  box-sizing: border-box;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-lead);
+}
+
+.fieldInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.fieldInput[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.fieldUnit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.fieldHint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-small);
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+}
+
+/* Stepper. */
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.stepper[data-disabled] {
+  opacity: 0.45;
+}
+
+.stepperLabel {
+  color: var(--text);
+  font-size: var(--type-body);
+}
+
+.stepperControls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.stepperValue {
+  min-inline-size: calc(var(--space-8) * 2);
+  padding-block: var(--space-1);
+  border-radius: var(--radius-control);
+  color: var(--text);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.stepperValue:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Segmented control: a muted track with the chosen option raised on it. */
+
+.segmented {
+  display: flex;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border-radius: var(--radius-control);
+  background-color: var(--page);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.segment {
+  flex: 1 1 0;
+  min-block-size: calc(var(--space-8) + var(--space-2));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border: 0;
+  border-radius: calc(var(--radius-control) - var(--space-1));
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition:
+    background-color var(--motion-quick) var(--ease-standard),
+    color var(--motion-quick) var(--ease-standard);
+}
+
+.segment[aria-checked='true'] {
+  background-color: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+/* Switch. */
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+}
+
+.switchRow[data-disabled] {
+  opacity: 0.45;
+}
+
+.switchText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.switchLabel {
+  color: var(--text);
+  font-size: var(--type-body);
+}
+
+.switchDescription {
+  color: var(--text-muted);
+  font-size: var(--type-small);
+}
+
+.switch {
+  box-sizing: border-box;
+  position: relative;
+  flex: none;
+  inline-size: calc(var(--space-8) + var(--space-5));
+  block-size: calc(var(--space-6) + var(--space-2));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background-color: var(--page);
+  cursor: pointer;
+  transition: background-color var(--motion-base) var(--ease-standard);
+}
+
+.switch[aria-checked='true'] {
+  border-color: var(--accent);
+  background-color: var(--accent);
+}
+
+.switch:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.switch:disabled {
+  cursor: not-allowed;
+}
+
+.switchThumb {
+  position: absolute;
+  inset-block-start: calc(var(--space-1) - 1px);
+  inset-inline-start: calc(var(--space-1) - 1px);
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border-radius: var(--radius-pill);
+  background-color: var(--text-muted);
+  transition:
+    transform var(--motion-base) var(--ease-out),
+    background-color var(--motion-base) var(--ease-standard);
+}
+
+.switch[aria-checked='true'] .switchThumb {
+  background-color: var(--accent-ink);
+  transform: translateX(var(--space-5));
+}
+
+[dir='rtl'] .switch[aria-checked='true'] .switchThumb {
+  transform: translateX(calc(var(--space-5) * -1));
+}
+
+/* Option list (ListPicker). */
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: calc(var(--space-8) + var(--space-4));
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.option[aria-selected='true'] {
+  border-color: var(--accent);
+}
+
+.option:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.optionText {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.optionLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.optionDetail {
+  color: var(--text-muted);
+  font-size: var(--type-small);
+}
+
+.optionExtra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-4);
+}
+
+/* A check mark drawn from two borders, shown on the chosen option only. */
+.optionCheck {
+  flex: none;
+  inline-size: var(--space-2);
+  block-size: var(--space-4);
+  margin-inline-end: var(--space-1);
+  border-block-end: 3px solid var(--accent);
+  border-inline-end: 3px solid var(--accent);
+  transform: rotate(45deg) translateY(calc(var(--space-1) * -0.5));
+  visibility: hidden;
+}
+
+.option[aria-selected='true'] .optionCheck {
+  visibility: visible;
+}
+
+/* Wheel: five rows on show, the middle one is the value. */
+
+.wheel {
+  --wheel-row: calc(var(--space-8) + var(--space-3));
+  position: relative;
+  min-inline-size: calc(var(--space-8) * 2);
+}
+
+/* The keyboard and screen-reader control: not drawn, but its focus ring shows on the wheel. */
+.wheelSelect {
+  composes: visuallyHidden;
+}
+
+.wheelFace {
+  position: relative;
+  block-size: calc(var(--wheel-row) * 5);
+  border-radius: var(--radius-control);
+}
+
+.wheelSelect:focus-visible + .wheelFace {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.wheelBand {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: calc(var(--wheel-row) * 2);
+  block-size: var(--wheel-row);
+  border-radius: var(--radius-control);
+  background-color: var(--accent-soft);
+  pointer-events: none;
+}
+
+.wheelList {
+  position: relative;
+  box-sizing: border-box;
+  block-size: 100%;
+  padding-block: calc(var(--wheel-row) * 2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+  outline: none;
+}
+
+.wheelList::-webkit-scrollbar {
+  display: none;
+}
+
+.wheelRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  block-size: var(--wheel-row);
+  color: var(--text-muted);
+  font-size: var(--type-lead);
+  font-variant-numeric: tabular-nums;
+  scroll-snap-align: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wheelRow[data-chosen] {
+  color: var(--text);
+  font-size: var(--type-title);
+  font-weight: var(--weight-semibold);
+}
+
+/* Date and time. */
+
+.dateTime {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dateTimeInputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.dateTimePart {
+  display: flex;
+  flex: 1 1 calc(var(--space-8) * 4);
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.dateTimePartLabel {
+  color: var(--text-muted);
+  font-size: var(--type-label);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .segment,
+  .switch,
+  .switchThumb {
+    transition: none;
+  }
+}

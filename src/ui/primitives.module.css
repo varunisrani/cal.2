@@ -1,0 +1,355 @@
+/*
+ * Buttons, cards, sheets, dialogs and toasts. Platewise's own surface (16 §2.5): solid token
+ * colours, no translucency, sheen or gradients. Every value comes from tokens.css; motion uses
+ * the token durations, which drop to 0 ms under reduced motion.
+ */
+
+/* Buttons. */
+
+.button {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background-color: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform var(--motion-quick) var(--ease-standard),
+    opacity var(--motion-quick) var(--ease-standard);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.button:active:not(:disabled, [aria-disabled='true']) {
+  transform: scale(0.97);
+}
+
+.button:disabled,
+.button[aria-disabled='true']:not([data-busy]) {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button[data-busy] {
+  cursor: progress;
+}
+
+.primary {
+  border-color: var(--accent);
+  background-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.secondary {
+  border-color: var(--line);
+  background-color: var(--raised);
+  color: var(--text);
+}
+
+.quiet {
+  border-color: transparent;
+  background: none;
+  color: var(--accent);
+  padding-inline: var(--space-3);
+}
+
+.danger {
+  border-color: var(--danger);
+  background-color: var(--danger);
+  color: var(--text-inverse);
+}
+
+.wide {
+  inline-size: 100%;
+}
+
+.buttonLabel {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+
+.spinner {
+  flex: none;
+  inline-size: 1em;
+  block-size: 1em;
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: turn calc(var(--motion-slow) * 2.5) linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+.iconButton {
+  inline-size: calc(var(--space-8) + var(--space-3));
+  padding: 0;
+  border-radius: var(--radius-pill);
+}
+
+.iconGlyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--type-lead);
+  line-height: 1;
+}
+
+.iconGlyph svg {
+  inline-size: 1.25em;
+  block-size: 1.25em;
+}
+
+/* Card. */
+
+.card {
+  display: block;
+  padding: var(--space-4);
+  border-radius: var(--radius-card);
+  background-color: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+}
+
+.cardHeading {
+  margin: 0 0 var(--space-3);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+/* The layer under sheets and dialogs. */
+
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--layer-sheet);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.centred {
+  z-index: var(--layer-dialog);
+  align-items: center;
+  justify-content: center;
+  padding-block: calc(var(--safe-top) + var(--space-6)) calc(var(--safe-bottom) + var(--space-6));
+  padding-inline: calc(var(--safe-left) + var(--space-6)) calc(var(--safe-right) + var(--space-6));
+}
+
+.scrim {
+  position: absolute;
+  inset: 0;
+  background-color: var(--scrim);
+  animation: appear var(--motion-base) var(--ease-standard);
+}
+
+/* Sheet. */
+
+.sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  inline-size: 100%;
+  max-inline-size: 40rem;
+  max-block-size: calc(100dvh - var(--safe-top) - var(--space-8));
+  margin-inline: auto;
+  padding-block-end: var(--safe-bottom);
+  border-start-start-radius: var(--radius-sheet);
+  border-start-end-radius: var(--radius-sheet);
+  background-color: var(--sheet);
+  color: var(--text);
+  box-shadow: var(--shadow-sheet);
+  animation: rise var(--motion-slow) var(--ease-out);
+  transition: transform var(--motion-base) var(--ease-out);
+}
+
+.sheet:focus {
+  outline: none;
+}
+
+.sheet:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.sheet[data-dragging] {
+  transition: none;
+}
+
+.sheetHead {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-4) var(--space-2);
+  padding-inline: var(--space-4) var(--space-2);
+}
+
+.sheetHead[data-draggable] {
+  touch-action: none;
+}
+
+.grip {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-start: calc(50% - var(--space-5));
+  inline-size: calc(var(--space-5) * 2);
+  block-size: var(--space-1);
+  border-radius: var(--radius-pill);
+  background-color: var(--line);
+}
+
+.sheetTitle {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.sheetBody {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-block: var(--space-2) var(--space-4);
+  padding-inline: var(--space-4);
+}
+
+.sheetFoot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+
+/* Dialog. */
+
+.dialog {
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  inline-size: min(100%, 26rem);
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background-color: var(--raised);
+  color: var(--text);
+  box-shadow: var(--shadow-raised);
+  animation: settle var(--motion-base) var(--ease-out);
+}
+
+.dialog:focus {
+  outline: none;
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.dialogMessage {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.dialogActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-block-start: var(--space-2);
+}
+
+/* Toast. */
+
+.toastRegion {
+  position: fixed;
+  inset-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+  inset-block-end: calc(var(--safe-bottom) + var(--space-8) * 3);
+  z-index: var(--layer-toast);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.toast {
+  box-sizing: border-box;
+  max-inline-size: 30rem;
+  margin: 0;
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-control);
+  background-color: var(--text);
+  color: var(--text-inverse);
+  box-shadow: var(--shadow-raised);
+  font-size: var(--type-small);
+  font-weight: var(--weight-medium);
+  animation: settle var(--motion-base) var(--ease-out);
+}
+
+/* Motion. */
+
+@keyframes appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(var(--space-2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scrim,
+  .sheet,
+  .dialog,
+  .toast {
+    animation: none;
+  }
+
+  .button,
+  .sheet {
+    transition: none;
+  }
+
+  .spinner {
+    animation: none;
+    border-inline-end-color: currentColor;
+    opacity: 0.6;
+  }
+}
