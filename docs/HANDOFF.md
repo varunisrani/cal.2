@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:08 IST (Agent 2). P00 and P01 complete; 50/176 tasks. The user started the new
+Updated: 2026-10-27 01:24 IST (Agent 2). P00 and P01 complete; 52/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -70,25 +70,28 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 7 | P02-06, P02-07, P02-13 (diary repository, photo store and cleanup, drafts) | 6ee9257 |
 | Wave 7 | P02-08, P02-09 (weight, body-fat, water and fasting repositories; lead cross-repo test) | 0c64ce7 |
 | Wave 7 | P02-10, P02-11 (saved meals, Coach messages) | dc092de |
+| Wave 7 | P04-08, P04-09 (diary service with one log at a time; temporary quick start) | 002fde4 |
 
 ## In progress
 
-- Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
-  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8), P02 S1 (31694df), P02 S2
-  (6ee9257), P02 S3 (0c64ce7), P02 S4 (dc092de; ci-local on that head: unit 1788/1788 + 1 expected
-  fail in 114 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 50/176 tasks** (P00 10/10,
-  P01 19/19, P02 12/15, P03 6/19, P04 3/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P04 S3 (P04-04..07
-  app shell + `src/services/appData.ts`, base 4c1c65d) and P04 S4 (P04-08/09 diary service, quick
-  start, base eaa69d1). At land time the lead wires QuickStart into the onboarding route with the
-  quick-start action and keeps the e2e smoke heading.
+- Landed since wave 3: P03 A (731fc23), P01 C (20c0983), P04 S1 (bd36cd2), P03 S1 (916b62f),
+  P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8), P02 S1 (31694df), P02 S2 (6ee9257),
+  P02 S3 (0c64ce7), P02 S4 (dc092de), P04 S4 (002fde4; ci-local on that head: unit 1812/1812 + 1
+  expected fail in 117 files, check 6/6, bundle 71.14 kB, e2e 1/1). **Progress: 52/176 tasks**
+  (P00 10/10, P01 19/19, P02 12/15, P03 6/19, P04 5/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P04 S3 (P04-04..07 app
+  shell + `src/services/appData.ts`, base 4c1c65d) and P02 S5 (P02-12/14 secrets, erase, storage,
+  base 71e00bb).
+- At P04 S3 land time: wire `<QuickStart onStart={quickStartAction({db, profile, settings},
+  navigator.language)} onDone={() => navigate('#/home')} />` into the onboarding route (memoised
+  per AppData), create the diary service once in the shell, keep the e2e smoke heading; both
+  slices add a line to `src/i18n/en.ts` (merge by hand).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P04 S3 and S4 (wire QuickStart into the onboarding route); then P02 S5 (P02-12/14),
-   P02-15 hooks, P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
+1. Land P04 S3 (wire QuickStart) and P02 S5; then P02-15 hooks, P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
