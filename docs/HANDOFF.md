@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 18:50 IST (Agent 1, session 2: resumed in a fresh container). Wave 1 is building.
+Updated: 2026-10-26 19:10 IST (Agent 1, session 2). Wave 1 landed (7/176 tasks). Waiting for the usage reset (21:20 IST) before wave 2.
 
 ## Where things are
 
@@ -20,27 +20,47 @@ Updated: 2026-10-26 18:50 IST (Agent 1, session 2: resumed in a fresh container)
 | 2 Clean room | Protocol, REA workflow, AGENTS.md, notices; guards in `tooling/checks` (86 unit tests) | c739f45, 98b7385 |
 | 3 Plan | Architecture (`04`), what-we-change with 48 decisions (`16`) | c4e9439, 8aa4b28 |
 | P00 | Skeleton (React 19, TS 6, Vite 8, Vitest 5, Playwright 1.63, pnpm), smoke e2e | 9f076fa, f6e38c0 |
+| Wave 1 | P00-08, P00-01, P00-10 (clock, ids, test time, CI pinned + `scripts/ci-local.sh`, bundle budget) | 4b31214 |
+| Wave 1 | P01-01, P01-02 (domain records, day keys and windows) | e081191 |
+| Wave 1 | P00-05, P00-06 (catalogue, typed `t()`, catalogue lint, Intl helpers) | 4ffda80 |
 
 ## In progress
 
-Wave 1, three builders in worktrees under `/root/wt/` (base `5241ac9`): `wt-p00s1` (P00-08, P00-01,
-P00-10), `wt-p00s3` (P00-05, P00-06), `wt-p01a` (P01-01, P01-02). P00 S2 (P00-02..04) was held back
-to fit the usage window; it goes in wave 2. Nothing of wave 1 has landed yet: if this session stops,
-the worktrees are lost with the container, so restart those slices from the phase files.
-
-Earlier state: the plan has landed: `docs/plan/` holds 11 phase files (P00–P10, 176 tasks), the
-traps ledger and the acceptance map. Decisions D-16.1 to D-16.66 are confirmed. CI is
-`.github/workflows/ci.yml`.
+Nothing. Wave 1 verified on the stacked head with `bash scripts/ci-local.sh` (lint, fmt, typecheck
+clean; unit 293/293 in 25 files; check --require-ref 6/6; check:bundle 68.00 kB of 250 kB; e2e 1/1)
+and pushed as 4b31214, e081191, 4ffda80. **Progress: 7/176 tasks** (P00: 5/10, P01: 2/19).
 
 ## Next
 
-1. Wave 1 (no shared files): P00 S1 (P00-08 clock and ids, P00-01 CI refinements, P00-10 bundle
-   budget), P00 S2 (P00-02..04 tokens, theme, icons), P00 S3 (P00-05/06 i18n), and P01 wave A
-   (P01-01/02 domain types and dates). A first attempt at the three P00 slices was stopped
-   unfinished when the user paused the build, and nothing of it landed. Start them again from
-   the phase file.
-2. Then the remaining P00 slices, P01 wave B, P02 and P03, in waves of up to four builders, then
+1. Wave 2, after the reset (4 builders, base = branch head): P00 S2 (P00-02..04 tokens, theme,
+   contrast, icons), P00 S4 (P00-07 lint boundaries), P00 S5 (P00-09 fake AI server), P01 wave B S1
+   (P01-03..06 units, `src/domain/units/**`, `src/domain/servings/expression*`).
+2. Wave 3: P01 wave B S2 (P01-07/08), S3 (P01-09..11), S4 (P01-12..16); then P01 wave C, P02, P03,
    P04 walking skeleton (Demo 1) and P05–P10.
+
+## Notes for later waves (from wave-1 builders; put them in the prompts)
+
+- P00-09 (S5): Playwright's default `testMatch` also matches `*.test.ts`, so set
+  `testMatch: '**/*.spec.ts'` (or a `testIgnore`) or `pnpm e2e` runs the Vitest files in
+  `e2e/fake-ai/`. The reporter is `list` only; add `html` (open: never) if the CI upload should hold
+  a report.
+- P00-07 (S4): allow `src/domain` → `src/lib` imports (`src/lib` imports nothing; P01-14 returns a
+  `Result`). Node-only test helpers declare a minimal `process` type, because `tsconfig.app.json`
+  has no Node types: keep it that way.
+- Catalogue partitions (D-16.55 detail): a partition exports a tree rooted at its area
+  (`x = { x: {…} }`); landing one = `import { x } from './en/x'` plus `x` in `enPartitions` in
+  `src/i18n/en.ts` (the lead does it). `TKey` from `src/i18n/t.ts` types a key in props and tables
+  (e.g. the accent labels of P00-02). Plurals follow English rules; numbers the browser locale.
+- Durations: UI uses `formatDuration(minutes)` from `src/i18n/format.ts` ("16h 30m"); P01-19's
+  fast helper should return numbers, not text.
+- Names fixed by `src/domain/model.ts` (P01-07 and the P03 reply contract use them): nutrient keys
+  such as `fibre`, `monounsaturatedFat`, `polyunsaturatedFat`; extras `arginine`, `betaAlanine`,
+  `betaine`, `carnitine`, `citrulline`, `creatine`, `hmb`, `taurine`; `NutritionDraft` is the base of
+  `DiaryEntry` and `SavedMeal`; saved targets are one `saved: Partial<Targets>`; photos one ordered
+  `photoIds` list; `DayKey` is a string alias; a malformed day key throws `RangeError`.
+- P02-02 and P03-12 codecs: make a grams basis only when grams is finite and above 0; read a
+  missing meal as `other`.
+- Time-zone tests: `inTimeZone(tz, fn)` from `src/test/time.ts`; vitest runs in America/New_York.
 
 ## Usage guard
 
@@ -55,8 +75,11 @@ usage reset. At 88 % read: builders wrap up, unfinished slices are saved as patc
 
 - Builder rules: `/root/wt/builder-rules.md` (outside the repo; copy from the skill template if
   lost). Worktrees go under `/root/wt/`, patches under `/root/wt/patches/`.
-- Full loop (from `platewise/`): `pnpm lint && pnpm fmt:check && pnpm typecheck && pnpm test`,
-  `pnpm build && pnpm exec playwright test --output /root/wt/e2e-<slug>`,
-  `PLATEWISE_REF=~/reference/fud-ai pnpm check --require-ref`.
-- The repo root's `.gitignore` is a Python one. `platewise/.gitignore` re-includes `lib/` and
-  similar names; check `git check-ignore -v <path>` when a builder's file is missing from a patch.
+- Full loop (repository root): `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`
+  (install, lint, fmt, typecheck, unit, check --require-ref, build, bundle budget, e2e). The
+  Playwright install step is a no-op here: chromium-1243 is already in `/opt/pw-browsers`.
+- Landing: `extract-patch.sh` / `land-patches.sh` (copies in `/root/wt/`, from the skill's
+  `scripts/`), verify worktree `/root/wt/verify`, then cherry-pick `-n` onto the newest remote head
+  with one message file per slice.
+- `.gitignore` is the package's own now (the old monorepo's Python ignore file is gone); still check
+  `git check-ignore -v <path>` when a builder's file is missing from a patch.
