@@ -260,7 +260,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
-  - Review: owned by P02-02
+  - Test: src/data/guard.test.ts > readAll > never replaces unreadable rows: adding to a table nobody can read keeps them (R05.6)
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal > never fires for a back-dated reading, even one past the target (R05.7)
   - Test: src/domain/trackers/goalCrossing.test.ts > reachesGoalOnAdd > fires once as a lose series passes 79.5, then never again (R05.7, R01.11)
@@ -305,13 +305,19 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R06 · Settings and data (`research/06-*.md` §6)
 
 - **R06.1** Unreadable data is never treated as empty: drop unreadable records only, keep raw data aside first, show a banner
-  - Review: owned by P02-02
+  - Test: src/data/guard.test.ts > readAll > leaves out a damaged entry, keeps it aside and still shows the others (ACC-K9-1, R06.1)
+  - Test: src/data/guard.test.ts > writeOne > keeps a corrupt profile aside before saving over it (R06.1)
+  - Test: src/data/guard.test.ts > writeOne > refuses the save and changes nothing when the copy cannot be written (R06.1)
 - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
   - Review: owned by P02-06
 - **R06.3** After every committed write every live query and tab re-reads
-  - Review: owned by P02-03
+  - Test: src/data/live.test.ts > live > a subscriber that starts during an open write ends on the committed value (R06.3)
+  - Test: src/data/live.test.ts > live > shows an entry added in one tab in another open tab (ACC-L7-1, R06.3)
+  - Test: src/data/live.test.ts > live > re-reads when another tab announces its write on the channel Dexie shares between tabs
 - **R06.4** An open or upgrade failure never deletes the database
-  - Review: owned by P02-01
+  - Test: src/data/db.test.ts > openDb > refuses a database a newer version wrote and leaves its rows and version as they were (R06.4)
+  - Test: src/data/db.test.ts > openDb > reports a failed upgrade and keeps version 1 with its rows (R06.4)
+  - Test: src/data/db.test.ts > openDb > refuses a newer database after opening it when the browser cannot list databases
 - **R06.5** Erase everything invalidates any running backup before wiping
   - Review: owned by P09-15
 - **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything
