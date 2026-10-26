@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:25 IST (Agent 1, session 3). 77/176 tasks; P00, P01, P02 and P04 complete; the app runs on the
+Updated: 2026-10-27 01:58 IST (Agent 1, session 3). 85/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -88,18 +88,23 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 ## In progress
 
 Four builders (prompts in `docs/handoff/wave9/`):
-- P07 S3 (P07-10/11 line and bar charts, chart maths), base 8f40663, `/root/wt/wt-p07s3`. At landing:
-  add a `charts` partition to `src/i18n/en.ts` if the builder made one.
-- P03 S6 (P03-17 client, then P03-18 food and planning tasks), base 257f9e3, `/root/wt/wt-p03s6`.
-- P05 S2a (P05-04 AI access step, shared provider form, `aiSetup` service, `ai.settings` row), base
-  21565b4, `/root/wt/wt-p05s2a`.
-- P05 S3a (P05-06 Plan ready, P05-13 methods page, P05-14 goal-reached dialog; a `finish` action in
-  `wizard.ts`), base 21565b4, `/root/wt/wt-p05s3a`. At landing: both add a partition line to
-  `src/i18n/en.ts`; merge the two lines.
-Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4 (latest full loop:
-unit 2541 passed + 2 expected-fail in 166 files, check 6/6, bundle 135.93 kB, e2e 2/2). If this container is gone, re-create
-the worktrees at their bases and relaunch the same prompts. **Progress: 77/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 16/19, P04 14/14, P05 3/15, P07 0/17).
+- P06 S1a (P06-02/03 photo storage, capture sheet, capture drafts), base a0911d2, `/root/wt/wt-p06s1a`.
+- P06 S3a (P06-15/16 Open Food Facts and FoodData Central clients), base 10a5f62, `/root/wt/wt-p06s3a`.
+- P05 S3c (P05-08/09 rebuild and tune-up services, `useTuneUp`), base 10a5f62, `/root/wt/wt-p05s3c`. At
+  landing the lead wires `aiAccess` (the `ai.settings` row and the secrets keys), the services and
+  `useTuneUp` in `main.tsx` / `App.tsx`.
+- P05 S3b (P05-05 Building plan and plan builder, P05-07 completion: the wizard goes on the onboarding
+  route, the quick start goes, Demo 1's spec and scenario walk the wizard), base 012fcff = 8456a60 plus
+  the staged P05-04 patch (`/root/wt/patches/w9-p05s2a.patch`), `/root/wt/wt-p05s3b`. Land after P05-04;
+  then run the Demo 1 scenario through REA again.
+Staged: P05-04 (AI access step, provider form, `aiSetup` service, `ai.settings` row) in `/root/wt/verify`
+(base 8456a60), full loop running; ledger script `/root/wt/msgs/ledger_w9_p05s2a.py`; rename of its note
+to the phase file's slug already done there.
+Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
+restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60 (latest full loop: unit 2757 passed + 2
+expected-fail in 177 files, check 6/6, bundle 142.32 kB, e2e 2/2). If this container is gone, re-create
+the worktrees at their bases and relaunch the same prompts. **Progress: 85/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 19/19, P04 14/14, P05 6/15, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -108,11 +113,9 @@ whether to fast-forward `main` to the work branch.
 ## Next
 
 1. Land waves 8–9 as they return (see In progress).
-2. Then: P03-19 CORS probe (independent; next free core). After P03-18 lands: P05-05 Building plan
-   with P05-07 completion (point the onboarding route at the wizard, delete the quick start, and move
-   `e2e/walking-skeleton.spec.ts` and `parity/walking-skeleton.platewise.json` from quick start to the
-   wizard with "Set up later"), then P05-08/09 rebuild and tune-up, P05-10..12 settings pages, P05-15
-   e2e; P06 (needs P03-18); the rest of P07; P08–P10.
+2. Then: P05-10..12 settings pages (wave B, after S3b/S3c), P05-15 e2e; P06 S1b (P06-04/05 analysis
+   service, overlay, describe sheet; after S1a), P06 S3b (P06-14 scanner, P06-17 lookup order and
+   label memory; after S3a), P06 S4 (P06-01, 12, 13, 18), then P06 waves B–C; the rest of P07; P08–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
@@ -124,6 +127,32 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (AI client and tasks, P03 S6): `complete(request, deps)` returns the validated value
+  (or the trimmed text); `withDeadline` and `withNotes` are exported. The compact re-ask note goes at the
+  end of the prompt (the notes for the AI stay in the system part). An incomplete Custom role fails as
+  `model` or `invalidUrl` before any request and skips the standby; a stopped deadline starts no
+  standby; all photos are prepared at the food size (P08 may add a Coach size). A mangled repair list
+  reaches the standby; an empty one changes nothing. Planning tasks take the prompt builders' inputs and
+  a `deps.deadline`. For P10-12: the re-ask keeps the same token cap, so a model that reasons by default
+  can be cut twice (only OpenRouter gets `effort: low`).
+- From wave 9 (AI access, P05-04): `ai.settings` reads as `AiSettings | null` (null = not set up; use
+  `?? DEFAULT_AI_SETTINGS`); "Set up later" stores null and removes every AI provider key (the `fdc` slot
+  stays); the choice is saved on each complete edit (WizardPage owns Continue); the step lists the 14
+  providers that read photos (the form shows all 16 with `use="text"` for P09); the terms box writes
+  `onboarding.termsAccepted`; key-page addresses in `keyPages.ts` were written from memory: open them in
+  the P10-12 live check; a typed server address saves on every valid keystroke (debounce later).
+- From wave 9 (Plan ready, methods, goal dialog): the protein/fat/kcal wheel limits live in `planWheel`
+  (PlanReady.tsx); move them to `src/domain/goals/planEdit.ts` if P05-11 needs them. `bmr()` keeps its
+  coefficients inline (methodsFigures.ts reads them by evaluating it): export named constants when a
+  domain slice is open. `src/test/screenHarness.tsx` has no bus yet. The Settings registry imports its
+  pages eagerly, so the methods page is in the initial chunk (142.32 kB now): make category pages lazy
+  before the bundle gets close to 250 kB.
+- From wave 9 (CORS probe): `scripts/ai-cors-probe/page.ts` references the DOM lib, so the whole
+  Node-side typecheck (tooling, e2e, scripts) sees DOM types; a Node file using a DOM global is not a
+  type error there. The probe's origin is loopback http, not the deployed https origin.
+- From wave 9 (charts): the inspector is pointer-only (the hidden table serves keyboard and screen
+  readers; a keyboard inspector is a follow-up); the Progress cards must import the charts from the lazy
+  Progress chunk; callers pass display-unit values and formatters.
 - From wave 9 (wizard, P05 S1): P05-07 renders `WizardPage` with `today` and `requestNotifications` and
   completes from `wizardProfile(state)`, `remindersOn(state)` and `state.units` (via `onStateChange`);
   on a granted reminder answer turn on `remind.master` and the three meal reminders at their defaults.
@@ -339,5 +368,11 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
   with one message file per slice. Gate every push on the real exit code of `pnpm fmt:check` and
   `pnpm check --require-ref` (store `$?`); never pipe a gating command into `grep` before `&&`, which
   hid a failing traps check once (fixed by 8655743).
+- Stage on a verify worktree created at a recorded base (`/root/wt/verify.base`); commit with `git reset
+  --soft <that base>`, then `git rebase origin/<branch>` before pushing. A soft reset to a remote head
+  that moved after the worktree was made records the newer commits' files as deleted (7fbe51e dropped a
+  prompt file that way; a0911d2 restored it). Check `git show --name-status` for `D` lines before pushing.
+- 21565b4's message says 135.93 kB; the real initial JS after the wizard was 137.89 kB (its catalogue
+  keys load at start-up). 7fbe51e's message corrects it.
 - `.gitignore` is the package's own now (the old monorepo's Python ignore file is gone); still check
   `git check-ignore -v <path>` when a builder's file is missing from a patch.

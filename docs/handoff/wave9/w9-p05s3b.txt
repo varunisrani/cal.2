@@ -1,0 +1,33 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s3b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 slice S3b = P05-05, P05-07 — the Building plan step and the plan builder; the onboarding completion service, which puts the wizard on the onboarding route. Spec: those two rows in docs/plan/phases/P05-onboarding-and-goals.md (the "Read in reference" column names exactly which reference parts to read); research spec 01 §3.4 (Building plan, Completion); decisions D-16.14, D-16.45 in docs/plan/16-what-we-change.md and D-16.80 (the wizard's maintain reading). Traps: R01.8 (the 60 s cap and the formula fallback; the stale-run and Back parts are already tested in wizard.ts). Acceptance ids: ACC-B7-1, ACC-B7-2 (P05-05), ACC-B9-1, ACC-B9-2 (P05-07).
+Task notes (each before its code): docs/notes/P05/building-plan-step-and-plan-builder.md, docs/notes/P05/onboarding-completion-service.md.
+
+You own:
+- src/services/goals/planBuilder.ts, planBuilder.test.ts (src/services/goals/ also gets rebuild and tune-up from another builder now: do not touch those files)
+- src/features/onboarding/steps/BuildingPlan.tsx, BuildingPlan.test.tsx
+- src/services/onboarding.ts, onboarding.test.ts (the completion; remove `startWithDefaults` once nothing uses it)
+- the onboarding route: src/app/App.tsx (render the wizard with the three late steps AiAccess, BuildingPlan, PlanReady and complete from `state.finished`), a small src/features/onboarding/OnboardingRoute.tsx if that keeps App.tsx thin, and deleting src/features/onboarding/{QuickStart.tsx,QuickStart.test.tsx,quickStart.module.css} and the `onboarding.quickStart` keys
+- `Services` (src/services/context.tsx) and src/main.tsx: add what the steps need (the plan builder, the completion) and make `aiSetup` required; give the stand-in services in src/app/App.test.tsx, src/features/home/{EntryRow,Diary}.test.tsx, src/services/context.test.tsx and src/test/screenHarness.tsx stubs for the new members (then drop the throw in AiAccess's `useAiSetup`)
+- the onboarding partition src/i18n/en/onboarding.ts (Building plan words; drop the `onboarding.wizard.pending.*` keys once all late steps exist)
+- e2e/walking-skeleton.spec.ts and parity/walking-skeleton.platewise.json: replace the quick start with the wizard's shortest path (Get started, Continue through each step on its defaults, AI access "Set up later", Building plan, Plan ready, Finish), keeping the rest of Demo 1 as it is; add data-ui hooks the scenario needs on the wizard's buttons (a hook attribute only, no other change to the steps)
+
+Do not touch:
+- src/services/goals/{rebuild,tuneUp}.ts, src/app/useTuneUp.ts (another builder, now), src/services/barcode/**, src/services/{photos,captureDrafts}.ts, src/features/log/** (other builders, now), src/ai/** (import only: requestPlan in src/ai/tasks/planning.ts, AiSettings and helpers in src/ai/settings.ts), src/domain/** (import only), src/data/** (import only), src/features/{ai-setup,about,goals,settings}/**, the other wizard steps and wizard.ts (import; a data-ui hook attribute is the only allowed edit), eslint.config.js, scripts/**, playwright.config.ts
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule).
+- planBuilder: buildPlan(profile, deps) reads the stored AI setup (the `ai.settings` row is `AiSettings | null`; null, or a primary with something missing per missingFor, means no AI setup → the formula plan at once, flagged aiUnavailable), calls requestPlan without evidence under a 60 s deadline for the whole call (D-16.14; pass it through deps.deadline); any failure or the cap → the formula plan flagged aiUnavailable; a success re-derives carbs as max(0, (kcal − 4P − 9F) div 4).
+- BuildingPlan: an animated 0–100 counter and a checklist ticking one item every 700 ms (about 4 s), the plan built in parallel, advancing (dispatch `planBuilt` with `state.buildRun`) only when both are done; Back disabled; a result for an abandoned run ignored (R01.8); reduced motion shows the steps without animation but keeps the order.
+- Completion (in one flow, from wizardProfile(state), state.plan, remindersOn(state), state.units): save the profile with the plan as saved targets; seed the first weigh-in at now when the history is empty, and the first body-fat reading only when body fat was entered; store the units; on a granted reminder answer turn on `remind.master` and the three meal reminders at their defaults; tune-up on unless the plan was hand-edited, last check = today; seed the Home sort mode; mark onboarding done last; route to Home. AI settings and key are already stored by the AI access step. A second completion adds no second weigh-in; a completion after a restore (P09-14) seeds nothing (take a flag).
+- The goal-reached dialog stays in the tab frame (not on the onboarding route).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/goals/planBuilder.test.ts src/services/onboarding.test.ts src/services/context.test.tsx src/features/onboarding src/app src/features/home src/i18n --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4182 PLATEWISE_FAKE_AI_PORT=4328 pnpm exec playwright test e2e/walking-skeleton.spec.ts e2e/smoke.spec.ts --workers=1 --repeat-each=3
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
