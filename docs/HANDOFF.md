@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:59 IST (Agent 2). P00 and P01 complete; 46/176 tasks. The user started the new
+Updated: 2026-10-27 01:08 IST (Agent 2). P00 and P01 complete; 50/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -68,23 +68,27 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 6 | P04-03 (gauge, pillar, progress bar, stat badge, menu, swipe row, icon set) | cbdd6c8 |
 | Wave 7 | P02-04, P02-05 (settings schema and repository, profile repository) | 31694df |
 | Wave 7 | P02-06, P02-07, P02-13 (diary repository, photo store and cleanup, drafts) | 6ee9257 |
+| Wave 7 | P02-08, P02-09 (weight, body-fat, water and fasting repositories; lead cross-repo test) | 0c64ce7 |
+| Wave 7 | P02-10, P02-11 (saved meals, Coach messages) | dc092de |
 
 ## In progress
 
 - Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
   (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8), P02 S1 (31694df), P02 S2
-  (6ee9257; ci-local on that head: unit 1681/1681 + 1 expected fail in 107 files, check 6/6,
-  bundle 71.03 kB, e2e 1/1). **Progress: 46/176 tasks** (P00 10/10, P01 19/19, P02 8/15,
-  P03 6/19, P04 3/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P02 S3 (P02-08/09,
-  base cb104fa), P02 S4 (P02-10/11, base fd6e563), P04 S3 (P04-04..07 app shell, base 4c1c65d).
+  (6ee9257), P02 S3 (0c64ce7), P02 S4 (dc092de; ci-local on that head: unit 1788/1788 + 1 expected
+  fail in 114 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 50/176 tasks** (P00 10/10,
+  P01 19/19, P02 12/15, P03 6/19, P04 3/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P04 S3 (P04-04..07
+  app shell + `src/services/appData.ts`, base 4c1c65d) and P04 S4 (P04-08/09 diary service, quick
+  start, base eaa69d1). At land time the lead wires QuickStart into the onboarding route with the
+  quick-start action and keeps the e2e smoke heading.
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P02 S3, S4 and P04 S3 as they come back; then P02 S5 (P02-12/14), P04 S4 (P04-08/09),
-   P02-15 hooks, P03 wave B S3–S5,
+1. Land P04 S3 and S4 (wire QuickStart into the onboarding route); then P02 S5 (P02-12/14),
+   P02-15 hooks, P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -149,6 +153,15 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   (P05-12); `readPillars` takes a string or a list (P02-04 picks the storage); section totals are
   whole grams and absent without food; follow-ups: pillar day totals (P07-03/P07-16), seed the
   `newestFirst` sort after onboarding, the vitamin D IU text in the UI.
+- Lint rule 2: screens (`src/app`, `src/ui`, `src/features`) never import `**/data/db` or
+  `**/data/repos`; they use services (`src/services/**`, which may) and data hooks. The shell's
+  data lives in `src/services/appData.ts` (P04 S3) behind a React context.
+- Repositories (P02-08..11): weight/body-fat/water/fast and saved-meal/Coach repos are factories
+  (`createWeightRepo`, `createFastRepo`, …; `savedMealsRepo(db)`, `coachRepo(db)`). The Settings
+  fasting switch must call `fastRepo.setTracking`; `settleOnOpen(now)` runs at start-up and after a
+  restore; `goal-reached` reaches other tabs (the dialog owner checks the origin); unsaving returns
+  the meals so the caller releases their photos; `copyInOwnTx` in `guard.ts` still passes a
+  non-async arrow to a transaction (works today; same shape as the async pitfall).
 - Repositories (P02-04..07, 13): every `transact()` body must be an `async` function (a plain arrow
   returning another promise loses Dexie's transaction after a few awaits) — consider documenting
   or enforcing it in `db.ts`. Two shapes exist: settings and profile are factories
