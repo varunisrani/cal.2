@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S1 = P03-05, P03-06 — transport and deadlines; the retry ladder. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests), plus its "Files to create" table; research spec 03 §3.9; decisions D-16.23 and D-16.60 in docs/plan/16-what-we-change.md. Traps owned: R03.6, R03.26 (search docs/internals/traps-ledger.md for "owned by P03-05", "P03-06"); also the retry part of R03.18 (daily-quota metadata survives the last attempt; the row is mapped, add a test and report it). Acceptance rows owned: ACC-E4-1, ACC-E4-2 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P03/transport-and-deadlines.md, docs/notes/P03/retry-ladder.md.
+
+You own:
+- src/ai/deadline.ts, src/ai/deadline.test.ts, src/ai/transport.ts, src/ai/transport.test.ts, src/ai/retry.ts, src/ai/retry.test.ts
+
+Do not touch:
+- src/ai/errors.ts and src/ai/testing/** (landed with P03-01/02: import from them; if one needs a change, stop and report it), src/i18n/**, src/data/** and src/test/** (the P02 builder), src/ui/** (the P04 builder), src/domain/** (the P01 builder), src/lib/**, src/app/**, e2e/**, scripts/**, eslint.config.js, vite.config.ts, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai/transport.ts is the only module that calls fetch for AI (lint rule 3 allows it there). It takes the fetch to use as an injectable dependency defaulting to the global one, so tests pass createFakeFetch() from src/ai/testing/fakeFetch.ts; it never logs headers or bodies.
+- Failures map through src/ai/errors.ts: classify(status, body) for HTTP replies and fromNetwork(err, {stoppedBy, online, provider, keySent}) for thrown errors. Pass stoppedBy: 'cancel' | 'deadline' from the Deadline (or abort the per-attempt cap with a reason named TimeoutError) so a cap or deadline is never read as a cancel, and a Cancel during the body read reports cancelled, not offline.
+- One Deadline per user action from the timeout setting (D-16.23), combining the person's Cancel signal and the overall timer into one AbortSignal; it reports remaining time and which one fired. Per-attempt cap: 75 s for fixed cloud providers, the remaining budget for Ollama and Custom (D-16.60). Any 2xx is success (R03.26).
+- Retry only 429, 503, 529 with waits 1 s, 2 s, 4 s (four attempts at most) on every format and entry point; ignore Retry-After; never retry network errors or other statuses; a wait that would pass the deadline stops early with the last error; the final failure is classified from the last response (R03.18 daily quota survives). The overall deadline also covers later repair requests and Coach rounds (D-16.60): keep the Deadline reusable across calls.
+- Real waits are banned: fake timers and the src/test/time.ts helpers for every delay, cap and deadline.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says (list each trap id and acceptance row your tests cover with its file > describe > test name). Leave everything uncommitted.
