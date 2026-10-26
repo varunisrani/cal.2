@@ -5,7 +5,7 @@
   "usage_pct": 71,
   "remaining_pct": 29,
   "resets_at": "2026-10-27T00:20:00+05:30",
-  "last_check": "2026-10-26T23:24:00+05:30",
+  "last_check": "2026-10-26T23:56:00+05:30",
   "current_step": "57/176 tasks; idle until the 00:20 IST reset; wave 8 prompts ready",
   "last_commit": "e00d741"
 }
