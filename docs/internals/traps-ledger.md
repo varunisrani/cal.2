@@ -215,7 +215,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
   - Review: owned by P02-09
 - **R05.4** Water and fasts never enter nutrition totals, averages or the recap
-  - Review: owned by P01-08
+  - Test: src/domain/meals/diary.test.ts > section totals > leaves Breakfast totals unchanged by a water row in it (R05.4)
+  - Test: src/domain/meals/diary.test.ts > section totals > leaves a section total unchanged by a fast row in it (R05.4)
+  - Test: src/domain/meals/diary.test.ts > section totals > gives no totals to a section of water and fasts only (R05.4)
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
@@ -254,7 +256,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.20** The fasting goal alert is dropped on end, cancel and delete and re-evaluated after edits and on open
   - Review: owned by P09-08
 - **R05.21** Fasts show on the day they end; the active fast only on today
-  - Review: owned by P01-08
+  - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 on the second day only (R05.21, ACC-F8-1)
+  - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows the active fast on today and not on yesterday (R05.21)
 - **R05.22** History rows have a visible delete with a confirmation and vanish at once (D-16.38)
   - Review: owned by P07-14
 
