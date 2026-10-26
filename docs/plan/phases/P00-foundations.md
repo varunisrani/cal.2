@@ -1,6 +1,6 @@
 # P00 · Foundations (remaining work)
 
-**Weeks:** 1 · **Tracks:** tooling (CI, scripts, fake AI server); UI groundwork (tokens, theme, icons, catalogue) · **Depends on:** — · **Status:** 🔨 in progress: the skeleton (Vite + React + TS, Vitest, Playwright) and the clean-room guards (`tooling/checks`) landed on 2026-10-26; the ten tasks below remain
+**Weeks:** 1 · **Tracks:** tooling (CI, scripts, fake AI server); UI groundwork (tokens, theme, icons, catalogue) · **Depends on:** — · **Status:** ✅ done: the skeleton (Vite + React + TS, Vitest, Playwright) and the clean-room guards (`tooling/checks`) landed on 2026-10-26; all ten tasks below landed in waves 1 and 2 (2026-10-26)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

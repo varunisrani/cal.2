@@ -1,0 +1,214 @@
+/*
+ * Platewise design tokens: every colour, size, duration and layer of the app as a custom
+ * property. Components read these and carry no literal values of their own.
+ *
+ * The theme runtime (theme.ts) sets two attributes on <html>:
+ *   data-theme  = dark | light   (no attribute: dark, the default)
+ *   data-accent = basil | saffron | lagoon | beet | ember | ink   (no attribute: basil)
+ *
+ * Every accent has a dark and a light variant. A light variant is written with both attributes,
+ * so it outranks the one-attribute blocks by specificity, not by its place in the file.
+ * Colours under test are hex (#rrggbb, or #rrggbbaa for a wash): src/ui/contrast.test.ts resolves
+ * this file for each theme and accent and checks the contrast floors. No gradients (D-16.1).
+ */
+
+/* Theme-independent scales. */
+:root {
+  /* Corner radii. */
+  --radius-control: 12px;
+  --radius-card: 18px;
+  --radius-sheet: 24px;
+  --radius-pill: 999px;
+
+  /* Spacing, named by multiples of 4 px. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Type: the system faces only; sizes in rem so the browser's text size setting applies. */
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', 'Noto Sans', Arial, sans-serif,
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji';
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --type-micro: 0.6875rem; /* 11 px */
+  --type-caption: 0.8125rem; /* 13 px */
+  --type-body: 0.9375rem; /* 15 px */
+  --type-lead: 1.0625rem; /* 17 px */
+  --type-title: 1.25rem; /* 20 px */
+  --type-heading: 1.625rem; /* 26 px */
+  --type-figure: 2.125rem; /* 34 px */
+  --type-display: 3rem; /* 48 px */
+  --leading-tight: 1.15;
+  --leading-snug: 1.3;
+  --leading-body: 1.45;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  /* Motion. */
+  --motion-quick: 140ms;
+  --motion-base: 220ms;
+  --motion-slow: 360ms;
+  --motion-count: 850ms;
+  --ease-move: cubic-bezier(0.3, 0.1, 0.15, 1);
+  --ease-leave: cubic-bezier(0.5, 0, 0.9, 0.4);
+
+  /* Stacking layers. A dialog sits above a sheet: a confirmation can open from one. */
+  --z-sticky: 10;
+  --z-tabbar: 20;
+  --z-fab: 30;
+  --z-scrim: 40;
+  --z-sheet: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+
+  /* Safe-area insets (needs viewport-fit=cover, set in index.html). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    /* 1 ms rather than 0, so transitionend and animationend still fire. */
+    --motion-quick: 1ms;
+    --motion-base: 1ms;
+    --motion-slow: 1ms;
+    --motion-count: 1ms;
+  }
+}
+
+/* Dark neutrals: the default. A deep green-black base. */
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #09120d;
+  --card: #121c17;
+  --raised: #1a2620;
+  --sheet: #16211b;
+  --line: #283731;
+  --text: #ebf4ee;
+  --text-muted: #94a59b;
+  --text-inverse: #09120d;
+  --danger: #ff8f7e;
+  --success: #9fdc7a;
+  --focus: #9ad4ff;
+  --scrim: rgb(3 6 4 / 0.64);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised: 0 6px 18px rgb(0 0 0 / 0.45);
+  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.5);
+}
+
+/* Light neutrals. */
+[data-theme='light'] {
+  color-scheme: light;
+  --page: #eff6f0;
+  --card: #fcfefc;
+  --raised: #fcfefc;
+  --sheet: #f6faf6;
+  --line: #d1ddd4;
+  --text: #0f1b15;
+  --text-muted: #4c5b52;
+  --text-inverse: #eff6f0;
+  --danger: #b0301c;
+  --success: #2f6d1a;
+  --focus: #1858c4;
+  --scrim: rgb(17 26 21 / 0.36);
+  --shadow-card: 0 1px 2px rgb(17 26 21 / 0.06), 0 2px 8px rgb(17 26 21 / 0.05);
+  --shadow-raised: 0 8px 24px rgb(17 26 21 / 0.12);
+  --shadow-sheet: 0 -6px 28px rgb(17 26 21 / 0.14);
+}
+
+/* Accents on the dark theme. Basil is the default. */
+:root,
+[data-accent='basil'] {
+  --accent: #6fd494;
+  --accent-ink: #06130c;
+  --accent-soft: #6fd4942e;
+}
+
+[data-accent='saffron'] {
+  --accent: #f0b443;
+  --accent-ink: #06130c;
+  --accent-soft: #f0b4432e;
+}
+
+[data-accent='lagoon'] {
+  --accent: #52c7dc;
+  --accent-ink: #06130c;
+  --accent-soft: #52c7dc2e;
+}
+
+[data-accent='beet'] {
+  --accent: #de88c0;
+  --accent-ink: #06130c;
+  --accent-soft: #de88c02e;
+}
+
+[data-accent='ember'] {
+  --accent: #ff9466;
+  --accent-ink: #06130c;
+  --accent-soft: #ff94662e;
+}
+
+[data-accent='ink'] {
+  --accent: #9fb2f2;
+  --accent-ink: #06130c;
+  --accent-soft: #9fb2f22e;
+}
+
+/* Accents on the light theme: deeper, with light ink. Basil is the default here too. */
+[data-theme='light'],
+[data-theme='light'][data-accent='basil'] {
+  --accent: #1d7647;
+  --accent-ink: #fbfefc;
+  --accent-soft: #1d764724;
+}
+
+[data-theme='light'][data-accent='saffron'] {
+  --accent: #8d5a00;
+  --accent-ink: #fbfefc;
+  --accent-soft: #8d5a0024;
+}
+
+[data-theme='light'][data-accent='lagoon'] {
+  --accent: #08697a;
+  --accent-ink: #fbfefc;
+  --accent-soft: #08697a24;
+}
+
+[data-theme='light'][data-accent='beet'] {
+  --accent: #a3285f;
+  --accent-ink: #fbfefc;
+  --accent-soft: #a3285f24;
+}
+
+[data-theme='light'][data-accent='ember'] {
+  --accent: #b23d14;
+  --accent-ink: #fbfefc;
+  --accent-soft: #b23d1424;
+}
+
+[data-theme='light'][data-accent='ink'] {
+  --accent: #3446a6;
+  --accent-ink: #fbfefc;
+  --accent-soft: #3446a624;
+}
+
+/* The page itself, so the shell shows the theme before any component styles exist. */
+html {
+  background-color: var(--page);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 100%;
+  line-height: var(--leading-body);
+  accent-color: var(--accent);
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
