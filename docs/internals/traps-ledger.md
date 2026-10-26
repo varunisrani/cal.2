@@ -141,7 +141,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R03 · AI providers (`research/03-*.md` §6)
 
 - **R03.1** Anthropic needs its direct-browser header or the reply has no CORS header
-  - Review: owned by P03-09
+  - Test: src/ai/adapters/anthropic.test.ts > buildAnthropic: headers (R03.1) > sends the browser-access header, the key and the version on every request (ACC-E2-1)
 - **R03.2** Browser network failures are opaque; offline, our deadline and Cancel are told apart, with a hint where providers drop CORS on errors
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > adds the refused-key hint for providers that hide it behind CORS
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > reports an offline device as offline, and anything else as connection
@@ -156,15 +156,17 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > stops one attempt at its 75 s cap, not before, as timeout
   - Test: src/ai/deadline.test.ts > one time limit for the whole action (D-16.23, R03.6, ACC-E4-2) > ends a four-attempt ladder early, at 180 s exactly
 - **R03.7** Gemini replies can hold several parts and thought parts: join every non-thought part; MAX_TOKENS means cut off
-  - Review: owned by P03-07
+  - Test: src/ai/adapters/gemini.test.ts > readGemini (R03.7) > joins every text part and skips the thought part
 - **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none
-  - Review: owned by P03-07
+  - Test: src/ai/adapters/gemini.test.ts > geminiThinkingLevel (R03.8) > gives %s the level %s
 - **R03.9** The answer token limit is shown for every provider and always sent (D-16.25)
   - Review: owned by P09-07
 - **R03.10** OpenAI needs max_completion_tokens; Custom only for gpt-5/6 and o1/o3/o4 ids; everything else max_tokens
-  - Review: owned by P03-08
+  - Test: src/ai/adapters/openaiCompat.test.ts > tokenLimitField (R03.10) > gives a Custom server max_completion_tokens for %j
+  - Test: src/ai/adapters/openaiCompat.test.ts > tokenLimitField (R03.10) > gives OpenAI max_completion_tokens for every model (ACC-E2-2)
 - **R03.11** Qwen needs enable_thinking false; OpenRouter reasoning is excluded; a reasoning-only reply counts as cut off
-  - Review: owned by P03-08
+  - Test: src/ai/adapters/openaiCompat.test.ts > provider extras (R03.11) > turns Qwen thinking off, and only for Qwen
+  - Test: src/ai/adapters/openaiCompat.test.ts > provider extras (R03.11) > always excludes OpenRouter reasoning and names the effort unless it is auto
 - **R03.12** Every image is re-encoded to JPEG; an undecodable one (HEIC outside Safari) fails as image conversion
   - Test: src/ai/image.test.ts > prepareImage: always a fresh JPEG (R03.12) > re-encodes a photo that needs no shrinking and sends the JPEG, not the picked bytes
 - **R03.13** JSON extraction strips fences and takes the first balanced object, aware of strings

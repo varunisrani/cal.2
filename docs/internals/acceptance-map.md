@@ -423,9 +423,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E2 · Gemini, OpenAI-compatible and Anthropic adapters with each … (P1)
 
 - **ACC-E2-1** Every Anthropic request carries the browser-access header
-  - Review: P03-09
+  - Test: src/ai/adapters/anthropic.test.ts > buildAnthropic: headers (R03.1) > sends the browser-access header, the key and the version on every request (ACC-E2-1)
 - **ACC-E2-2** OpenAI requests use the newer token-limit parameter
-  - Review: P03-08
+  - Test: src/ai/adapters/openaiCompat.test.ts > tokenLimitField (R03.10) > gives OpenAI max_completion_tokens for every model (ACC-E2-2)
 
 ### E3 · Vision primary, optional text provider, image standby and text standby (P1)
 
