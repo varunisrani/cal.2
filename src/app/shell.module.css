@@ -1,0 +1,190 @@
+/*
+ * The app shell (P04-04..07): the page frame, the tab screens' content area, the floating tab
+ * bar, the start-up skeleton and the full-page notice cards. Every value comes from tokens.css;
+ * the one endless animation (the skeleton's pulse) stops under reduced motion.
+ */
+
+/* The shell draws the page edge to edge; safe areas are padded where they matter. */
+:global(body) {
+  margin: 0;
+}
+
+/* ---- Frame and content area --------------------------------------------------------------- */
+
+.shell {
+  /* The bar's size and its gap to the screen edge; the content keeps that much room free. */
+  --tabbar-height: calc(var(--space-8) * 2);
+  --tabbar-gap: var(--space-3);
+  min-block-size: 100dvh;
+}
+
+.content {
+  display: block;
+  padding-block-start: calc(var(--safe-top) + var(--space-4));
+  padding-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+  /* The last card clears the floating bar. */
+  padding-block-end: calc(
+    var(--tabbar-height) + var(--tabbar-gap) * 2 + var(--safe-bottom) + var(--space-6)
+  );
+}
+
+.screenTitle {
+  margin: 0 0 var(--space-4);
+  font-size: var(--type-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.onboarding {
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding-inline: var(--space-4);
+}
+
+.onboarding h1 {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: var(--weight-bold);
+}
+
+/* ---- Tab bar ------------------------------------------------------------------------------ */
+
+.tabBar {
+  --tab-inset: var(--space-1);
+  position: fixed;
+  z-index: var(--z-tabbar);
+  inset-block-end: calc(var(--safe-bottom) + var(--tabbar-gap));
+  inset-inline: calc(var(--safe-left) + var(--tabbar-gap))
+    calc(var(--safe-right) + var(--tabbar-gap));
+  display: grid;
+  grid-template-columns: repeat(var(--tab-count), minmax(0, 1fr));
+  block-size: var(--tabbar-height);
+  padding: var(--tab-inset);
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--raised);
+  box-shadow: var(--shadow-raised);
+}
+
+/* The soft pill behind the selected tab; it slides when the selection moves. */
+.tabPill {
+  position: absolute;
+  inset-block: var(--tab-inset);
+  inset-inline-start: calc(
+    var(--tab-inset) + (100% - var(--tab-inset) * 2) / var(--tab-count) * var(--tab-index)
+  );
+  inline-size: calc((100% - var(--tab-inset) * 2) / var(--tab-count));
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  transition: inset-inline-start var(--motion-base) var(--ease-move);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--type-micro);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--motion-quick) var(--ease-move);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tab svg {
+  transition: transform var(--motion-base) var(--ease-move);
+}
+
+.tabSelected {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+.tabSelected svg {
+  transform: scale(1.08);
+}
+
+.tabLabel {
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Start-up skeleton -------------------------------------------------------------------- */
+
+.skeleton {
+  display: grid;
+  gap: var(--space-4);
+  padding-block-start: calc(var(--safe-top) + var(--space-6));
+  padding-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+}
+
+.block {
+  border-radius: var(--radius-card);
+  background: var(--card);
+  animation: pulse calc(var(--motion-slow) * 4) ease-in-out infinite;
+}
+
+.blockTitle {
+  inline-size: 45%;
+  block-size: var(--space-8);
+  border-radius: var(--radius-control);
+}
+
+.blockHero {
+  block-size: calc(var(--space-8) * 6);
+}
+
+.blockRow {
+  block-size: calc(var(--space-8) * 2);
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block {
+    animation: none;
+  }
+}
+
+/* ---- Notice cards (recovery and crash) ---------------------------------------------------- */
+
+.notice {
+  display: grid;
+  place-items: center;
+  min-block-size: 100dvh;
+  padding-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+  box-sizing: border-box;
+}
+
+.noticeCard {
+  inline-size: min(100%, calc(var(--space-8) * 13));
+}
+
+.noticeBody {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}

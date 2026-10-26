@@ -278,11 +278,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
   - Review: owned by P07-12
 - **R05.12** No fallback goals flash before the profile is read
-  - Review: owned by P04-07
+  - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves
 - **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time
-  - Review: owned by P04-05
+  - Test: src/app/TabBar.test.tsx > TabBar > draws nothing until the hidden-tab setting is read, so a hidden tab never flashes in
+  - Test: docs/internals/acceptance-map.mdTabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears
+  - Test: docs/internals/acceptance-map.mdTabBar.test.tsx > TabBar > goes to Home when the app opens on a hidden tab
+  - Review: the one-tab-at-a-time stored write owned by P02-04
 - **R05.14** Today is recomputed at local midnight and on return to the foreground
-  - Review: owned by P04-07
+  - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
+  - Test: docs/internals/acceptance-map.mdTodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
 - **R05.15** Dense calorie charts always fit so the newest day stays reachable
   - Review: owned by P07-11
 - **R05.16** Only clearly horizontal drags scrub charts; pointer state stays local; long series are downsampled

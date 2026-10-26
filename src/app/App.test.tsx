@@ -1,16 +1,77 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { common } from '../i18n/en/common';
+import { shell } from '../i18n/en/shell';
 import { t } from '../i18n/t';
 import { App } from './App';
+import { createAppState } from './appState';
+import {
+  DEFAULT_SHELL_SETTINGS,
+  temporaryPorts,
+  type BootState,
+  type ReadStore,
+  type ShellPorts,
+  type ShellSettings,
+} from './ports';
+import { createRouter } from './router';
+import { controlledStore } from './testing/controlledStore';
+import { memoryHost } from './testing/memoryHost';
+
+function renderApp(ports: ShellPorts, initialHash = '') {
+  const host = memoryHost(initialHash);
+  const router = createRouter(host);
+  const reload = vi.fn();
+  const view = render(
+    <App ports={ports} router={router} appState={createAppState()} onReload={reload} />,
+  );
+  return { host, router, reload, ...view };
+}
 
 describe('App', () => {
-  it('renders the product name', () => {
-    render(<App />);
+  it('boots to onboarding with the temporary source and shows the app name', () => {
+    const { host } = renderApp(temporaryPorts());
     expect(screen.getByRole('heading', { level: 1, name: 'Platewise' })).toBeInTheDocument();
+    expect(host.hash()).toBe('#/onboarding');
+    expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('shows only text from the catalogue', () => {
-    const { container } = render(<App />);
+    const { container } = renderApp(temporaryPorts());
     expect(container.textContent).toBe(t('common.appName'));
+  });
+
+  it('shows the skeleton, then Home and the tab bar once the profile and settings are read', () => {
+    const boot = controlledStore<BootState>();
+    const settings = controlledStore<ShellSettings>();
+    renderApp({ boot, settings }, '#/home');
+    expect(screen.getByRole('status', { name: shell.shell.loading })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).toBeNull();
+
+    act(() => {
+      settings.set({ ...DEFAULT_SHELL_SETTINGS, accent: 'ember' });
+      boot.set({ status: 'ready' });
+    });
+    expect(screen.getByRole('heading', { level: 1, name: common.common.tabs.home })).toBeVisible();
+    expect(screen.getByRole('navigation')).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(4);
+    expect(document.documentElement.dataset.accent).toBe('ember');
+  });
+
+  it('puts every screen inside the toast provider', () => {
+    renderApp(temporaryPorts());
+    expect(document.querySelector('[data-ui="toast.region"]')).not.toBeNull();
+  });
+
+  it('shows the crash card with Reload when drawing the app fails', () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failing: ReadStore<BootState> = {
+      getSnapshot: () => {
+        throw new Error('store broke');
+      },
+      subscribe: () => () => {},
+    };
+    renderApp({ ...temporaryPorts(), boot: failing });
+    expect(screen.getByRole('alert', { name: shell.shell.crash.title })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: shell.shell.crash.reload })).toBeInTheDocument();
   });
 });
