@@ -131,11 +131,13 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > fromNetwork > reports offline when the device says so
   - Test: src/ai/errors.test.ts > fromNetwork > adds the refused-key hint for providers whose errors look like lost connections (R03.2)
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
-  - Review: owned by P03-04
+  - Test: src/ai/endpoint.test.ts > checkServerUrl > refuses plain http to any host but this device (D-16.26, R03.3)
+  - Test: src/ai/endpoint.test.ts > checkServerUrl > accepts plain http only on this device: localhost, 127.0.0.1 and [::1] (D-16.26)
 - **R03.4** An answer that fails validation also triggers the standby, on every entry point (D-16.22)
   - Review: owned by P03-17
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
-  - Review: owned by P03-04
+  - Test: src/ai/settings.test.ts > standbyFor > refuses a standby identical to the role it backs, and accepts the same provider with another model (R03.5)
+  - Test: src/ai/settings.test.ts > standbyFor > lets two Ollama servers be primary and standby at once (ACC-E3-2)
 - **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
   - Test: src/ai/transport.test.ts > send > reports a Cancel during the body read as cancelled, not offline (R03.6)
   - Test: src/ai/transport.test.ts > send > tells our own stops apart by the signal that fired, even when the browser only says TypeError
@@ -177,11 +179,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > classify > maps 404, 429, 503 and 529 by status when no wording applies
   - Test: src/ai/errors.test.ts > classify > falls back to generic for 500, 418 and a 400 it does not recognise
 - **R03.20** Custom: key optional, model required; keys trimmed
-  - Review: owned by P03-04
+  - Test: src/ai/settings.test.ts > keyFor and targetProblem > reports a Custom role without a model or an address as incomplete (R03.20)
+  - Test: src/ai/settings.test.ts > keyFor and targetProblem > trims a saved key and treats a blank one as missing (R03.20)
+  - Test: src/ai/catalog/providers.test.ts > PROVIDERS > asks for a key everywhere but Ollama, and only optionally for Custom (R03.20)
 - **R03.21** Ollama accepts free-form model ids
-  - Review: owned by P03-03
+  - Test: src/ai/catalog/presets.test.ts > resolveModel > keeps a typed Ollama model tag such as qwen3-vl:8b (R03.21, ACC-E13-2)
+  - Test: src/ai/catalog/providers.test.ts > PROVIDERS > accepts typed model ids for OpenRouter, Hugging Face, Ollama and Custom (R03.21)
 - **R03.22** Server addresses are trimmed and lose trailing slashes; Ollama without /v1 gets a hint
-  - Review: owned by P03-04
+  - Test: src/ai/endpoint.test.ts > normaliseBaseUrl > trims the address and drops trailing slashes (R03.22)
+  - Test: src/ai/endpoint.test.ts > checkServerUrl > hints, without refusing, that an Ollama address usually ends in /v1 (R03.22)
 - **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
   - Review: owned by P03-17
 - **R03.24** Label scaling rounds kcal
@@ -193,7 +199,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
   - Review: owned by P02-12
 - **R03.28** A retired preset maps to its replacement once under a version marker, for primary and standby
-  - Review: owned by P03-03
+  - Test: src/ai/catalog/presets.test.ts > preset upgrades > renames a retired id once, and not again after the marker has moved (R03.28)
+  - Test: src/ai/catalog/presets.test.ts > preset upgrades > renames only under the provider the round names, typed-id providers included
+  - Test: src/ai/settings.test.ts > loadAiSettings > renames retired presets in every role once, then leaves a re-picked old id alone (R03.28)
 - **R03.29** Large photo sets: the payload is estimated and size errors get their own message (message is v1.x, E16)
   - Review: owned by P03-10
 

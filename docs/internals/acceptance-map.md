@@ -422,7 +422,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E1 · 16 bring-your-own-key providers with their wire formats (P1)
 
 - **ACC-E1-1** The provider list shows 16 providers and each offers its presets
-  - Review: P03-03
+  - Test: src/ai/catalog/presets.test.ts > pickers > lists 14 providers for photos and all 16 for text, each offering its presets (ACC-E1-1)
 
 ### E2 · Gemini, OpenAI-compatible and Anthropic adapters with each … (P1)
 
@@ -434,9 +434,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E3 · Vision primary, optional text provider, image standby and text standby (P1)
 
 - **ACC-E3-1** A typed description goes to the text provider when one is set; photos always go to the primary
-  - Review: P03-04
+  - Test: src/ai/settings.test.ts > roleFor > sends a typed description to the text role when it is on, and photos always to the primary (ACC-E3-1)
 - **ACC-E3-2** Two Ollama servers can be primary and standby at once
-  - Review: P03-04
+  - Test: src/ai/settings.test.ts > standbyFor > lets two Ollama servers be primary and standby at once (ACC-E3-2)
 
 ### E4 · Retry 429/503/529 at 1, 2 and 4 s on every format (P1)
 
@@ -496,7 +496,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-E13-1** An http address on the local network is refused with the reason
   - Review: P05-04
 - **ACC-E13-2** An Ollama model tag can be typed freely
-  - Review: P03-03
+  - Test: src/ai/catalog/presets.test.ts > resolveModel > keeps a typed Ollama model tag such as qwen3-vl:8b (R03.21, ACC-E13-2)
 
 ### E14 · Keys kept in a separate local store, trimmed, shown masked, never … (P1)
 
