@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 00:42 IST (Agent 2). P00 and P01 complete; 40/176 tasks. The user started the new
+Updated: 2026-10-27 00:48 IST (Agent 2). P00 and P01 complete; 41/176 tasks. The user started the new
 session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
 pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
@@ -65,22 +65,24 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 | Wave 6 | P03-05, P03-06 (deadline, transport, retry ladder) | 916b62f |
 | Wave 4 | P02-01..03 (schema and safe open, record guard and quarantine, live queries and bus) | e61199b |
 | Wave 6 | P03-03, P03-04 (provider catalogue and presets; AI settings, roles, standbys, server addresses) | 4ef228a |
+| Wave 6 | P04-03 (gauge, pillar, progress bar, stat badge, menu, swipe row, icon set) | cbdd6c8 |
 
 ## In progress
 
 - Landed since wave 3: P03 wave A (731fc23), P01 wave C (20c0983), P04 S1 (bd36cd2), P03 S1
-  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a; ci-local on that head: unit 1475/1475 + 1
-  expected fail in 94 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress: 40/176 tasks**
-  (P00 10/10, P01 19/19, P02 3/15, P03 6/19, P04 2/14).
-- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave6|wave7/`): P04 S2 (P04-03,
-  base db84874), P02 wave B S1 (P02-04/05) and S2 (P02-06/07/13) on base 6ff78c0, S3 (P02-08/09)
-  on base cb104fa.
+  (916b62f), P02 S0 (e61199b), P03 S2 (4ef228a), P04 S2 (cbdd6c8; ci-local on that head: unit
+  1572/1572 + 1 expected fail in 101 files, check 6/6, bundle 71.03 kB, e2e 1/1). **Progress:
+  41/176 tasks** (P00 10/10, P01 19/19, P02 3/15, P03 6/19, P04 3/14).
+- Running (each in `/root/wt/wt-<slice>`, prompt in `docs/handoff/wave7/`): P02 wave B S1
+  (P02-04/05) and S2 (P02-06/07/13) on base 6ff78c0, S3 (P02-08/09) on cb104fa, S4 (P02-10/11) on
+  fd6e563.
+- Waiting: P04 S3 (app shell, P04-04..07) needs the settings and profile repositories (P02 S1).
 - If this session dies, the worktrees and patches are gone with the container: relaunch the
   unlanded slices from their prompts.
 
 ## Next
 
-1. Land P04 S2 and P02 S1–S3 as they come back; then P02 wave B S4–S5, P03 wave B S3–S5,
+1. Land P02 S1–S4 as they come back; then P04 S3 (needs P02 S1), P02 S5 (P02-12/14), P03 wave B S3–S5,
    P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
    then P05–P10.
 
@@ -164,6 +166,12 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
   fetch?})`, `startDeadline({timeoutMs, cancel?})` in ms (caller converts `timeoutSec`); one
   deadline per action, `dispose()` at the end; `attemptCapFor('fixed'|'userServer')`. P03-17 sends
   everything through `sendWithRetry` and checks `deadline.throwIfStopped()` between steps.
+- Display primitives (P04-03): Gauge and Pillar are groups named by their heading with the
+  drawing hidden from screen readers; Menu hooks `<hook>`, `<hook>.menu`, rows
+  `<hook>[.<page>].<id>`, Back `<hook>.<page>.back`, `onSelect` runs after focus returns;
+  SwipeRow needs `deleteLabel`, `deleteButton` "always" (default) or "focus" (P04-12 picks);
+  `Icon({name, label?, size?})` with `ICON_NAMES` (kebab-case, includes `home`). Not built yet:
+  menu typeahead, RTL arrow swap, fill-from-zero on app open (R05.18).
 - UI primitives (P04-01/02): `data-ui` is a required prop, parts are `<hook>.<part>`; disabled and
   busy controls use `aria-disabled`; form sheets (P04-11) pass `dismissable={false} hideDone`;
   P04-07 mounts `ToastProvider` once; weight wheels round tenths (R05.10, P05/P07 callers); no
