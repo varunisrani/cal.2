@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S3 = P03-07, P03-08, P03-09 — the Gemini, OpenAI-compatible and Anthropic adapters. Spec: those three rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.2; decision D-16.24 in docs/plan/16-what-we-change.md. Traps owned: R03.7, R03.8 (P03-07), R03.10, R03.11 (P03-08), R03.1 (P03-09). Acceptance ids: ACC-E2-2 (P03-08), ACC-E2-1 (P03-09).
+Task notes (each before its code): docs/notes/P03/gemini-adapter.md, docs/notes/P03/openai-compatible-adapter.md, docs/notes/P03/anthropic-adapter.md.
+
+You own:
+- src/ai/adapters/** (gemini, openaiCompat, anthropic, a small shared types file if you need one, + tests)
+
+Do not touch:
+- src/ai/catalog/**, src/ai/settings.ts, src/ai/endpoint.ts, src/ai/image.ts, src/ai/parse/** (other builders, now: do not import them)
+- src/ai/errors.ts, src/ai/testing/**, src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts (landed: import, do not edit), src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React; only src/ai/transport.ts calls fetch (P00-07 lint). Failures are values (Result from src/lib/result.ts, AiFailure kinds from src/ai/errors.ts), never thrown across the module edge. Tests use fakeFetch / wire builders from src/ai/testing and fake timers; check error.name, never instanceof DOMException. Every sample text, model reply and prompt word is ours.
+- An adapter is two pure functions over a small input you define in the adapters folder (provider id, base URL, model, key or none, system text, prompt text, images as base64 JPEG, json flag, max tokens, OpenRouter effort): build(input) → {url, init} for transport.send, and read(status, bodyText) → Result<text, AiFailure> (truncated, invalidResponse or a classified error). The catalogue and settings slices land in parallel; the client (P03-17) maps them onto your input later, so do not import them.
+- Keys go only in headers (Gemini x-goog-api-key, never in the URL; OpenAI-compatible Authorization: Bearer only when a key exists; Anthropic x-api-key plus anthropic-version and the direct-browser-access header on every request). The system text carries the notes for the AI (D-16.24). OpenRouter attribution headers name Platewise and its own URL (take the URL as a constant you define; no reference URL).
+- Follow each row's exact rules (thinking-level table, token-cap parameter choice, Qwen and OpenRouter extras, reply joining, truncation and in-body errors) and use each Verify column as test vectors.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/adapters --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

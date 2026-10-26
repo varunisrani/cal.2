@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S2 = P03-03, P03-04 — the provider catalogue and model presets; AI settings, roles, endpoints and standby validity. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.1, §3.3–3.4; decisions D-16.25, D-16.26 in docs/plan/16-what-we-change.md and docs/plan/research/03-*.md (CORS measurements, D-04.1). Traps owned: R03.21, R03.28 (P03-03), R03.3, R03.5, R03.20, R03.22 (P03-04). Acceptance ids: ACC-E1-1, ACC-E13-2 (P03-03), ACC-E3-1, ACC-E3-2 (P03-04).
+Task notes (each before its code): docs/notes/P03/provider-catalogue-and-model-presets.md, docs/notes/P03/ai-settings-roles-endpoints-and-standby-validity.md.
+
+You own:
+- src/ai/catalog/** (providers, presets + tests), src/ai/settings.ts, src/ai/endpoint.ts and their tests
+
+Do not touch:
+- src/ai/adapters/**, src/ai/image.ts, src/ai/parse/** (other builders, now)
+- src/ai/errors.ts, src/ai/testing/**, src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts (landed: import, do not edit), src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React; only src/ai/transport.ts calls fetch (P00-07 lint). Failures are values (Result from src/lib/result.ts, AiFailure kinds from src/ai/errors.ts), never thrown across the module edge. Tests use fakeFetch / wire builders from src/ai/testing and fake timers; check error.name, never instanceof DOMException. Every sample text, model reply and prompt word is ours.
+- Each provider entry also carries selfHosted (true for Ollama and Custom), which attemptCapMs in src/ai/deadline.ts needs (D-16.60).
+- Presets are our own short list (at most three image and three text per provider, first = default), picked from each vendor's public model list as of the build date and recorded in a header comment; Custom has none; never copy the reference's preset list.
+- AiSettings decode: maxTokens default 1 024 (min 1, D-16.65), timeoutSec default 180 clamped 30–600, openRouterEffort default auto. The settings row ai.settings in src/data/settingsSchema.ts is stored as a plain record today; export a decodeAiSettings(raw) the data layer can plug in later (do not edit src/data).
+- Endpoint rule (D-16.26): https anywhere; http only for localhost, 127.0.0.1 and [::1]; everything else refused with a reason; an Ollama URL without /v1 gets a hint, not an error.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/catalog src/ai/settings.test.ts src/ai/endpoint.test.ts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

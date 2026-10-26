@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave B slice S4a = P03-10, P03-11, P03-12 — image preparation, JSON extraction and the food reply parser. Spec: those three rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.5–3.6; decisions D-16.21, D-16.22, D-16.58 in docs/plan/16-what-we-change.md. Traps owned: R03.12, R03.29 (P03-10), R03.13 (P03-11), R03.15 (P03-12). Acceptance ids: ACC-E7-1 (P03-10), ACC-E8-1 (P03-11).
+Task notes (each before its code): docs/notes/P03/image-preparation.md, docs/notes/P03/json-extraction.md, docs/notes/P03/food-reply-parser.md.
+
+You own:
+- src/ai/image.ts, src/ai/parse/json.ts, src/ai/parse/foodReply.ts and their tests
+
+Do not touch:
+- src/ai/catalog/**, src/ai/settings.ts, src/ai/endpoint.ts, src/ai/adapters/** (other builders, now), src/ai/parse/** other than your two files (P03-13/14 later), src/ai/prompts/** (P03-15 later)
+- src/ai/errors.ts, src/ai/testing/**, src/ai/deadline.ts, src/ai/transport.ts, src/ai/retry.ts (landed: import, do not edit), src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/**, src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React; only src/ai/transport.ts calls fetch (P00-07 lint). Failures are values (Result from src/lib/result.ts, AiFailure kinds from src/ai/errors.ts), never thrown across the module edge. Tests use fakeFetch / wire builders from src/ai/testing and fake timers; check error.name, never instanceof DOMException. Every sample text, model reply and prompt word is ours.
+- image.ts: the canvas backend (createImageBitmap + OffscreenCanvas or a canvas element) is injectable so jsdom tests use a fake; always re-encode to JPEG (never send raw bytes); decode or encode failure → imageConversion; estimatePayload sums base64 lengths.
+- json.ts: fenced block first, then the first balanced object tracking strings and escapes; never a greedy first-to-last-brace match.
+- foodReply.ts codes against our reply contract keys as fixed in the P03-15 row: name, kcal, protein, carbs, fat, servingGrams, emoji, nutrients (keyed by the nutrient keys of src/domain/model.ts), units [{unit, count, gramsEach}], parts [{name, grams, kcal, protein, carbs, fat}], progressive. Export the key names as constants so P03-15's contract.ts (next wave) uses the same ones. Output is a NutritionDraft (src/domain/model.ts): kcal rounded, macros decimal, a missing or non-positive servingGrams means the weight is unknown (servings basis, count 1, never 100 g; R03.15); optional nutrients and extras finite and ≥ 0 else dropped; unknown keys ignored; units and parts are left for P03-13. Codec rule from earlier waves: a grams basis only for finite grams > 0. The food reply in e2e/fake-ai/scripts/food-ok.json already uses these keys: your parser should accept it (read it in a test).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/image.test.ts src/ai/parse --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

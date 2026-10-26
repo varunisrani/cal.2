@@ -85,11 +85,15 @@ check 6/6, bundle 123.08 kB, e2e 1/1) and pushed as 322a3f7. **Progress: 57/176 
 
 ## Next
 
-1. After the 00:20 IST reset (new prompts needed, same pattern as `docs/handoff/wave6/`): P04 wave B S5
-   (P04-10..13: Home with gauge, pillars and diary; manual entry; tab placeholders) on the hooks and
-   services, then P04-14 walking-skeleton e2e and parity scenario = **Demo 1**; in parallel P03 wave B
-   S2 (P03-03/04 catalog, settings, endpoint), S3 (P03-07..09 adapters), S4 (P03-10..14 image, parse),
-   S5 (P03-15/16 prompts); then P03 wave C (P03-17..19), P05 onboarding and goals, P06–P10.
+1. After the 00:20 IST reset: launch **wave 8** from `docs/handoff/wave8/` (prompts ready; base = branch
+   head; worktrees `/root/wt/wt-{p04s5,p03s2,p03s3,p03s4}`): P04 S5 (P04-10..13 Home, manual entry,
+   entry row, tab placeholders, Settings hub), P03 S2 (P03-03/04 catalogue, AI settings, endpoints),
+   P03 S3 (P03-07..09 adapters), P03 S4a (P03-10..12 image, JSON, food reply parser). At landing: add
+   the `home`, `log` and `settings` partitions to `src/i18n/en.ts`.
+2. Wave 9: P04-14 walking-skeleton e2e and parity scenario (= **Demo 1**, after P04 S5), P03-13/14
+   (units, parts, plan/goal/label readers), P03-15/16 (prompts and contract: contract.ts reuses the
+   key constants exported by foodReply.ts), then P03 wave C (P03-17..19), P05 onboarding and goals,
+   P06–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 

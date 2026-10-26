@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave B slice S5 = P04-10, P04-11, P04-12, P04-13 — the Home page skeleton (gauge, pillars, diary by meal, empty card, "+" menu), the manual entry sheet, the entry row with swipe-to-delete, and the tab placeholders with the Settings hub registry. Spec: those four rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (read the named reference parts for behaviour and layout only, then restyle per docs/plan/16-what-we-change.md §2.5); research spec 05 §3.2–3.4 and 02 §3.8. Acceptance ids: ACC-D3-1, ACC-F3-1, ACC-F3-2, ACC-F4-1, ACC-F7-1, ACC-F10-1 (P04-10), ACC-D2-2 (P04-11), ACC-J1-1 (P04-13).
+Task notes (each before its code): docs/notes/P04/home-page-skeleton.md, docs/notes/P04/manual-entry-sheet.md, docs/notes/P04/entry-row-with-delete.md, docs/notes/P04/tab-placeholders-and-settings-hub-registry.md.
+
+You own:
+- src/features/home/** (HomePage, DaySummary, Diary, EntryRow, home.module.css, tests), src/features/log/** (ManualSheet + test), src/features/progress/ProgressPage.tsx, src/features/coach/CoachPage.tsx, src/features/settings/** (SettingsHub, registry + tests)
+- new catalogue partitions src/i18n/en/{home,log,settings}.ts (rooted at home, log, settings; the lead adds them to src/i18n/en.ts at landing; import them directly in tests)
+- shared, only the lines needed: src/app/Screen.tsx (or wherever the tab placeholders render) to render your pages; report it
+
+Do not touch:
+- src/ui/** (use the primitives, icons and tokens; if one truly lacks something, report it), src/data/** (read only through src/data/hooks), src/services/** (act only through useServices: diary.logEntry and deleteEntry exist), src/domain/**, src/lib/**, src/ai/** (other builders, now), src/app/** beyond the line above, src/main.tsx, src/i18n/** other than your three partitions, e2e/** (P04-14 writes the walking-skeleton spec next), playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks (every hook returns LiveState<T>: loading | ready | error; useTargets(today) → missing | corrupt | ok {profile, formula, targets}; useSettings(keys) returns only the named keys) and act through src/services (useServices().diary.logEntry(draft, {loggedAt, meal, source}) → logged | fastActive | ignored; deleteEntry(id)). Today comes from useToday() (TodayProvider). Never import repositories.
+- Use the domain rules, never re-derive them: groupDiary / section totals (src/domain/meals/diary.ts, food-only totals), meal times and mealAt (src/domain/meals/times.ts), energy display and parsing (src/domain/units/energy.ts: the comparison stays in kcal, shown in kcal or kJ), effective targets (src/domain/goals/targets.ts via useTargets), pillars (src/domain/nutrients/pillars.ts; four pillars protein, carbs, fat, fibre for now), formatting from src/i18n/format.ts. The gauge status: no goal / N left / N over / goal reached.
+- Primitives: Gauge, Pillar, Card, Menu (the "+" menu offers only Enter manually for now), Sheet with dismissable={false} for the manual sheet, Field, Segmented or ListPicker for the meal, Button (busy while saving), SwipeRow + Dialog for delete (the row asks; Delete calls deleteEntry; Cancel keeps it), Icon. Every interactive element has a data-ui hook (the walking-skeleton e2e and the REA parity scenario will use them: name them plainly, e.g. home.add, home.add.manual, manual.name, manual.energy, manual.save, entry.row, entry.delete).
+- Manual entry: name required and trimmed; energy a required whole number in the person's unit, stored in kcal; protein, carbs, fat optional decimals (blank → 0); fibre optional (blank or negative → unknown); meal defaults from the meal times for the entry's time; logs at the viewed day's stamp (today for now) with source manual; a fastActive answer shows a short message (the paused dialog comes in P07); Save is disabled while in flight.
+- Settings hub: a registry (id, title key, icon, route, group prefs | info) that later phases add to (one task per phase owns that edit); each category page gets a back link labelled Settings. Progress and Coach show titled placeholders.
+- Copy rule: no literal user-visible text in .tsx; all words in your partitions, written by us.
+- Tests: Testing Library; src/test/setup.ts runs cleanup; user-event with fake timers needs vi.stubGlobal('jest', { advanceTimersByTime: (ms: number) => vi.advanceTimersByTime(ms) }) plus userEvent.setup({ advanceTimers: … }); real waits are banned.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features src/app --maxWorkers=1
+- e2e smoke: pnpm build, then PLATEWISE_E2E_PORT=4179 PLATEWISE_FAKE_AI_PORT=4326 pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p04s5; also check by hand in Chromium (a throwaway script in your scratch space) that quick start → Home → "+" → Enter manually → Toast 250 kcal shows the entry under its meal and the gauge at 250, survives a reload, and swipe-delete with confirmation leaves the empty state.
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
