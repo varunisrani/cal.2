@@ -1,7 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 20:52 IST (Agent 1, session 3). Wave 4 landing slice by slice (32/176 tasks; P00 and P01
-complete).
+Updated: 2026-10-26 21:05 IST (Agent 1, session 3). Rolling waves (37/176 tasks; P00 and P01 complete).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -64,29 +63,47 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 4 | P01-17..19 (evidence pack, weight forecast, fasting rules, goal crossing; D-16.74). P01 done | 33b4468 |
 | Wave 4 | P04-03 (gauge, pillar, progress bar, stat badge, menu, swipe row, icons; D-16.75; shared cleanup in `src/test/setup.ts`) | 5177b59 |
 | Wave 4 | P04-01, P04-02 (buttons, cards, sheets, dialogs, toasts, fields, stepper, segmented, switch, list picker, wheel, date-time) | f98a497 |
+| Wave 4 | P02-01..03 (Dexie schema and open safety, record guard and quarantine, live queries and bus; D-16.76) | 49c5a03 |
+| Wave 4 | P03-01, P03-02 (AI failure kinds and messages, `ai` partition, fake fetch and wire fixtures) | 58180c2 |
 
 ## In progress
 
-**Wave 4, rolling** (slices land as they come back; a freed core takes the next slice that has no
-unlanded dependency). Running: P02 wave A S0 (P02-01..03, `w4-p02a0.txt`, base df679fb, in
-`/root/wt/wt-p02a0`), P03 wave A (P03-01/02, `w4-p03a.txt`, base bf55efd, `/root/wt/wt-p03a`), P04 S3
-shell (P04-04..07, `w4-p04s3.txt`, base 9dedcc5, `/root/wt/wt-p04s3`). Landed so far: 33b4468, 5177b59,
-f98a497, each verified on its stacked head with the full loop (latest: unit 1295/1295 in 82 files,
-check 6/6, bundle 70.16 kB, e2e 1/1). If this container is gone, re-create the running slices'
-worktrees at their bases and relaunch the same prompts. **Progress: 32/176 tasks** (P00 10/10, P01
-19/19, P04 3/14).
+**Rolling waves** (a slice lands as soon as it returns; a freed core takes the next slice with no
+unlanded dependency). Running, 4 builders:
+- P04 S3 shell (P04-04..07), `docs/handoff/wave4/w4-p04s3.txt`, base 9dedcc5, `/root/wt/wt-p04s3`.
+- P02 wave B S1 (P02-04/05 settings, profile), S2 (P02-06/07/13 diary, photos, drafts), S3
+  (P02-08/09 weight, body fat, water, fasts): `docs/handoff/wave5/w5-p02s{1,2,3}.txt`, base f2091c9,
+  `/root/wt/wt-p02s{1,2,3}`.
+
+Latest landing (49c5a03 + 58180c2) verified on the stacked head with the full loop: unit 1504 passed +
+2 expected-fail in 93 files, check 6/6, bundle 70.97 kB, e2e 1/1. If this container is gone, re-create
+the running slices' worktrees at their bases and relaunch the same prompts. **Progress: 37/176 tasks**
+(P00 10/10, P01 19/19, P02 3/15, P03 2/19, P04 3/14).
 
 ## Next
 
-1. Land P02-01..03, P03-01/02 and P04-04..07 as they return. At landing: add the `ai` partition
-   (P03) and the `shell` partition (P04 S3) to `src/i18n/en.ts`.
-2. Then (rolling, up to 4 builders): P02 wave B S1..S5 (after P02 S0), P03 wave B S1..S5 (after P03
-   A), P04 S4 (P04-08/09, after P02-04/05/06), P04 wave B and the walking-skeleton e2e (Demo 1), then
-   P03 wave C, P05–P10.
+1. Land P04-04..07 (add the `shell` partition to `src/i18n/en.ts`) and P02 S1–S3 as they return.
+2. Then, as cores free up and usage allows (75 % band: no new builders): P02 S4 (P02-10/11 saved meals,
+   Coach store), P02 S5 (P02-12/14 crypto, wipe, storage, secrets), P03 wave B S1..S5 (transport,
+   catalog, adapters, image and parse, prompts), P04 S4 (P04-08/09 diary service and quick start,
+   after P02-04/05/06), then P04 wave B and the walking-skeleton e2e (Demo 1), P02-15 hooks, P03 wave C,
+   P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
 - From wave 4 so far:
+  - Data layer (P02-01..03): no db singleton (boot owns it); `openDb` options `name`, `indexedDB`,
+    `IDBKeyRange`, `steps`, `bus`; a transaction using `writeOne`/`removeRows`/`keepAside` includes
+    `GUARD_TABLES`; deletes through `removeRows`; reads schedule quarantine copies on a 0 ms timer
+    (`settleQuarantine` in tests); `openTestDb` and `countRuns` in `src/test/db.ts`; jsdom Blobs do not
+    survive fake-indexeddb (P02-07, P02-11); nothing clears `meta.unreadableData` yet (K9 dismiss).
+    Bus messages: `{type:'goal-reached', kg}`; `post(msg, 'this-tab')`; listeners get `(msg, fromOtherTab)`.
+    Codec decisions: unknown entry source reads as `manual`; a Coach message with an unknown role and a
+    fast with an invalid stored end are unreadable; negative required numbers are unreadable.
+  - AI errors (P03-01/02): keys `ai.failure.<kind>` and `ai.hint.keyMayBeRefused` (a cancel has no
+    message); P03-05 passes `stoppedBy` to `fromNetwork`; P03-17 maps exceptions from outside fetch to
+    `generic`; check `error.name`, never `instanceof DOMException`; fakeFetch imports vitest, so keep it
+    out of app code (a lint rule could enforce it). Copy calls the page "AI settings".
   - UI tests: `src/test/setup.ts` runs Testing Library's `cleanup` after every test (per-file
     `afterEach(cleanup)` lines are now redundant). user-event with fake timers needs
     `vi.stubGlobal('jest', { advanceTimersByTime: (ms) => vi.advanceTimersByTime(ms) })` and
