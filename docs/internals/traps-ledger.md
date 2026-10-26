@@ -55,7 +55,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/forecast/evidence.test.ts > buildEvidence: privacy (R01.16) > has no workout or burn field anywhere in the pack
   - Test: src/domain/forecast/forecast.test.ts > forecastWeight: average intake > averages 1 400 two days ago and 1 600 yesterday as 1 500 over 2 days, leaving out today's 300 (R01.16)
 - **R01.17** An undecodable profile record is kept aside and never overwritten by the next save
-  - Review: owned by P02-05
+  - Test: src/data/repos/profileRepo.test.ts > profile: reading > answers corrupt for a record that cannot be read, never missing, and keeps it aside (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > profile: saving > keeps a corrupt stored profile aside before saving over it (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > profile: saving > refuses the save and leaves the stored bytes when they cannot be kept aside (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > profile: updating > rejects on a corrupt profile, never runs the change and leaves the record (R01.17)
+  - Test: src/data/repos/profileRepo.test.ts > profile: live > shows an unreadable profile as corrupt, never as missing (R01.17)
 - **R01.18** Height and weight units default together from the browser locale (D-16.10)
   - Test: src/domain/units/defaults.test.ts > defaultUnits > always seeds height and weight together, with energy in kcal (R01.18)
 
