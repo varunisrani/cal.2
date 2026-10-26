@@ -1,0 +1,63 @@
+{
+  "description": "A Coach turn: one food_log tool call, then a text answer.",
+  "replies": [
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-tool",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call_fake_food_log_1",
+                  "type": "function",
+                  "function": {
+                    "name": "food_log",
+                    "arguments": "{\"from\":\"2026-10-19\",\"to\":\"2026-10-25\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2210,
+          "completion_tokens": 38,
+          "total_tokens": 2248
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-answer",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Your food log for last week looks steady: most days landed near your calorie target, and protein held up well. One easy step: add a protein food such as eggs, yogurt or beans to breakfast on the lighter days."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2630,
+          "completion_tokens": 61,
+          "total_tokens": 2691
+        }
+      }
+    }
+  ]
+}

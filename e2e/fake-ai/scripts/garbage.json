@@ -1,0 +1,9 @@
+{
+  "description": "A 200 whose body is a chat completion cut off mid-JSON: no client can parse it.",
+  "replies": [
+    {
+      "status": 200,
+      "body": "{\"id\":\"chatcmpl-fake-garbage\",\"object\":\"chat.completion\",\"created\":1793000000,\"model\":\"fake-model\",\"choices\":[{\"index\":0,\"message\":{\"role\":\"assistant\",\"content\":\"{\\\"name\\\":\\\"Red lentil soup "
+    }
+  ]
+}
