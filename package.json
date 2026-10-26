@@ -25,7 +25,8 @@
     "check:assets": "tsx tooling/checks/runAll.ts --only assets",
     "check:licenses": "tsx tooling/checks/runAll.ts --only licenses",
     "check:traps": "tsx tooling/checks/runAll.ts --only traps",
-    "check:acceptance": "tsx tooling/checks/runAll.ts --only acceptance"
+    "check:acceptance": "tsx tooling/checks/runAll.ts --only acceptance",
+    "check:bundle": "tsx scripts/bundle-budget.ts"
   },
   "dependencies": {
     "dexie": "4.4.6",

@@ -30,11 +30,17 @@ Each slice owns its files; no two slices in a wave touch the same path. A builde
 | P00-09 | **Fake AI provider server.** A scripted OpenAI-compatible HTTP server for e2e and parity runs (02-rea-workflow §4 step 2), bound to 127.0.0.1 on a port from `PLATEWISE_FAKE_AI_PORT` (default 4320). It serves `POST /v1/chat/completions` from a loaded script: an ordered list of replies `{status, body, delayMs?}`; answers CORS preflights and adds `Access-Control-Allow-Origin: *` to every reply; records each request (headers without `authorization`, and the JSON body). Control routes: `POST /__script` (load a named script from `e2e/fake-ai/scripts/` or an inline one), `GET /__requests`, `POST /__reset`. Ship starter scripts: a valid food reply, a 429 then success, a cut-off reply (`finish_reason: length`) then success, a Coach tool call then text, a malformed reply. Playwright starts and stops it through `globalSetup`. The app reaches it as the Custom provider at `http://127.0.0.1:4320/v1`, which the loopback rule allows (D-16.26). All reply text in the scripts is ours. | none | `e2e/fake-ai/server.ts`, `e2e/fake-ai/server.test.ts`, `e2e/fake-ai/global-setup.ts`, `e2e/fake-ai/scripts/food-ok.json`, `e2e/fake-ai/scripts/busy-then-ok.json`, `e2e/fake-ai/scripts/cut-then-ok.json`, `e2e/fake-ai/scripts/coach-tool.json`, `e2e/fake-ai/scripts/garbage.json` | `server.test.ts` (node env): preflight returns 204 with the CORS headers; a 429-then-200 script answers in order; `/__requests` lists both bodies without the key; `delayMs` is honoured with fake timers; an empty script answers 500 with a clear message. |
 | P00-10 | **Bundle budget script.** `scripts/bundle-budget.ts` reads `dist/.vite/manifest.json`, follows the entry's static imports (not dynamic ones), gzips each JS file and fails when the total exceeds 250 KB (architecture §6). It prints a table of files and sizes and the headroom. Add `"check:bundle": "tsx scripts/bundle-budget.ts"` to `package.json`. Lazy chunks (barcode decoder, charts, Markdown) are reported separately and never counted. | none | `scripts/bundle-budget.ts`, `scripts/bundle-budget.test.ts` | `bundle-budget.test.ts` with a fixture manifest and fixture files: under budget passes; over budget fails with the file list; dynamic imports excluded; a missing manifest is a setup error (exit 2). |
 
+**Deviation (lead, 2026-10-26, P00-01).** The package moved out of the Ai1 monorepo into its own
+repository (`varunisrani/cal.2`), so D-16.54 is applied as: one workflow at the repository root,
+`.github/workflows/ci.yml` (it existed already), with no path filter and no `working-directory`. The
+task refined it (actions pinned by SHA, Node 22.22.0, `check:bundle`, report upload on failure)
+and added `scripts/ci-local.sh`. No `ci/platewise.yml` exists.
+
 ## Files to create (49)
 
 | Path (under `platewise/`) | What it holds | Task |
 |---|---|---|
-| `ci/platewise.yml` | The workflow (copied to the repo root `.github/workflows/` once D-16.54 is confirmed) | P00-01 |
+| `.github/workflows/ci.yml` | The workflow (already at the repo root; refined, not created: see the deviation note under Tasks) | P00-01 |
 | `scripts/ci-local.sh` | Runs the CI commands locally in CI order | P00-01 |
 | `src/ui/tokens.css` | Design tokens, both themes, six accents | P00-02 |
 | `src/ui/tokens.ts` | Accent preset ids, default accent, label keys | P00-02 |
@@ -148,4 +154,4 @@ On any failure, fix the cause and run the whole loop again from `pnpm install`. 
 
 ## Done when
 
-CI (or `scripts/ci-local.sh` until D-16.54 is confirmed) runs every step green, including `pnpm check --require-ref`. The token contrast sweep, catalogue lint, lint-rule fixtures, fake AI server tests and bundle budget all pass. **Demo M0:** `pnpm dev` shows the placeholder app in dark and light with the Basil accent and our favicon; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref` prints a green table.
+CI (`.github/workflows/ci.yml`, reproduced locally by `scripts/ci-local.sh`) runs every step green, including `pnpm check --require-ref`. The token contrast sweep, catalogue lint, lint-rule fixtures, fake AI server tests and bundle budget all pass. **Demo M0:** `pnpm dev` shows the placeholder app in dark and light with the Basil accent and our favicon; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref` prints a green table.

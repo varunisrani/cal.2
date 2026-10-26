@@ -936,7 +936,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L10 · Initial JavaScript at most 250 KB gzip (P1)
 
 - **ACC-L10-1** The production build stays within the bundle budget
-  - Review: P00-10
+  - Test: scripts/bundle-budget.test.ts > measureBundle > passes under budget, counting the entry and its static imports once each
+  - Test: scripts/bundle-budget.test.ts > measureBundle > fails over budget and names every counted file
 
 ## Known gaps
 
