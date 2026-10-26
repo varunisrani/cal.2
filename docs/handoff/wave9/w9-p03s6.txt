@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p03s6 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P03 wave C slice S6 = P03-17, P03-18 — the client pipeline; the food and planning tasks with unit repair. Build P03-17 first, then P03-18 on top of it. Spec: those two rows in docs/plan/phases/P03-ai-layer.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.4, §3.6, §3.9, §3.11; decisions D-16.22, D-16.23, D-16.24 in docs/plan/16-what-we-change.md and Proposed D-16.58, D-16.60, D-16.62 in docs/plan/18-phase-wise-build-plan.md. Traps owned: R03.4, R03.23 (P03-17), R03.17 (P03-18). Acceptance ids: ACC-E5-1, ACC-E6-1, ACC-E11-1 (P03-17), ACC-E9-1 (P03-18).
+Task notes (each before its code): docs/notes/P03/client-pipeline.md, docs/notes/P03/food-and-planning-tasks.md.
+
+You own:
+- src/ai/client.ts, src/ai/client.test.ts
+- src/ai/tasks/** (food, planning + tests)
+
+Do not touch:
+- every other file under src/ai/** (all landed: import, do not edit; if one needs a change, say so in your report instead)
+- src/data/**, src/domain/**, src/lib/**, src/services/**, src/features/** (other builders, now), src/app/**, src/main.tsx, src/ui/**, src/i18n/**, e2e/**, playwright.config.ts, eslint.config.js, index.html, public/**, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- src/ai is pure TypeScript with no React. Only src/ai/transport.ts calls fetch: the client takes fetch in its deps and hands it to send(); never read globalThis.fetch. Failures are values (Result from src/lib/result.ts; AiFailure, SingleFailure, bothFailed and fromNetwork from src/ai/errors.ts). A cancel is silent at every step: no standby, no re-ask, kind cancelled. Exceptions thrown outside fetch map to generic; check error.name, never instanceof DOMException.
+- Reuse, do not re-derive: roleFor, standbyFor, missingFor, keyFor from src/ai/settings.ts (AiSettings.instructions are the notes for the AI, maxTokens, timeoutSec, openRouterEffort); startDeadline and attemptCapMs from src/ai/deadline.ts (PROVIDERS[p].selfHosted picks the cap; D-16.60); withRetries from src/ai/retry.ts; the adapter for PROVIDERS[p].format from src/ai/adapters/*; prepareImage with an injected ImageBackend from src/ai/image.ts (tests use a fake backend; a conversion failure is imageConversion with no standby).
+- One Deadline per user action: complete() starts one from timeoutSec unless deps hand one in, and ends what it started. The unit repair request of the same analysis runs inside the analysis's deadline (D-16.60), so the food task owns the deadline and passes it to both calls.
+- Notes for the AI go in the system channel of every request: primary, standby, compact re-ask and repair (D-16.24, R03.23). The prompt builders return { system, prompt } without notes; the client appends the notes, and on a re-ask also compactRetryNote(maxTokens, 'json' | 'prose') from src/ai/prompts/shared.ts. OpenRouter effort is forced to low on the re-ask only.
+- validate runs on the answer text; its failure counts like any error and triggers the standby once (D-16.22, R03.4). Both failing → bothFailed naming both providers, kind = the standby's.
+- tasks/food.ts: photoMealPrompt, textMealPrompt, labelScanPrompt (photo path, source label; D-16.62) and unitRepairPrompt from src/ai/prompts/food.ts. validate = parseModelJson + readFoodReply, then withParts(readParts(...)), then withUnits(readUnits(...)) keeping needsRepair. repairUnitsIfNeeded only when needsRepair, the weight is known and kcal, protein, carbs and fat are all ≤ 0: one request with the name, grams, note and first image; its answer goes through readUnits and applies only when non-empty; any repair failure keeps the first result (R03.17, ACC-E9-1). At most 10 images: the first ten non-empty.
+- tasks/planning.ts: requestPlan → planPrompt + readPlanReply (checkPlan stays inside the reader); requestNutrientGoals → nutrientGoalsPrompt + readNutrientGoals (starting from the current goals); fitCheck → fitCheckPrompt, prose, JSON off, text role and text standby.
+- Models that reason by default and the 1 024-token cap are out of scope here (P10-12 live check); mention anything you notice in your report.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai/client.test.ts src/ai/tasks --maxWorkers=1 (src/ai/testing/fakeFetch.ts and wire.ts for replies; fake timers for the retry waits)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
