@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:58 IST (Agent 1, session 3). 85/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 02:12 IST (Agent 1, session 3). 92/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -87,24 +87,22 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Four builders (prompts in `docs/handoff/wave9/`):
-- P06 S1a (P06-02/03 photo storage, capture sheet, capture drafts), base a0911d2, `/root/wt/wt-p06s1a`.
-- P06 S3a (P06-15/16 Open Food Facts and FoodData Central clients), base 10a5f62, `/root/wt/wt-p06s3a`.
-- P05 S3c (P05-08/09 rebuild and tune-up services, `useTuneUp`), base 10a5f62, `/root/wt/wt-p05s3c`. At
-  landing the lead wires `aiAccess` (the `ai.settings` row and the secrets keys), the services and
-  `useTuneUp` in `main.tsx` / `App.tsx`.
+Two builders (prompts in `docs/handoff/wave9/`); no new builders this window (usage 70 % at 02:09 IST):
 - P05 S3b (P05-05 Building plan and plan builder, P05-07 completion: the wizard goes on the onboarding
-  route, the quick start goes, Demo 1's spec and scenario walk the wizard), base 012fcff = 8456a60 plus
-  the staged P05-04 patch (`/root/wt/patches/w9-p05s2a.patch`), `/root/wt/wt-p05s3b`. Land after P05-04;
-  then run the Demo 1 scenario through REA again.
-Staged: P05-04 (AI access step, provider form, `aiSetup` service, `ai.settings` row) in `/root/wt/verify`
-(base 8456a60), full loop running; ledger script `/root/wt/msgs/ledger_w9_p05s2a.py`; rename of its note
-to the phase file's slug already done there.
+  route, the quick start goes, Demo 1's spec and scenario walk the wizard), base 012fcff (= 8456a60 plus
+  the P05-04 patch, now landed as f6bd162), `/root/wt/wt-p05s3b`. At landing: point its AI-setup reader
+  at `src/services/aiAccess.ts` (`createAiAccess`) if it wrote its own; it may export `browserFetch`
+  from `src/ai/transport.ts` (identical to the landed change); merge `Services` / `main.tsx` / `App.tsx`
+  with the landed `rebuild`, `tuneUp`, `photos`, `captureDrafts` lines; then run the Demo 1 scenario
+  through REA again.
+- P06 S1b (P06-04 analysis service and overlay, P06-05 describe sheet), base 99249d1 (= 49ffc21 plus the
+  P06-02/03 patch, now landed as a66e465), `/root/wt/wt-p06s1b`. Same at landing: `createAiAccess`,
+  `browserFetch`, additive `Services` / `main.tsx` merges.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
-restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60 (latest full loop: unit 2757 passed + 2
-expected-fail in 177 files, check 6/6, bundle 142.32 kB, e2e 2/2). If this container is gone, re-create
-the worktrees at their bases and relaunch the same prompts. **Progress: 85/176 tasks** (P00 10/10, P01
-19/19, P02 15/15, P03 19/19, P04 14/14, P05 6/15, P07 2/17).
+restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a (latest full
+loop: unit 2978 passed + 2 expected-fail in 194 files, check 6/6, bundle 164.05 kB, e2e 2/2). If this
+container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
+92/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 9/15, P06 4/20, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -113,9 +111,9 @@ whether to fast-forward `main` to the work branch.
 ## Next
 
 1. Land waves 8–9 as they return (see In progress).
-2. Then: P05-10..12 settings pages (wave B, after S3b/S3c), P05-15 e2e; P06 S1b (P06-04/05 analysis
-   service, overlay, describe sheet; after S1a), P06 S3b (P06-14 scanner, P06-17 lookup order and
-   label memory; after S3a), P06 S4 (P06-01, 12, 13, 18), then P06 waves B–C; the rest of P07; P08–P10.
+2. Then (next window): P05-10..12 settings pages (wave B), P05-15 e2e; P06 S3b (P06-14 scanner, P06-17
+   lookup order and label memory), P06 S4 (P06-01 add menu, 12, 13, 18), then P06 waves B–C; the rest
+   of P07; P08–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
@@ -127,6 +125,21 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 9 (rebuild and tune-up, P05 S3c): `createRebuildService` / `createTuneUpRunner` take one
+  `PlanServiceDeps` (`src/services/goals/planRequest.ts`); outcomes are kinds and numbers (P05-11 words
+  them and calls `turnOn` / `turnOff`). A tune-up that applies also stores the rebuild baseline. Each
+  request gets its own deadline from the timeout setting. `useFakeTime` fakes `setImmediate` and stalls
+  fake-indexeddb: service tests fake only setTimeout/setInterval/Date (a shared helper would help).
+  Cross-tab writes of profile, kept plan and check day are separate transactions.
+- From wave 9 (barcode clients, P06 S3a): OFF identifies the app with `app_name=Platewise` (OFF and its
+  image host send `Access-Control-Allow-Origin: *`); OFF timeout 30 s, FDC 15 s; both have a never-shown
+  `cancelled` kind; FDC also returns `noKey`, `invalid`, `notFound`. The gram parsing and tag cleaning
+  live in `src/services/barcode/product.ts` (the row named `src/domain/food/productText.ts`; move it
+  there if another caller needs it). For P06-17: call `downloadProductPhoto` after `lookupOff`, pass
+  `unnamed` from the catalogue, map `keyRefused` to its own message, and mark `ingredientsMarkup` with
+  P06-18's function.
+- Initial JS is 164.05 kB: the tune-up loads the whole AI client at start-up. Before the bundle nears
+  250 kB, load the AI layer (client, adapters, prompts, tasks) with a dynamic import on first use.
 - From wave 9 (AI client and tasks, P03 S6): `complete(request, deps)` returns the validated value
   (or the trimmed text); `withDeadline` and `withNotes` are exported. The compact re-ask note goes at the
   end of the prompt (the notes for the AI stay in the system part). An incomplete Custom role fails as
