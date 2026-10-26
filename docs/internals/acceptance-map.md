@@ -350,7 +350,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D17 · Saved meals with their own ids, toggled from the editor and Home … (P1)
 
 - **ACC-D17-1** Two different foods with the same name and calories can both be saved
-  - Review: P02-10
+  - Test: src/data/repos/savedMealsRepo.test.ts > toggleFromEntry > saves two foods with the same name and calories separately (ACC-D17-1, D-16.17)
 - **ACC-D17-2** Reorder buttons are hidden while searching
   - Review: P06-12
 
@@ -764,7 +764,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I10 · Conversation kept locally (P1)
 
 - **ACC-I10-1** After 205 messages the oldest 5 are gone
-  - Review: P02-11
+  - Test: src/data/repos/coachRepo.test.ts > append > keeps the newest 200 of 205 messages: the oldest 5 are gone (ACC-I10-1, R04.8)
 - **ACC-I10-2** The chat survives a reload
   - Review: P08-14
 
