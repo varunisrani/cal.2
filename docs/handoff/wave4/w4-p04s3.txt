@@ -1,0 +1,34 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p04s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P04 wave A slice S3 = P04-04, P04-05, P04-06, P04-07 — the hash router and sheet stack; the tab bar; the theme provider; the boot gate, today clock and error boundary. Spec: those four rows in docs/plan/phases/P04-shell-and-walking-skeleton.md (the "Read in reference" column names exactly which reference files and parts to read, then their tests); docs/plan/04-architecture.md §4 (router); research spec 05 §3.1.1–3.1.2; decisions in docs/plan/16-what-we-change.md. Traps owned: R05.13 (P04-05), R05.12, R05.14 (P04-07). Acceptance ids: ACC-A2-1, ACC-A2-2 (P04-04); ACC-A1-1, ACC-A3-1, ACC-A3-2, ACC-A4-1, ACC-A6-1 (P04-05); ACC-A8-1 (P04-06); ACC-A10-1, ACC-A11-1 (P04-07).
+Task notes (each before its code): docs/notes/P04/hash-router-and-sheet-stack.md, docs/notes/P04/tab-bar.md, docs/notes/P04/theme-provider.md, docs/notes/P04/boot-gate-today-clock-and-error-boundary.md.
+
+You own:
+- src/app/** (router, useRoute, TabBar, ThemeProvider, Boot, TodayProvider, ErrorBoundary, appState, App.tsx and their tests, plus src/app/ports.ts and a src/app/shell.module.css)
+- src/main.tsx (replace the applyTheme(DEFAULT_THEME) call with the ThemeProvider and render the composed App)
+- src/i18n/en/shell.ts — a new catalogue partition rooted at shell (export const shell = { shell: {…} }) for tab names and the skeleton, crash and recovery cards; the lead adds it to src/i18n/en.ts when it lands (do not edit en.ts; import the partition directly in tests, or render through a translator over it)
+
+Do not touch:
+- src/ui/** (landed primitives, icons and tokens: use them, do not edit), src/domain/**, src/lib/** (landed: import, do not edit)
+- src/data/** (the P02 builder, at the same time), src/ai/**, src/i18n/en/ai.ts (the P03 builder, at the same time), src/services/**, src/features/** (later slices)
+- src/i18n/** other than shell.ts, index.html, public/**, eslint.config.js, e2e/** (the smoke spec must keep passing unchanged), playwright.config.ts, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- The shell reads data only through src/app/ports.ts, which you define: small read stores in the useSyncExternalStore shape ({ getSnapshot(): T | undefined; subscribe(onChange): () => void }, undefined = not loaded yet) for (a) the shell settings snapshot { appearance, accent, hiddenTabs } and (b) the boot state (loading, an open error, no completed profile, ready), provided through one React context. Tests use deferred fake stores. Do not import src/data (being written now) or any repository; P02-04/05 and P04-08/09 adapt the real repositories to these ports later. Until then src/main.tsx wires a fixed temporary source: settings = the defaults (System, Basil, nothing hidden), boot = no completed profile, so the app routes to #/onboarding.
+- #/onboarding shows a temporary placeholder (P04-09's QuickStart replaces it) whose heading is the app name t('common.appName'), so e2e/smoke.spec.ts keeps passing as written.
+- Router: our own small hash router per the P04-04 row; unknown hash → #/home; a sheet stack that pushes a history entry per sheet so Back closes the top sheet first; each tab remembers its scroll and last nested route.
+- TabBar: Home, Progress, Coach, Settings in that order, with the icons from src/ui/icons; not drawn until the settings snapshot is loaded (a hidden tab never flashes, R05.13); Progress and Coach can be hidden, Home and Settings never; unknown names ignored; hiding the tab on screen goes Home; re-tapping Settings inside Settings returns to its hub; hidden while appState's analysis-overlay flag is on; aria-current on the selected tab; the content area reserves bottom space.
+- ThemeProvider: applies { appearance, accent } with applyTheme from src/ui/theme.ts and owns its unsubscribe; System follows the OS live; changes apply without remounting children.
+- Boot: a neutral skeleton until both the profile state and the settings snapshot resolve (no fallback goals or default switches flash, R05.12, R06.22); an open error shows a recovery card instead of the app. TodayProvider gives today's DayKey (dayKeyOf / nextLocalMidnight from src/domain/dates, the Clock from src/lib/clock.ts) and refreshes it at the next local midnight and on visibilitychange → visible and pageshow (R05.14). ErrorBoundary shows a crash card with Reload. App wraps everything in the ToastProvider from src/ui/Toast.tsx (useToast throws without it).
+- Use the landed primitives (Button, IconButton, Card, …) and tokens; the copy rule applies to every .tsx (no literal user-visible text). Every interactive element has a data-ui hook.
+- Tests: Testing Library; src/test/setup.ts already runs cleanup after every test. user-event with Vitest fake timers needs: vi.stubGlobal('jest', { advanceTimersByTime: (ms: number) => vi.advanceTimersByTime(ms) }) and userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) }); otherwise use fireEvent. Real waits are banned.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/app --maxWorkers=1
+- e2e smoke: pnpm build, then PLATEWISE_E2E_PORT=4176 PLATEWISE_FAKE_AI_PORT=4323 pnpm exec playwright test e2e/smoke.spec.ts --workers=1 --output /root/wt/e2e-p04s3
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
