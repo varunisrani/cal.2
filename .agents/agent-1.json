@@ -1,0 +1,11 @@
+{
+  "agent": "AGENT_1",
+  "account": "Account 1 (Claude Code cloud session)",
+  "state": "ACTIVE",
+  "usage_pct": 67,
+  "remaining_pct": 33,
+  "resets_at": "2026-10-26T21:20:00+05:30",
+  "last_check": "2026-10-26T18:50:03+05:30",
+  "current_step": "wave 1 (P00 S1, P00 S3, P01 wave A) building — 0/176 tasks landed",
+  "last_commit": "5241ac9"
+}

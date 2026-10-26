@@ -1,12 +1,12 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 (lead agent, session 1). Work paused by the user after the plan landed; build wave 1 had not landed.
+Updated: 2026-10-26 18:50 IST (Agent 1, session 2: resumed in a fresh container). Wave 1 is building.
 
 ## Where things are
 
 | Item | State |
 |---|---|
-| Repository | `varunisrani/cal.2`, branch `main` (moved from the `platewise/` folder of `varunisrani/Ai1`, branch `claude/elegant-cannon-peaxt4`, with its history). Paths in the plan docs that start with `platewise/` now mean the repository root |
+| Repository | `varunisrani/cal.2`; work branch `claude/focused-brahmagupta-9l3emz` (session 2 on; `main` holds the plan-only state). Moved from the `platewise/` folder of `varunisrani/Ai1`, branch `claude/elegant-cannon-peaxt4`, with its history. Paths in the plan docs that start with `platewise/` now mean the repository root |
 | Reference | `~/reference/fud-ai` at `10e14b67116c52b515d2389621266e32b3a99840` (re-clone and check out that commit if the container was reset) |
 | REA | `~/rea-lab/rea` wraps `npx -y rea-agents@6.8.0` on Node 24.22.1 (`nvm install 24.22.1` if missing). Evidence and captures live in `~/rea-lab/`; nothing of it is in the repo |
 | Plan | `docs/plan/` (start at `README.md` once the planner lands it) |
@@ -23,7 +23,12 @@ Updated: 2026-10-26 (lead agent, session 1). Work paused by the user after the p
 
 ## In progress
 
-Nothing. The plan has landed: `docs/plan/` holds 11 phase files (P00–P10, 176 tasks), the
+Wave 1, three builders in worktrees under `/root/wt/` (base `5241ac9`): `wt-p00s1` (P00-08, P00-01,
+P00-10), `wt-p00s3` (P00-05, P00-06), `wt-p01a` (P01-01, P01-02). P00 S2 (P00-02..04) was held back
+to fit the usage window; it goes in wave 2. Nothing of wave 1 has landed yet: if this session stops,
+the worktrees are lost with the container, so restart those slices from the phase files.
+
+Earlier state: the plan has landed: `docs/plan/` holds 11 phase files (P00–P10, 176 tasks), the
 traps ledger and the acceptance map. Decisions D-16.1 to D-16.66 are confirmed. CI is
 `.github/workflows/ci.yml`.
 
@@ -36,6 +41,15 @@ traps ledger and the acceptance map. Decisions D-16.1 to D-16.66 are confirmed. 
    the phase file.
 2. Then the remaining P00 slices, P01 wave B, P02 and P03, in waves of up to four builders, then
    P04 walking skeleton (Demo 1) and P05–P10.
+
+## Usage guard
+
+One agent (Agent 1); no second account. `.agents/turn.json` (lock), `.agents/agent-1.json` (status)
+and `.agents/usage-log-agent-1.md` (one row per check, IST) follow the skill's two-agent protocol so a
+second agent can join with `.agents/wait-for-turn.sh AGENT_2`. Check-ins run by `send_later`
+(30 min below 75 %, 10 min from 75 %); an hourly auto-continue routine resumes the build after a
+usage reset. At 88 % read: builders wrap up, unfinished slices are saved as patches under
+`.agents/wip/`, this page is updated, and the session waits for the reset.
 
 ## How to resume
 
