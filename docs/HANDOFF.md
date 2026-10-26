@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-26 19:58 IST (Agent 1, session 3). Wave 2 landed (16/176 tasks; P00 complete).
+Updated: 2026-10-26 20:22 IST (Agent 1, session 3). Wave 3 landed (26/176 tasks; P00 complete, P01 16/19).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -56,29 +56,60 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 2 | P00-09 (scripted fake AI provider, Playwright globalSetup) | 59e57dc |
 | Wave 2 | P00-02, P00-03, P00-04 (tokens and six accents, theme runtime, contrast sweep, icon set) | 00a1182 |
 | Wave 2 | P01-03..06 (energy, body, water units; locale defaults; number parsing; amount expressions; D-16.67, D-16.68) | 6897aaf |
+| Wave 3 | P01-07, P01-08 (nutrient catalogue, goal defaults, pillars; meal times, diary grouping; D-16.69) | ad0109a |
+| Wave 3 | P01-09..11 (serving units and scaling, ingredient stretch, recipe split, combining; D-16.72, D-16.73) | 9337e0e |
+| Wave 3 | P01-12..14 (goal formulas, maintenance, targets and locks, Plan Ready editing, AI plan validator; D-16.71) | abc2cee |
+| Wave 3 | P01-15, P01-16 (profile rules, plan-input signature, Adaptive cadence; D-16.70) | bcf0c83 |
 
 ## In progress
 
-**Wave 3** (session 3, launching 2026-10-26 ~20:10 IST; prompts in `docs/handoff/wave3/`, base = the
-commit that adds them): four builders in `/root/wt/wt-{p01b2,p01b3,p01b4a,p01b4b}` — P01 S2
-(P01-07, P01-08), S3 (P01-09..11), S4a (P01-12..14) and S4b (P01-15, P01-16). The plan's S4 is split
-in two so wave C (needs S2 and S4) starts sooner; P04 S1 primitives move to wave 4. Owned paths do
-not overlap; no shared files. If this container is gone, re-create the worktrees at that base and
-relaunch the same prompts (nothing of wave 3 is landed yet).
-
-Wave 2 (session 3, base f67065d) verified on the stacked head and again on the
-rebuilt head 6897aaf with `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt,
-typecheck clean; unit 615/615 in 38 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB;
-e2e 1/1. **Progress: 16/176 tasks** (P00: 10/10, P01: 6/19).
+Nothing in flight; wave 4 launches next (prompts in `docs/handoff/wave4/`, base = the commit that
+carries this entry). Wave 3 (base bf6536b; the plan's P01 S4 split into S4a = P01-12..14 and S4b =
+P01-15/16) verified on the stacked head and again on the rebuilt head bcf0c83 with
+`PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt, typecheck clean; unit
+955/955 in 59 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB; e2e 1/1.
+**Progress: 26/176 tasks** (P00: 10/10, P01: 16/19).
 
 ## Next
 
-1. Land wave 3 (above).
-2. Wave 4 (proposed): P01 wave C S5 (P01-17..19, after S2 and S4 land), P02 wave A S0 (P02-01..03),
-   P04 wave A S1 (P04-01, P04-02 primitives) and S2 (P04-03); then P02 wave B, P03, P04 walking
-   skeleton (Demo 1) and P05–P10.
+1. Wave 4 (4 builders, prompts in `docs/handoff/wave4/`, base = branch head): P01 wave C S5
+   (P01-17..19 evidence pack, forecast, fasting and goal crossing), P02 wave A S0 (P02-01..03 schema,
+   guard and quarantine, live queries and bus), P04 S1 (P04-01, P04-02 primitives), P04 S2 (P04-03
+   gauge, pillar, menu, swipe row, icons). Shared at landing: `src/i18n/en.ts` gets the `display`
+   partition from P04 S2 (one import line and one `enPartitions` entry); P04 S1 adds keys to
+   `src/i18n/en/common.ts` only.
+2. Then P02 wave B (S1..S5), P04 S3/S4 (shell, diary service, quick start), P03 AI layer, P04 wave B
+   and the walking-skeleton e2e (Demo 1), P05–P10.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
+
+- From wave 3 (P01-07..16):
+  - Goals API: `formulaPlan(profile, today)`, `bmr/tdee/estimateMaintenance(…, today)`;
+    `checkPlan(values, formulaPlan(profile, today))` returns a Result naming the failed step;
+    `setKcal`/`setMacro` set locks themselves and return a new profile, or `null` when refused;
+    `PLAN_WHEELS` serves Plan Ready (P05-06) and the Settings goals page (P05-11). Test fixtures:
+    `src/domain/goals/__fixtures__/profiles.ts`. Integer helpers `div`/`floorMod` live in
+    `src/domain/goals/integers.ts`.
+  - P05-06: if protein and fat alone exceed kcal, `editPlan` sets carbs 0 and the plan holds more
+    energy than its kcal: cap the protein and fat wheels or show it.
+  - Weigh-ins: P02-08 must evaluate `crossesGoal` before `withWeight` clears a contradicted
+    target. Only the Settings weight save calls `withWeight` (as in the reference); Progress
+    weigh-ins only sync the weight (P05-10, P02-08).
+  - Cadence: `settle` returns the next state and the next profile together; P05-09 writes both in
+    one transaction. P02-04 decodes the tune-up switch ("on when never set") and the kept plan
+    (`null` = nothing kept, `{}` = an all-automatic plan). Single flight and "onboarding done" are
+    inputs to `plan`.
+  - Signature key: a JSON array starting with format number 1; a missing, non-string, empty or
+    other-format baseline is seeded silently.
+  - Words the domain does not own: `unitLabel(unit, count, {one, other})` and
+    `combineEntries(entries, {fallbackName, more})` take catalogue words as parameters;
+    `combineEntries` returns an entry without an id (the repository assigns it) and null for
+    fewer than 2. `draftAsLine` (ingredients.ts) serves P06-09. Ask `canSplit` of the draft as it
+    opened. Combine's removal of the originals and the fasting block are P02-06 / P06-19.
+  - Pillars: store the list as an array (`decodePillars` also reads comma text). `pillarGoal`
+    reads macros from effective targets, the rest from optional goals.
+  - `groupDiary` takes one tagged `DiaryRow` list; same-time rows keep their given order; section
+    totals come back rounded.
 
 - Lint boundaries (P00-07): test files (`*.test.ts[x]`, `src/test/**`) are exempt from rules 2-5;
   `e2e/**`, `scripts/**`, `tooling/**` are not exempt from the IndexedDB/Dexie rule (exempt `e2e/**`
