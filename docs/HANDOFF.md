@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:05 IST (Agent 1, session 3). 65/176 tasks; P00, P01 and P02 complete; the app runs on the
+Updated: 2026-10-27 01:25 IST (Agent 1, session 3). 69/176 tasks; P00, P01 and P02 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -79,20 +79,21 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 8 | P03-10..12 (image preparation, JSON extraction, food reply parser; reply key constants) | bca540b |
 | Wave 8 | P03-07..09 (Gemini, OpenAI-compatible and Anthropic adapters) | 9d8d27d |
 | Wave 8 | P03-03, P03-04 (provider catalogue and presets, AI settings and endpoints; adapters take `ProviderId` from the catalogue) | 8b03cfd |
+| Wave 8 | P04-10..13 (Home with gauge, pillars and diary; manual entry; swipe-delete rows; tab placeholders; Settings hub; D-16.79) | ea9563c |
 
 ## In progress
 
-Four builders:
-- Wave 8 (base d38d4fb): P04 S5 (P04-10..13 Home, manual entry, entry row, tab placeholders, Settings hub)
-  in `/root/wt/wt-p04s5`. At landing: add the `home`, `log` and `settings` partitions to
-  `src/i18n/en.ts`.
-- Wave 9 (`docs/handoff/wave9/`): P03 S4b (P03-13/14 readers, base 7a6e065, `/root/wt/wt-p03s4b`); P03 S5
-  (P03-15/16 prompts and contract, base 7a6e065, `/root/wt/wt-p03s5`); P05 S1 (P05-01..03 wizard state
-  machine and steps, base c0b38bb, `/root/wt/wt-p05s1`).
-Landed this window: bca540b, 9d8d27d, 8b03cfd (latest full loop: unit 2233 passed + 2 expected-fail in 139
-files, check 6/6, bundle 123.08 kB, e2e 1/1). If this container is gone, re-create the worktrees at their
-bases and relaunch the same prompts. **Progress: 65/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03
-12/19, P04 9/14, P05 0/15).
+Four builders (prompts in `docs/handoff/wave9/`):
+- P03 S4b (P03-13/14 readers), base 7a6e065, `/root/wt/wt-p03s4b`.
+- P03 S5 (P03-15/16 prompts and contract), base 7a6e065, `/root/wt/wt-p03s5`.
+- P05 S1 (P05-01..03 wizard state machine and steps), base c0b38bb, `/root/wt/wt-p05s1`.
+- P04-14 walking-skeleton e2e and parity scenario (**Demo 1**), base 19fb709, `/root/wt/wt-p04s6`. After
+  landing, the lead runs `parity/walking-skeleton.platewise.json` once through REA (install
+  `rea-agents@6.8.0` outside the repo on Node 24 per "Where things are").
+Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c (latest full loop: unit 2303 passed + 2
+expected-fail in 146 files, check 6/6, bundle 135.93 kB, e2e 1/1). If this container is gone, re-create
+the worktrees at their bases and relaunch the same prompts. **Progress: 69/176 tasks** (P00 10/10, P01
+19/19, P02 15/15, P03 12/19, P04 13/14, P05 0/15).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -107,6 +108,14 @@ whether to fast-forward `main` to the work branch.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
+- From wave 8 (Home): data-ui hooks for e2e and parity: `home.add`, `home.add.manual`, `home.gauge`,
+  `home.summary`, `home.pillar.<key>`, `home.diary`, `home.diary.empty`, `home.meal.<meal>[.totals]`,
+  `manual`, `manual.{name,energy,protein,carbs,fat,fibre,meal,save,cancel}`, `manual.mealPicker.<meal>`,
+  `entry.row` (keyboard delete `entry.row.delete`), dialog `entry.delete` with `.confirm`/`.cancel`,
+  `settings.category.<id>`, `settings.back`. `src/test/screenHarness.tsx` renders a tab screen over real
+  repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
+  router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
+  icons; no photo hook yet (P06).
 - From wave 8 (AI catalogue and settings): `decodeAiSettings` is ready for the `ai.settings` row of
   `src/data/settingsSchema.ts` (plug it in when P05 S2 / P09 use it); the preset-upgrade marker lives in
   `meta.presetUpgradeVersion` (the caller saves settings when `changed` and stores the version); an empty

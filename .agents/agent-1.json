@@ -6,6 +6,6 @@
   "remaining_pct": 86,
   "resets_at": "2026-10-27T05:20:00+05:30",
   "last_check": "2026-10-27T00:44:00+05:30",
-  "current_step": "65/176 tasks; running P04-10..13, P03-13/14, P03-15/16, P05-01..03",
-  "last_commit": "c0b38bb"
+  "current_step": "69/176 tasks; running P03-13/14, P03-15/16, P05-01..03, P04-14 (Demo 1)",
+  "last_commit": "19fb709"
 }
