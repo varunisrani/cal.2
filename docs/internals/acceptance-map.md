@@ -213,7 +213,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C10-1** A typed sodium goal of 2 345 mg is kept exactly
   - Review: P05-12
 - **ACC-C10-2** An AI refresh that returns only sodium leaves the other goals unchanged
-  - Review: P03-14
+  - Test: src/ai/parse/nutrientGoals.test.ts > readNutrientGoals: only the goals that came back change (R03.25, R01.10) > changes only sodium when the answer gives only sodium (ACC-C10-2)
 
 ### C11 · Goal-reached dialog when a new latest weigh-in crosses the goal, … (P1)
 
@@ -461,7 +461,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-E8-1** An answer wrapped in prose and a code fence is still read
   - Test: src/ai/parse/json.test.ts > parseModelJson: answers wrapped in prose or a fence (R03.13, ACC-E8-1) > reads an answer wrapped in prose and a plain fence with a language word
 - **ACC-E8-2** A breakdown that does not add up is dropped and the totals kept
-  - Review: P03-13
+  - Test: src/ai/parse/parts.test.ts > readParts: a breakdown that does not add up is dropped and the totals kept (ACC-E8-2) > drops a breakdown covering 0.4 of the meal kcal
 
 ### E9 · A second request for serving units only for zero-energy foods with … (P1)
 

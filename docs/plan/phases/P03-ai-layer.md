@@ -1,6 +1,6 @@
 # P03 · AI layer (catalogue, adapters, client, parsers, prompts)
 
-**Weeks:** 2–3 · **Tracks:** domain/data/AI · **Depends on:** P01 (validator, units); P02 for settings and secrets (wave C only) · **Status:** 🔨 in progress: P03-01..12 landed (12/19, 2026-10-27)
+**Weeks:** 2–3 · **Tracks:** domain/data/AI · **Depends on:** P01 (validator, units); P02 for settings and secrets (wave C only) · **Status:** 🔨 in progress: P03-01..14 landed (14/19, 2026-10-27)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

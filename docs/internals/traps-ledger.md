@@ -40,7 +40,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/goals/integers.test.ts > floorMod > gives a remainder with the sign of the divisor, unlike % (R01.9)
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > lowers protein until fat can take the remainder kcal needs (R01.9)
 - **R01.10** The optional-goal refresh keeps current values for keys the AI left out, clamps to 0–999 999 and never snaps typed values
-  - Review: owned by P03-14
+  - Test: src/ai/parse/nutrientGoals.test.ts > readNutrientGoals: only the goals that came back change (R03.25, R01.10) > keeps typed values it was not given exactly, never snapped or rounded
 - **R01.11** Goal reached fires only for a new latest weigh-in that crosses the goal, once, from every add path
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires once for lose 80 → 79 with target 79.5; a later 79 does not (R01.11)
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > fires for gain 70 → 72 with target 71, once (R01.11)
@@ -174,11 +174,13 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/parse/json.test.ts > parseModelJson: the first balanced object, aware of strings (R03.13) > ignores braces inside a string
   - Test: src/ai/parse/json.test.ts > parseModelJson: the first balanced object, aware of strings (R03.13) > takes the first of two objects, never a span from the first { to the last }
 - **R03.14** The ingredient breakdown is all or nothing (≤ 20 entries, valid values, ≤ 9 kcal/g fill, coverage 0.5–1.5)
-  - Review: owned by P03-13
+  - Test: src/ai/parse/parts.test.ts > readParts: unknown part weights are filled from the meal (R03.14) > accepts a fill of exactly 9 kcal per gram and drops one of 10
+  - Test: src/ai/parse/parts.test.ts > readParts: a usable breakdown replaces the totals (R03.14) > keeps the parts and makes the meal kcal and macros their sums
 - **R03.15** A missing serving weight stays unknown and is never repaired
   - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a missing weight stays unknown (R03.15) > describes one serving, never 100 g, when the answer gives no weight
 - **R03.16** Unit choices need real positive numbers within max(5 g, 15 %); one bad element voids the list; an empty list is valid
-  - Review: owned by P03-13
+  - Test: src/ai/parse/units.test.ts > readUnits: a missing or mangled list asks for one repair (R03.16) > refuses count: true and count: "2", and the same for grams each
+  - Test: src/ai/parse/units.test.ts > readUnits: a usable list (R03.16) > reads an empty list as a complete answer: no units and no repair
 - **R03.17** The unit repair request runs only for zero-macro results with a known weight; its failures are ignored
   - Review: owned by P03-18
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
@@ -196,9 +198,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.23** Notes for the AI go in the system channel of every request, standby and repair included
   - Review: owned by P03-17
 - **R03.24** Label scaling rounds kcal
-  - Review: owned by P03-14
+  - Test: src/ai/parse/labelReply.test.ts > readLabelReply: per-100 g values scaled to the serving (R03.24) > gives 110 kcal for 333 kcal per 100 g at 33 g: rounded, not cut down to 109
 - **R03.25** Nutrient-goal replies are read tolerantly but keep the person's values for missing keys; a failure never clears goals
-  - Review: owned by P03-14
+  - Test: src/ai/parse/nutrientGoals.test.ts > readNutrientGoals: nothing usable is a failure and never clears goals (R03.25) > refuses an answer with no usable goal, leaving the goals to the caller unchanged
 - **R03.26** Any 2xx status counts as success
   - Test: src/ai/transport.test.ts > send: any 2xx is a success (R03.26) > counts 200, 201, 204 and 299 as success, and 300 and 404 as not
 - **R03.27** An unreadable key store or wrapping key starts with no keys, never a crash
