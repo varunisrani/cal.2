@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s1b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave A slice S1b = P06-04, P06-05 — the analysis service and overlay; the describe sheet (typed meal). Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.4, §3.10, §3.11; decision D-16.46 in docs/plan/16-what-we-change.md. Trap: R02.10 (P06-04). Acceptance ids: ACC-A5-1, ACC-D5-1, ACC-D5-2 and any other whose Review line names P06-04 or P06-05 in docs/internals/acceptance-map.md.
+Task notes (each before its code): docs/notes/P06/analysis-service-and-overlay.md, docs/notes/P06/describe-sheet-typed-meal.md.
+
+You own:
+- src/services/analysis.ts, src/services/analysis.test.ts
+- src/features/log/AnalysisOverlay.tsx (+ test), src/features/log/DescribeSheet.tsx (+ test), a css module for them
+- your words in the `capture` partition (src/i18n/en/capture.ts, landed with P06-03) or a new `analysis` partition with its one line in src/i18n/en.ts
+- additive edits only: `analysis` in `Services` (src/services/context.tsx, optional like its neighbours) and its wiring in src/main.tsx
+
+Do not touch:
+- src/services/{photos,captureDrafts,aiSetup,onboarding,diary}.ts and src/features/log/capture/** (landed: import; if one needs a change, say so), src/services/goals/** and src/services/barcode/** (other builders, now), src/ai/** (import only: analyzePhotos, analyzeText, analyzeLabelScan in src/ai/tasks/food.ts; startDeadline in src/ai/deadline.ts), src/data/** (import only: the drafts repository's analysis record and generations, the photo repository), src/domain/**, src/app/** (import only: the app state store's setAnalysisOverlay hides the tab bar), src/features/onboarding/**, src/features/{home,settings,ai-setup,about,goals}/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule).
+- The service reads the stored AI setup itself (the `ai.settings` row is `AiSettings | null`, keys in the secrets repository per provider: see src/services/aiSetup.ts) and takes an injected fetch, clock and image backend, so tests run on src/ai/testing/fakeFetch.ts with no network.
+- start(kind, inputs) (kind photo | label | text) begins a new draft generation (releasing the previous draft's blobs), sets the overlay flag, runs the P03-18 task under one Deadline from the timeout setting; on success stores the analysis draft with its photo ids and source (photo; label when a label scan was armed — take an `armedLabel` input for now, P06-17 arms it; text), drops the capture record without releasing its photos (they now belong to the analysis draft), and reports `reviewReady` (the review sheet, P06-06, opens from it; expose it as state a screen can subscribe to); on Cancel aborts silently and releases the attempt's blobs (ACC-D5-1); on failure exposes the failure kind's message key with Retry (the same inputs, ACC-D5-2) and Cancel; a stale result releases its own blobs and never opens (R02.10). On app start a stored draft reopens the review unless another analysis already started (D-16.46).
+- AnalysisOverlay: the first photo (or a spinner for text) and Cancel; the tab bar hides while it shows and returns after (ACC-A5-1).
+- DescribeSheet: a multi-line field (3–5 lines) focused on open; while empty the placeholder rotates through four example descriptions of ours every 2 s and stops once typing starts; Analyse enabled when the trimmed text is not blank; it starts a text analysis with the trimmed text; Cancel.
+- Neither surface is reachable from the app yet (the add menu is P06-01): test them on their own.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/analysis.test.ts src/features/log src/i18n --maxWorkers=1 (fake timers for the placeholder and the deadline)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
