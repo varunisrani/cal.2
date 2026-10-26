@@ -63,8 +63,9 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Nothing in flight; wave 4 launches next (prompts in `docs/handoff/wave4/`, base = the commit that
-carries this entry). Wave 3 (base bf6536b; the plan's P01 S4 split into S4a = P01-12..14 and S4b =
+**Wave 4** (launched 2026-10-26 20:24 IST, base df679fb): four builders in
+`/root/wt/wt-{p01c5,p02a0,p04s1,p04s2}` from `docs/handoff/wave4/`. If this container is gone,
+re-create the worktrees at df679fb and relaunch the same prompts (nothing of wave 4 is landed yet). Wave 3 (base bf6536b; the plan's P01 S4 split into S4a = P01-12..14 and S4b =
 P01-15/16) verified on the stacked head and again on the rebuilt head bcf0c83 with
 `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`: lint, fmt, typecheck clean; unit
 955/955 in 59 files; check --require-ref 6/6; check:bundle 70.09 kB of 250 kB; e2e 1/1.

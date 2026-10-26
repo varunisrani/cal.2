@@ -6,6 +6,6 @@
   "remaining_pct": 78,
   "resets_at": "2026-10-27T00:20:00+05:30",
   "last_check": "2026-10-26T20:22:00+05:30",
-  "current_step": "26/176 tasks; wave 3 landed (ad0109a, 9337e0e, abc2cee, bcf0c83); launching wave 4",
-  "last_commit": "bcf0c83"
+  "current_step": "26/176 tasks; wave 4 running (4 builders, base df679fb): P01-17..19, P02-01..03, P04-01/02, P04-03",
+  "last_commit": "df679fb"
 }
