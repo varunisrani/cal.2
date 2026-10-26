@@ -20,3 +20,4 @@ Readings lag a few minutes, so 88 % counts as 90 %. When the newest reading is o
 | 2026-10-27 01:08 | Agent 2 | Account 2 | 61 (reading 01:06) | 39 | 2026-10-27 02:40 | 50/176 (P02 S3, S4 landed); P04 S4 launched; 2 running; ~0.35 %/min |
 | 2026-10-27 01:11 | Agent 2 | Account 2 | 62 (reading 01:08) | 38 | 2026-10-27 02:40 | 50/176; 2 builders running (P04 S3, S4); ~0.35 %/min, 75 % expected near 01:45 |
 | 2026-10-27 01:37 | Agent 2 | Account 2 | 70 (reading 01:36) | 30 | 2026-10-27 02:40 | 56/176 (P04 S3 + quick-start wiring landed; first-run path to Home works); P02 S5 running; no new builders until the reset |
+| 2026-10-27 01:42 | Agent 2 | Account 2 | 70 (reading 01:36) | 30 | 2026-10-27 02:40 | handoff #2 to Agent 1 at the user's request: 56/176, code head 472dbc6 green, P02 S5 saved as a patch, builder stopped, routines off |

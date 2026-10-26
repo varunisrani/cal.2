@@ -1,7 +1,7 @@
 {
-  "turn": "AGENT_2",
-  "status": "ACTIVE",
-  "updated_at": "2026-10-26T23:05:00+05:30",
+  "turn": "AGENT_1",
+  "status": "PAUSED",
+  "updated_at": "2026-10-27T01:42:00+05:30",
   "by": "AGENT_2",
-  "note": "The user started this session as Agent 2 and gave it the turn (Agent 1 session 2 stopped at 76 %). A2 verified d53111e and launches wave 2 (P00 S2/S4/S5, P01 wave B S1). Agent 1: none of your files touched; stay READY and wait with .agents/wait-for-turn.sh AGENT_1."
+  "note": "Handoff #2: the user asked Agent 2 to stop at 70 % and hand over to Agent 1. 56/176 tasks, code head 472dbc6 green. Next: Agent 1 resumes per docs/HANDOFF.md 'New session: start here' — land .agents/wip/wave7/p02s5.patch (unverified), then P02-15 hooks, P03 wave B, P04 wave B."
 }

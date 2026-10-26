@@ -1,0 +1,1839 @@
+diff --git a/docs/notes/P02/erase-persistence-and-storage-estimates.md b/docs/notes/P02/erase-persistence-and-storage-estimates.md
+new file mode 100644
+index 0000000..672ee9a
+--- /dev/null
++++ b/docs/notes/P02/erase-persistence-and-storage-estimates.md
+@@ -0,0 +1,98 @@
++# Task: erase, persistence and storage estimates (P02-14) · Phase: 02 · Owner: builder (wt-p02s5)
++
++<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
++BEFORE writing code, in your own words. Never paste or paraphrase the reference line by line. -->
++
++Read (reference @ `10e14b67`): `A/ui/settings/SettingsViewModel.kt` lines 1469–1500 (the order of
++"delete all data"); research spec `06-settings-data.md` §3.15, §3.18, §5 (Delete All Data on the
++web, storage card, persistence) and §6 R06.5, R06.10, R06.19; decision D-16.8; the landed bus
++(`src/data/bus.ts`, message `erase`) and `openDb` (closes on `versionchange`). The web parts have
++no reference counterpart. No Evidence ids.
++
++What it does (own words): "Erase everything" removes every trace of the person's data from this
++browser. It first tells the app's other open tabs (an `erase` message on the bus) so they close
++their database connection and show a notice, closes this tab's connection, deletes the whole
++`platewise` database (every table: diary, photos, keys, settings, quarantine, meta), then removes
++the app's own Cache Storage entries and `localStorage` keys, both named with the `platewise-`
++prefix; anything else on the origin is left alone. A tab that does not let go makes the delete
++`blocked`: we broadcast `erase` once more and give the other tabs a moment; if the delete still
++waits, the caller is told (so the screen can ask the person to close other tabs), and the queued
++delete finishes on its own once they close. Storage helpers (D-16.8, R06.19): after the first
++logged entry the app asks the browser to keep its storage (`navigator.storage.persist()`), once
++per device, and records that it asked; Settings shows whether storage is persistent and how much
++is used of the quota. Browsers without these APIs read as `unknown`, never an error.
++
++Inputs → outputs:
++- `src/data/wipe.ts`: `eraseEverything({ db?, name?, indexedDB?, bus?, caches?, localStorage?,
++  pause? })` → `{ kind: 'erased' }` | `{ kind: 'blocked', finished }` (finished resolves to
++  `'erased'` or `'failed'` once the queued delete ends) | `{ kind: 'failed', error }`.
++  `closeOnErase(db, { bus?, onErase? })` → a stop function: in every tab, an `erase` posted by
++  another tab closes this tab's connection and calls `onErase` (the notice). `OWNED_PREFIX`.
++- `src/data/storage.ts`: `requestPersistence(db, { storage? })` → `'persistent' | 'best-effort' |
++  'unknown'`; `persistenceStatus({ storage? })` → the same three states; `estimate({ storage? })`
++  → `{ usage, quota }` or null.
++
++Files: created `src/data/wipe.ts`, `src/data/wipe.test.ts`, `src/data/storage.ts`,
++`src/data/storage.test.ts`, this note.
++
++Edge cases / failure modes:
++- Another tab of this build: its `openDb` closes on `versionchange` and `closeOnErase` closes it on
++  the bus message, so the delete is not blocked.
++- A tab that keeps its connection (an older build, a frozen tab) → `blocked` → broadcast again,
++  wait once (`pause`, about 1.5 s by default; tests pass their own) → still waiting → reported as
++  `blocked` with `finished`; the delete request stays queued and completes when that tab closes.
++  An IndexedDB delete cannot be cancelled and a second delete request would only queue behind the
++  first, so "retry" means broadcast again and wait one more round on the same request.
++- The delete fails (`error` event) or IndexedDB is missing → `failed`; caches and `localStorage`
++  are then left as they are, so a second try repeats the whole erase.
++- No Cache Storage (`caches` missing: insecure page, test environment) or no `localStorage`
++  (blocked by the browser; even reading `window.localStorage` can throw) → those steps are
++  skipped; a failing cache delete is ignored (caches hold only app files, rebuilt on demand).
++- Only names starting with `platewise-` go: other apps on the same origin keep their caches and
++  keys.
++- Our own tab posts `erase` too: `closeOnErase` ignores messages from this tab (the erasing tab
++  moves to onboarding itself).
++- `requestPersistence` asked twice (in sequence or at the same time, also from two tabs) → one
++  `persist()` call: concurrent calls in a tab share one ask, and the "asked" setting is claimed in
++  a transaction before asking, so a second tab does not ask again. Already persistent → no ask.
++- `persist()` or `persisted()` missing or throwing → `unknown`; `estimate()` missing, throwing or
++  answering without numbers → null. Nothing here throws.
++
++Our design differences / decisions:
++- The order follows the web plan (bus, close, delete database, caches, local storage) instead of
++  the reference's (forget backup session, clear the store, clear keys, delete photos): one database
++  delete removes the store, keys and photos together. Forgetting a running backup (R06.5) and
++  cancelling reminder timers (R06.10) are services that do not exist yet; the Erase action in
++  P09-15 does them before calling `eraseEverything`.
++- "Records the answer": the device-only setting `storage.persistAsked` becomes true when we ask
++  (so we never ask twice on this device); the answer itself is not copied into the database,
++  because `navigator.storage.persisted()` reports it at any time and a stored copy could go stale
++  (the person can revoke it in the browser).
++- The `erase` broadcast is the notice channel; closing also happens through `openDb`'s own
++  `versionchange` handler, so a tab that missed the message still lets go.
++- Dependencies (`indexedDB`, `caches`, `localStorage`, `navigator.storage`, the bus, the pause) are
++  options with the browser's objects as defaults, so tests use fakes and no timers.
++
++Tests we will write:
++- erase deletes every table (reopen → all empty) and our cache entries and `localStorage` keys but
++  not foreign ones.
++- A second open connection receives `erase` and closes; its notice runs once; a message from its
++  own tab is ignored.
++- A tab that keeps its connection → `blocked` after one retry (erase posted twice, one pause);
++  closing that tab finishes the delete.
++- A tab that lets go on the second broadcast → `erased`.
++- A failing delete → `failed`, caches and keys kept.
++- `persist()` called once when asked twice in a row and twice at once; the setting records the
++  ask; already persistent → no ask; denied → `best-effort`.
++- Missing `navigator.storage` → status `unknown` and `requestPersistence` `unknown` without
++  throwing (R06.19); throwing APIs → `unknown`; `estimate` with and without the API.
++
++Compare checklist (filled after the rewrite; reopened `A/ui/settings/SettingsViewModel.kt` lines
++1469–1500):
++- [ ] Everything the reference's delete-all clears is gone after erase (tested in `<file>`)
++- Deliberate differences: <…>
++- Not taken: <…>
++
++## Decisions for the lead
++
++## Status
+diff --git a/docs/notes/P02/secrets-repository.md b/docs/notes/P02/secrets-repository.md
+new file mode 100644
+index 0000000..bef84bd
+--- /dev/null
++++ b/docs/notes/P02/secrets-repository.md
+@@ -0,0 +1,105 @@
++# Task: secrets repository (P02-12) · Phase: 02 · Owner: builder (wt-p02s5)
++
++<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
++BEFORE writing code, in your own words. Never paste or paraphrase the reference line by line. -->
++
++Read (reference @ `10e14b67`): `A/data/KeyStore.kt` (all), `I/Services/KeychainHelper.swift` (all),
++the key mask helper at the end of `A/ui/settings/SettingsViewModel.kt` (to see what a saved key
++shows); no reference tests cover either store. Research spec `03-ai-providers.md` §3.12 and §6
++R03.20, R03.27; `06-settings-data.md` §3.18 (secret store corruption), §3.19 and §5 (secret
++storage on the web); decisions D-16.7, D-16.51 (`16-what-we-change.md` row D-16.49 … D-16.66 and
++`18-phase-wise-build-plan.md` "Proposed decisions"); naming `17-naming-and-glossary.md` (table
++`secrets`, slots `<providerId>` and `fdc`). Acceptance ACC-E14-1. No Evidence ids.
++
++What it does (own words): the person's API keys (one per AI provider, plus their own FoodData
++Central key) live in the `secrets` table, never in settings, exports or backups. Each value is
++encrypted with AES-GCM under one device key: a 256-bit key made by Web Crypto as non-extractable,
++created the first time a key is saved and kept in `meta` as a stored CryptoKey (IndexedDB keeps it
++by structured clone; script can use it but never read its bytes). This only protects copies of the
++raw storage files; code running on the site can still use the key, which Settings says (D-16.7).
++Saving trims the value (a pasted newline breaks auth, R03.20); a blank value deletes the slot. The
++store must never stop the app from starting (R03.27): when the device key is missing or unusable,
++or a stored value cannot be decrypted, every slot reads as unset and the table is emptied so the
++person enters their keys again. Settings shows a saved key masked: its first four characters, an
++ellipsis and its last four (ACC-E14-1); short values show dots only.
++
++Inputs → outputs:
++- `src/data/crypto.ts`: `createDeviceKey(subtle)` → a new non-extractable AES-GCM 256 key;
++  `isDeviceKey(value)` → whether a stored value is a usable key (cross-realm safe);
++  `seal(subtle, key, text)` → `{ iv, data }` (fresh 12-byte IV each time); `unseal(subtle, key,
++  sealed)` → the text, or null when it cannot be decrypted; `readSealed(raw)` → the stored
++  `{ iv, data }` or null; `loadDeviceKey(db)` → the stored key or null; `ensureDeviceKey(db,
++  subtle)` → the stored key, creating it once (atomic, also across tabs); `webCrypto()` → the
++  browser's `SubtleCrypto` or null (insecure page).
++- `src/data/repos/secretsRepo.ts`: `createSecretsRepo(db, options?)` → `{ set(slot, value),
++  get(slot), slots() }`; `mask(value)`; `SECRET_SLOTS`, `isSecretSlot`, `SecretSlot`.
++
++Files: created `src/data/crypto.ts`, `src/data/crypto.test.ts`, `src/data/repos/secretsRepo.ts`,
++`src/data/repos/secretsRepo.test.ts`, this note.
++
++Edge cases / failure modes:
++- No device key yet and nothing stored → `get` null, `slots` [], nothing written.
++- Device key deleted (or replaced by something that is not a usable key) while values are stored →
++  `get` null for every slot, `slots` [], the table is emptied (and an unusable key value removed);
++  no throw. The next `set` creates a new key.
++- A stored value that fails to decrypt (damaged bytes, wrong key, bad shape) → null for every slot
++  and the table is emptied; the clearing transaction first checks the failing row is still the one
++  that failed, so a value another tab just saved over it is not wiped.
++- Two saves at once before any key exists → both use the one key that was stored first (the key
++  is generated outside the transaction, and the transaction keeps an existing usable key instead
++  of the new one). Creating a key also empties the table: values sealed by a lost key can never be
++  read again.
++- No Web Crypto (page not served over https) → `get` null and `slots` [] without clearing anything
++  (the values are fine, this page just cannot open them); `set` of a non-blank value rejects with
++  `SecretsUnavailableError`. Blank `set` still deletes.
++- `set` with a slot that is not a provider id or `fdc` → RangeError, nothing written.
++- " sk-abc \n" is stored as "sk-abc"; "   " deletes.
++- `mask`: 40 characters → 4 + "…" + 4; 8 characters or fewer → a fixed row of 8 dots (the length
++  is not shown); empty → empty.
++
++Our design differences / decisions:
++- Web Crypto AES-GCM under a non-extractable device key (D-16.51) instead of an OS keystore; the
++  stored row is `{ id: slot, iv, data }` (both `Uint8Array`), the key is the `meta` row
++  `deviceKey`.
++- Slots are our provider ids plus `fdc` (17-naming); the reference's speech keys, challenge token
++  and Drive token have no v1 slot.
++- Every value is trimmed on save for every slot (the reference trims only the food database key
++  on Android, R03.20).
++- Recovery is per read, not at app start: the first `get`/`slots` that meets a missing key or an
++  undecryptable value empties the table. The reference wipes and rebuilds its whole key file when
++  it fails to open.
++- The secrets table does not go through the record guard's quarantine. R03.27 and D-16.51 give it
++  its own recovery (empty and re-enter), and copying secret material into `quarantine` would put it
++  in a second table that export, repair or backup code may read; the "unreadable data" banner is
++  not raised for it. The device key in `meta` is handled the same way (an unusable value is
++  replaced, not kept aside). Writes still go only through `transact()`.
++- No live feed: the settings screens read `slots()`/`get()` when they open and after a save
++  (recovery writes, and a live query may not write).
++- `mask` is ours: the reference shows short keys in full; we show dots only.
++
++Tests we will write:
++- crypto: the key is AES-GCM 256, non-extractable (export refused), encrypt and decrypt only; seal
++  → unseal round trip; two seals of one text use different IVs and data; a damaged byte or another
++  key → null; the key survives storage in `meta` and still decrypts after a reopen;
++  `ensureDeviceKey` creates once (two parallel calls end on one stored key) and empties the table
++  when it creates; `readSealed` refuses bad shapes.
++- repository: round trip; " sk-abc \n" stored as "sk-abc"; blank deletes; stored bytes do not hold
++  the plain key; deleting the device key → `get` null for all, table empty, no throw (R03.27); an
++  undecryptable value → every slot unset and the table empty; a value saved over a failing one in
++  between is not wiped; `slots` lists slot names only, in a fixed order; unknown slot refused; no
++  Web Crypto → reads unset and nothing cleared, `set` rejects; two parallel first saves both read
++  back.
++- `mask` of a 40-character key shows 4 + … + 4 (ACC-E14-1); short and empty values.
++
++Compare checklist (filled after the rewrite; reopened `A/data/KeyStore.kt`,
++`I/Services/KeychainHelper.swift`, `A/ui/settings/SettingsViewModel.kt` mask helper):
++- [ ] Saving blank deletes the slot (tested in `<file>`)
++- [ ] Keys trimmed on save (tested in `<file>`)
++- [ ] A store that cannot be opened starts empty instead of crashing (tested in `<file>`)
++- [ ] Masked display: first 4, ellipsis, last 4 (tested in `<file>`)
++- Deliberate differences: <…>
++- Not taken: <…>
++
++## Decisions for the lead
++
++## Status
+diff --git a/src/data/crypto.test.ts b/src/data/crypto.test.ts
+new file mode 100644
+index 0000000..01e2aff
+--- /dev/null
++++ b/src/data/crypto.test.ts
+@@ -0,0 +1,188 @@
++import { describe, expect, it } from 'vitest';
++import { freshDbOptions, openTestDb } from '../test/db';
++import {
++  DEVICE_KEY,
++  IV_BYTES,
++  createDeviceKey,
++  ensureDeviceKey,
++  isDeviceKey,
++  loadDeviceKey,
++  readSealed,
++  seal,
++  unseal,
++  webCrypto,
++  type Sealed,
++} from './crypto';
++import type { PlatewiseDb } from './db';
++
++const subtle = globalThis.crypto.subtle;
++
++async function storedKey(db: PlatewiseDb): Promise<CryptoKey> {
++  const key = await loadDeviceKey(db);
++  if (!key) throw new Error('expected a stored device key');
++  return key;
++}
++
++/** A copy of `sealed` with one bit of `field` flipped. */
++function flipped(sealed: Sealed, field: keyof Sealed): Sealed {
++  const bytes = sealed[field].slice();
++  bytes[0] = (bytes[0] ?? 0) ^ 1;
++  return { ...sealed, [field]: bytes };
++}
++
++describe('createDeviceKey', () => {
++  it('makes a non-extractable AES-GCM 256 key for encrypting and decrypting only', async () => {
++    const key = await createDeviceKey(subtle);
++
++    expect(key.type).toBe('secret');
++    expect(key.extractable).toBe(false);
++    expect(key.algorithm).toEqual({ name: 'AES-GCM', length: 256 });
++    expect([...key.usages].sort()).toEqual(['decrypt', 'encrypt']);
++    await expect(subtle.exportKey('raw', key)).rejects.toThrow();
++    expect(isDeviceKey(key)).toBe(true);
++  });
++});
++
++describe('isDeviceKey', () => {
++  it('refuses anything that is not an AES-GCM 256 key that both encrypts and decrypts', async () => {
++    const hmac = await subtle.generateKey({ name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
++    const short = await subtle.generateKey({ name: 'AES-GCM', length: 128 }, false, [
++      'encrypt',
++      'decrypt',
++    ]);
++    const encryptOnly = await subtle.generateKey({ name: 'AES-GCM', length: 256 }, false, [
++      'encrypt',
++    ]);
++    const lookalike = {
++      type: 'secret',
++      algorithm: { name: 'AES-GCM', length: 256 },
++      usages: ['encrypt', 'decrypt'],
++    };
++
++    for (const value of [undefined, null, 'key', {}, lookalike, hmac, short, encryptOnly]) {
++      expect(isDeviceKey(value)).toBe(false);
++    }
++  });
++});
++
++describe('seal and unseal', () => {
++  it('round trips text, characters outside ASCII included', async () => {
++    const key = await createDeviceKey(subtle);
++    for (const text of ['sk-abc', 'gsk_0123456789abcdefghijklmnopqrstuvwxyz', 'clé ✓ 鍵']) {
++      expect(await unseal(subtle, key, await seal(subtle, key, text))).toBe(text);
++    }
++  });
++
++  it('takes a fresh 12-byte IV each time, so the same text never seals the same way', async () => {
++    const key = await createDeviceKey(subtle);
++    const first = await seal(subtle, key, 'sk-same-key');
++    const second = await seal(subtle, key, 'sk-same-key');
++
++    expect(first.iv).toHaveLength(IV_BYTES);
++    expect(second.iv).toHaveLength(IV_BYTES);
++    expect(first.iv).not.toEqual(second.iv);
++    expect(first.data).not.toEqual(second.data);
++  });
++
++  it('answers null for a changed byte, a changed IV or another key, without throwing', async () => {
++    const key = await createDeviceKey(subtle);
++    const other = await createDeviceKey(subtle);
++    const sealed = await seal(subtle, key, 'sk-abc');
++
++    expect(await unseal(subtle, key, flipped(sealed, 'data'))).toBeNull();
++    expect(await unseal(subtle, key, flipped(sealed, 'iv'))).toBeNull();
++    expect(await unseal(subtle, other, sealed)).toBeNull();
++  });
++});
++
++describe('readSealed', () => {
++  it('reads typed arrays and array buffers, as copies', async () => {
++    const sealed = await seal(subtle, await createDeviceKey(subtle), 'sk-abc');
++    const asBuffer = { iv: sealed.iv.slice().buffer, data: sealed.data.slice().buffer };
++
++    const read = readSealed(sealed);
++    expect(read).toEqual(sealed);
++    expect(read?.data).not.toBe(sealed.data);
++    expect(readSealed(asBuffer)).toEqual(sealed);
++  });
++
++  it('refuses a value without a 12-byte IV or with data shorter than the tag', () => {
++    const data = new Uint8Array(32);
++    for (const raw of [
++      null,
++      'sealed',
++      { data },
++      { iv: new Uint8Array(IV_BYTES) },
++      { iv: new Uint8Array(16), data },
++      { iv: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], data },
++      { iv: new Uint8Array(IV_BYTES), data: new Uint8Array(15) },
++    ]) {
++      expect(readSealed(raw)).toBeNull();
++    }
++  });
++});
++
++describe('the device key in meta', () => {
++  it('is stored once and still opens what it sealed after the database is reopened', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    const key = await ensureDeviceKey(db, subtle);
++    const sealed = await seal(subtle, key, 'sk-kept-across-starts');
++    db.close();
++
++    const reopened = await openTestDb(options);
++    const stored = await storedKey(reopened);
++    expect(stored.extractable).toBe(false);
++    expect(isDeviceKey(stored)).toBe(true);
++    expect(await unseal(subtle, stored, sealed)).toBe('sk-kept-across-starts');
++    expect(await unseal(subtle, await ensureDeviceKey(reopened, subtle), sealed)).toBe(
++      'sk-kept-across-starts',
++    );
++  });
++
++  it('ends two calls made at the same time on one stored key', async () => {
++    const db = await openTestDb();
++    const [a, b] = await Promise.all([ensureDeviceKey(db, subtle), ensureDeviceKey(db, subtle)]);
++
++    const sealed = await seal(subtle, a, 'sk-one-key');
++    expect(await unseal(subtle, b, sealed)).toBe('sk-one-key');
++    expect(await unseal(subtle, await storedKey(db), sealed)).toBe('sk-one-key');
++  });
++
++  it('empties the secrets table when it has to make a new key', async () => {
++    const db = await openTestDb();
++    const orphan = await seal(subtle, await createDeviceKey(subtle), 'sk-from-a-lost-key');
++    await db.secrets.put({ id: 'gemini', ...orphan });
++
++    await ensureDeviceKey(db, subtle);
++
++    expect(await db.secrets.count()).toBe(0);
++  });
++
++  it('keeps the secrets table when a key is already stored', async () => {
++    const db = await openTestDb();
++    const key = await ensureDeviceKey(db, subtle);
++    await db.secrets.put({ id: 'gemini', ...(await seal(subtle, key, 'sk-abc')) });
++
++    await ensureDeviceKey(db, subtle);
++
++    expect(await db.secrets.count()).toBe(1);
++  });
++
++  it('replaces a stored value that is not a usable key', async () => {
++    const db = await openTestDb();
++    await db.meta.put({ key: DEVICE_KEY, value: 'not a key' });
++
++    expect(await loadDeviceKey(db)).toBeNull();
++    const key = await ensureDeviceKey(db, subtle);
++
++    expect(isDeviceKey(key)).toBe(true);
++    expect(isDeviceKey((await db.meta.get(DEVICE_KEY))?.value)).toBe(true);
++  });
++});
++
++describe('webCrypto', () => {
++  it('is the Web Crypto of the page', () => {
++    expect(webCrypto()).toBe(globalThis.crypto.subtle);
++  });
++});
+diff --git a/src/data/crypto.ts b/src/data/crypto.ts
+new file mode 100644
+index 0000000..3bf4a25
+--- /dev/null
++++ b/src/data/crypto.ts
+@@ -0,0 +1,120 @@
++// The device key, and sealing short secrets with it (D-16.51).
++//
++// One AES-GCM 256 key per browser profile, made by Web Crypto as non-extractable: code on this
++// site can encrypt and decrypt with it but can never read its bytes. IndexedDB keeps it in `meta`
++// as a structured clone of the CryptoKey. Each value is sealed under a fresh random 12-byte IV.
++// This protects copies of the raw storage files only; code running on the site can still use the
++// key, which Settings says plainly (D-16.7).
++
++import { transact, type PlatewiseDb } from './db';
++
++/** The `meta` key the device key is stored under. */
++export const DEVICE_KEY = 'deviceKey';
++
++const ALGORITHM = 'AES-GCM';
++const KEY_BITS = 256;
++/** Bytes of the random IV: the 96 bits AES-GCM is designed for. */
++export const IV_BYTES = 12;
++/** Bytes of the authentication tag AES-GCM appends to every sealed value. */
++const TAG_BYTES = 16;
++
++/** A sealed value as stored: its IV, and the encrypted bytes followed by the tag. */
++export interface Sealed {
++  iv: Uint8Array<ArrayBuffer>;
++  data: Uint8Array<ArrayBuffer>;
++}
++
++/** The browser's Web Crypto, or null where there is none (a page not served over https). */
++export function webCrypto(): SubtleCrypto | null {
++  // Typed as always present, but browsers leave it out of insecure pages.
++  return (globalThis.crypto as Crypto | undefined)?.subtle ?? null;
++}
++
++/** Makes a new device key: AES-GCM 256, non-extractable, for encrypting and decrypting only. */
++export function createDeviceKey(subtle: SubtleCrypto): Promise<CryptoKey> {
++  return subtle.generateKey({ name: ALGORITHM, length: KEY_BITS }, false, ['encrypt', 'decrypt']);
++}
++
++/**
++ * True for a key this module can seal and open with. Checked by its tag and fields rather than
++ * `instanceof`, because a key read back from storage may come from another realm.
++ */
++export function isDeviceKey(value: unknown): value is CryptoKey {
++  if (Object.prototype.toString.call(value) !== '[object CryptoKey]') return false;
++  const key = value as CryptoKey;
++  const algorithm = key.algorithm as Partial<AesKeyAlgorithm>;
++  return (
++    key.type === 'secret' &&
++    algorithm.name === ALGORITHM &&
++    algorithm.length === KEY_BITS &&
++    key.usages.includes('encrypt') &&
++    key.usages.includes('decrypt')
++  );
++}
++
++/** Encrypts `text` under `key` with a fresh random IV. */
++export async function seal(subtle: SubtleCrypto, key: CryptoKey, text: string): Promise<Sealed> {
++  const iv = globalThis.crypto.getRandomValues(new Uint8Array(IV_BYTES));
++  const data = await subtle.encrypt({ name: ALGORITHM, iv }, key, new TextEncoder().encode(text));
++  return { iv, data: new Uint8Array(data) };
++}
++
++/** The text sealed in `sealed`, or null when it cannot be opened (damaged, or another key). */
++export async function unseal(
++  subtle: SubtleCrypto,
++  key: CryptoKey,
++  sealed: Sealed,
++): Promise<string | null> {
++  try {
++    const plain = await subtle.decrypt({ name: ALGORITHM, iv: sealed.iv }, key, sealed.data);
++    return new TextDecoder('utf-8', { fatal: true }).decode(plain);
++  } catch {
++    return null;
++  }
++}
++
++/** A copy of stored bytes (a typed array or an ArrayBuffer, from any realm), or null. */
++function bytesOf(value: unknown): Uint8Array<ArrayBuffer> | null {
++  if (ArrayBuffer.isView(value)) {
++    return new Uint8Array(value.buffer, value.byteOffset, value.byteLength).slice();
++  }
++  if (Object.prototype.toString.call(value) === '[object ArrayBuffer]') {
++    return new Uint8Array(value as ArrayBuffer).slice();
++  }
++  return null;
++}
++
++/** The IV and sealed bytes of a stored value, or null when it does not have their shape. */
++export function readSealed(raw: unknown): Sealed | null {
++  if (typeof raw !== 'object' || raw === null) return null;
++  const fields = raw as { iv?: unknown; data?: unknown };
++  const iv = bytesOf(fields.iv);
++  const data = bytesOf(fields.data);
++  if (!iv || iv.length !== IV_BYTES || !data || data.length < TAG_BYTES) return null;
++  return { iv, data };
++}
++
++/** The stored device key, or null when there is none or the stored value is not a usable key. */
++export async function loadDeviceKey(db: PlatewiseDb): Promise<CryptoKey | null> {
++  const value = (await db.meta.get(DEVICE_KEY))?.value;
++  return isDeviceKey(value) ? value : null;
++}
++
++/**
++ * The stored device key, made and stored on first use. Safe to call at the same time from several
++ * places or tabs: they all end on the key stored first. Storing a new key also empties `secrets`,
++ * because values sealed by a key that is gone can never be opened again.
++ */
++export async function ensureDeviceKey(db: PlatewiseDb, subtle: SubtleCrypto): Promise<CryptoKey> {
++  const stored = await loadDeviceKey(db);
++  if (stored) return stored;
++  // Made before the transaction: a transaction ends when it waits on anything but the database.
++  const fresh = await createDeviceKey(subtle);
++  return transact(db, 'rw', ['meta', 'secrets'], async () => {
++    const current = await loadDeviceKey(db);
++    if (current) return current;
++    await db.secrets.clear();
++    await db.meta.put({ key: DEVICE_KEY, value: fresh });
++    return fresh;
++  });
++}
+diff --git a/src/data/repos/secretsRepo.test.ts b/src/data/repos/secretsRepo.test.ts
+new file mode 100644
+index 0000000..a25222e
+--- /dev/null
++++ b/src/data/repos/secretsRepo.test.ts
+@@ -0,0 +1,281 @@
++import { describe, expect, it } from 'vitest';
++import { freshDbOptions, openTestDb } from '../../test/db';
++import { DEVICE_KEY, isDeviceKey, readSealed } from '../crypto';
++import type { PlatewiseDb } from '../db';
++import { hasUnreadableData } from '../guard';
++import { stableText } from '../values';
++import {
++  SECRET_SLOTS,
++  SecretsUnavailableError,
++  createSecretsRepo,
++  isSecretSlot,
++  mask,
++  type SecretSlot,
++} from './secretsRepo';
++
++const GEMINI_KEY = 'AIzaSyD-0123456789abcdefghijklmnopqrstu';
++const FDC_KEY = 'fdc-key-0123456789';
++
++/** Bit-flips the first sealed byte of a stored row, as damage on disk would. */
++async function damage(db: PlatewiseDb, slot: SecretSlot): Promise<void> {
++  const sealed = readSealed(await db.secrets.get(slot));
++  if (!sealed) throw new Error(`expected a sealed value in ${slot}`);
++  const data = sealed.data.slice();
++  data[0] = (data[0] ?? 0) ^ 1;
++  await db.secrets.put({ id: slot, iv: sealed.iv, data });
++}
++
++/** True when `haystack` holds the bytes of `needle` anywhere. */
++function holdsBytes(haystack: Uint8Array, needle: Uint8Array): boolean {
++  outer: for (let start = 0; start + needle.length <= haystack.length; start++) {
++    for (let i = 0; i < needle.length; i++) {
++      if (haystack[start + i] !== needle[i]) continue outer;
++    }
++    return true;
++  }
++  return false;
++}
++
++describe('set and get', () => {
++  it('reads back a saved key, also after the database is reopened', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    await createSecretsRepo(db).set('gemini', GEMINI_KEY);
++
++    expect(await createSecretsRepo(db).get('gemini')).toBe(GEMINI_KEY);
++    db.close();
++    const reopened = await openTestDb(options);
++    expect(await createSecretsRepo(reopened).get('gemini')).toBe(GEMINI_KEY);
++  });
++
++  it('stores " sk-abc \\n" as "sk-abc" (R03.20)', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++
++    await repo.set('openai', ' sk-abc \n');
++
++    expect(await repo.get('openai')).toBe('sk-abc');
++  });
++
++  it('deletes the slot when the value is blank', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('openai', 'sk-abc');
++    await repo.set('fdc', FDC_KEY);
++
++    await repo.set('openai', '  \n\t');
++
++    expect(await repo.get('openai')).toBeNull();
++    expect(await db.secrets.get('openai')).toBeUndefined();
++    expect(await repo.get('fdc')).toBe(FDC_KEY);
++  });
++
++  it('keeps no plain key in the stored row', async () => {
++    const db = await openTestDb();
++    await createSecretsRepo(db).set('gemini', GEMINI_KEY);
++
++    const row = await db.secrets.get('gemini');
++    const sealed = readSealed(row);
++    expect(sealed?.iv).toHaveLength(12);
++    expect(Object.keys(row ?? {}).sort()).toEqual(['data', 'id', 'iv']);
++    const plain = new TextEncoder().encode(GEMINI_KEY);
++    expect(holdsBytes(sealed?.data ?? new Uint8Array(), plain)).toBe(false);
++    expect(holdsBytes(sealed?.data ?? new Uint8Array(), plain.slice(0, 8))).toBe(false);
++    expect(stableText(row)).not.toContain(GEMINI_KEY);
++    expect(stableText(await db.meta.toArray())).not.toContain(GEMINI_KEY);
++  });
++
++  it('keeps each slot apart', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await repo.set('fdc', FDC_KEY);
++    await repo.set('gemini', 'AIza-replaced-0001');
++
++    expect(await repo.get('gemini')).toBe('AIza-replaced-0001');
++    expect(await repo.get('fdc')).toBe(FDC_KEY);
++    expect(await repo.get('anthropic')).toBeNull();
++  });
++
++  it('refuses a slot that is neither a provider nor fdc, and writes nothing', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    const slot = 'apikey_gemini' as SecretSlot;
++
++    await expect(repo.set(slot, 'sk-abc')).rejects.toThrow(RangeError);
++    await expect(repo.get(slot)).rejects.toThrow(RangeError);
++    expect(await db.secrets.count()).toBe(0);
++    expect(await db.meta.get(DEVICE_KEY)).toBeUndefined();
++  });
++
++  it('saves two keys at the same time before any device key exists, and both read back', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++
++    await Promise.all([repo.set('gemini', GEMINI_KEY), repo.set('fdc', FDC_KEY)]);
++
++    expect(await repo.get('gemini')).toBe(GEMINI_KEY);
++    expect(await repo.get('fdc')).toBe(FDC_KEY);
++    expect(isDeviceKey((await db.meta.get(DEVICE_KEY))?.value)).toBe(true);
++  });
++});
++
++describe('slots', () => {
++  it('lists the slots that hold a key in a fixed order, never the values', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('fdc', FDC_KEY);
++    await repo.set('openai', 'sk-openai-0123456789');
++    await repo.set('gemini', GEMINI_KEY);
++
++    const held = await repo.slots();
++
++    expect(held).toEqual(['gemini', 'openai', 'fdc']);
++    expect(JSON.stringify(held)).not.toContain('sk-');
++  });
++
++  it('lists nothing when nothing is stored, and writes nothing', async () => {
++    const db = await openTestDb();
++
++    expect(await createSecretsRepo(db).slots()).toEqual([]);
++    expect(await db.meta.get(DEVICE_KEY)).toBeUndefined();
++  });
++
++  it('covers every provider and fdc', () => {
++    expect(SECRET_SLOTS.slice(0, 3)).toEqual(['gemini', 'openai', 'anthropic']);
++    expect(SECRET_SLOTS.at(-1)).toBe('fdc');
++    expect(SECRET_SLOTS.every(isSecretSlot)).toBe(true);
++    expect(isSecretSlot('apikey_gemini')).toBe(false);
++  });
++});
++
++describe('recovery (R03.27)', () => {
++  it('reads every slot as unset and empties the table when the device key is deleted, without throwing (R03.27)', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await repo.set('fdc', FDC_KEY);
++
++    await db.meta.delete(DEVICE_KEY);
++
++    await expect(repo.get('gemini')).resolves.toBeNull();
++    expect(await db.secrets.count()).toBe(0);
++    expect(await repo.get('fdc')).toBeNull();
++    expect(await repo.slots()).toEqual([]);
++  });
++
++  it('empties the table from slots() too when the device key is gone (R03.27)', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await db.meta.delete(DEVICE_KEY);
++
++    await expect(repo.slots()).resolves.toEqual([]);
++    expect(await db.secrets.count()).toBe(0);
++  });
++
++  it('reads every slot as unset and empties the table when one value cannot be opened (R03.27)', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await repo.set('fdc', FDC_KEY);
++    await damage(db, 'gemini');
++
++    await expect(repo.get('gemini')).resolves.toBeNull();
++    expect(await db.secrets.count()).toBe(0);
++    expect(await repo.get('fdc')).toBeNull();
++  });
++
++  it('lists nothing and empties the table when any stored value cannot be opened (R03.27)', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await repo.set('fdc', FDC_KEY);
++    await db.secrets.put({ id: 'openai', iv: 'not bytes', data: 42 });
++
++    await expect(repo.slots()).resolves.toEqual([]);
++    expect(await db.secrets.count()).toBe(0);
++  });
++
++  it('removes a stored device key that cannot be used, then saves under a new one', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await db.meta.put({ key: DEVICE_KEY, value: { broken: true } });
++
++    expect(await repo.get('gemini')).toBeNull();
++    expect(await db.secrets.count()).toBe(0);
++    expect(await db.meta.get(DEVICE_KEY)).toBeUndefined();
++
++    await repo.set('gemini', 'AIza-entered-again-01');
++    expect(await repo.get('gemini')).toBe('AIza-entered-again-01');
++  });
++
++  it('keeps unreadable keys out of the quarantine and the unreadable-data flag', async () => {
++    const db = await openTestDb();
++    const repo = createSecretsRepo(db);
++    await repo.set('gemini', GEMINI_KEY);
++    await damage(db, 'gemini');
++
++    await repo.get('gemini');
++
++    expect(await db.quarantine.count()).toBe(0);
++    expect(await hasUnreadableData(db)).toBe(false);
++  });
++
++  it('does not wipe a value saved over the failing one while it was being opened', async () => {
++    const db = await openTestDb();
++    const writer = createSecretsRepo(db);
++    await writer.set('gemini', GEMINI_KEY);
++    await damage(db, 'gemini');
++
++    // A Web Crypto whose first decrypt lets another save land before it reports its failure.
++    const real = globalThis.crypto.subtle;
++    let decrypts = 0;
++    const racing = Object.create(real) as SubtleCrypto;
++    racing.decrypt = async (...args: Parameters<SubtleCrypto['decrypt']>) => {
++      decrypts += 1;
++      if (decrypts === 1) await writer.set('gemini', 'AIza-saved-meanwhile-1');
++      return real.decrypt(...args);
++    };
++    const reader = createSecretsRepo(db, { subtle: racing });
++
++    expect(await reader.get('gemini')).toBeNull();
++    expect(await writer.get('gemini')).toBe('AIza-saved-meanwhile-1');
++  });
++
++  it('reads unset but keeps every value when the page has no Web Crypto', async () => {
++    const db = await openTestDb();
++    await createSecretsRepo(db).set('gemini', GEMINI_KEY);
++    const repo = createSecretsRepo(db, { subtle: null });
++
++    await expect(repo.get('gemini')).resolves.toBeNull();
++    await expect(repo.slots()).resolves.toEqual([]);
++    expect(await db.secrets.count()).toBe(1);
++    await expect(repo.set('fdc', FDC_KEY)).rejects.toThrow(SecretsUnavailableError);
++    await repo.set('gemini', ' ');
++    expect(await db.secrets.count()).toBe(0);
++  });
++});
++
++describe('mask', () => {
++  it('shows only the first and last 4 characters of a 40-character key (ACC-E14-1)', () => {
++    const key = 'sk-proj-ABCDEFGHIJKLMNOPQRSTUVWXYZ01wxyz';
++    expect(key).toHaveLength(40);
++
++    const shown = mask(key);
++
++    expect(shown).toBe('sk-p…wxyz');
++    expect(shown).not.toContain('ABCD');
++  });
++
++  it('shows dots only, always 8 of them, for 8 characters or fewer', () => {
++    expect(mask('12345678')).toBe('••••••••');
++    expect(mask('abc')).toBe('••••••••');
++    expect(mask('123456789')).toBe('1234…6789');
++  });
++
++  it('is empty for an empty value', () => {
++    expect(mask('')).toBe('');
++  });
++});
+diff --git a/src/data/repos/secretsRepo.ts b/src/data/repos/secretsRepo.ts
+new file mode 100644
+index 0000000..4adcc05
+--- /dev/null
++++ b/src/data/repos/secretsRepo.ts
+@@ -0,0 +1,185 @@
++// The person's API keys: one row per slot in `secrets`, each sealed with the device key (D-16.7,
++// D-16.51). A value is trimmed on save (a pasted newline breaks sign-in, R03.20) and a blank value
++// deletes the slot. Reading never stops the app (R03.27): when the device key is missing or a
++// value cannot be opened, every slot reads as unset and the table is emptied, so the person enters
++// their keys again.
++//
++// On purpose outside the record guard: an unreadable row is emptied, not copied into the
++// quarantine, so key material never sits in a table that export, repair or backup code reads.
++// Export and backup code never read this table either (P09 checks it).
++
++import { PROVIDER_IDS, type ProviderId } from '../../ai/catalog/providers';
++import {
++  DEVICE_KEY,
++  ensureDeviceKey,
++  isDeviceKey,
++  loadDeviceKey,
++  readSealed,
++  seal,
++  unseal,
++  webCrypto,
++  type Sealed,
++} from '../crypto';
++import { transact, type PlatewiseDb } from '../db';
++import type { LooseRow } from '../schema';
++import { sameData } from '../values';
++
++/** Where keys go: one slot per AI provider, and `fdc` for the FoodData Central key. */
++export type SecretSlot = ProviderId | 'fdc';
++
++/** Every slot, in the order `slots()` lists them. */
++export const SECRET_SLOTS: readonly SecretSlot[] = [...PROVIDER_IDS, 'fdc'];
++
++export function isSecretSlot(value: unknown): value is SecretSlot {
++  return typeof value === 'string' && (SECRET_SLOTS as readonly string[]).includes(value);
++}
++
++/** A stored row: the slot and its sealed value. A type literal, so it fits the table's row type. */
++export type SecretRow = {
++  id: SecretSlot;
++  iv: Sealed['iv'];
++  data: Sealed['data'];
++};
++
++/** Saving a key needs Web Crypto, which browsers leave out of pages not served over https. */
++export class SecretsUnavailableError extends Error {
++  override readonly name = 'SecretsUnavailableError';
++
++  constructor() {
++    super('Keys cannot be saved here: this page has no Web Crypto');
++  }
++}
++
++export interface SecretsRepoOptions {
++  /** The Web Crypto to use; the browser's by default, null for none. */
++  subtle?: SubtleCrypto | null;
++}
++
++export interface SecretsRepo {
++  /** Stores `value`, trimmed, in `slot`; a blank value deletes the slot. */
++  set(slot: SecretSlot, value: string): Promise<void>;
++  /**
++   * The value in `slot`, or null when there is none. Null also when it cannot be opened: then
++   * every slot is emptied.
++   */
++  get(slot: SecretSlot): Promise<string | null>;
++  /** The slots that hold a value, in `SECRET_SLOTS` order. Never returns the values. */
++  slots(): Promise<SecretSlot[]>;
++}
++
++/** A row that could not be opened, as it was read. */
++interface Failed {
++  id: string;
++  raw: LooseRow;
++}
++
++/** How many characters `mask` shows at each end. */
++const SHOWN = 4;
++/** What a value too short to show any of it masks to (always the same length). */
++const DOTS = '••••••••';
++
++/** A saved key as Settings shows it: the first and last 4 characters (ACC-E14-1). */
++export function mask(value: string): string {
++  if (value === '') return '';
++  if (value.length <= SHOWN * 2) return DOTS;
++  return `${value.slice(0, SHOWN)}…${value.slice(-SHOWN)}`;
++}
++
++function checkSlot(slot: SecretSlot): void {
++  if (!isSecretSlot(slot)) throw new RangeError(`${String(slot)} is not a key slot`);
++}
++
++export function createSecretsRepo(db: PlatewiseDb, options: SecretsRepoOptions = {}): SecretsRepo {
++  const subtle = (): SubtleCrypto | null =>
++    options.subtle === undefined ? webCrypto() : options.subtle;
++
++  /** The device key and the rows, read together. */
++  function snapshot<T>(rows: () => Promise<T>): Promise<{ key: CryptoKey | null; rows: T }> {
++    return transact(db, 'r', ['meta', 'secrets'], async () => ({
++      key: await loadDeviceKey(db),
++      rows: await rows(),
++    }));
++  }
++
++  /**
++   * Empties the table (R03.27): the device key is missing, or `failed` could not be opened. Checks
++   * again inside the transaction, so a key or value saved since the read is not wiped.
++   */
++  async function forgetAll(failed?: Failed): Promise<void> {
++    await transact(db, 'rw', ['meta', 'secrets'], async () => {
++      const stored = await db.meta.get(DEVICE_KEY);
++      if (failed) {
++        if (!sameData(await db.secrets.get(failed.id), failed.raw)) return;
++      } else if (isDeviceKey(stored?.value)) {
++        // A save stored a key since the read; storing it emptied the table already.
++        return;
++      }
++      await db.secrets.clear();
++      if (stored !== undefined && !isDeviceKey(stored.value)) await db.meta.delete(DEVICE_KEY);
++    });
++  }
++
++  /** Opens one stored row, or null when it cannot be opened. */
++  async function open(cipher: SubtleCrypto, key: CryptoKey, raw: LooseRow): Promise<string | null> {
++    const sealed = readSealed(raw);
++    return sealed ? unseal(cipher, key, sealed) : null;
++  }
++
++  return {
++    async set(slot, value) {
++      checkSlot(slot);
++      const text = value.trim();
++      if (text === '') {
++        await transact(db, 'rw', ['secrets'], async () => {
++          await db.secrets.delete(slot);
++        });
++        return;
++      }
++      const cipher = subtle();
++      if (!cipher) throw new SecretsUnavailableError();
++      // A usable stored key is never replaced (only a missing or unusable one is), so the key
++      // this value is sealed with is still the stored one when the row is written.
++      const key = await ensureDeviceKey(db, cipher);
++      const row: SecretRow = { id: slot, ...(await seal(cipher, key, text)) };
++      await transact(db, 'rw', ['secrets'], async () => {
++        await db.secrets.put(row);
++      });
++    },
++
++    async get(slot) {
++      checkSlot(slot);
++      const cipher = subtle();
++      // Without Web Crypto the values cannot be opened here, but they are fine: keep them.
++      if (!cipher) return null;
++      const { key, rows: raw } = await snapshot(() => db.secrets.get(slot));
++      if (raw === undefined) return null;
++      if (!key) {
++        await forgetAll();
++        return null;
++      }
++      const text = await open(cipher, key, raw);
++      if (text === null) await forgetAll({ id: slot, raw });
++      return text;
++    },
++
++    async slots() {
++      const cipher = subtle();
++      if (!cipher) return [];
++      const { key, rows } = await snapshot(() => db.secrets.toArray());
++      if (rows.length === 0) return [];
++      if (!key) {
++        await forgetAll();
++        return [];
++      }
++      // Every value is opened, so a slot listed here also reads back through `get`.
++      for (const raw of rows) {
++        if ((await open(cipher, key, raw)) === null) {
++          await forgetAll({ id: raw.id, raw });
++          return [];
++        }
++      }
++      const held = new Set(rows.map((row) => row.id));
++      return SECRET_SLOTS.filter((slot) => held.has(slot));
++    },
++  };
++}
+diff --git a/src/data/storage.test.ts b/src/data/storage.test.ts
+new file mode 100644
+index 0000000..7b64c43
+--- /dev/null
++++ b/src/data/storage.test.ts
+@@ -0,0 +1,182 @@
++import { describe, expect, it, vi } from 'vitest';
++import { freshDbOptions, openTestDb } from '../test/db';
++import type { PlatewiseDb } from './db';
++import { hasUnreadableData } from './guard';
++import {
++  PERSIST_ASKED_KEY,
++  estimate,
++  persistenceStatus,
++  requestPersistence,
++  type StorageManagerLike,
++} from './storage';
++
++/** A browser storage manager that grants (or refuses) persistence when asked. */
++function fakeStorage({ persisted = false, grant = false } = {}) {
++  const state = { persisted };
++  return {
++    persist: vi.fn(() => {
++      if (grant) state.persisted = true;
++      return Promise.resolve(grant);
++    }),
++    persisted: vi.fn(() => Promise.resolve(state.persisted)),
++    estimate: vi.fn(() => Promise.resolve({ usage: 1_234_567, quota: 300_000_000 })),
++  };
++}
++
++async function askedFlag(db: PlatewiseDb): Promise<unknown> {
++  return (await db.settings.get(PERSIST_ASKED_KEY))?.value;
++}
++
++describe('requestPersistence', () => {
++  it('calls persist() once when asked twice in a row, and records the ask', async () => {
++    const db = await openTestDb();
++    const storage = fakeStorage({ grant: false });
++
++    expect(await requestPersistence(db, { storage })).toBe('best-effort');
++    expect(await requestPersistence(db, { storage })).toBe('best-effort');
++
++    expect(storage.persist).toHaveBeenCalledTimes(1);
++    expect(await askedFlag(db)).toBe(true);
++  });
++
++  it('calls persist() once when asked twice at the same time, also from two tabs', async () => {
++    const options = freshDbOptions();
++    const one = await openTestDb(options);
++    const other = await openTestDb(options);
++    const storage = fakeStorage({ grant: true });
++
++    const answers = await Promise.all([
++      requestPersistence(one, { storage }),
++      requestPersistence(one, { storage }),
++      requestPersistence(other, { storage }),
++    ]);
++
++    expect(storage.persist).toHaveBeenCalledTimes(1);
++    expect(answers[0]).toBe('persistent');
++    expect(answers[1]).toBe('persistent');
++  });
++
++  it('does not ask again on a later start of the app', async () => {
++    const options = freshDbOptions();
++    const first = await openTestDb(options);
++    await requestPersistence(first, { storage: fakeStorage() });
++    first.close();
++
++    const later = await openTestDb(options);
++    const storage = fakeStorage();
++    expect(await requestPersistence(later, { storage })).toBe('best-effort');
++    expect(storage.persist).not.toHaveBeenCalled();
++  });
++
++  it('reports a grant as persistent', async () => {
++    const db = await openTestDb();
++    const storage = fakeStorage({ grant: true });
++
++    expect(await requestPersistence(db, { storage })).toBe('persistent');
++    expect(await persistenceStatus({ storage })).toBe('persistent');
++  });
++
++  it('does not ask when storage is already persistent', async () => {
++    const db = await openTestDb();
++    const storage = fakeStorage({ persisted: true });
++
++    expect(await requestPersistence(db, { storage })).toBe('persistent');
++    expect(storage.persist).not.toHaveBeenCalled();
++    expect(await askedFlag(db)).toBeUndefined();
++  });
++
++  it('reads unknown without navigator.storage, asks nothing and never throws (R06.19)', async () => {
++    const db = await openTestDb();
++    expect('storage' in navigator).toBe(false);
++
++    await expect(requestPersistence(db)).resolves.toBe('unknown');
++    await expect(requestPersistence(db, { storage: null })).resolves.toBe('unknown');
++    expect(await askedFlag(db)).toBeUndefined();
++  });
++
++  it('reads unknown when persist() fails, after recording the ask', async () => {
++    const db = await openTestDb();
++    const storage: StorageManagerLike = {
++      persist: vi.fn(() => Promise.reject(new Error('not allowed'))),
++      persisted: () => Promise.resolve(false),
++    };
++
++    await expect(requestPersistence(db, { storage })).resolves.toBe('unknown');
++    expect(await askedFlag(db)).toBe(true);
++  });
++
++  it('asks without persisted(), and asks nothing without persist()', async () => {
++    const db = await openTestDb();
++    const persist = vi.fn(() => Promise.resolve(true));
++
++    expect(await requestPersistence(db, { storage: { persist } })).toBe('persistent');
++    expect(persist).toHaveBeenCalledTimes(1);
++
++    const other = await openTestDb();
++    const persisted = vi.fn(() => Promise.resolve(false));
++    expect(await requestPersistence(other, { storage: { persisted } })).toBe('best-effort');
++    expect(await askedFlag(other)).toBeUndefined();
++  });
++
++  it('keeps an unreadable stored flag aside, then records the ask over it', async () => {
++    const db = await openTestDb();
++    await db.settings.put({ key: PERSIST_ASKED_KEY, value: 'yes please' });
++    const storage = fakeStorage();
++
++    await requestPersistence(db, { storage });
++
++    expect(storage.persist).toHaveBeenCalledTimes(1);
++    expect(await askedFlag(db)).toBe(true);
++    expect(await db.quarantine.count()).toBe(1);
++    expect(await hasUnreadableData(db)).toBe(true);
++  });
++
++  it('does not ask when the ask cannot be recorded, and does not throw', async () => {
++    const db = await openTestDb();
++    db.close();
++    const storage = fakeStorage();
++
++    await expect(requestPersistence(db, { storage })).resolves.toBe('best-effort');
++    expect(storage.persist).not.toHaveBeenCalled();
++  });
++});
++
++describe('persistenceStatus', () => {
++  it('follows what the browser says now', async () => {
++    expect(await persistenceStatus({ storage: fakeStorage({ persisted: true }) })).toBe(
++      'persistent',
++    );
++    expect(await persistenceStatus({ storage: fakeStorage() })).toBe('best-effort');
++  });
++
++  it('is unknown without navigator.storage or when the call fails (R06.19)', async () => {
++    expect(await persistenceStatus()).toBe('unknown');
++    expect(await persistenceStatus({ storage: null })).toBe('unknown');
++    expect(await persistenceStatus({ storage: {} })).toBe('unknown');
++    const failing = { persisted: () => Promise.reject(new Error('gone')) };
++    expect(await persistenceStatus({ storage: failing })).toBe('unknown');
++  });
++});
++
++describe('estimate', () => {
++  it('returns the bytes used and the quota', async () => {
++    expect(await estimate({ storage: fakeStorage() })).toEqual({
++      usage: 1_234_567,
++      quota: 300_000_000,
++    });
++  });
++
++  it('is null without the API, when it fails or when it leaves out a number', async () => {
++    expect(await estimate()).toBeNull();
++    expect(await estimate({ storage: null })).toBeNull();
++    expect(await estimate({ storage: { estimate: () => Promise.reject(new Error('no')) } })).toBe(
++      null,
++    );
++    expect(await estimate({ storage: { estimate: () => Promise.resolve({ usage: 10 }) } })).toBe(
++      null,
++    );
++    expect(
++      await estimate({ storage: { estimate: () => Promise.resolve({ usage: -1, quota: 5 }) } }),
++    ).toBeNull();
++  });
++});
+diff --git a/src/data/storage.ts b/src/data/storage.ts
+new file mode 100644
+index 0000000..207bbdc
+--- /dev/null
++++ b/src/data/storage.ts
+@@ -0,0 +1,132 @@
++// Keeping the browser from clearing our storage, and how much of it we use (D-16.8, R06.19).
++//
++// Browsers may clear a site's storage when space runs low, and Safari clears it after a week
++// without a visit unless the app is installed. `navigator.storage.persist()` asks the browser to
++// keep it. The app asks once per device, after the first logged entry (P04-08); Settings shows
++// whether storage is kept and how much is used (P09-15). Where a browser lacks these calls, or one
++// fails, the answer is `unknown` (or no estimate): nothing here throws.
++
++import { transact, type PlatewiseDb } from './db';
++import { guardKey, type Codec } from './guard';
++import { readSetting, type SettingKey } from './settingsSchema';
++
++/** Kept by the browser, may be cleared under pressure, or the browser cannot say. */
++export type PersistenceStatus = 'persistent' | 'best-effort' | 'unknown';
++
++/** Bytes used by this site and the most it may use. */
++export interface StorageUse {
++  usage: number;
++  quota: number;
++}
++
++/** The parts of `navigator.storage` used here; any of them may be missing. */
++export type StorageManagerLike = Partial<
++  Pick<StorageManager, 'persist' | 'persisted' | 'estimate'>
++>;
++
++export interface StorageOptions {
++  /** `navigator.storage` by default; null for none. */
++  storage?: StorageManagerLike | null;
++}
++
++/** The device-only setting that records that this device has asked. */
++export const PERSIST_ASKED_KEY = 'storage.persistAsked' satisfies SettingKey;
++
++function browserStorage(): StorageManagerLike | null {
++  try {
++    // Typed as always present, but missing from older browsers and pages not served over https.
++    return (globalThis.navigator as Navigator | undefined)?.storage ?? null;
++  } catch {
++    return null;
++  }
++}
++
++function managerOf(options: StorageOptions): StorageManagerLike | null {
++  return options.storage === undefined ? browserStorage() : options.storage;
++}
++
++async function statusOf(manager: StorageManagerLike | null): Promise<PersistenceStatus> {
++  if (typeof manager?.persisted !== 'function') return 'unknown';
++  try {
++    return (await manager.persisted()) ? 'persistent' : 'best-effort';
++  } catch {
++    return 'unknown';
++  }
++}
++
++/** Whether storage is kept by the browser now. */
++export function persistenceStatus(options: StorageOptions = {}): Promise<PersistenceStatus> {
++  return statusOf(managerOf(options));
++}
++
++function isAmount(value: unknown): value is number {
++  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
++}
++
++/** Bytes used and the quota, or null when the browser cannot say. */
++export async function estimate(options: StorageOptions = {}): Promise<StorageUse | null> {
++  const manager = managerOf(options);
++  if (typeof manager?.estimate !== 'function') return null;
++  try {
++    const { usage, quota } = await manager.estimate();
++    return isAmount(usage) && isAmount(quota) ? { usage, quota } : null;
++  } catch {
++    return null;
++  }
++}
++
++/** The `settings` row of the "asked" flag; any other row or value cannot be read. */
++const readAskedRow: Codec<boolean> = (raw) => {
++  if (typeof raw !== 'object' || raw === null) return null;
++  const { key, value } = raw as { key?: unknown; value?: unknown };
++  if (key !== PERSIST_ASKED_KEY) return null;
++  return readSetting(PERSIST_ASKED_KEY, value) ?? null;
++};
++
++/**
++ * Records that this device asks now, unless it (or another tab) already has. True when the caller
++ * may ask. Claimed before asking, so two tabs never both ask.
++ */
++function claimAsk(db: PlatewiseDb): Promise<boolean> {
++  return transact(db, 'rw', ['settings'], async () => {
++    if (readAskedRow(await db.settings.get(PERSIST_ASKED_KEY)) === true) return false;
++    // An unreadable stored value is kept aside before it is replaced.
++    await guardKey(db, 'settings', PERSIST_ASKED_KEY, readAskedRow);
++    await db.settings.put({ key: PERSIST_ASKED_KEY, value: true });
++    return true;
++  });
++}
++
++async function askOnce(db: PlatewiseDb, manager: StorageManagerLike | null) {
++  const now = await statusOf(manager);
++  if (now === 'persistent' || typeof manager?.persist !== 'function') return now;
++  try {
++    if (!(await claimAsk(db))) return now;
++  } catch {
++    // Without the record the ask could repeat on every start: leave it for another time.
++    return now;
++  }
++  try {
++    return (await manager.persist()) ? 'persistent' : 'best-effort';
++  } catch {
++    return 'unknown';
++  }
++}
++
++/** Per connection: the ask in progress, so calls at the same time share one. */
++const asking = new WeakMap<PlatewiseDb, Promise<PersistenceStatus>>();
++
++/**
++ * Asks the browser to keep the app's storage, once per device (D-16.8); later calls report the
++ * current state without asking again. Never rejects.
++ */
++export function requestPersistence(
++  db: PlatewiseDb,
++  options: StorageOptions = {},
++): Promise<PersistenceStatus> {
++  const running = asking.get(db);
++  if (running) return running;
++  const ask = askOnce(db, managerOf(options)).finally(() => asking.delete(db));
++  asking.set(db, ask);
++  return ask;
++}
+diff --git a/src/data/wipe.test.ts b/src/data/wipe.test.ts
+new file mode 100644
+index 0000000..7fae3b7
+--- /dev/null
++++ b/src/data/wipe.test.ts
+@@ -0,0 +1,313 @@
++import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
++import { freshDbOptions, openTestDb, type TestDbOptions } from '../test/db';
++import { createBus, type AppBus } from './bus';
++import type { PlatewiseDb } from './db';
++import { TABLE_NAMES, type TableName } from './schema';
++import { closeOnErase, eraseEverything, type CacheStore } from './wipe';
++
++let channels = 0;
++
++/** A bus channel name of its own for each test; open it twice for two tabs. */
++function channelName(): string {
++  channels += 1;
++  return `platewise-wipe-test-${channels}`;
++}
++
++function openBus(name: string): AppBus {
++  const bus = createBus(name);
++  onTestFinished(() => bus.close());
++  return bus;
++}
++
++/** Cache Storage holding `names`; `held` shows what is left. */
++function fakeCaches(names: string[]): CacheStore & { held: Set<string> } {
++  const held = new Set(names);
++  return {
++    held,
++    keys: () => Promise.resolve([...held]),
++    delete: (name: string) => Promise.resolve(held.delete(name)),
++  };
++}
++
++/** A connection from a tab that ignores `versionchange` and the bus: an older build. */
++function openHolder(options: TestDbOptions): Promise<IDBDatabase> {
++  return new Promise((resolve, reject) => {
++    const request = options.indexedDB.open(options.name);
++    request.onsuccess = () => {
++      const connection = request.result;
++      onTestFinished(() => connection.close());
++      resolve(connection);
++    };
++    request.onerror = () => reject(request.error ?? new Error('open failed'));
++  });
++}
++
++/** One row in every table. */
++async function fillEveryTable(db: PlatewiseDb): Promise<void> {
++  for (const name of TABLE_NAMES) {
++    const table = db.table(name);
++    if (name === 'quarantine') {
++      await table.add({ table: 'entries', key: 'e-1', at: 1, raw: {}, hash: '0' });
++    } else {
++      const keyPath = table.schema.primKey.keyPath as string;
++      await table.put({ [keyPath]: `${name}-1`, value: 1 });
++    }
++  }
++}
++
++async function counts(db: PlatewiseDb): Promise<Record<TableName, number>> {
++  const entries = await Promise.all(
++    TABLE_NAMES.map(async (name) => [name, await db.table(name).count()] as const),
++  );
++  return Object.fromEntries(entries) as Record<TableName, number>;
++}
++
++async function databaseNames(options: TestDbOptions): Promise<(string | undefined)[]> {
++  return (await options.indexedDB.databases()).map((info) => info.name);
++}
++
++afterEach(() => {
++  localStorage.clear();
++});
++
++describe('eraseEverything', () => {
++  it('deletes every table and our caches and storage keys, and nothing of other apps', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    await fillEveryTable(db);
++    expect(Object.values(await counts(db)).every((count) => count === 1)).toBe(true);
++    const caches = fakeCaches(['platewise-shell-v3', 'platewise-thumbs', 'another-app-v1']);
++    localStorage.setItem('platewise-appearance', 'dark');
++    localStorage.setItem('platewise-last-tab', 'home');
++    localStorage.setItem('another-app-token', 'keep me');
++
++    const result = await eraseEverything({
++      db,
++      name: options.name,
++      indexedDB: options.indexedDB,
++      bus: openBus(channelName()),
++      caches,
++      localStorage,
++    });
++
++    expect(result).toEqual({ kind: 'erased' });
++    expect(db.isOpen()).toBe(false);
++    expect(await databaseNames(options)).not.toContain(options.name);
++    const reopened = await openTestDb(options);
++    expect(Object.values(await counts(reopened)).every((count) => count === 0)).toBe(true);
++    expect([...caches.held]).toEqual(['another-app-v1']);
++    expect(localStorage.getItem('platewise-appearance')).toBeNull();
++    expect(localStorage.getItem('platewise-last-tab')).toBeNull();
++    expect(localStorage.getItem('another-app-token')).toBe('keep me');
++  });
++
++  it('posts erase while our connection is still open, before anything is deleted', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    const bus = openBus(channelName());
++    const seen: { type: string; open: boolean }[] = [];
++    bus.subscribe((message) => seen.push({ type: message.type, open: db.isOpen() }));
++
++    await eraseEverything({ db, ...options, bus, caches: null, localStorage: null });
++
++    expect(seen).toEqual([{ type: 'erase', open: true }]);
++  });
++
++  it('closes a second open connection, which hears erase and shows its notice once', async () => {
++    const options = freshDbOptions();
++    const channel = channelName();
++    const here = await openTestDb(options);
++    const there = await openTestDb(options);
++    const onErase = vi.fn();
++    const noticed = new Promise<void>((resolve) => {
++      closeOnErase(there, {
++        bus: openBus(channel),
++        onErase: () => {
++          onErase();
++          resolve();
++        },
++      });
++    });
++
++    const result = await eraseEverything({
++      db: here,
++      ...options,
++      bus: openBus(channel),
++      caches: null,
++      localStorage: null,
++    });
++    await noticed;
++
++    expect(result).toEqual({ kind: 'erased' });
++    expect(there.isOpen()).toBe(false);
++    expect(onErase).toHaveBeenCalledTimes(1);
++    expect(await databaseNames(options)).not.toContain(options.name);
++  });
++
++  it('reports blocked after one retry while another tab keeps the database open', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    const holder = await openHolder(options);
++    const bus = openBus(channelName());
++    const posted: string[] = [];
++    bus.subscribe((message) => posted.push(message.type));
++    const pause = vi.fn(() => Promise.resolve());
++    const caches = fakeCaches(['platewise-shell-v3']);
++    localStorage.setItem('platewise-appearance', 'dark');
++
++    const result = await eraseEverything({ db, ...options, bus, pause, caches, localStorage });
++
++    expect(result.kind).toBe('blocked');
++    expect(posted).toEqual(['erase', 'erase']);
++    expect(pause).toHaveBeenCalledTimes(1);
++    expect(caches.held.size).toBe(0);
++    expect(localStorage.getItem('platewise-appearance')).toBeNull();
++
++    // The delete stays queued and ends once that tab lets go.
++    holder.close();
++    if (result.kind !== 'blocked') throw new Error('expected a blocked erase');
++    expect(await result.finished).toBe('erased');
++    expect(await databaseNames(options)).not.toContain(options.name);
++  });
++
++  it('erases when the other tab lets go after the second broadcast', async () => {
++    const options = freshDbOptions();
++    const channel = channelName();
++    const db = await openTestDb(options);
++    const holder = await openHolder(options);
++    // A tab that only acts on the second erase message (it missed the first one).
++    let heard = 0;
++    openBus(channel).subscribe((message) => {
++      if (message.type === 'erase' && ++heard === 2) holder.close();
++    });
++
++    const result = await eraseEverything({
++      db,
++      ...options,
++      bus: openBus(channel),
++      // Never ends: only the other tab letting go can finish this erase.
++      pause: () => new Promise<void>(() => undefined),
++      caches: null,
++      localStorage: null,
++    });
++
++    expect(result).toEqual({ kind: 'erased' });
++    expect(heard).toBe(2);
++  });
++
++  it('reports a failed delete and leaves caches and storage keys alone', async () => {
++    const failure = new DOMException('The disk is not available', 'UnknownError');
++    const request = {
++      error: failure,
++      onsuccess: null as (() => void) | null,
++      onerror: null as (() => void) | null,
++      onblocked: null as (() => void) | null,
++    };
++    const factory = {
++      deleteDatabase: () => {
++        queueMicrotask(() => request.onerror?.());
++        return request;
++      },
++    } as unknown as IDBFactory;
++    const caches = fakeCaches(['platewise-shell-v3']);
++    localStorage.setItem('platewise-appearance', 'dark');
++
++    const result = await eraseEverything({
++      name: 'platewise-unreachable',
++      indexedDB: factory,
++      bus: openBus(channelName()),
++      caches,
++      localStorage,
++    });
++
++    expect(result).toEqual({ kind: 'failed', error: failure });
++    expect([...caches.held]).toEqual(['platewise-shell-v3']);
++    expect(localStorage.getItem('platewise-appearance')).toBe('dark');
++  });
++
++  it('erases without Cache Storage, which this page does not have', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    expect('caches' in globalThis).toBe(false);
++
++    const result = await eraseEverything({ db, ...options, bus: openBus(channelName()) });
++
++    expect(result).toEqual({ kind: 'erased' });
++  });
++
++  it('ignores storage that throws, and caches that fail to list', async () => {
++    const options = freshDbOptions();
++    const db = await openTestDb(options);
++    const broken = {
++      get length(): number {
++        throw new DOMException('Site data is blocked', 'SecurityError');
++      },
++      key: () => null,
++      removeItem: () => undefined,
++    };
++
++    const result = await eraseEverything({
++      db,
++      ...options,
++      bus: openBus(channelName()),
++      caches: { keys: () => Promise.reject(new Error('no')), delete: () => Promise.resolve(false) },
++      localStorage: broken,
++    });
++
++    expect(result).toEqual({ kind: 'erased' });
++  });
++});
++
++describe('closeOnErase', () => {
++  it('closes the connection when another tab posts erase, and shows the notice once', async () => {
++    const channel = channelName();
++    const db = await openTestDb();
++    const here = openBus(channel);
++    const there = openBus(channel);
++    const onErase = vi.fn();
++    closeOnErase(db, { bus: here, onErase });
++    let arrivals = 0;
++    const bothArrived = new Promise<void>((resolve) => {
++      here.subscribe(() => {
++        if (++arrivals === 2) resolve();
++      });
++    });
++
++    // The erasing tab posts twice when its delete is blocked.
++    there.post({ type: 'erase' });
++    there.post({ type: 'erase' });
++    await bothArrived;
++
++    expect(db.isOpen()).toBe(false);
++    expect(onErase).toHaveBeenCalledTimes(1);
++  });
++
++  it('ignores an erase posted by its own tab', async () => {
++    const db = await openTestDb();
++    const bus = openBus(channelName());
++    const onErase = vi.fn();
++    closeOnErase(db, { bus, onErase });
++
++    bus.post({ type: 'erase' });
++
++    expect(db.isOpen()).toBe(true);
++    expect(onErase).not.toHaveBeenCalled();
++  });
++
++  it('stops listening when told to', async () => {
++    const channel = channelName();
++    const db = await openTestDb();
++    const here = openBus(channel);
++    const there = openBus(channel);
++    const onErase = vi.fn();
++    const stop = closeOnErase(db, { bus: here, onErase });
++    stop();
++    const arrived = new Promise<void>((resolve) => here.subscribe(() => resolve()));
++
++    there.post({ type: 'erase' });
++    await arrived;
++
++    expect(db.isOpen()).toBe(true);
++    expect(onErase).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/data/wipe.ts b/src/data/wipe.ts
+new file mode 100644
+index 0000000..8b8c4c0
+--- /dev/null
++++ b/src/data/wipe.ts
+@@ -0,0 +1,175 @@
++// Erasing everything the app keeps in this browser (06 §3.15 and §5). This is the only code that
++// deletes the database.
++//
++// In order: tell the other tabs (`erase` on the bus: they close their connection and show a
++// notice), close our connection, delete the database (every table at once: diary, photos, keys,
++// settings, quarantine), then remove the app's own Cache Storage entries and `localStorage` keys,
++// both named with `platewise-`. Nothing else on the origin is touched. Forgetting a running backup
++// and stopping reminder timers happen before this call, in the Erase action (P09-15; R06.5, R06.10).
++
++import { appBus, type AppBus } from './bus';
++import type { PlatewiseDb } from './db';
++import { DB_NAME } from './schema';
++
++/** The name prefix of every cache and `localStorage` key the app owns. */
++export const OWNED_PREFIX = 'platewise-';
++
++/** How long a blocked delete waits for the other tabs after asking them a second time. */
++export const BLOCKED_GRACE_MS = 1_500;
++
++/** The parts of Cache Storage erase uses. */
++export type CacheStore = Pick<CacheStorage, 'keys' | 'delete'>;
++/** The parts of `localStorage` erase uses. */
++export type KeyValueStore = Pick<Storage, 'length' | 'key' | 'removeItem'>;
++
++export interface EraseOptions {
++  /** This tab's connection, closed before the delete. */
++  db?: PlatewiseDb;
++  /** The database to delete: `db`'s, else the app's. */
++  name?: string;
++  /** IndexedDB factory; the browser's by default. */
++  indexedDB?: IDBFactory;
++  /** Where `erase` is posted; the app's bus by default. */
++  bus?: AppBus;
++  /** Cache Storage; the browser's by default, null for none. */
++  caches?: CacheStore | null;
++  /** `localStorage`; the browser's by default, null for none. */
++  localStorage?: KeyValueStore | null;
++  /** The wait for other tabs after a blocked delete; `BLOCKED_GRACE_MS` by default. */
++  pause?: () => Promise<void>;
++}
++
++/** How a queued delete ended. */
++export type DeleteEnd = 'erased' | 'failed';
++
++export type EraseResult =
++  | { kind: 'erased' }
++  /**
++   * Another tab still holds the database open. The delete stays queued and ends once that tab
++   * closes (`finished`); the app's own caches and keys are already gone.
++   */
++  | { kind: 'blocked'; finished: Promise<DeleteEnd> }
++  /** The database could not be deleted; nothing else was removed. */
++  | { kind: 'failed'; error: unknown };
++
++function owned(name: string): boolean {
++  return name.startsWith(OWNED_PREFIX);
++}
++
++function browserCaches(): CacheStore | null {
++  // Typed as always present, but browsers leave it out of pages not served over https.
++  return (globalThis.caches as CacheStorage | undefined) ?? null;
++}
++
++function browserStorage(): KeyValueStore | null {
++  try {
++    // Reading it throws where the browser blocks site data.
++    return (globalThis.localStorage as Storage | undefined) ?? null;
++  } catch {
++    return null;
++  }
++}
++
++function graceWait(): Promise<void> {
++  return new Promise((resolve) => setTimeout(resolve, BLOCKED_GRACE_MS));
++}
++
++/** Starts deleting `name`: how the request ends, and whether it had to wait for other tabs. */
++function startDelete(factory: IDBFactory, name: string) {
++  const request = factory.deleteDatabase(name);
++  const finished = new Promise<DeleteEnd>((resolve) => {
++    request.onsuccess = () => resolve('erased');
++    request.onerror = () => resolve('failed');
++  });
++  const blocked = new Promise<'blocked'>((resolve) => {
++    request.onblocked = () => resolve('blocked');
++  });
++  return { finished, blocked, error: () => request.error };
++}
++
++/** Deletes the app's own caches. They hold app files only, so a failure is left for next time. */
++async function removeOwnedCaches(store: CacheStore | null): Promise<void> {
++  if (!store) return;
++  try {
++    const names = (await store.keys()).filter(owned);
++    await Promise.all(names.map((name) => store.delete(name).catch(() => false)));
++  } catch {
++    // The service worker replaces its caches on its next update.
++  }
++}
++
++/** Removes the app's own `localStorage` keys. */
++function removeOwnedKeys(store: KeyValueStore | null): void {
++  if (!store) return;
++  try {
++    const keys: string[] = [];
++    for (let i = 0; i < store.length; i++) {
++      const key = store.key(i);
++      if (key !== null && owned(key)) keys.push(key);
++    }
++    for (const key of keys) store.removeItem(key);
++  } catch {
++    // Site data blocked by the browser: there is nothing of ours to remove.
++  }
++}
++
++/**
++ * Erases the database, the app's caches and its `localStorage` keys, after telling the other
++ * tabs. Never rejects: the result says whether the database is gone, still queued behind another
++ * tab, or could not be deleted.
++ */
++export async function eraseEverything(options: EraseOptions = {}): Promise<EraseResult> {
++  const bus = options.bus ?? appBus();
++  const factory = options.indexedDB ?? (globalThis.indexedDB as IDBFactory | undefined);
++  const name = options.name ?? options.db?.name ?? DB_NAME;
++
++  bus.post({ type: 'erase' });
++  options.db?.close();
++  if (!factory) return { kind: 'failed', error: new Error('IndexedDB is not available') };
++
++  let deletion: ReturnType<typeof startDelete>;
++  try {
++    deletion = startDelete(factory, name);
++  } catch (error) {
++    return { kind: 'failed', error };
++  }
++
++  let outcome = await Promise.race([deletion.finished, deletion.blocked]);
++  if (outcome === 'blocked') {
++    // A delete cannot be cancelled, and a second request would only queue behind this one. So
++    // the retry asks the other tabs once more and waits one more round on the same request.
++    bus.post({ type: 'erase' });
++    const pause = options.pause ?? graceWait;
++    outcome = await Promise.race([deletion.finished, pause().then(() => 'blocked' as const)]);
++  }
++  if (outcome === 'failed') return { kind: 'failed', error: deletion.error() };
++
++  await removeOwnedCaches(options.caches === undefined ? browserCaches() : options.caches);
++  removeOwnedKeys(options.localStorage === undefined ? browserStorage() : options.localStorage);
++  return outcome === 'blocked'
++    ? { kind: 'blocked', finished: deletion.finished }
++    : { kind: 'erased' };
++}
++
++export interface CloseOnEraseOptions {
++  /** Where `erase` arrives; the app's bus by default. */
++  bus?: AppBus;
++  /** Shows the "erased in another tab" notice. */
++  onErase?: () => void;
++}
++
++/**
++ * In every tab: when another tab erases everything, closes this tab's connection and calls
++ * `onErase` once. Returns the function that stops listening.
++ */
++export function closeOnErase(db: PlatewiseDb, options: CloseOnEraseOptions = {}): () => void {
++  const bus = options.bus ?? appBus();
++  const stop = bus.subscribe((message, origin) => {
++    // The erasing tab closes its own connection and moves on by itself.
++    if (message.type !== 'erase' || origin !== 'other-tab') return;
++    stop();
++    db.close();
++    options.onErase?.();
++  });
++  return stop;
++}

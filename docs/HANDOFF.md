@@ -1,34 +1,45 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 01:37 IST (Agent 2). P00 and P01 complete; 56/176 tasks; the app opens, sets up with defaults and shows Home. The user started the new
-session as **Agent 2** (Account 2) and gave it the turn; Agent 1 session 2 has stopped (routines off,
-pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
+Updated: 2026-10-27 01:42 IST (Agent 2, last entry). **Handoff #2: Agent 2 → Agent 1**, at the
+user's request (Agent 2 at 70 %). 56/176 tasks; P00 and P01 complete; the app opens, sets up with
+defaults and shows Home. The lock is `AGENT_1 PAUSED` until Agent 1 resumes. Agent 2 has stopped:
+its builder is stopped, its routines are off, and it pushes nothing more until the turn comes back.
 
 ## New session: start here
 
+For Agent 1 (or any new session) taking the turn from Agent 2:
+
 1. Re-create the machine state (a fresh container has none of it):
    - `git clone https://github.com/apoorvdarshan/fud-ai.git /root/reference/fud-ai && git -C
-     /root/reference/fud-ai checkout 10e14b67116c52b515d2389621266e32b3a99840` (outside the repo).
+     /root/reference/fud-ai checkout 10e14b67116c52b515d2389621266e32b3a99840` (outside the repo;
+     about 2.7 GB, takes a few minutes).
    - `pnpm install --frozen-lockfile` at the repository root.
-   - `mkdir -p /root/wt/patches /root/rea-lab/{evidence,parity,captures}`; copy
-     `docs/handoff/builder-rules.md` to `/root/wt/builder-rules.md` (builders read it there); copy
-     `extract-patch.sh` and `land-patches.sh` from the clean-room-rebuild skill's `scripts/` to
-     `/root/wt/`.
-2. Verify the snapshot before anything else: `pnpm lint && pnpm fmt:check && pnpm typecheck` and
-   `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`. Session 2 left it green (local
-   full loop and GitHub CI run 5 on dc4efdd). Write the result under "Resume notes" below.
-3. Set the lock and status: `.agents/turn.json` `{turn: AGENT_1, status: ACTIVE}`, `.agents/agent-1.json`
-   `state: ACTIVE` with your own usage reading; add a row to `.agents/usage-log-agent-1.md`; push with
-   `.agents/agent-sync.sh`.
-4. Arm the usage guard for **your** session (session 2's routines were bound to session 2 and are off):
-   a `send_later` check-in (30 min below 75 %, 10 min from 75 % with builders running) and one hourly
-   auto-continue `create_trigger` bound to your session. Prompts: the skill's
-   `assets/routine-prompts.md`. Times in IST.
-5. Launch wave 2: four worktrees `/root/wt/wt-{p00s2,p00s4,p00s5,p01b1}` detached at the branch head,
-   install each sequentially, replace `<BASE>` in `docs/handoff/wave2/w2-*.txt` with the short sha,
-   and launch one builder per prompt in the background. Prompts and owned paths do not overlap except
-   `src/i18n/en.ts` (S2 adds `appearance`, S4 may add `shell`: one line each, merge by hand).
-6. Then land, verify (`bash scripts/ci-local.sh`) and push as below, and continue with "Next".
+   - `mkdir -p /root/wt/patches /root/wt/prompts /root/rea-lab/{evidence,parity,captures}`; copy
+     `docs/handoff/builder-rules.md` to `/root/wt/builder-rules.md`; copy `extract-patch.sh` and
+     `land-patches.sh` from the clean-room-rebuild skill's `scripts/` to `/root/wt/`.
+2. Verify the head: `pnpm lint && pnpm fmt:check && pnpm typecheck` and
+   `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref` (or the full loop,
+   `bash scripts/ci-local.sh`). Agent 2 left it green: last full loop on the code of 472dbc6 (unit
+   1919/1919 + 1 expected fail in 127 files, check 6/6, bundle 117.22 kB, e2e 1/1); later commits
+   are docs and `.agents/` only. Write the result under "Resume notes".
+3. Take the lock: `.agents/turn.json` `{turn: AGENT_1, status: ACTIVE, by: AGENT_1}`,
+   `.agents/agent-1.json` `state: ACTIVE` with your own usage reading, a row in
+   `.agents/usage-log-agent-1.md`; push with `.agents/agent-sync.sh`. Do not edit Agent 2's files.
+4. Arm your own usage guard (Agent 2's routines are off): a `send_later` check-in (30 min below
+   75 %, 10 min from 75 %) and one hourly auto-continue `create_trigger` bound to your session;
+   prompts in the skill's `assets/routine-prompts.md`. Times in IST.
+5. Land the unfinished P02 S5 patch first: `.agents/wip/wave7/p02s5.patch` (base in
+   `p02s5.patch.base`, 71e00bb; prompt `docs/handoff/wave7/w7-p02s5.txt`). State: the builder had
+   written all 10 files (P02-12 crypto + secrets repository, P02-14 wipe + storage, both task notes)
+   and was stopped while starting its final checks, so it wrote no final report. Agent 2 ran once in
+   its worktree: those 4 test files 59/59, lint, typecheck and fmt:check clean. **Not run**: the
+   full loop, `check --require-ref`, and a read of the notes' compare checklists. Apply it in a
+   verify worktree with `land-patches.sh` (it touches only new files), have a builder (or yourself)
+   finish the compare step and the notes, run the full loop, map R03.27 and ACC-E14-1 in the
+   ledgers, commit as `platewise(P02-12, P02-14): …`, then delete the patch files.
+6. Continue with "Next". Builders: at most 4 at a time on 4 cores; prompts in the style of
+   `docs/handoff/wave7/`; land each slice with the full loop and the ledger updates (see "How to
+   resume").
 
 ## Where things are
 
@@ -76,27 +87,23 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## In progress
 
-- Landed since wave 3: P03 A, P01 C, P04 S1, P03 S1, P02 S0, P03 S2, P04 S2, P02 S1–S4, P04 S4,
-  P04 S3 (321a511) and the quick-start wiring (472dbc6; ci-local on that head: unit 1919/1919 + 1
-  expected fail in 127 files, check 6/6, bundle 117.22 kB, e2e 1/1; the production build walked in
-  Chromium from an empty database to Home). **Progress: 56/176 tasks** (P00 10/10, P01 19/19,
-  P02 12/15, P03 6/19, P04 9/14).
-- Running: P02 S5 (P02-12/14 secrets, erase, storage) in `/root/wt/wt-p02s5`, base 71e00bb,
-  prompt `docs/handoff/wave7/w7-p02s5.txt`.
-- Usage: Agent 2 at 70 % (01:36 IST); no new builders this window (75 % band near). The window
-  resets at 02:40 IST; the hourly auto-continue resumes then.
-- If this session dies, the worktrees and patches are gone with the container: relaunch P02 S5
-  from its prompt.
+Nothing running. **Progress: 56/176 tasks** (P00 10/10, P01 19/19, P02 12/15, P03 6/19,
+P04 9/14; P05–P10 0). Last code commit 472dbc6, green. Unfinished and unverified: P02 S5 as a patch
+in `.agents/wip/wave7/` (see step 5 above).
 
 ## Next
 
-1. Land P02 S5. After the reset: P02-15 data hooks (wrap the factory and namespace repositories;
-   AppData can then shrink), P03 wave B S3–S5 (adapters, image and parsing, prompts), P04 wave B
-   (P04-10..13: Home, manual entry, diary rows, placeholders and the settings hub; screens plug in
-   by replacing their line in `src/app/RouteScreen.tsx`), then P04-14 (walking-skeleton e2e and
-   parity scenario, Demo 1), P03 wave B S3–S5, P04 wave B (P04-10..13 screens) and C (P04-14 e2e),
-   P04 S3 (app shell) and S4 (diary service, quick start), toward the walking skeleton (Demo 1),
-   then P05–P10.
+1. Land P02 S5 from `.agents/wip/wave7/` (step 5 above): P02 then 14/15.
+2. P02-15 data hooks (`src/data/hooks.ts`): wrap the factory repositories (settings, profile,
+   weight, body fat, water, fasts, saved meals, Coach) and the namespace ones (diary, photos,
+   drafts) for screens; `AppData` (`src/services/appData.ts`) can then shrink.
+3. P03 wave B S3–S5 (adapters P03-07..09, image and parsing P03-10..14, prompts P03-15/16), then
+   P03 wave C (client, tasks, CORS probe, P03-17..19; needs P02-12 secrets).
+4. P04 wave B (P04-10..13: Home, manual entry, diary rows, placeholders and the settings hub;
+   screens plug in by replacing their line in `src/app/RouteScreen.tsx`), then P04-14 (walking-
+   skeleton e2e and parity scenario): **Demo 1**.
+5. Then P05 onboarding, P06 logging flows, P07 Home depth and trackers, P08 Coach, P09 settings and
+   platform, P10 hardening and release.
 
 ## Open questions for the user
 
@@ -230,20 +237,30 @@ pushes nothing more). Agent 2 holds the lock (`ACTIVE`) and works on `main`.
 
 ## Usage guard
 
-Two agents: Agent 1 (Account 1, session 2 stopped at 76 %, `READY`) and Agent 2 (Account 2, this
-session, holds the turn). `.agents/turn.json` (lock), `.agents/agent-1.json` (status)
-and `.agents/usage-log-agent-1.md` (one row per check, IST) follow the skill's two-agent protocol, so
-a second agent can join with `.agents/wait-for-turn.sh AGENT_2`. Bands: below 75 % builders allowed;
-75–89 % no new builders, small tasks only, this page after every step; at 88 % read stop builders,
-save unfinished slices as patches under `.agents/wip/`, update this page, state `STOPPED_90`, push,
-and wait for the reset (the auto-continue routine resumes). Measured in session 2: three builders
-moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
+Two agents, one lock (`.agents/turn.json`), each with its own status file and usage log
+(`.agents/agent-N.json`, `.agents/usage-log-agent-N.md`; only agent N writes them). Bands: below
+75 % builders allowed; 75–89 % no new builders, small tasks only, this page after every step; at
+88 % read stop builders, save unfinished slices as patches under `.agents/wip/`, update this page,
+hand the lock over, push. Measured by Agent 2 (Account 2, 26–27 Oct): about 0.4–0.6 %/min with 4
+builders, 0.35 %/min with 2, near 0 for the lead alone; one full landing (patch, `ci-local.sh`,
+commit, ledgers) about 2–3 points.
 
 ## Handoff history
 
 | # | When (IST) | From → to | Tasks | Why | State left |
 |---|---|---|---|---|---|
 | 1 | 2026-10-26 19:25 | Agent 1 session 2 → new session (taken by Agent 2 at 23:05) | 7/176 | The user moved the work to a new session with a fresh usage window (session 2 at 76 %); the user named it Agent 2 | Head green and pushed to `main` and the work branch; nothing in flight, no patches; wave 2 prompts in `docs/handoff/wave2/` |
+| 2 | 2026-10-27 01:42 | Agent 2 → Agent 1 | 56/176 | The user asked Agent 2 to stop and hand the work to Agent 1 (Agent 2 at 70 %, window resets 02:40 IST) | Head green (code of 472dbc6, full loop); P02 S5 unfinished and unverified in `.agents/wip/wave7/p02s5.patch`; builder stopped; Agent 2's auto-continue disabled, no check-in pending; lock `AGENT_1 PAUSED` |
+
+## Last stop
+
+- Who and when: Agent 2 (Account 2, session_01UQtNJKF1Nd9XgDUr44pa8M), 2026-10-27 01:42 IST, on
+  `main` (mirrored to `ccr-1bf6898d-rqsk8z`). Why: the user asked to stop and hand over to Agent 1.
+- Last verified commit: 472dbc6 (full loop green). Commits after it are docs and `.agents/` only.
+- In patches: P02 S5 (`.agents/wip/wave7/p02s5.patch`, base 71e00bb), unverified.
+- Stopped: the P02 S5 builder (TaskStop); no other builder, test run or preview server running.
+- Usage at the stop: Agent 2 70 % used (reading 01:36 IST), resets 02:40 IST; Agent 1 unknown
+  (its last reading was 76 % at 19:19 IST on 26 Oct, and its window reset at 21:20 IST).
 
 ## Resume notes
 
@@ -264,5 +281,9 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
 - Landing: `extract-patch.sh` / `land-patches.sh` (copies in `/root/wt/`, from the skill's
   `scripts/`), verify worktree `/root/wt/verify`, then cherry-pick `-n` onto the newest remote head
   with one message file per slice.
+- Landing a slice also updates the ledgers: replace a row's `Review:` line in
+  `docs/internals/traps-ledger.md` / `acceptance-map.md` with the builder's `Test: file > describe >
+  test` lines (keep `Review:` for rows owned by a later task), set the phase file's Status line, and
+  record builder notes for later tasks in this page.
 - `.gitignore` is the package's own now (the old monorepo's Python ignore file is gone); still check
   `git check-ignore -v <path>` when a builder's file is missing from a patch.
