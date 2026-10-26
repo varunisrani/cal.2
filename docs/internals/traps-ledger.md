@@ -96,7 +96,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
   - Review: owned by P06-04
 - **R02.11** Log, Save and manual Save are single-flight
-  - Review: owned by P04-08
+  - Test: src/services/diary.test.ts > logEntry: one log at a time (R02.11) > writes one entry for two rapid calls; the second answers busy (ACC-D26-1, R02.11)
+  - Test: src/services/diary.test.ts > logEntry: one log at a time (R02.11) > logs again once the first log has finished
+  - Test: src/services/diary.test.ts > logEntry: one log at a time (R02.11) > opens again after a failed write, which rejects and writes nothing
+  - Test: src/services/diary.test.ts > logEntry: one log at a time (R02.11) > runs two deletes of one row once, and deletes of two rows both
 - **R02.12** The active-fast refusal happens at write time for every food write path
   - Test: src/data/repos/diaryRepo.test.ts > writes during a fast (D-16.35) > add throws FastActiveError and writes nothing; once the fast ends it logs (ACC-D27-2, R05.1, R02.12)
   - Test: src/data/repos/diaryRepo.test.ts > writes during a fast (D-16.35) > addMany and combine are refused as a whole and change nothing (ACC-D27-2, R02.12)
