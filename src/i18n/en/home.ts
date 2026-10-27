@@ -3,7 +3,8 @@ import type { MessageTree } from '../catalogue';
 /**
  * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the all-nutrients
  * sheet and the pillar picker, the diary with its sort control and its food, water and fast rows,
- * and the add button. Meal names are logging words, in `log.meal`.
+ * the add button, and picking rows to combine (the bar and the combined entry's name). Meal names
+ * are logging words, in `log.meal`.
  */
 export const home = {
   home: {
@@ -159,9 +160,25 @@ export const home = {
       deleteTitle: 'Delete this entry?',
       deleteMessage: '{name} will be removed from your diary.',
       deleteFailed: "That entry couldn't be deleted. Please try again.",
+      open: 'Edit {name}',
+      select: 'Select {name}',
+      save: 'Save {name}',
+      saveFailed: "Your saved meals couldn't be changed. Please try again.",
     },
     add: {
       label: 'Add food',
+    },
+    selection: {
+      label: 'Combine foods',
+      count: '{count} selected',
+      combine: 'Combine',
+      failed: "Those foods couldn't be combined. Please try again.",
+      missing: 'One of those foods is no longer in your diary, so nothing was combined.',
+    },
+    // The combined entry's name: the foods' names joined with " + ", or these words.
+    combine: {
+      unnamed: 'Combined foods',
+      more: '{count, plural, one {# other} other {# others}}',
     },
   },
 } as const satisfies MessageTree;

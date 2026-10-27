@@ -5,6 +5,7 @@ import type { AnalysisService } from './analysis';
 import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CoachSession } from './coach/session';
+import type { CombineService } from './combine';
 import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
 import type { FastingService } from './fasting';
@@ -77,6 +78,8 @@ export interface Services {
   readonly reminders?: ReminderEngine;
   /** The Coach's one session: send, retry, reset and pending (P08-09); optional likewise. */
   readonly coachSession?: CoachSession;
+  /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */
+  readonly combine?: CombineService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

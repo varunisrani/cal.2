@@ -147,6 +147,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.9** Combine sums every nutrient all rows know (D-16.20) and keeps unknown-weight lines visible
   - Test: src/domain/food/combine.test.ts > combineEntries > sums sodium when both entries know it and leaves it unknown when one lacks it (D-16.20, R02.9)
   - Test: src/domain/food/combine.test.ts > combineEntries > adds a visible 0 g line for an unknown-weight entry and sums the known weights (R02.9)
+  - Test: src/services/combine.test.ts > combine > sums sodium only when all three entries know it (D-16.20, R02.9)
 - **R02.10** Analysis drafts carry a generation; a late result cleans up its own blobs and never reopens over a newer flow
   - Test: src/data/repos/draftsRepo.test.ts > analysis draft > refuses a result saved with an old generation as stale (R02.10)
   - Test: src/data/repos/draftsRepo.test.ts > analysis draft > does not clear a newer draft when an older attempt clears (R02.10)
@@ -161,6 +162,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
   - Test: src/services/copyDay.test.ts > copy > writes nothing while a fast runs, and says so (R02.12)
   - Test: src/features/log/CopyDaySheet.test.tsx > CopyDaySheet > writes nothing during a fast: the paused dialog shows and the sheet stays (R02.12)
+  - Test: src/services/combine.test.ts > combine > changes nothing while a fast runs, and says so (R02.12)
+  - Test: src/features/home/SelectionBar.test.tsx > SelectionBar > changes nothing while a fast runs and shows the paused dialog; Cancel keeps fasting and picking (R02.12)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > changes nothing while a fast runs and shows the paused dialog; picking stays (R02.12)
 - **R02.13** The review's suggested meal follows its picked date and time (D-16.16)
   - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > suggests the meal for the picked time: 08:00 is breakfast and 19:30 dinner (ACC-D7-1, R02.13, D-16.16)
 - **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only
@@ -225,6 +229,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
   - Test: src/data/repos/diaryRepo.test.ts > add > never replaces a stored row, readable or not, with a new one under the same id (R02.24)
   - Test: src/data/repos/diaryRepo.test.ts > combine > deletes the originals and adds one entry in one transaction (R02.24)
+  - Test: src/services/combine.test.ts > combine > replaces three entries by one named "Toast + Eggs + Tea" at the latest time, in one write (ACC-D15-1, R02.24)
 - **R02.25** Values are stored unrounded and rounded only on screen, so review, fit check and totals agree
   - Test: src/domain/servings/scale.test.ts > draftAtAmount > stores values unrounded so review, fit check and totals agree (R02.25)
 

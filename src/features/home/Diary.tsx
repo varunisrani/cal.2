@@ -12,7 +12,7 @@ import { Card } from '../../ui/Card';
 import { MEAL_NAME_KEYS } from '../log/meals';
 import rowStyles from './diaryRows.module.css';
 import { energyText } from './energy';
-import { EntryRow } from './EntryRow';
+import { EntryRow, type FoodRowActions } from './EntryRow';
 import { FastRow } from './FastRow';
 import styles from './home.module.css';
 import { SortMenu } from './SortMenu';
@@ -43,6 +43,8 @@ export interface DiaryProps {
   readonly onSortChange?: (mode: DiarySortMode) => void;
   /** A tap on a fast: its editor. */
   readonly onOpenFast?: (fast: Fast) => void;
+  /** What food rows do on Home: open, pick for a combine, the saved heart (P06-19). */
+  readonly foodActions?: FoodRowActions;
 }
 
 /** A row's key: ids are unique within a kind only. */
@@ -63,7 +65,8 @@ function rowKey(row: DiaryRow): string {
  * changes, so a meal can come back), rows newest first either way. Water sits in the meal of its
  * time, a fast in the meal of its end (its start while it runs). Each section is headed by its
  * food totals (water and fasts never add to them, R05.4); the first header also holds the Sort
- * control. A day with nothing in it shows one card saying so.
+ * control. A day with nothing in it shows one card saying so. Only food rows take Home's row
+ * actions: water and fasts are never picked for a combine.
  */
 export function Diary({
   entries,
@@ -76,6 +79,7 @@ export function Diary({
   sort = DEFAULT_DIARY_SORT,
   onSortChange,
   onOpenFast = openNothing,
+  foodActions,
 }: DiaryProps) {
   const baseId = useId();
   const headingId = `${baseId}-heading`;
@@ -132,7 +136,7 @@ export function Diary({
                 {mealRows.map((row) => (
                   <li key={rowKey(row)} className={styles.rowItem}>
                     {row.kind === 'food' ? (
-                      <EntryRow entry={row.entry} energyUnit={energyUnit} />
+                      <EntryRow entry={row.entry} energyUnit={energyUnit} actions={foodActions} />
                     ) : row.kind === 'water' ? (
                       <WaterRow log={row.log} unit={waterUnit} />
                     ) : (

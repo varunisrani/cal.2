@@ -1,0 +1,139 @@
+/*
+ * Home's row actions and picking rows for a combine (P06-19): a food row with its tap target, the
+ * heart and the keyboard Select button; the mark of a picked row; and the bar that takes the "+"
+ * button's place while rows are picked. Every value comes from tokens.css; logical properties
+ * throughout. The bar sits where the floating button sits, clear of the tab bar.
+ */
+
+/* ---- A food row on Home ------------------------------------------------------------------ */
+
+.row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.row[data-picked] {
+  background: var(--accent-soft);
+}
+
+/* The tap target: the tile and the text, as the plain row lays them out. */
+.press {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  /* A held press is ours: no text selection, no system callout and no tap flash. */
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.press:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* While picking, the mark comes first. */
+.press[aria-pressed] {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+.check {
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border: 2px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--accent-ink);
+}
+
+.check[data-picked] {
+  border-color: var(--accent);
+  background: var(--accent);
+}
+
+.heart {
+  margin-inline-end: var(--space-2);
+  color: var(--text-muted);
+}
+
+.heart[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.heart[aria-pressed='true'] svg {
+  fill: currentColor;
+}
+
+/* Out of sight until the keyboard reaches it, then over the row's trailing end. */
+.select {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+
+.select:not(:focus) {
+  overflow: hidden;
+  clip-path: inset(50%);
+  inline-size: 1px;
+  block-size: 1px;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- The bar while rows are picked ------------------------------------------------------- */
+
+.bar {
+  position: fixed;
+  z-index: var(--z-fab);
+  inset-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+  inset-block-end: calc(
+    var(--safe-bottom) + var(--tabbar-height, 4rem) + var(--tabbar-gap, var(--space-3)) * 2 +
+      var(--space-4)
+  );
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.count {
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

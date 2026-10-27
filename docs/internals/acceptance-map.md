@@ -360,7 +360,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D15 · Combine selected entries into one meal that sums every nutrient … (P1)
 
 - **ACC-D15-1** Combining three entries leaves one entry named after them at the latest time
-  - Review: P06-19
+  - Test: src/services/combine.test.ts > combine > replaces three entries by one named "Toast + Eggs + Tea" at the latest time, in one write (ACC-D15-1, R02.24)
+  - Test: src/features/home/SelectionBar.test.tsx > SelectionBar > combines three rows into one named "Toast + Eggs + Tea" at the latest time, then ends picking (ACC-D15-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > combines three picked rows into one entry named "Toast + Eggs + Tea" at the latest time, and the "+" comes back (ACC-D15-1, D-16.20)
 
 ### D16 · Recent (30 days) and Often eaten (90 days, grouped by name and … (P1)
 
@@ -621,7 +623,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F12 · Long-press multi-select with a combine bar (P1)
 
 - **ACC-F12-1** Long-pressing a row enters selection mode and shows the combine bar
-  - Review: P06-19
+  - Test: src/features/home/EntryRow.test.tsx > EntryRow: on Home (P06-19) > starts picking after a press held still for half a second, and the click that ends it does nothing more (ACC-F12-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > starts picking on a long-press: the bar with the count, Cancel and Combine takes the place of "+" (ACC-F12-1)
+  - Test: src/features/home/SelectionBar.test.tsx > SelectionBar > says how many rows are picked and offers Combine from two (ACC-F12-1)
 
 ## G · Progress, weight and body fat
 

@@ -7,13 +7,15 @@ import {
   useDayEntries,
   useDayWater,
   useFasts,
+  useSavedMeals,
   useSettings,
   useTargets,
   type LiveState,
 } from '../../data/hooks';
+import type { DayKey } from '../../domain/dates/dayKey';
 import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
 import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
-import type { Fast } from '../../domain/model';
+import type { DiaryEntry, Fast } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
@@ -31,10 +33,13 @@ import type { WaterDay } from './dayNutrients';
 import { DaySummary } from './DaySummary';
 import { DaySwipe } from './DaySwipe';
 import { Diary } from './Diary';
+import type { FoodRowActions } from './EntryRow';
 import styles from './home.module.css';
 import { PillarPicker } from './PillarPicker';
+import { SelectionBar } from './SelectionBar';
 import { tx } from './text';
 import { useSelectedDay } from './useSelectedDay';
+import { useSelection } from './useSelection';
 import { oldestDay, WeekBar } from './WeekBar';
 
 /** The manual entry sheet's place on the sheet stack. */
@@ -69,6 +74,22 @@ const StartFastSheet = onDemand(() =>
 const FastEditor = onDemand(() =>
   import('../fasting/FastEditor').then((module) => module.FastEditor),
 );
+
+/** The entry editor a row's tap opens (P06-19). */
+export const EDITOR_SHEET = 'entry';
+
+// Fetched the first time a row is tapped.
+const EntryEditor = onDemand(() =>
+  import('../log/EntryEditor').then((module) => module.EntryEditor),
+);
+
+const NO_ENTRIES: readonly DiaryEntry[] = [];
+
+/** The entry the editor shows, and its day. */
+interface Editing {
+  readonly id: string;
+  readonly day: DayKey;
+}
 
 const SETTINGS = [
   'units.energy',
@@ -105,7 +126,9 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
  * drawn until the profile, the settings and the day's entries, water and fasts have been read, so
  * a fallback goal never flashes (R05.12); the "+" waits too, since its menu depends on what is
  * stored. Photos gathered for a meal before a reload bring their sheet back when Home opens
- * (D-16.46).
+ * (D-16.46). A tap on a food row opens its editor; a long-press starts picking rows, and the bar
+ * to combine them takes the "+" button's place (P06-19); each row's heart keeps a copy in the
+ * saved meals.
  */
 export function HomePage() {
   const today = useToday();
@@ -137,7 +160,11 @@ export function HomePage() {
   const startFast = useSheet(START_FAST_SHEET);
   const fastSheet = useSheet(FAST_SHEET);
   // The fast the editor opened on, as it was stored when its row was tapped.
-  const [editing, setEditing] = useState<Fast | null>(null);
+  const [editingFast, setEditingFast] = useState<Fast | null>(null);
+  const editor = useSheet(EDITOR_SHEET);
+  const [editing, setEditing] = useState<Editing | null>(null);
+  const picking = useSelection(dayKey, entries.status === 'ready' ? entries.value : NO_ENTRIES);
+  const savedMeals = useSavedMeals();
   // What the capture sheet's "Add photo" opens; a sheet brought back after a reload uses the library.
   const [picker, setPicker] = useState<CapturePicker>('library');
 
@@ -238,8 +265,23 @@ export function HomePage() {
   };
 
   const openFast = (fast: Fast): void => {
-    setEditing(fast);
+    setEditingFast(fast);
     fastSheet.show();
+  };
+
+  const foodActions: FoodRowActions = {
+    picked: picking.picked,
+    // The heart waits for the saved meals, so it never shows the wrong state.
+    saved:
+      savedMeals.status === 'ready'
+        ? new Set(savedMeals.value.flatMap((meal) => meal.originEntryId ?? []))
+        : null,
+    onOpen: (entry) => {
+      setEditing({ id: entry.id, day: entry.dayKey });
+      editor.show();
+    },
+    onPick: picking.pick,
+    onToggle: picking.toggle,
   };
 
   const reads = [dayRead, waterRead, fastsRead, activeFast, targets, settings];
@@ -310,8 +352,13 @@ export function HomePage() {
           sort={settings.value['home.sort']}
           onSortChange={storeSort}
           onOpenFast={openFast}
+          foodActions={foodActions}
         />
-        <div className={styles.fabSlot}>
+        {picking.active ? (
+          <SelectionBar entries={picking.chosen} onCancel={picking.end} onCombined={picking.end} />
+        ) : null}
+        {/* While rows are picked, the bar takes the "+" button's place. */}
+        <div className={styles.fabSlot} hidden={picking.active}>
           <AddMenu
             label={tx('home.add.label')}
             layout={decodeLayout(settings.value['menu.layout'])}
@@ -358,8 +405,8 @@ export function HomePage() {
           {startFast.open ? <StartFastSheet open onClose={startFast.close} /> : null}
         </Suspense>
         <Suspense fallback={null}>
-          {fastSheet.open && editing ? (
-            <FastEditor open fast={editing} onClose={fastSheet.close} />
+          {fastSheet.open && editingFast ? (
+            <FastEditor open fast={editingFast} onClose={fastSheet.close} />
           ) : null}
         </Suspense>
       </>
@@ -396,6 +443,16 @@ export function HomePage() {
       <CopyDaySheet open={copyDay.open} onClose={copyDay.close} targetDay={dayKey} />
       <ScanSheet open={scan.open} onCode={lookUp} onClose={scan.close} />
       {barcode ? <LookupOverlay onScanLabel={photographLabel} /> : null}
+      <Suspense fallback={null}>
+        {editor.open && editing ? (
+          <EntryEditor
+            key={editing.id}
+            entryId={editing.id}
+            dayKey={editing.day}
+            onClose={editor.close}
+          />
+        ) : null}
+      </Suspense>
     </section>
   );
 }

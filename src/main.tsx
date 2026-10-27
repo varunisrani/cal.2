@@ -32,6 +32,7 @@ import { createAnalysisService } from './services/analysis';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
 import { createCoachSession } from './services/coach/session';
+import { createCombineService } from './services/combine';
 import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
@@ -250,6 +251,15 @@ async function start(): Promise<void> {
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
       fetch: browserFetch,
       photoOnlyText: () => t('coach.photoOnly'),
+    }),
+    // Home's picked rows as one entry (P06-19); the name's words come from the catalogue.
+    combine: createCombineService({
+      diaryRepo,
+      photoRepo,
+      words: {
+        fallbackName: t('home.combine.unnamed'),
+        more: (count) => t('home.combine.more', { count }),
+      },
     }),
     clock: systemClock,
   };

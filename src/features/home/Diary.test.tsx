@@ -12,6 +12,7 @@ import { ServicesProvider, type Services } from '../../services/context';
 import { FACTORY_NOW, makeEntry, makeFast, makeWater } from '../../test/factories';
 import { ToastProvider } from '../../ui/Toast';
 import { Diary, type DiaryProps } from './Diary';
+import type { FoodRowActions } from './EntryRow';
 
 const words = home.home;
 const meals = log.log.meal;
@@ -40,9 +41,20 @@ function Providers({ children }: { children: ReactNode }) {
   );
 }
 
-function renderDiary(entries: DiaryEntry[], unit: EnergyDisplayUnit = 'kcal', isToday = true) {
+function renderDiary(
+  entries: DiaryEntry[],
+  unit: EnergyDisplayUnit = 'kcal',
+  isToday = true,
+  foodActions?: FoodRowActions,
+) {
   return render(
-    <Diary entries={entries} energyUnit={unit} times={DEFAULT_MEAL_TIMES} isToday={isToday} />,
+    <Diary
+      entries={entries}
+      energyUnit={unit}
+      times={DEFAULT_MEAL_TIMES}
+      isToday={isToday}
+      foodActions={foodActions}
+    />,
     { wrapper: Providers },
   );
 }
@@ -144,6 +156,39 @@ describe('Diary', () => {
   it('heads the list Today on today and Diary on another day', () => {
     renderDiary([], 'kcal', false);
     expect(screen.getByRole('heading', { level: 2, name: words.diary.day })).toBeVisible();
+  });
+
+  it("hands Home's row actions to every food row: a tap opens that entry, and picking shows on each (P06-19)", () => {
+    const toast = makeEntry({ name: 'Toast', meal: 'breakfast', loggedAt: at('08:00') });
+    const soup = makeEntry({ name: 'Soup', meal: 'lunch', loggedAt: at('12:30') });
+    const actions: FoodRowActions = {
+      picked: null,
+      saved: null,
+      onOpen: vi.fn(),
+      onPick: vi.fn(),
+      onToggle: vi.fn(),
+    };
+    const { rerender } = renderDiary([toast, soup], 'kcal', true, actions);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Edit Soup' }));
+    expect(actions.onOpen).toHaveBeenCalledExactlyOnceWith(soup);
+    fireEvent.click(screen.getByRole('button', { name: 'Select Toast' }));
+    expect(actions.onPick).toHaveBeenCalledExactlyOnceWith(toast);
+
+    rerender(
+      <Diary
+        entries={[toast, soup]}
+        energyUnit="kcal"
+        times={DEFAULT_MEAL_TIMES}
+        isToday
+        foodActions={{ ...actions, picked: new Set([toast.id]) }}
+      />,
+    );
+    const pressed = screen
+      .getAllByRole('button', { pressed: true })
+      .map((button) => button.getAttribute('aria-label'));
+    expect(pressed).toEqual(['Select Toast']);
+    expect(screen.getByRole('button', { name: 'Select Soup', pressed: false })).toBeVisible();
   });
 });
 

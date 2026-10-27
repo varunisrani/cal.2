@@ -22,7 +22,9 @@ import { createBarcodeService } from '../../services/barcode/lookup';
 import { OFF_PRODUCT_URL } from '../../services/barcode/off';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
+import { createCombineService } from '../../services/combine';
 import { createCopyDayService } from '../../services/copyDay';
+import { createDiaryService } from '../../services/diary';
 import { createFastingService } from '../../services/fasting';
 import { createHomePrefsService } from '../../services/homePrefs';
 import { formatDay } from '../../i18n/format';
@@ -32,12 +34,17 @@ import { reuse } from '../../i18n/en/reuse';
 import { review } from '../../i18n/en/review';
 import { trackers } from '../../i18n/en/trackers';
 import { createWaterService } from '../../services/water';
+import { editor as editorWords } from '../../i18n/en/editor';
+import { settle as settleTasks } from '../water/testing/openWater';
+import { LONG_PRESS_MS } from './EntryRow';
+import { SELECT_SHEET } from './useSelection';
 import { AnalysisReview } from '../log/review/ReviewSheet';
 import {
   CAPTURE_SHEET,
   COPY_DAY_SHEET,
   DESCRIBE_SHEET,
   FAST_SHEET,
+  EDITOR_SHEET,
   HomePage,
   MANUAL_SHEET,
   OFTEN_SHEET,
@@ -1041,7 +1048,7 @@ describe('HomePage: water and fasts (P07-05, P07-08)', () => {
     fireEvent.click(addButton());
 
     fireEvent.click(dayTile('2026-10-25'));
-    await until(() => diaryLayout()[0]?.[1] === words.water.title);
+    await until(() => diaryLayout()[0]?.[0] === meals.lunch);
     expect(diaryLayout()).toEqual([[meals.lunch, words.water.title, '16h fast']]);
   });
 
@@ -1156,5 +1163,195 @@ describe('HomePage: water and fasts (P07-05, P07-08)', () => {
     expect(await h.repos.waterRepo.byDay('2026-10-26')).toEqual([
       expect.objectContaining({ ml: 300, at: FACTORY_NOW }),
     ]);
+  });
+});
+
+// ---- Picking rows, combining them, the editor and the heart (P06-19) ---------------------------
+
+/** 26 October 2026 at `hh:mm` in the test zone. */
+const today = (time: string) => Date.parse(`2026-10-26T${time}:00-04:00`);
+const FAKED = ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] as const;
+
+/**
+ * Home over this morning's toast, eggs and tea, with the diary that saves meals, the combine and
+ * the fasting services wired as `main.tsx` does; optionally a fast left running since 07:00.
+ */
+async function openWithMorning(options: { fasting?: boolean } = {}) {
+  const h = await openHarness();
+  const { diaryRepo, fastRepo, settingsRepo, savedMealsRepo, profileRepo } = h.repos;
+  await profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+  await diaryRepo.addMany([
+    makeEntry({
+      id: 'toast',
+      name: 'Toast',
+      kcal: 250,
+      meal: 'breakfast',
+      loggedAt: today('08:00'),
+    }),
+    makeEntry({ id: 'eggs', name: 'Eggs', kcal: 155, meal: 'breakfast', loggedAt: today('08:10') }),
+    makeEntry({ id: 'tea', name: 'Tea', kcal: 30, meal: 'snack', loggedAt: today('09:30') }),
+  ]);
+  const running = makeFast({ id: 'running', start: today('07:00') - 60_000, end: null });
+  if (options.fasting) await h.db.fasts.put(running);
+  const photoRepo = createPhotoRepo(h.db);
+  const services: Services = {
+    ...h.services,
+    diary: createDiaryService({ diaryRepo, photoRepo, savedMealsRepo }),
+    combine: createCombineService({
+      diaryRepo,
+      photoRepo,
+      words: { fallbackName: 'Plate', more: (count) => `${count} others` },
+    }),
+    fasting: createFastingService({ fastRepo, diaryRepo, settingsRepo, clock: h.clock }),
+  };
+  h.mount(
+    <ServicesProvider services={services}>
+      <HomePage />
+    </ServicesProvider>,
+  );
+  await untilShown('[data-ui="home.add"]');
+  return { ...h, running };
+}
+
+const selectionBar = () => screen.queryByRole('region', { name: words.selection.label });
+const rowButton = (name: string) => screen.getByRole('button', { name });
+
+/** Holds the row's tap target still for the long-press time, then lets go. */
+function longPress(name: string) {
+  vi.useFakeTimers({ toFake: [...FAKED] });
+  try {
+    const target = rowButton(`Edit ${name}`);
+    fireEvent.pointerDown(target, { pointerId: 3, button: 0, clientX: 80, clientY: 20 });
+    act(() => {
+      vi.advanceTimersByTime(LONG_PRESS_MS);
+    });
+    fireEvent.pointerUp(target, { pointerId: 3, button: 0, clientX: 80, clientY: 20 });
+    fireEvent.click(target);
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
+describe('HomePage: picking and combining rows (P06-19)', () => {
+  it('starts picking on a long-press: the bar with the count, Cancel and Combine takes the place of "+" (ACC-F12-1)', async () => {
+    const h = await openWithMorning();
+
+    longPress('Toast');
+
+    const bar = selectionBar();
+    expect(bar).not.toBeNull();
+    expect(within(bar as HTMLElement).getByText('1 selected')).toBeVisible();
+    expect(
+      within(bar as HTMLElement).getByRole('button', { name: words.selection.combine }),
+    ).toBeDisabled();
+    expect(
+      within(bar as HTMLElement).getByRole('button', { name: common.common.cancel }),
+    ).toBeVisible();
+    expect(screen.queryByRole('button', { name: words.add.label })).toBeNull();
+    expect(rowButton('Select Toast')).toHaveAttribute('aria-pressed', 'true');
+    expect(rowButton('Select Eggs')).toHaveAttribute('aria-pressed', 'false');
+    // No editor opened with it, and nothing can be swiped away while picking.
+    expect(h.router.current().sheets).toEqual([SELECT_SHEET]);
+    expect(screen.queryByRole('button', { name: 'Delete Toast' })).toBeNull();
+  });
+
+  it('combines three picked rows into one entry named "Toast + Eggs + Tea" at the latest time, and the "+" comes back (ACC-D15-1, D-16.20)', async () => {
+    const h = await openWithMorning();
+    fireEvent.click(rowButton('Select Toast'));
+    fireEvent.click(rowButton('Select Eggs'));
+    fireEvent.click(rowButton('Select Tea'));
+    expect(within(selectionBar() as HTMLElement).getByText('3 selected')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: words.selection.combine }));
+    await settleTasks(() => screen.queryByRole('button', { name: words.add.label }) !== null);
+    await until(() => screen.queryByText('Toast + Eggs + Tea') !== null);
+
+    expect(selectionBar()).toBeNull();
+    expect(h.router.current().sheets).toEqual([]);
+    expect(screen.queryByRole('group', { name: 'Toast 250 kcal' })).toBeNull();
+    const snack = document.querySelector<HTMLElement>('[data-ui="home.meal.snack"]');
+    expect(
+      snack && within(snack).getByRole('group', { name: 'Toast + Eggs + Tea 435 kcal' }),
+    ).toBeTruthy();
+    expect(await h.repos.diaryRepo.byDay('2026-10-26')).toEqual([
+      expect.objectContaining({ name: 'Toast + Eggs + Tea', kcal: 435, loggedAt: today('09:30') }),
+    ]);
+  });
+
+  it('ends picking when the last picked row is let go, on Cancel and on Back', async () => {
+    const h = await openWithMorning();
+
+    fireEvent.click(rowButton('Select Toast'));
+    fireEvent.click(rowButton('Select Toast'));
+    await until(() => selectionBar() === null);
+    expect(h.router.current().sheets).toEqual([]);
+
+    fireEvent.click(rowButton('Select Eggs'));
+    fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
+    await until(() => selectionBar() === null);
+    expect(h.router.current().sheets).toEqual([]);
+
+    fireEvent.click(rowButton('Select Tea'));
+    expect(selectionBar()).not.toBeNull();
+    act(() => h.host.back());
+    await until(() => selectionBar() === null);
+    expect(screen.getByRole('button', { name: words.add.label })).toBeVisible();
+    expect(await h.repos.diaryRepo.count()).toBe(3);
+  });
+
+  it('changes nothing while a fast runs and shows the paused dialog; picking stays (R02.12)', async () => {
+    const h = await openWithMorning({ fasting: true });
+    fireEvent.click(rowButton('Select Toast'));
+    fireEvent.click(rowButton('Select Eggs'));
+
+    fireEvent.click(screen.getByRole('button', { name: words.selection.combine }));
+    await settleTasks(
+      () => screen.queryByRole('alertdialog', { name: fastingWords.fasting.paused.title }) !== null,
+    );
+
+    expect(await h.repos.diaryRepo.count()).toBe(3);
+    expect(await h.repos.fastRepo.list()).toEqual([h.running]);
+    expect(within(selectionBar() as HTMLElement).getByText('2 selected')).toBeVisible();
+  });
+});
+
+describe('HomePage: a row opens its editor and keeps a saved copy (P06-19)', () => {
+  beforeAll(async () => {
+    // The editor is fetched on demand: load it once before any wait includes its transform.
+    await import('../log/EntryEditor');
+  });
+
+  it('opens the entry editor on a tap, and Cancel closes it', async () => {
+    const h = await openWithMorning();
+
+    fireEvent.click(rowButton('Edit Eggs'));
+    await waitFor(() =>
+      expect(screen.getByRole('dialog', { name: editorWords.editor.title })).toBeVisible(),
+    );
+    await untilShown('[data-ui="editor.name"]');
+
+    const sheet = within(screen.getByRole('dialog', { name: editorWords.editor.title }));
+    expect(sheet.getByDisplayValue('Eggs')).toBeVisible();
+    expect(h.router.current().sheets).toEqual([EDITOR_SHEET]);
+    fireEvent.click(sheet.getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="editor"]');
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it("keeps a copy in the saved meals from the row's heart, and takes it out again", async () => {
+    const h = await openWithMorning();
+    await until(() => screen.queryByRole('button', { name: 'Save Tea' }) !== null);
+    const heart = () => rowButton('Save Tea');
+    expect(heart()).toHaveAttribute('aria-pressed', 'false');
+
+    fireEvent.click(heart());
+    await until(() => heart().getAttribute('aria-pressed') === 'true');
+    expect(await h.repos.savedMealsRepo.list()).toEqual([
+      expect.objectContaining({ name: 'Tea', originEntryId: 'tea' }),
+    ]);
+
+    fireEvent.click(heart());
+    await until(() => heart().getAttribute('aria-pressed') === 'false');
+    expect(await h.repos.savedMealsRepo.list()).toEqual([]);
   });
 });
