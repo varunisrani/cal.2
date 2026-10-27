@@ -1,0 +1,30 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-lazy (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: lazy-loading groundwork for P10-08 (the bundle budget). No planned task id of its own: it is lead infrastructure so the remaining phases fit the 250 kB gzip initial-JS budget. Initial JS is 206.57 kB now (`pnpm build && pnpm check:bundle`); P06, P07 (charts), P08 (Coach, Markdown) and P09 still have to be added. Read docs/plan/phases/P10-hardening-and-release.md (P10-08) and docs/internals/checks.md (the bundle check). No reference reading.
+Task note (before code): docs/notes/P10/lazy-loading-groundwork.md (what loads at start, what moved to which chunk, the before/after numbers).
+
+You own:
+- src/app/Screen.tsx: tab screens other than Home through React.lazy with a Suspense fallback that matches the existing loading state (Home stays eager: it is the first screen)
+- src/features/settings/registry.ts and SettingsScreen.tsx / CategoryFrame.tsx: category pages through React.lazy (the registry keeps its records and order; only `page` becomes lazy)
+- src/app/App.tsx: the analysis overlay and the review sheet mounts load their components on demand (render nothing until an analysis starts or a draft waits; the overlay must still hide the tab bar as soon as an analysis starts)
+- the AI layer: src/services/goals/{rebuild,tuneUp,planRequest,planBuilder}.ts and src/services/analysis.ts load `src/ai/tasks/*` (and through them the client, adapters, prompts, parsers) with a dynamic import on first use, so none of src/ai is in the initial chunk; keep their public types and behaviour; tests may need `await` where a first call now resolves a module (fake timers: fake only setTimeout, setInterval and Date)
+- scripts/bundle-budget.ts only if the check needs to list chunks (no change to the 250 kB gate)
+
+Do not touch:
+- src/features/log/{AddMenu.tsx,scan/**,reuse/**,CopyDaySheet.tsx,review/{IngredientsCard,LineEditor,AddIngredientMenu}.tsx,FitCheckSheet.tsx}, src/features/home/HomePage.tsx, src/services/{barcode/**,copyDay.ts,ingredientIntake.ts} (other builders, now; analysis.ts gains an `openForReview` method from one of them: keep your change to how it loads the tasks, small and local), src/ai/** (no change: only how it is imported), src/domain/**, src/data/**, e2e/**, eslint.config.js, vite.config.ts unless a chunk rule is truly needed (say why)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Behaviour does not change: every existing unit test and both e2e specs must pass unchanged in meaning (adding an `await` for a lazy module is fine; weakening an assertion is not).
+- Lazy pieces show the existing loading state while they load; a failed chunk load falls into the app's ErrorBoundary card with Reload (it already handles thrown errors).
+- Report the before/after initial JS and the chunks created (name, gzip size, what is in it).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/app src/features/settings src/services src/features/log/review --maxWorkers=1
+- pnpm build && pnpm check:bundle (must drop clearly; report the number)
+- e2e: PLATEWISE_E2E_PORT=4184 PLATEWISE_FAKE_AI_PORT=4330 pnpm exec playwright test e2e/walking-skeleton.spec.ts e2e/smoke.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.
