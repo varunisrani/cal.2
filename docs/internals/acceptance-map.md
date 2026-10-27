@@ -180,25 +180,30 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-C4-1** Rebuild shows the new calorie target and the AI's reason
   - Test: src/services/goals/rebuild.test.ts > rebuild: a stored plan > stores all four targets, clears every lock and returns the kcal and the reason (ACC-C4-1)
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: rebuild plan > words a rebuilt plan: the new target in the display unit and the AI reason (ACC-C4-1)
 - **ACC-C4-2** Editing the profile while a rebuild runs discards its result
   - Test: src/services/goals/rebuild.test.ts > rebuild: a profile changed during the call (R01.4) > drops the plan when %s changed, leaving targets and locks (R01.4, ACC-C4-2)
 
 ### C5 · "Inputs changed" nudge on Rebuild when goal inputs changed since … (P1)
 
 - **ACC-C5-1** After a new weigh-in the Rebuild row shows the nudge; on first open it does not
-  - Review: P05-11
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: rebuild plan > shows no nudge on first open and shows it after a new weigh-in (ACC-C5-1, R01.12)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: the rebuild baseline (P01-15) > seeds the baseline silently on first open and keeps it after a change (R01.12)
 
 ### C6 · Target editing with a calorie lock and up to two macro locks, … (P1)
 
 - **ACC-C6-1** With calories locked, raising protein lowers carbs and fat and keeps calories
-  - Review: P05-11
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > keeps calories and lowers carbs and fat when protein rises with calories locked (ACC-C6-1)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: edits through the lock engine (P01-13) > keeps energy and lowers carbs and fat when protein rises with energy locked (ACC-C6-1)
 - **ACC-C6-2** A third macro lock is not added
   - Test: src/domain/goals/locks.test.ts > setMacro > does not add a third macro lock, while the edit still applies (R01.13, ACC-C6-2)
 
 ### C7 · Maintenance estimate row (P1)
 
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > applies an edit to the third macro without locking it (R01.13, ACC-C6-2)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: edits through the lock engine (P01-13) > applies an edit without adding a third macro lock (R01.13, ACC-C6-2)
 - **ACC-C7-1** A target 40 kcal under maintenance reads close to maintenance
-  - Review: P05-11
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: maintenance estimate > reads a target 40 kcal under the estimate as close to it (ACC-C7-1)
 
 ### C8 · Weekly tune-up (Adaptive Goals) (P1)
 
@@ -207,7 +212,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C8-2** Turning the tune-up off restores the plan from before its first change
   - Test: src/services/goals/tuneUp.test.ts > the plan from before the tune-up (R01.14) > restores the plan from before the first tune-up after two runs (R01.14, ACC-C8-2)
 - **ACC-C8-3** While it is on, tapping a target explains why it cannot be edited
-  - Review: P05-11
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > keeps the rows read-only while the tune-up is on: a tap explains and changes nothing (ACC-C8-3)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: edits through the lock engine (P01-13) > refuses every edit while the tune-up is on and writes nothing (ACC-C8-3)
 
 ### C9 · The evidence sent with a plan request holds only numbers and … (P1)
 
@@ -218,7 +224,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C10 · Optional nutrient goals for 29 nutrients with defaults, ranges, … (P1)
 
 - **ACC-C10-1** A typed sodium goal of 2 345 mg is kept exactly
-  - Review: P05-12
+  - Test: src/features/settings/goals/NutrientGoalsSheet.test.tsx > NutrientGoalsSheet: the editor > keeps a typed sodium goal of 2 345 exactly and reopens it in typing mode (ACC-C10-1)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: switches and nutrient goals > stores a typed nutrient goal exactly and clamps only above 999 999 (ACC-C10-1)
 - **ACC-C10-2** An AI refresh that returns only sodium leaves the other goals unchanged
   - Test: src/ai/parse/nutrientGoals.test.ts > readNutrientGoals: only the goals that came back change (R03.25, R01.10) > changes only sodium when the answer gives only sodium (ACC-C10-2)
 

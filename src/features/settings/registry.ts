@@ -8,6 +8,7 @@ import type { IconName } from '../../ui/icons';
 import { MethodsPage } from '../about/MethodsPage';
 import { ProfilePage } from './profile/ProfilePage';
 import type { TxKey } from '../home/text';
+import { GoalsPage } from './goals/GoalsPage';
 
 /** The hub's two cards: the person's preferences, then information about the app. */
 export const SETTINGS_GROUPS = ['prefs', 'info'] as const;
@@ -53,6 +54,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     icon: 'heart',
     group: 'prefs',
     page: ProfilePage,
+  },
+  // Targets and locks, the rebuild, the weekly tune-up, nutrient goals and alerts (P05-11).
+  {
+    id: 'goals',
+    titleKey: 'goals.page.title',
+    icon: 'chart',
+    group: 'prefs',
+    page: GoalsPage,
   },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {

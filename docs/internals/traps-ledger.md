@@ -75,10 +75,14 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > leaves the saved targets and locks as they were for every field edit
   - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > raises the rebuild nudge after an activity edit against a stored baseline
   - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > seeds a missing baseline from the profile before the edit, so the edit still raises the nudge
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: rebuild plan > shows no nudge on first open and shows it after a new weigh-in (ACC-C5-1, R01.12)
 - **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
   - Test: src/domain/goals/locks.test.ts > setMacro > pins all three macros from the state before the edit (R01.13)
   - Test: src/domain/goals/locks.test.ts > setMacro > refuses an edit nothing can absorb and changes nothing (R01.13)
   - Test: src/domain/goals/locks.test.ts > setMacro > does not add a third macro lock, while the edit still applies (R01.13, ACC-C6-2)
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > refuses an edit nothing can absorb, says why and changes nothing (R01.13)
+  - Test: src/services/goals/targetEdits.test.ts > targetEdits: edits through the lock engine (P01-13) > refuses an edit nothing can absorb and writes nothing (R01.13)
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > applies an edit to the third macro without locking it (R01.13, ACC-C6-2)
 - **R01.14** Turning the tune-up off restores the plan saved before its first change; that snapshot is taken once
   - Test: src/domain/adaptive/cadence.test.ts > settle > keeps the first plan on the first success and the same snapshot on the second (R01.14)
   - Test: src/domain/adaptive/cadence.test.ts > turnOff > restores the plan from before the first tune-up after two runs (R01.14)
@@ -458,6 +462,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
   - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > shows kJ to a kJ reader and keeps the exact kcal when the wheel is saved untouched (R06.20)
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > shows and edits the energy target in kJ, keeping the exact kcal when untouched (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches

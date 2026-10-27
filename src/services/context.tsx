@@ -6,6 +6,7 @@ import type { CaptureDraftService } from './captureDrafts';
 import type { DiaryService } from './diary';
 import type { PlanBuilder } from './goals/planBuilder';
 import type { RebuildService } from './goals/rebuild';
+import type { TargetEditsService } from './goals/targetEdits';
 import type { TuneUpRunner } from './goals/tuneUp';
 import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
@@ -35,6 +36,8 @@ export interface Services {
   readonly analysis?: AnalysisService;
   /** Settings › Personal info edits (P05-10); optional for the same reason. */
   readonly profileEdits?: ProfileEditsService;
+  /** The Goals page's writes: targets, locks, its switches, nutrient goals (P05-11, P05-12). */
+  readonly targetEdits?: TargetEditsService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

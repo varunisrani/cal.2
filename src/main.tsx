@@ -32,6 +32,7 @@ import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
 import { createRebuildService } from './services/goals/rebuild';
+import { createTargetEditsService } from './services/goals/targetEdits';
 import { createTuneUpRunner } from './services/goals/tuneUp';
 import type { PlanServiceDeps } from './services/goals/planRequest';
 import { createPlanBuilder, storedAiAccess } from './services/goals/planBuilder';
@@ -103,6 +104,7 @@ async function start(): Promise<void> {
     aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
     fetch: browserFetch,
   };
+  const tuneUp = createTuneUpRunner(planDeps);
   const analysis = createAnalysisService({
     draftsRepo,
     photoRepo,
@@ -133,7 +135,13 @@ async function start(): Promise<void> {
       photoRepo,
     }),
     rebuild: createRebuildService(planDeps),
-    tuneUp: createTuneUpRunner(planDeps),
+    tuneUp,
+    targetEdits: createTargetEditsService({
+      profileRepo,
+      settingsRepo,
+      tuneUp,
+      clock: systemClock,
+    }),
     planBuilder: createPlanBuilder({
       aiAccess: storedAiAccess({ settingsRepo, secretsRepo }),
       energyUnit: () => settingsRepo.get('units.energy'),

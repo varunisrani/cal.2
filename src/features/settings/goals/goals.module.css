@@ -1,0 +1,190 @@
+/*
+ * Settings › Goals and nutrition (P05-11) and the nutrient goals sheet (P05-12): row cards, the
+ * lock glyph, the nudge, the picker bodies. Every value comes from tokens.css; logical
+ * properties throughout.
+ */
+
+.card {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.card > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.row[aria-busy='true'] {
+  cursor: progress;
+}
+
+.rowText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.rowText + .rowText {
+  flex: none;
+  justify-items: end;
+}
+
+.rowLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-weight: var(--weight-medium);
+}
+
+.rowValue {
+  flex: none;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowSub {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.nudge {
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.lock {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.lock[data-locked] {
+  color: var(--accent);
+}
+
+.lock[data-dimmed] {
+  opacity: 0.35;
+}
+
+.cardNote,
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.cardNote {
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  border-block-start: 1px solid var(--line);
+}
+
+.switchItem {
+  display: flex;
+  align-items: center;
+  padding-inline-end: var(--space-2);
+}
+
+.switchItem > :first-child {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* ---- Pickers ----------------------------------------------------------------------------- */
+
+.editor,
+.sheetBody {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.wheels {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.wheelUnit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+}
+
+.detail {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  text-align: center;
+}
+
+.caution {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
+  text-align: center;
+}
+
+/* ---- Nutrient goals ------------------------------------------------------------------------ */
+
+.group {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.groupHeading {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.group .rows {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
