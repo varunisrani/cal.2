@@ -3,12 +3,51 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.1.0)
+## 1.1.0 (2026-10-28)
 
-Platewise comes to Android as an app that reads your steps, burned calories, workouts and
-weigh-ins from Health Connect, and can count the calories you burn in the day's target. The web
-app and the installable web app are unchanged and show none of it. How to install the app and
-what each setting does: [docs/user/android.md](docs/user/android.md).
+Platewise 1.1 has a new orange look in a light and a dark theme, shows weight in kilograms only,
+and comes to Android as an app that reads your steps, burned calories, workouts and weigh-ins
+from Health Connect and can count the calories you burn in the day's target. The Coach sees that
+activity, has an easier chat and can set reminders for you; reminders, including your own, come as
+Android notifications. The health features exist only in the Android app. How to install the app
+and what each setting does: [docs/user/android.md](docs/user/android.md).
+
+### A new look
+
+- Orange is Platewise's colour: buttons, the + button, the selected tab, the calorie gauge,
+  links, selected items and charts. The light theme is white with warm grey lines; the dark theme
+  is a neutral charcoal. Both keep every text and control at WCAG AA contrast.
+- Pill buttons, rounder cards and sheets with soft shadows, a floating tab bar with an orange
+  capsule on the selected tab, refreshed switches and segmented controls.
+- A new app icon and splash screen: the plate and leaf on an orange tile.
+- System, Light and Dark stay in Settings › App; the other accent colours (Basil, Saffron, Lagoon,
+  Beet, Ember, Ink) remain as choices after Orange. A colour you chose before is kept.
+
+### Weight in kilograms
+
+- Weight is shown and entered in kg everywhere: onboarding, Settings, weigh-ins, goals, pace (kg
+  per week), Progress, exports and the Coach. The kg/lb choice is gone. If you used lb, your
+  weights now show in kg; no saved number changes. Height and energy keep their choices.
+
+### The Coach
+
+- The chat scrolls on its own and stays on the newest message; scroll up to read and a "Jump to
+  latest" button shows how many messages are new. The text box stays above the keyboard and grows
+  to six lines; Copy works on every reply.
+- Ask it to remind you ("remind me to drink water at 4 pm every day"): it shows a reminder card,
+  and the reminder is set only when you tap Add.
+- In the Android app with Health Connect connected, it reads your steps, calories burned,
+  distance and workouts, knows today's activity and your "goal + burned" target, and never counts
+  active calories twice.
+
+### Reminders and notifications
+
+- In the Android app every reminder is a real Android notification that comes with the app
+  closed: breakfast, lunch, dinner, the daily summary, water and the end of a fast. Android 13 and
+  newer ask for permission when you turn reminders on.
+- Your own reminders: Settings › Tracking & reminders › Your reminders, up to 20, each with your
+  words, a time, and every day, chosen weekdays or one date. On the web they show while the app is
+  open.
 
 ### The Android app
 
@@ -71,8 +110,9 @@ what each setting does: [docs/user/android.md](docs/user/android.md).
   the build machine, so the native code is tested on a computer and the web side against a
   stand-in for Health Connect. The first device tests, including Health Connect's permission
   screens on Android 13 and on Android 14 and newer, are the owner's.
-- Reminders cannot be turned on in the Android app: its built-in browser view has no
-  notifications.
+- Reminders as Android notifications, their permission dialog and their delivery while the
+  phone sleeps or after a restart have not been tried on a real phone yet.
+- In the light theme the Android status and navigation bars stay charcoal.
 - The app targets Android 15 (API level 35), as Capacitor 7 does. Google Play's yearly rule very
   likely asks new apps and updates for API level 36 since 31 August 2026: check it before a Play
   upload, which would first need Capacitor 8. Installing the APK directly is not affected.

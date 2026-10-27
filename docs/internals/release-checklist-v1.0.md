@@ -35,12 +35,13 @@ were filled by the lead from the full loop on `73aedfb`, where that slice landed
 | 19 | Notices | `pnpm exec tsx scripts/notices.ts --check` | "src/generated/notices.json and THIRD_PARTY_NOTICES.md are up to date" (exit 0). Both list zxing-cpp (Apache-2.0) and zint (BSD-3-Clause), bundled in zxing-wasm 3.1.5, without licence texts: the package ships neither | 2026-10-27, here |
 | 20 | Dependency audit | `pnpm audit --audit-level high` | "No known vulnerabilities found" (exit 0) | 2026-10-27, here |
 
-## After 1.0: Android app (1.1, unreleased)
+## 1.1.0 (2026-10-28): the Android app, the orange look, kg only, the Coach and reminders
 
 P11 (`docs/plan/phases/P11-android-and-health-connect.md`, D-16.89) adds the Android app and
-Health Connect; `CHANGELOG.md` describes it under "Unreleased (1.1.0)" and
-[docs/user/android.md](../user/android.md) is its user page. Nothing here is released, tagged or
-uploaded. These rows say what was proved on a computer and what waits for a phone: the container
+Health Connect; P12 the orange redesign (D-16.90); P13 kg only, the Coach with Health Connect and
+reminders, and reminders as Android notifications (D-16.91..94). `CHANGELOG.md` describes 1.1.0 and
+[docs/user/android.md](../user/android.md) is its user page. 1.1.0 is released as a version in the repository and an APK sent to the owner; nothing is tagged
+or uploaded unless the owner asks. These rows say what was proved on a computer and what waits for a phone: the container
 has no KVM, so no emulator, and no row runs the app. Rows marked "here" were run on 2026-10-27 in
 the P11-05 worktree (`cbc7a27`, P11-01..04, with this slice uncommitted on top), with
 `ANDROID_HOME` pointing at a local SDK (platform `android-36`), JDK 21 and
