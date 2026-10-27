@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 13:24 IST (Agent 1, session 3). 152/176 tasks; P00–P06 complete; the app runs on the
-real database. Next reset 15:20 IST; wave 14 prompts ready.
+Updated: 2026-10-27 15:24 IST (Agent 1, session 3). 152/176 tasks; P00–P06 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); wave 14 running (7 builders).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -133,10 +133,8 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-No builders running (13:24 IST, usage about 83 %). Everything built this window is landed; the last full loop
-(78db379): unit 4812 passed + 2 expected-fail in 335 files, check 6/6, bundle 229.03 kB, e2e 15/15.
-
-Next window (after the 15:20 IST reset), wave 14 prompts in `docs/handoff/wave14/` at the branch head:
+Window reset at 15:20 IST (next reset 20:20 IST). Seven wave 14 builders started at 15:24 IST, base 1430e0b
+(prompts in `docs/handoff/wave14/`, filled copies in `/root/wt/prompt-<slice>.txt`, worktrees `/root/wt/wt-<slice>`):
 - `w14-p09s01` P09-01 Settings hub and load gate (two cards, sub-pages nested under App settings, update dot).
 - `w14-p09s09` P09-09 notifications section and notifier (replaces the engine's `permitted`/`show` stubs in
   `main.tsx`) + P09-03 meal times editor, both on the Tracking page.
