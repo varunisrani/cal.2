@@ -48,6 +48,7 @@ import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
 import { createProgressService } from './services/progress';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
+import { createWaterService } from './services/water';
 
 // The composition root: the one place that opens the database, creates each repository once and
 // hands the app the shell's ports, the services and the read hooks' data sources. Screens never
@@ -194,6 +195,7 @@ async function start(): Promise<void> {
     }),
     progress: createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: systemClock }),
     homePrefs: createHomePrefsService({ settingsRepo }),
+    water: createWaterService({ waterRepo: createWaterRepo(db), settingsRepo, clock: systemClock }),
     clock: systemClock,
   };
   const data: DataSources = {

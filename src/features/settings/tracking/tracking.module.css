@@ -1,0 +1,9 @@
+/*
+ * Settings › Tracking & reminders (P07-06; P09 adds meal times and reminders): the page's stack of
+ * cards. Every value comes from tokens.css.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}

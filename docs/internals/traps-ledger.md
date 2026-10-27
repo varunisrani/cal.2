@@ -415,6 +415,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/units/water.test.ts > amountToMl > caps a custom amount at 5 000 ml (R05.10, D-16.39)
   - Test: src/domain/units/body.test.ts > weightWheel > shows 160.0 lb after a round trip through kg, not 159.9 (R05.10)
   - Test: src/domain/units/body.test.ts > weightWheel > keeps every tenth of the lb wheel after a round trip through kg (R05.10)
+  - Test: src/features/water/PresetsEditor.test.tsx > PresetsEditor > keeps 250 ml exactly through a save in fl oz when no field is touched (R05.10, ACC-H2-1)
+  - Test: src/features/water/CustomWaterSheet.test.tsx > CustomWaterSheet > refuses 6 000 ml with a message naming 5,000 ml and stores nothing (ACC-H3-1, R05.10, D-16.39)
+  - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > opens the goal wheel in fl oz on 68, keeps 2 000 ml unmoved, and stores 70 fl oz as 2 070 ml (R05.10)
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
   - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
   - Test: src/services/progress.test.ts > settings > stores the weight unit for the whole app (R05.11)
@@ -530,6 +533,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches
   - Test: src/data/repos/settingsRepo.test.ts > loaded > resolves with the first snapshot only after a write in flight has landed (R06.22)
+  - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > draws nothing until the settings are read (R06.22)
   - Review: the settings screens owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue

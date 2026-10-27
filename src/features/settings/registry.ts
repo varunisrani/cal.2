@@ -65,6 +65,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     page: onDemand(() => import('./goals/GoalsPage').then((module) => module.GoalsPage)),
   },
+  // Water and fasting tracking (P07-06, P07-07); meal times and reminders join in P09.
+  {
+    id: 'tracking',
+    titleKey: 'trackers.page.title',
+    icon: 'clock',
+    group: 'prefs',
+    page: onDemand(() => import('./tracking/TrackingPage').then((module) => module.TrackingPage)),
+  },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
     id: 'methods',

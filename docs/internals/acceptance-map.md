@@ -606,7 +606,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F11 · "+" button opening food methods, Water and fasting entries (P0)
 
 - **ACC-F11-1** With water tracking on, the + menu has a Water page that logs a preset at once
-  - Review: P07-06
+  - Test: src/features/water/WaterMenuPage.test.tsx > WaterMenuPage > logs 500 ml on the selected day at once, confirms it and is done (ACC-F11-1)
+  - Review: P07-08
 - **ACC-F11-2** During a fast the + menu shows only water and fasting entries
   - Review: P07-08
 
@@ -691,17 +692,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H1 · Water tracking switch (off by default), daily goal, ml or fl oz (P1)
 
 - **ACC-H1-1** Turning water tracking on adds the water pillar and the Water page in the + menu
-  - Review: P07-06
+  - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > adds the water pillar on Home once water is turned on, and a log from the water page fills it (ACC-H1-1)
+  - Review: P07-08
 
 ### H2 · Three quick-add amounts (1–5 000 ml) that keep exact values … (P1)
 
 - **ACC-H2-1** 250 ml stays 250 ml after editing in fl oz without touching it
-  - Review: P01-05
+  - Test: src/features/water/PresetsEditor.test.tsx > PresetsEditor > keeps 250 ml exactly through a save in fl oz when no field is touched (R05.10, ACC-H2-1)
 
 ### H3 · Log water by quick amount or a custom amount up to 5 000 ml on the … (P1)
 
 - **ACC-H3-1** A custom amount of 6 000 ml is refused
-  - Review: P07-06
+  - Test: src/features/water/CustomWaterSheet.test.tsx > CustomWaterSheet > refuses 6 000 ml with a message naming 5,000 ml and stores nothing (ACC-H3-1, R05.10, D-16.39)
+  - Test: src/services/water.test.ts > logWater > refuses more than 5 000 ml, nothing, and part of a ml, storing nothing (ACC-H3-1, D-16.39)
 - **ACC-H3-2** Water logged while yesterday is selected lands on yesterday
   - Review: P07-17
 
@@ -878,7 +881,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J10 · Tracking & reminders page (P1)
 
 - **ACC-J10-1** The tracking page shows water and fasting rows only when each is switched on
-  - Review: P07-06
+  - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > shows water's own rows only while water is switched on (ACC-J10-1)
+  - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > shows the goal, the unit and the quick-add amounts once water is on (ACC-J10-1)
+  - Review: P07-07
 
 ### J11 · Reminders (P1)
 
