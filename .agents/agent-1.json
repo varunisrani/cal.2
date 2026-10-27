@@ -2,10 +2,10 @@
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
   "state": "ACTIVE",
-  "usage_pct": 81,
-  "remaining_pct": 19,
+  "usage_pct": 84,
+  "remaining_pct": 16,
   "resets_at": "2026-10-27T10:20:00+05:30",
-  "last_check": "2026-10-27T08:51:00+05:30",
-  "current_step": "121/176 tasks; 1 builder (P07-06 water, base 358143a) started at 81 % with usage flat; stop at 88 %",
+  "last_check": "2026-10-27T09:05:00+05:30",
+  "current_step": "121/176 tasks; 1 builder (P07-06 water); about 0.3 %/min, 88 % near 09:14 IST; stop rule armed",
   "last_commit": "358143a"
 }
