@@ -1,0 +1,71 @@
+{
+  "format": "platewise-diary",
+  "version": "1.0",
+  "range": { "start": "2026-10-27", "end": "2026-10-27" },
+  "days": [
+    {
+      "date": "2026-10-27",
+      "totals": { "kcal": 870, "protein": 50, "carbs": 96, "fat": 29 },
+      "targets": { "kcal": 2200, "protein": 140, "carbs": 220, "fat": 73 },
+      "left": { "kcal": 1330, "protein": 90, "carbs": 124, "fat": 44 },
+      "meals": [
+        {
+          "meal": "breakfast",
+          "items": [
+            {
+              "id": "99beffda-61cf-4944-aaf1-dfd63255b3ff",
+              "name": "Chicken grain bowl",
+              "grams": 360,
+              "kcal": 480,
+              "protein": 32,
+              "carbs": 52,
+              "fat": 15,
+              "nutrients": { "fibreG": 8, "sugarG": 5, "sodiumMg": 590 },
+              "extras": {},
+              "time": "08:15",
+              "source": "ai",
+              "note": "Half the rice.",
+              "lines": [
+                {
+                  "name": "Grilled chicken",
+                  "grams": 120,
+                  "kcal": 200,
+                  "protein": 28,
+                  "carbs": 0,
+                  "fat": 9
+                },
+                {
+                  "name": "Brown rice and vegetables",
+                  "grams": 240,
+                  "kcal": 280,
+                  "protein": 4,
+                  "carbs": 52,
+                  "fat": 6
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "meal": "lunch",
+          "items": [
+            {
+              "id": "815d547d-c02a-40e5-bcc3-e620f8f7719d",
+              "name": "Lentil salad with feta",
+              "grams": 300,
+              "kcal": 390,
+              "protein": 18,
+              "carbs": 44,
+              "fat": 14,
+              "nutrients": { "fibreG": 12 },
+              "extras": {},
+              "time": "12:40",
+              "source": "manual",
+              "lines": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

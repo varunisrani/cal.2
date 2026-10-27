@@ -53,6 +53,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-A9-1** Picking Ember recolours every accent element at once
   - Test: src/features/settings/app/AppPage.test.tsx > AppPage > recolours every accent element at once when Ember is chosen (ACC-A9-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > changes the accent and the units: the page and Home follow at once, a reload keeps them, and no stored value changes (ACC-A9-1, ACC-C12-1, D-16.1)
 - **ACC-A9-2** Every accent passes the contrast sweep in both themes
   - Test: src/ui/contrast.test.ts > token contrast sweep > meets every floor: $theme theme, $accent accent
 
@@ -138,6 +139,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-B10-1** Restoring a complete backup from Welcome lands on Home with its entries
   - Test: src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > restores a complete backup after its preview and lands on Home with its entries, seeding nothing (ACC-B10-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
 - **ACC-B10-2** Restoring a backup without a profile continues the wizard and keeps the entries
   - Test: src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > continues a backup without a profile at the Sex step, keeping its entries through to the end (ACC-B10-2)
 
@@ -246,6 +248,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-C12-1** Switching to kJ shows 8 368 kJ for a 2 000 kcal goal without changing it
   - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > changes the accent and the units: the page and Home follow at once, a reload keeps them, and no stored value changes (ACC-A9-1, ACC-C12-1, D-16.1)
 - **ACC-C12-2** Opening and saving the kJ goal wheel unchanged keeps 2 000 kcal
   - Review: P01-03
 
@@ -954,6 +957,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-J11-1** Denying notification permission leaves the switch off with a pointer to browser settings
   - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > leaves the switch off when the browser says no, and points to the browser's site settings (ACC-J11-1, R06.13)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > keeps the notification switch off when the browser says no, and points to the browser's settings (ACC-J11-1, R06.13)
 - **ACC-J11-2** A reminder missed while the app was closed shows once on the next open
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows a lunch reminder missed while the app was closed once on the next open (ACC-J11-2)
   - Test: src/services/reminders/schedule.test.ts > due > lists a reminder once when its time passed since it was dealt with (ACC-J11-2)
@@ -964,7 +968,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### K1 · Export the diary as JSON, Markdown or CSV for today, this week (by … (P1)
 
 - **ACC-K1-1** Exporting this week as CSV gives a file with food and water rows
-  - Review: P09-19
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > exports this week as CSV with its header, the food row and the water rows (ACC-K1-1)
 - **ACC-K1-2** A kJ user's export still holds kcal and says so
   - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > keeps kcal in a kJ reader's file (R06.14, ACC-K1-2)
   - Test: src/services/transfer/exportFormats.test.ts > toCsv > is the same for a kJ reader: the header names kcal and values stay kcal (R06.14, ACC-K1-2)
@@ -979,18 +983,21 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-K2-2** Replacing a range keeps the photos of matched entries
   - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > keeps a matched entry's id and photos and takes the file's values (ACC-K2-2, R06.16)
   - Test: src/features/settings/data/ImportSheet.test.tsx > ImportSheet > replaces the dates, keeps a matched entry's photos, then closes and says so (ACC-K2-2)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > imports our diary file with Replace: the matched entry keeps its photo and takes the file's values (ACC-K2-2, R06.16)
 
 ### K3 · Back up to a file (P1)
 
 - **ACC-K3-1** Back up now produces one file with the diary, photos and chat
   - Test: src/services/backup/backup.test.ts > makeBackup > makes one file with the diary, its photos and the Coach chat (ACC-K3-1)
   - Test: src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
 
 ### K4 · Restore from a file (P1)
 
 - **ACC-K4-1** Restore shows what the file holds and asks before replacing anything
   - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)
   - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
 - **ACC-K4-2** A damaged file changes nothing
   - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a file is not a backup and changes nothing (ACC-K4-2)
   - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a damaged file changed nothing (ACC-K4-2)
@@ -1007,6 +1014,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-K6-1** Erase everything empties the app, other open tabs included, and shows Welcome
   - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > deletes everything, the nudge’s key too, and another open tab starts again on Welcome (ACC-K6-1)
   - Test: src/features/settings/data/DataPage.test.tsx > DataPage > asks before erasing everything, then tells the backup, stops the reminders, erases and starts again (R06.5, ACC-K6-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
 
 ### K7 · Storage card (P1)
 
@@ -1033,7 +1041,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L2 · Works offline except AI and food-database lookups (P1)
 
 - **ACC-L2-1** The installed app reloads with the network off
-  - Review: P09-19
+  - Test: e2e/settings-data.spec.ts > offline (service workers allowed) > reloads with the network off from the service worker, and an AI request offline says so (ACC-L2-1, R03.2)
 - **ACC-L2-2** AI requests are never cached by the service worker
   - Test: src/sw/sw.test.ts > fetch > leaves a request to %s alone: no answer, no cache (ACC-L2-2)
 

@@ -183,6 +183,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > turns an Open Food Facts product into one part of one serving, keeping its photo
   - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > takes a label saved for the code before FoodData Central, as one part without a photo
   - Test: e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > sends a stored FoodData Central key in its header only, once, after an Open Food Facts miss (R02.18, R02.15)
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > reads our fixture per serving, preferring per-serving values to scaled per-100 g ones
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > scales per-100 g values by 0.3 for a 30 g serving
@@ -202,6 +203,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/barcode/fdc.test.ts > lookupFdc: the request (R02.18) > puts the key in the X-Api-Key header and nowhere else
   - Test: src/services/barcode/fdc.test.ts > englishTitleCase (R02.18) > gives "GREEK YOGURT" as "Greek Yogurt" and keeps the dotted i under a Turkish locale
   - Test: src/features/settings/ai/FoodDbSection.test.tsx > FoodDbSection > refuses a key with a character a header cannot carry, and stores nothing (R02.18)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > sends a stored FoodData Central key in its header only, once, after an Open Food Facts miss (R02.18, R02.15)
 - **R02.19** One photo storage rule (≤ 2 048 px at 0.8 only when smaller); restored photos are never re-encoded; thumbnails are upright
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > stores a 4 000 px photo as a 2 048 px JPEG at 0.80 when that copy is smaller
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > keeps the original bytes of a large photo whose 2 048 px copy is not smaller
@@ -245,6 +247,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > adds the refused-key hint for providers that hide it behind CORS
   - Test: src/ai/errors.test.ts > fromNetwork (R03.2) > reports an offline device as offline, and anything else as connection
   - Test: scripts/ai-cors-probe.test.ts > judgeAttempt: one request, one verdict (R03.2) > tells the environment refusing the connection apart from CORS
+  - Test: e2e/settings-data.spec.ts > offline (service workers allowed) > reloads with the network off from the service worker, and an AI request offline says so (ACC-L2-1, R03.2)
 - **R03.3** Plain HTTP only for loopback; other HTTP server addresses are refused when saved (D-16.26)
   - Test: src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses plain http to the local network or the internet, with the reason
   - Test: src/features/ai-setup/choice.test.ts > checkChoice > refuses plain http to another machine and gives the reason (D-16.26, R03.3)
@@ -597,6 +600,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.8** Restore states what it will replace and asks first (D-16.42)
   - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)
   - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
 - **R06.9** Archive entry names are plain photo names only, when writing and reading
   - Test: src/services/backup/archive.test.ts > packBackup and unpackBackup > skips the same names when reading, with every other stray entry, and lists them (R06.9)
   - Test: src/services/backup/archive.test.ts > isSafePhotoName > refuses every other name rather than cleaning it up (R06.9)
@@ -617,6 +621,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > turns on after a grant and lists the reminders, each off, with a line saying so (R06.13)
   - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > shows the switch off when the permission was taken back while away, and on again once it is back (R06.13)
   - Test: src/services/trackingSettings.test.ts > the notifications switch (R06.13) > asks the browser and stores the switch on after a grant
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > keeps the notification switch off when the browser says no, and points to the browser's settings (ACC-J11-1, R06.13)
 - **R06.14** Exports always hold kcal; kJ users get a note and a kcal header
   - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > keeps kcal in a kJ reader's file (R06.14, ACC-K1-2)
   - Test: src/services/transfer/exportFormats.test.ts > toCsv > is the same for a kJ reader: the header names kcal and values stay kcal (R06.14, ACC-K1-2)
@@ -634,6 +639,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > adds every food and water log as new with Add as new, doubling the day (R06.16)
   - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > leaves water alone for a food-only file (R06.16)
   - Test: src/services/transfer/importDiary.test.ts > planImport > matches every food by id before any by key, each stored entry once
+  - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > imports our diary file with Replace: the matched entry keeps its photo and takes the file's values (ACC-K2-2, R06.16)
 - **R06.17** Export "This week" follows the week-start setting
   - Test: src/services/transfer/exportDiary.test.ts > resolveRange > starts This week on the app week start: Sunday for a Sunday start (R06.17)
   - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > exports This week from a Sunday start with a water-only day (R06.17)

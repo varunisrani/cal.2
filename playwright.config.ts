@@ -19,7 +19,17 @@ export default defineConfig({
     trace: 'retain-on-failure',
     serviceWorkers: 'block',
   },
-  projects: [{ name: 'mobile-chromium', use: { ...devices['Pixel 7'] } }],
+  projects: [
+    { name: 'mobile-chromium', use: { ...devices['Pixel 7'] } },
+    // The offline test of the settings and data spec (P09-19) needs the app's service worker,
+    // which the project above blocks for every other spec.
+    {
+      name: 'offline-chromium',
+      testMatch: /settings-data\.spec\.ts$/,
+      grep: /@offline/,
+      use: { ...devices['Pixel 7'], serviceWorkers: 'allow' },
+    },
+  ],
   webServer: {
     command: `pnpm exec vite preview --host 127.0.0.1 --port ${port} --strictPort`,
     url: `http://127.0.0.1:${port}`,

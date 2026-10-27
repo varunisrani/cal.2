@@ -549,7 +549,8 @@
       "module": "src/domain/units/energy.ts",
       "symbol": "formatEnergy",
       "tests": [
-        "src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)"
+        "src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > changes the accent and the units: the page and Home follow at once, a reload keeps them, and no stored value changes (ACC-A9-1, ACC-C12-1, D-16.1)"
       ]
     },
     {
@@ -573,7 +574,8 @@
       "module": "src/features/settings/app/AppPage.tsx",
       "symbol": "AppPage",
       "tests": [
-        "src/features/settings/app/AppPage.test.tsx > AppPage > recolours every accent element at once when Ember is chosen (ACC-A9-1)"
+        "src/features/settings/app/AppPage.test.tsx > AppPage > recolours every accent element at once when Ember is chosen (ACC-A9-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > changes the accent and the units: the page and Home follow at once, a reload keeps them, and no stored value changes (ACC-A9-1, ACC-C12-1, D-16.1)"
       ]
     },
     {
@@ -625,7 +627,8 @@
       "symbol": "RestoreSheet",
       "tests": [
         "src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)",
-        "src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)"
+        "src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)"
       ]
     },
     {
@@ -633,14 +636,17 @@
       "module": "src/features/onboarding/RestoreFromFile.tsx",
       "symbol": "RestoreFromFile",
       "tests": [
-        "src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > restores a complete backup after its preview and lands on Home with its entries, seeding nothing (ACC-B10-1)"
+        "src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > restores a complete backup after its preview and lands on Home with its entries, seeding nothing (ACC-B10-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)"
       ]
     },
     {
       "id": "PC-ACC-K1-1",
       "module": "src/features/settings/data/ExportSheet.tsx",
       "symbol": "ExportSheet",
-      "tests": [],
+      "tests": [
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > exports this week as CSV with its header, the food row and the water rows (ACC-K1-1)"
+      ],
       "review": ["P09-19"]
     },
     {
@@ -649,14 +655,19 @@
       "symbol": "BackupSection",
       "tests": [
         "src/services/backup/backup.test.ts > makeBackup > makes one file with the diary, its photos and the Coach chat (ACC-K3-1)",
-        "src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)"
+        "src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)"
       ]
     },
     {
       "id": "PC-ACC-K6-1",
       "module": "src/data/wipe.ts",
       "symbol": "eraseEverything",
-      "tests": [],
+      "tests": [
+        "src/services/yourData.test.ts > createYourDataService: Erase everything > deletes everything, the nudge’s key too, and another open tab starts again on Welcome (ACC-K6-1)",
+        "src/features/settings/data/DataPage.test.tsx > DataPage > asks before erasing everything, then tells the backup, stops the reminders, erases and starts again (R06.5, ACC-K6-1)",
+        "e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)"
+      ],
       "review": ["P09-15"]
     },
     {

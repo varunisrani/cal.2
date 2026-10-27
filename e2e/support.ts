@@ -264,6 +264,8 @@ export interface FoodDatabaseLog {
   readonly offPhotos: string[];
   /** FoodData Central requests, `METHOD url`. */
   readonly fdc: string[];
+  /** FoodData Central searches (its POSTs): the address, the `X-Api-Key` header and the body. */
+  readonly fdcSearches: { url: string; apiKey: string | null; body: string | null }[];
   /** Every other request off loopback, `METHOD url`: aborted, and a test failure. */
   readonly strays: string[];
 }
@@ -278,7 +280,7 @@ export async function routeFoodDatabases(context: BrowserContext): Promise<FoodD
   const product = readFileSync(`${FIXTURES}off-product.json`, 'utf8');
   const notFound = readFileSync(`${FIXTURES}off-not-found.json`, 'utf8');
   const photo = readFileSync(MEAL_PHOTO);
-  const log: FoodDatabaseLog = { off: [], offPhotos: [], fdc: [], strays: [] };
+  const log: FoodDatabaseLog = { off: [], offPhotos: [], fdc: [], fdcSearches: [], strays: [] };
 
   const json = (route: Route, status: number, body: string): Promise<void> =>
     route.fulfill({ status, headers: CORS, contentType: 'application/json', body });
@@ -301,6 +303,10 @@ export async function routeFoodDatabases(context: BrowserContext): Promise<FoodD
     }
     if (url.host === FDC_SEARCH.host && url.pathname === FDC_SEARCH.pathname) {
       log.fdc.push(`${method} ${url.href}`);
+      if (method === 'POST') {
+        const apiKey = (await request.headerValue('x-api-key')) ?? null;
+        log.fdcSearches.push({ url: url.href, apiKey, body: request.postData() });
+      }
       if (method === 'OPTIONS') {
         await route.fulfill({
           status: 204,
@@ -470,4 +476,49 @@ export function textsSeen(page: Page): Promise<string[]> {
     (key) => [...((window as unknown as Record<string, string[] | undefined>)[key] ?? [])],
     TEXTS_SEEN_KEY,
   );
+}
+
+// ---- Settings and data (P09-19): the notification prompt ---------------------------------------
+
+/** Where the stand-in below keeps its state; sessionStorage, so a reload keeps the answer. */
+const NOTIFICATION_KEY = '__platewiseNotificationPrompt';
+
+/**
+ * Makes the browser's notification prompt answer "no" from each document's start, as a person
+ * pressing Block would: the permission reads `default` until the app asks, then `denied` for the
+ * rest of the tab's life, reloads included. Playwright can grant a permission but not deny one,
+ * and headless Chromium's own prompt answers `default`. Read the number of requests with
+ * `notificationRequests`.
+ */
+export async function refuseNotifications(page: Page): Promise<void> {
+  await page.addInitScript((key) => {
+    const prompt = window.Notification as typeof Notification | undefined;
+    if (prompt === undefined) return;
+    const read = (): { asked: number; answer: NotificationPermission } => {
+      const stored = sessionStorage.getItem(key);
+      return stored === null
+        ? { asked: 0, answer: 'default' }
+        : (JSON.parse(stored) as { asked: number; answer: NotificationPermission });
+    };
+    Object.defineProperty(prompt, 'permission', {
+      configurable: true,
+      get: () => read().answer,
+    });
+    Object.defineProperty(prompt, 'requestPermission', {
+      configurable: true,
+      value: (): Promise<NotificationPermission> => {
+        const next = { asked: read().asked + 1, answer: 'denied' as const };
+        sessionStorage.setItem(key, JSON.stringify(next));
+        return Promise.resolve(next.answer);
+      },
+    });
+  }, NOTIFICATION_KEY);
+}
+
+/** How many times the page asked for the notification permission (`refuseNotifications`). */
+export function notificationRequests(page: Page): Promise<number> {
+  return page.evaluate((key) => {
+    const stored = sessionStorage.getItem(key);
+    return stored === null ? 0 : (JSON.parse(stored) as { asked: number }).asked;
+  }, NOTIFICATION_KEY);
 }
