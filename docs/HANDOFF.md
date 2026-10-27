@@ -133,16 +133,15 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Window reset at 15:20 IST (next reset 20:20 IST). Seven wave 14 builders started at 15:24 IST, base 1430e0b
-(prompts in `docs/handoff/wave14/`, filled copies in `/root/wt/prompt-<slice>.txt`, worktrees `/root/wt/wt-<slice>`):
-- `w14-p09s01` P09-01 Settings hub and load gate (two cards, sub-pages nested under App settings, update dot).
-- `w14-p09s09` P09-09 notifications section and notifier (replaces the engine's `permitted`/`show` stubs in
-  `main.tsx`) + P09-03 meal times editor, both on the Tracking page.
-- `w14-p09s14` P09-14 restore from a file on Welcome (reuses `RestoreSheet`).
-- `w14-p09s15` P09-15 Your data page (mounts Export, Import, Backup, Restore; Erase calls `backup.invalidate()`
-  and `reminders.stop()` first), storage card, persistence nudges.
-- `w14-p09s16` P09-16 About, credits, `src/config/links.ts`, `scripts/notices.ts`, a version build constant.
-- `w14-p07s17` P07-17 Home and Progress e2e; `w14-p08s14` P08-14 Coach e2e.
+Landing (16:17 IST): seven slices stacked on `/root/wt/verify` over 8b6fe57 in one full loop; when the loop log
+ends with ci=0 push with `/root/wt/land-multi.sh 8b6fe57 25bb8dc /root/wt/msgs/w15-01.txt dbbafcc
+/root/wt/msgs/w14-01.txt 8724512 /root/wt/msgs/w14-02.txt 8adf47f /root/wt/msgs/w14-03.txt fa7dba9
+/root/wt/msgs/w14-04.txt 5213fb5 /root/wt/msgs/w14-05.txt 4153a6e /root/wt/msgs/w14-06.txt` (P10-13 user docs,
+P09-16 About, P08-14 Coach e2e, P09-09/03 notifier and meal times, P09-01 hub, P09-14 Welcome restore, P07-17
+Home/Progress e2e; ledgers applied). At the hub merge the lead kept About's `links.ts`, nested Credits under
+About and set `waitForSettings: false` on About and Credits.
+Builder running: P09-15 Your data (`/root/wt/wt-p09s15`, base 1430e0b; approved an additive
+`photoRepo.clearThumbs()` with its test).
 Merges to expect: P09-01 and P09-15/16 all touch `registry.ts`; P09-09 and P09-01 both touch the Tracking page's
 registration only; P09-16 and P09-01 share `src/config/links.ts` (P09-16 owns it).
 Then P09-19 settings, data and offline e2e (after P09-14/15), then P10 (hardening and release: parity, ledgers
