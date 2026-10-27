@@ -316,6 +316,13 @@ export const SETTING_SPECS = {
   // the AI layer's defaults (P03-04)
   'ai.settings': setting<AiSettings | null>(none, readAiSettings),
 
+  // Health Connect, on the Android app only (P11-03, D-16.89). Counting the day's active calories
+  // in its energy target is on once connected; sending entries and weigh-ins back is off.
+  'health.connected': setting(off, readFlag),
+  'health.countActiveCalories': setting(on, readFlag),
+  'health.writeBack': setting(off, readFlag),
+  'health.importWeights': setting(on, readFlag),
+
   // Storage and backup
   'storage.persistAsked': setting(off, readFlag),
   'storage.nudgeDone': setting(off, readFlag),

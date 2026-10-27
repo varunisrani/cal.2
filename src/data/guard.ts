@@ -7,7 +7,7 @@
 
 import { systemClock, type Clock } from '../lib/clock';
 import { isBlobLike, type Codec } from './codecs';
-import type { PlatewiseDb, TableName } from './schema';
+import type { PlatewiseDb, StoreName } from './schema';
 
 /** The `meta` key of the "some data could not be read" flag. */
 export const UNREADABLE_FLAG = 'unreadableData';
@@ -16,7 +16,7 @@ export const UNREADABLE_FLAG = 'unreadableData';
 export const GUARD_TABLES = ['quarantine', 'meta'] as const;
 
 /** Tables whose rows are decoded by a codec (the quarantine itself is never decoded). */
-export type GuardedTable = Exclude<TableName, 'quarantine'>;
+export type GuardedTable = Exclude<StoreName, 'quarantine'>;
 
 export interface ReadAllResult<T> {
   items: T[];

@@ -14,6 +14,7 @@ import { documentVisibility } from './app/useTuneUp';
 import { appBus } from './data/bus';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
+import { live } from './data/live';
 import { clearUnreadableFlag, hasUnreadableData } from './data/guard';
 import { createBackupRepo } from './data/repos/backupRepo';
 import { createBodyFatRepo } from './data/repos/bodyFatRepo';
@@ -49,6 +50,7 @@ import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
 import { createFastingService } from './services/fasting';
 import { createFitCheckService } from './services/fitCheck';
+import { loadHealth } from './services/health/load';
 import { createHomePrefsService } from './services/homePrefs';
 import { createRebuildService } from './services/goals/rebuild';
 import { createTargetEditsService } from './services/goals/targetEdits';
@@ -200,6 +202,20 @@ async function start(): Promise<void> {
     show: (notice) => void notifier.show(notice),
   });
 
+  // P11-03: Health Connect on the Android app only; the web build fetches none of its code.
+  const health = await loadHealth({
+    db,
+    settingsRepo,
+    diaryRepo,
+    weightRepo,
+    clock: systemClock,
+    visibility: documentVisibility,
+    live,
+  }).catch((error: unknown) => {
+    console.error('Platewise: Health Connect could not be set up', error);
+    return undefined;
+  });
+
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
     diary: createDiaryService({
@@ -330,6 +346,7 @@ async function start(): Promise<void> {
     storageNudge,
     // The "some saved data could not be read" notice's Dismiss (K9).
     damagedData: createDamagedDataService({ clearFlag: () => clearUnreadableFlag(db) }),
+    health: health?.service,
     clock: systemClock,
   };
   const data: DataSources = {
@@ -342,11 +359,14 @@ async function start(): Promise<void> {
     bodyFatRepo,
     savedMealsRepo: createSavedMealsRepo(db),
     coachRepo,
+    // Only the Android app has the activity copy.
+    activityRepo: health?.activityRepo,
     unreadableFlag: () => hasUnreadableData(db),
     clock: systemClock,
   };
   render(createShellPorts({ profileRepo, settingsRepo }), services, data);
   reminders.start();
+  health?.service.start();
   // D-16.46: an analysis that finished before a reload opens its review again.
   analysis.restore().catch((error: unknown) => {
     console.error('Platewise: the stored analysis could not be read', error);

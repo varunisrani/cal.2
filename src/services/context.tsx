@@ -13,6 +13,7 @@ import type { DamagedDataService } from './damagedData';
 import type { DiaryService } from './diary';
 import type { FastingService } from './fasting';
 import type { FitCheckService } from './fitCheck';
+import type { HealthService } from './health/service';
 import type { HomePrefsService } from './homePrefs';
 import type { PlanBuilder } from './goals/planBuilder';
 import type { RebuildService } from './goals/rebuild';
@@ -104,6 +105,11 @@ export interface Services {
   readonly storageNudge?: StorageNudge;
   /** Dismiss on the "some saved data could not be read" notice (K9); optional likewise. */
   readonly damagedData?: DamagedDataService;
+  /**
+   * Health Connect (P11-03): only the Android app has one. Without it Home, Progress and Settings
+   * show no health features, as on the web.
+   */
+  readonly health?: HealthService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

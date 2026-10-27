@@ -39,6 +39,15 @@
   gap: var(--space-1);
 }
 
+/* The counted burn (P11-04): "2,000 goal + 350 burned", close under the gauge. */
+.burn {
+  justify-self: center;
+  margin: calc(-1 * var(--space-3)) 0 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
 /* "All nutrients", centred under the pillars and drawn closer to them than the card's gap. */
 .allNutrients {
   justify-self: center;

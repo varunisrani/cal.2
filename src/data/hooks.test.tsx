@@ -14,6 +14,7 @@ import { createBus } from './bus';
 import { hasUnreadableData, settleQuarantine } from './guard';
 import {
   useActiveFast,
+  useActivity,
   useBodyFat,
   useCoachMessages,
   useDayEntries,
@@ -34,6 +35,7 @@ import { createBodyFatRepo } from './repos/bodyFatRepo';
 import { createCoachRepo } from './repos/coachRepo';
 import { createDiaryRepo } from './repos/diaryRepo';
 import { createFastRepo } from './repos/fastRepo';
+import { createHealthRepo } from './repos/healthRepo';
 import { createProfileRepo } from './repos/profileRepo';
 import { createSavedMealsRepo } from './repos/savedMealsRepo';
 import { createSettingsRepo } from './repos/settingsRepo';
@@ -300,6 +302,36 @@ describe('each hook renders loading, then the stored data, and follows a write a
     await act(() => settleQuarantine(db));
     await flag.until(ready((raised) => raised));
     expect(flag.value()).toBe(true);
+  });
+});
+
+describe('useActivity (P11-03)', () => {
+  it('renders the stored days of Health Connect activity and follows a sync after mount', async () => {
+    const { db, sources } = await setUp();
+    const activityRepo = createHealthRepo(db);
+    const view = track({ ...sources, activityRepo }, () => useActivity(DAY_BEFORE, DAY), null);
+    expect(view.renders[0]).toEqual({ status: 'loading' });
+    await view.until(ready());
+    expect(view.value()).toEqual([]);
+
+    const row = {
+      day: DAY,
+      steps: 6_400,
+      activeKcal: 280,
+      totalKcal: null,
+      distanceM: null,
+      sessions: [],
+      syncedAt: FACTORY_NOW,
+    };
+    await act(() => activityRepo.putDays([row]));
+    await view.until(ready(longer(0)));
+    expect(view.value()).toEqual([row]);
+  });
+
+  it('is empty at once where there is no activity copy (the web)', async () => {
+    const { sources } = await setUp();
+    const view = track(sources, () => useActivity(DAY, DAY), null);
+    expect(view.renders[0]).toEqual({ status: 'ready', value: [] });
   });
 });
 

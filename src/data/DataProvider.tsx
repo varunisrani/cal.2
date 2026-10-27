@@ -5,6 +5,7 @@ import type { BodyFatRepo } from './repos/bodyFatRepo';
 import type { CoachRepo } from './repos/coachRepo';
 import type { DiaryRepo } from './repos/diaryRepo';
 import type { FastRepo } from './repos/fastRepo';
+import type { HealthRepo } from './repos/healthRepo';
 import type { ProfileRepo } from './repos/profileRepo';
 import type { SavedMealsRepo } from './repos/savedMealsRepo';
 import type { SettingsRepo } from './repos/settingsRepo';
@@ -26,6 +27,8 @@ export interface DataSources {
   readonly bodyFatRepo: Pick<BodyFatRepo, 'between'>;
   readonly savedMealsRepo: Pick<SavedMealsRepo, 'list'>;
   readonly coachRepo: Pick<CoachRepo, 'list'>;
+  /** Health Connect's activity copy (P11-03): only the Android app has one. */
+  readonly activityRepo?: Pick<HealthRepo, 'between'>;
   /** Reads `meta.unreadableData`: true once anything stored could not be read. */
   readonly unreadableFlag: () => Promise<boolean>;
   /** Where "today" comes from when a hook is not given a day. */

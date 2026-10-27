@@ -1104,14 +1104,30 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 ### M11 · Health-store sync, steps, burn line and the measured-energy anchor (P1)
 
-- **ACC-M11-1** On Android, once Health Connect is connected, Home shows the shown day's steps, active calories and workouts
-  - Review: P11-03, P11-04
-- **ACC-M11-2** With "Count active calories" on, the day's target is the goal plus that day's active calories, and the stored goal does not change
-  - Review: P11-04
-- **ACC-M11-3** With writing on, a logged entry and a weigh-in reach Health Connect under our ids, and an edit or delete in Platewise follows there
-  - Review: P11-03
-- **ACC-M11-4** The web app and PWA show no health features and never load the Health Connect adapter
-  - Review: P11-03, P11-04
+- **ACC-M11-1** On the Android app Settings lists Health Connect, and Connect shows what is allowed, the switches and the last sync; the web never offers it
+  - Test: src/features/settings/registry.test.ts > pages a copy of the app does not offer (P11-04) > offers Health Connect on the web never, and in the Android app after Tracking (ACC-M11-1)
+  - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage (P11-04) > connects on Connect, then shows what is allowed, the switches and the last sync (ACC-M11-1)
+- **ACC-M11-2** With "Count active calories" on, Home's target is the goal plus the day's active calories with the line "<goal> goal + <N> burned"; with it off the goal stays; the stored goal never changes
+  - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > counts the day's active calories in the gauge, says goal + burned, and shows the activity card (ACC-M11-2)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > keeps the goal and shows no line while counting is off; the card stays
+- **ACC-M11-3** Progress shows steps and active calories for 7 or 30 days
+  - Test: src/features/progress/ActivityHistoryCard.test.tsx > ActivityHistoryCard (P11-04) > shows the last 7 days of steps and active calories, each with the mean of its days (ACC-M11-3)
+  - Test: src/features/progress/ActivityHistoryCard.test.tsx > ActivityHistoryCard (P11-04) > covers 30 days once chosen
+- **ACC-M11-4** A sync fills the last 30 days, a second sync changes nothing, and a deleted imported weigh-in never returns
+  - Test: src/services/health/service.test.ts > sync (P11-03) > fills the last 30 days from Health Connect and keeps the sync time
+  - Test: src/services/health/service.test.ts > sync (P11-03) > changes nothing on a second sync with the same answers
+  - Test: src/data/repos/healthRepo.test.ts > importWeighIns (R07.22) > never brings back a reading the person deleted here
+- **ACC-M11-5** With writing on, entries and weigh-ins reach Health Connect under our ids and follow add, edit and delete; imported weigh-ins are never sent back
+  - Test: src/services/health/service.test.ts > write-back (D-16.89) > sends the window's entries when turned on, then follows add, edit and delete
+  - Test: src/services/health/service.test.ts > write-back (D-16.89) > sends weigh-ins typed here and removes deleted ones, never imported ones
+- **ACC-M11-6** Access removed in Health Connect shows with Grant access, and a failed sync never blocks the diary
+  - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage (P11-04) > shows access removed in Health Connect with Grant access, and reads again once it is back
+  - Test: src/services/health/service.test.ts > sync (P11-03) > keeps a failure in the status without rejecting, and clears it on the next success
+  - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > draws the day and its goal when Health Connect's copy cannot be read
+- **ACC-M11-7** The web app and PWA show no health feature and never fetch the health code
+  - Test: src/services/health/load.test.ts > loadHealth > fetches nothing and builds nothing on the web, where there is no Capacitor bridge
+  - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > shows no health feature without a health service, as on the web (D-16.89)
+  - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage: Health Connect on the Android app (P11-04) > shows no activity card without a health service, as on the web (D-16.89)
 
 ## Known gaps
 

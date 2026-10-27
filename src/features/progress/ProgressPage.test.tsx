@@ -1,7 +1,13 @@
-import { act, screen } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dexie } from 'dexie';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { DataProvider } from '../../data/DataProvider';
+import { createHealthRepo } from '../../data/repos/healthRepo';
+import { health as healthWords } from '../../i18n/en/health';
+import { ServicesProvider } from '../../services/context';
+import { createHealthService } from '../../services/health/service';
+import { fakeHealthPlugin } from '../../services/health/testing/fakeHealthPlugin';
 import { common } from '../../i18n/en/common';
 import { progress } from '../../i18n/en/progress';
 import { FACTORY_NOW, makeProfile } from '../../test/factories';
@@ -178,5 +184,67 @@ describe('ProgressPage', () => {
     await untilShown('[data-ui="progress.range"]');
 
     expect(screen.getByRole('radio', { name: words.range.week })).toBeChecked();
+  });
+});
+
+describe('ProgressPage: Health Connect on the Android app (P11-04)', () => {
+  beforeAll(async () => {
+    // The card is fetched on demand: load it once before any wait includes its transform.
+    await import('./ActivityHistoryCard');
+  });
+
+  /** Progress with a health service over a fake Health Connect holding today's steps. */
+  async function openWithHealth(connected: boolean) {
+    const h = await openProgress();
+    await h.repos.settingsRepo.set('health.connected', connected);
+    const healthRepo = createHealthRepo(h.db);
+    const health = createHealthService({
+      plugin: fakeHealthPlugin({
+        days: [
+          { day: '2026-10-26', steps: 7_500, activeKcal: 260, totalKcal: null, distanceM: null },
+        ],
+      }),
+      healthRepo,
+      settingsRepo: h.repos.settingsRepo,
+      diaryRepo: h.repos.diaryRepo,
+      weightRepo: h.repos.weightRepo,
+      clock: h.clock,
+      visibility: { isVisible: () => true, subscribe: () => () => undefined },
+      watch: () => () => undefined,
+    });
+    if (connected) await health.sync();
+    h.mount(
+      <ServicesProvider services={{ ...h.services, progress: h.progress, health }}>
+        <DataProvider sources={{ ...h.sources, activityRepo: healthRepo }}>
+          <ProgressPage />
+        </DataProvider>
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="progress.weight"]');
+  }
+
+  it('shows the activity card under the nutrition cards while Health Connect is connected', async () => {
+    await openWithHealth(true);
+    await waitFor(() =>
+      expect(
+        screen.getByRole('heading', { level: 2, name: healthWords.health.progress.title }),
+      ).toBeVisible(),
+    );
+    await waitFor(() =>
+      expect(document.querySelector('[data-ui="progress.activity.steps"]')).not.toBeNull(),
+    );
+  });
+
+  it('shows no activity card while not connected', async () => {
+    await openWithHealth(false);
+    expect(document.querySelector('[data-ui="progress.activity"]')).toBeNull();
+  });
+
+  it('shows no activity card without a health service, as on the web (D-16.89)', async () => {
+    const h = await openProgress();
+    await h.repos.settingsRepo.set('health.connected', true);
+    h.mount(<ProgressPage />);
+    await untilShown('[data-ui="progress.weight"]');
+    expect(document.querySelector('[data-ui="progress.activity"]')).toBeNull();
   });
 });

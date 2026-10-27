@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { parseHash, routeHash, tabRoute } from '../../app/router';
 import {
   categoryFor,
@@ -83,6 +83,34 @@ describe('defineCategories', () => {
       );
     },
   );
+});
+
+describe('pages a copy of the app does not offer (P11-04)', () => {
+  it('leaves out a page whose offer says no, and keeps one whose offer says yes', () => {
+    const categories = defineCategories([
+      { ...(SPECS[0] as CategorySpec), offered: () => false },
+      { ...(SPECS[1] as CategorySpec), offered: () => true },
+      SPECS[2] as CategorySpec,
+    ]);
+    expect(categories.map((category) => category.id)).toEqual(['about-app', 'tab-bar']);
+  });
+
+  it('offers Health Connect on the web never, and in the Android app after Tracking (ACC-M11-1)', async () => {
+    expect(SETTINGS_CATEGORIES.some(({ id }) => id === 'health-connect')).toBe(false);
+
+    vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+    vi.resetModules();
+    try {
+      const android = await import('./registry');
+      const page = android.categoryFor(['health-connect']);
+      expect(page).toMatchObject({ titleKey: 'health.page.title', group: 'prefs' });
+      const prefs = android.hubGroups(android.SETTINGS_CATEGORIES)[0]?.rows ?? [];
+      const ids = prefs.map((row) => (row.kind === 'page' ? row.category.id : row.link.id));
+      expect(ids.slice(0, 5)).toEqual(['profile', 'goals', 'tracking', 'health-connect', 'ai']);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
 });
 
 describe('categoryFor', () => {
@@ -188,6 +216,7 @@ describe('the registered categories', () => {
       'profile',
       'goals',
       'tracking',
+      'health-connect',
       'ai',
       'app',
       'data',

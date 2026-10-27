@@ -189,3 +189,35 @@ describe('DaySummary pillars, chosen (P07-03)', () => {
     expect(onShowAll).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('DaySummary counted burn (P11-04)', () => {
+  const burnLine = () => document.querySelector('[data-ui="home.burn"]');
+
+  it('reads goal + burned under the gauge, which counts against the raised target', () => {
+    render(
+      <DaySummary
+        {...summaryProps({ entries: eaten(1_200), targets: { ...PLAN, kcal: 2_350 } })}
+        burn={{ goalKcal: 2_000, burnedKcal: 350 }}
+      />,
+    );
+    expect(gauge()).toHaveAccessibleDescription('1,200 1,150 left');
+    expect(burnLine()).toHaveTextContent('2,000 goal + 350 burned');
+    expect(screen.getByText('2,000 goal + 350 burned')).toBeVisible();
+  });
+
+  it('writes both amounts in kJ for a kJ user', () => {
+    render(
+      <DaySummary
+        {...summaryProps({ unit: 'kJ', targets: { ...PLAN, kcal: 2_350 } })}
+        burn={{ goalKcal: 2_000, burnedKcal: 350 }}
+      />,
+    );
+    // 2 000 kcal = 8 368 kJ; 350 kcal = 1 464 kJ.
+    expect(burnLine()).toHaveTextContent('8,368 goal + 1,464 burned');
+  });
+
+  it('shows no line when no burn is counted', () => {
+    renderSummary({ entries: eaten(1_200) });
+    expect(burnLine()).toBeNull();
+  });
+});

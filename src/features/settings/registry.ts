@@ -9,6 +9,7 @@ import type { ComponentType } from 'react';
 import { onDemand } from '../../app/onDemand';
 import { tabRoute, type TabRoute } from '../../app/router';
 import { LINKS } from '../../config/links';
+import { isHealthAvailable } from '../../services/health/platform';
 import type { IconName } from '../../ui/icons';
 import type { TxKey } from '../home/text';
 
@@ -40,6 +41,11 @@ export interface SettingsCategory {
    * `false`, which only a page that shows no stored setting does.
    */
   readonly waitForSettings?: boolean;
+  /**
+   * Whether this copy of the app offers the page at all, asked once when the registry is built.
+   * Health Connect's page (P11-04) exists only in the Android app. Offered when left out.
+   */
+  readonly offered?: () => boolean;
 }
 
 /** A category as written in the registry; its route follows from its id. */
@@ -48,13 +54,15 @@ export type CategorySpec = Omit<SettingsCategory, 'route'>;
 const PAGE_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 /**
- * The registry's records in the order given, each with its route. Throws for an id that is not a
- * page segment or that two categories share, and for a parent that is not a registered page listed
- * on the hub: a mistake in the registry, not a runtime state.
+ * The registry's records in the order given, each with its route, leaving out a page this copy of
+ * the app does not offer. Throws for an id that is not a page segment or that two categories
+ * share, and for a parent that is not a registered page listed on the hub: a mistake in the
+ * registry, not a runtime state.
  */
 export function defineCategories(specs: readonly CategorySpec[]): readonly SettingsCategory[] {
   const seen = new Set<string>();
-  const categories = specs.map((spec) => {
+  const offered = specs.filter((spec) => spec.offered?.() ?? true);
+  const categories = offered.map((spec) => {
     if (!PAGE_ID.test(spec.id)) throw new Error(`Settings category id "${spec.id}" is not a page`);
     if (seen.has(spec.id)) throw new Error(`Settings category "${spec.id}" is registered twice`);
     seen.add(spec.id);
@@ -95,6 +103,16 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     icon: 'clock',
     group: 'prefs',
     page: onDemand(() => import('./tracking/TrackingPage').then((module) => module.TrackingPage)),
+  },
+  // Health Connect: connection, data allowed, counting, import and write-back, sync (P11-04).
+  // Only the Android app offers it (D-16.89).
+  {
+    id: 'health-connect',
+    titleKey: 'health.page.title',
+    icon: 'heart',
+    group: 'prefs',
+    offered: isHealthAvailable,
+    page: onDemand(() => import('./health/HealthPage').then((module) => module.HealthPage)),
   },
   // The AI providers and standbys, the request limits, notes and the food-database key (P09-07).
   {
@@ -214,13 +232,15 @@ export const SETTINGS_LINKS: readonly SettingsLink[] = [
 
 /**
  * The hub's rows in order (06 §3.1, D-16.66): Personal info, Goals & nutrition, Tracking &
- * reminders, AI providers, App settings, Your data; then About Platewise, Help & feedback, Privacy
- * & terms. A row whose id is missing here follows these, in registry order.
+ * reminders, Health Connect (Android app only, P11-04), AI providers, App settings, Your data;
+ * then About Platewise, Help & feedback, Privacy & terms. A row whose id is missing here follows
+ * these, in registry order.
  */
 export const HUB_ORDER: readonly string[] = [
   'profile',
   'goals',
   'tracking',
+  'health-connect',
   'ai',
   'app',
   'data',

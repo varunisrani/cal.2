@@ -729,4 +729,4 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R07.21** Local model downloads are verified before use; only Whisper-size models are viable in a browser
   - Review: owned by L4 (optional on-device speech model)
 - **R07.22** Health deletions need tombstones (no health store in the plan)
-  - Review: owned by N-5 (not planned)
+  - Test: src/data/repos/healthRepo.test.ts > importWeighIns (R07.22) > never brings back a reading the person deleted here

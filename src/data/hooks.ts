@@ -26,12 +26,14 @@ import { appBus } from './bus';
 import { useDataSources } from './DataProvider';
 import type { LiveState } from './live';
 import type { ProfileRead } from './repos/profileRepo';
+import type { ActivityRow } from './schema';
 import type { SettingKey, Settings } from './settingsSchema';
 import { useLive } from './useLive';
 
 // Screens may not import from src/data/repos, so the types they need come from here.
 export type { LiveState } from './live';
 export type { ProfileRead } from './repos/profileRepo';
+export type { ActivityRow as ActivityDay, ActivitySession } from './schema';
 
 /** The stored profile with the plan it gives: none before onboarding or when it cannot be read. */
 export type TargetsRead =
@@ -111,6 +113,23 @@ export function useWeighIns(firstKey: DayKey, lastKey: DayKey): LiveState<WeighI
 export function useBodyFat(firstKey: DayKey, lastKey: DayKey): LiveState<BodyFatReading[]> {
   const { bodyFatRepo } = useDataSources();
   return useLive(() => bodyFatRepo.between(firstKey, lastKey), [bodyFatRepo, firstKey, lastKey]);
+}
+
+const NO_ACTIVITY_DAYS: ActivityRow[] = [];
+const NO_ACTIVITY: LiveState<ActivityRow[]> = { status: 'ready', value: NO_ACTIVITY_DAYS };
+
+/**
+ * The Health Connect activity of the local days `firstKey`…`lastKey`, oldest first (P11-03): a day
+ * Health Connect had nothing for has no row. Always empty where there is no activity copy (the
+ * web).
+ */
+export function useActivity(firstKey: DayKey, lastKey: DayKey): LiveState<ActivityRow[]> {
+  const { activityRepo } = useDataSources();
+  const read = useLive(
+    () => (activityRepo ? activityRepo.between(firstKey, lastKey) : NO_ACTIVITY_DAYS),
+    [activityRepo, firstKey, lastKey],
+  );
+  return activityRepo ? read : NO_ACTIVITY;
 }
 
 /** The saved meals in the person's order. */

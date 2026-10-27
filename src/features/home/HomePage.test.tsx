@@ -1,7 +1,10 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { Dexie } from 'dexie';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeFetch } from '../../ai/testing/fakeFetch';
+import { DataProvider } from '../../data/DataProvider';
 import { createDraftsRepo } from '../../data/repos/draftsRepo';
+import { createHealthRepo } from '../../data/repos/healthRepo';
 import { createPhotoRepo } from '../../data/repos/photoRepo';
 import { createSecretsRepo } from '../../data/repos/secretsRepo';
 import { capture } from '../../i18n/en/capture';
@@ -27,6 +30,10 @@ import { createCopyDayService } from '../../services/copyDay';
 import { createDiaryService } from '../../services/diary';
 import { createFastingService } from '../../services/fasting';
 import { createHomePrefsService } from '../../services/homePrefs';
+import type { DailyTotals, ExerciseSession } from '../../services/health/contract';
+import { createHealthService } from '../../services/health/service';
+import { fakeHealthPlugin } from '../../services/health/testing/fakeHealthPlugin';
+import { health as healthWords } from '../../i18n/en/health';
 import { formatDay } from '../../i18n/format';
 import type { PhotoService } from '../../services/photos';
 import { FACTORY_NOW, makeEntry, makeFast, makeProfile } from '../../test/factories';
@@ -1353,5 +1360,143 @@ describe('HomePage: a row opens its editor and keeps a saved copy (P06-19)', () 
     fireEvent.click(heart());
     await until(() => heart().getAttribute('aria-pressed') === 'false');
     expect(await h.repos.savedMealsRepo.list()).toEqual([]);
+  });
+});
+
+describe('HomePage: Health Connect on the Android app (P11-04)', () => {
+  beforeAll(async () => {
+    // The card is fetched on demand: load it once before any wait includes its transform.
+    await import('./ActivityCard');
+  });
+
+  const TODAY_TOTALS: DailyTotals = {
+    day: '2026-10-26',
+    steps: 8_040,
+    activeKcal: 349.7,
+    totalKcal: 2_310,
+    distanceM: 6_100,
+  };
+  const WALK: ExerciseSession = {
+    id: 'walk-1',
+    day: '2026-10-26',
+    start: '2026-10-26T12:00:00Z',
+    end: '2026-10-26T12:30:00Z',
+    type: 'walking',
+    title: null,
+    activeKcal: 120,
+    source: 'org.example.watch',
+  };
+
+  /**
+   * Home with a health service over a fake Health Connect holding today's activity, synced once
+   * while connected; 1 200 kcal eaten today against a 2 000 kcal goal.
+   */
+  async function openWithHealth({ connected = true, counting = true } = {}) {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+    await h.repos.diaryRepo.add(makeEntry({ kcal: 1_200, loggedAt: FACTORY_NOW - HOUR }));
+    await h.repos.settingsRepo.set('health.connected', connected);
+    await h.repos.settingsRepo.set('health.countActiveCalories', counting);
+    const healthRepo = createHealthRepo(h.db);
+    const health = createHealthService({
+      plugin: fakeHealthPlugin({ days: [TODAY_TOTALS], sessions: [WALK] }),
+      healthRepo,
+      settingsRepo: h.repos.settingsRepo,
+      diaryRepo: h.repos.diaryRepo,
+      weightRepo: h.repos.weightRepo,
+      clock: h.clock,
+      visibility: { isVisible: () => true, subscribe: () => () => undefined },
+      watch: () => () => undefined,
+    });
+    if (connected) await health.sync();
+    h.mount(
+      <ServicesProvider services={{ ...h.services, health }}>
+        <DataProvider sources={{ ...h.sources, activityRepo: healthRepo }}>
+          <HomePage />
+        </DataProvider>
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.gauge"]');
+    return h;
+  }
+
+  it("counts the day's active calories in the gauge, says goal + burned, and shows the activity card (ACC-M11-2)", async () => {
+    await openWithHealth();
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: healthWords.health.home.title })).toBeVisible(),
+    );
+
+    // 2 000 + 350 = 2 350 kcal target; 1 200 eaten.
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,2001,150 left`);
+    expect(textOf('home.burn')).toBe('2,000 goal + 350 burned');
+    const card = within(screen.getByRole('region', { name: healthWords.health.home.title }));
+    expect(card.getByText('8,040 steps')).toBeVisible();
+    expect(card.getByText('350 kcal active')).toBeVisible();
+    expect(card.getByRole('list', { name: healthWords.health.home.workouts })).toHaveTextContent(
+      'Walking, 30m, 120 kcal',
+    );
+  });
+
+  it('keeps the goal and shows no line while counting is off; the card stays', async () => {
+    await openWithHealth({ counting: false });
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: healthWords.health.home.title })).toBeVisible(),
+    );
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,200800 left`);
+    expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
+  });
+
+  it('says a day without Health Connect data has none, and keeps its goal', async () => {
+    await openWithHealth();
+    fireEvent.click(dayTile('2026-10-25'));
+    await waitFor(() => expect(screen.getByText(healthWords.health.home.empty)).toBeVisible());
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}02,000 left`);
+    expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
+  });
+
+  it("draws the day and its goal when Health Connect's copy cannot be read", async () => {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+    await h.repos.settingsRepo.set('health.connected', true);
+    const health = createHealthService({
+      plugin: fakeHealthPlugin(),
+      healthRepo: createHealthRepo(h.db),
+      settingsRepo: h.repos.settingsRepo,
+      diaryRepo: h.repos.diaryRepo,
+      weightRepo: h.repos.weightRepo,
+      clock: h.clock,
+      visibility: { isVisible: () => true, subscribe: () => () => undefined },
+      watch: () => () => undefined,
+    });
+    const activityRepo = { between: () => Dexie.Promise.reject(new Error('unreadable')) };
+    h.mount(
+      <ServicesProvider services={{ ...h.services, health }}>
+        <DataProvider sources={{ ...h.sources, activityRepo }}>
+          <HomePage />
+        </DataProvider>
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.gauge"]');
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}02,000 left`);
+    expect(document.querySelector('[data-ui="home.error"]')).toBeNull();
+    await waitFor(() => expect(screen.getByText(healthWords.health.home.empty)).toBeVisible());
+  });
+
+  it('shows no card and counts nothing while Health Connect is not connected', async () => {
+    await openWithHealth({ connected: false });
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,200800 left`);
+    expect(document.querySelector('[data-ui="home.activity"]')).toBeNull();
+    expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
+  });
+
+  it('shows no health feature without a health service, as on the web (D-16.89)', async () => {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+    await h.repos.settingsRepo.set('health.connected', true);
+    h.mount(<HomePage />);
+    await untilShown('[data-ui="home.gauge"]');
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}02,000 left`);
+    expect(document.querySelector('[data-ui="home.activity"]')).toBeNull();
+    expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
   });
 });

@@ -48,6 +48,36 @@ export interface WeightRepo {
   latest(): PromiseExtended<WeighIn | null>;
 }
 
+/**
+ * Inside a read-write transaction over the weigh-ins, the profile and the guard's tables: points
+ * the profile weight at the newest of the stored readings. For writers of weigh-ins outside this
+ * repository (the Health Connect import, P11-03), so the profile follows every reading however it
+ * arrived. A missing or unreadable profile is left alone.
+ */
+export async function followNewestWeighIn(
+  db: PlatewiseDb,
+  clock: Clock = systemClock,
+): Promise<void> {
+  const stored = await readOne(db, 'profile', PROFILE_KEY, decodeProfile, clock);
+  if (stored.kind !== 'ok') return;
+  const readings = (await readAll(db, 'weighIns', decodeWeighIn, clock)).items;
+  await pointProfileAt(db, stored.value, readings, clock);
+}
+
+// Inside a transaction over the weigh-ins, the profile and the guard's tables: points the profile
+// weight at the newest of `readings`.
+async function pointProfileAt(
+  db: PlatewiseDb,
+  profile: Profile | null,
+  readings: readonly WeighIn[],
+  clock: Clock,
+): Promise<void> {
+  const newest = latestWeighIn(readings);
+  if (!profile || !newest || Math.abs(profile.weightKg - newest.kg) <= WEIGHT_SYNC_KG) return;
+  const row = { ...profile, weightKg: newest.kg, id: PROFILE_KEY };
+  await writeOne(db, 'profile', row, decodeProfile, clock);
+}
+
 function checkReading(at: number, kg: number): void {
   if (!Number.isFinite(at)) throw new RangeError(`A weigh-in needs a finite instant, got ${at}`);
   if (!Number.isFinite(kg) || kg <= 0) {
@@ -72,12 +102,8 @@ export function createWeightRepo(db: PlatewiseDb, options: WeightRepoOptions = {
   }
 
   // Inside a transaction over `tables`: points the profile weight at the newest of `readings`.
-  async function syncProfile(profile: Profile | null, readings: readonly WeighIn[]) {
-    const newest = latestWeighIn(readings);
-    if (!profile || !newest || Math.abs(profile.weightKg - newest.kg) <= WEIGHT_SYNC_KG) return;
-    const row = { ...profile, weightKg: newest.kg, id: PROFILE_KEY };
-    await writeOne(db, 'profile', row, decodeProfile, clock);
-  }
+  const syncProfile = (profile: Profile | null, readings: readonly WeighIn[]) =>
+    pointProfileAt(db, profile, readings, clock);
 
   async function storedReadings(): Promise<WeighIn[]> {
     return (await readAll(db, 'weighIns', decodeWeighIn, clock)).items;

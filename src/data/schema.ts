@@ -5,6 +5,7 @@
 // have written them): read them through the codecs and the guard (`codecs.ts`, `guard.ts`).
 
 import type { Dexie, EntityTable, Table, Transaction } from 'dexie';
+import type { DayKey } from '../domain/dates/dayKey';
 import type {
   BodyFatReading,
   CoachMessage,
@@ -39,6 +40,18 @@ export const TABLES = {
 export type TableName = keyof typeof TABLES;
 
 export const TABLE_NAMES = Object.keys(TABLES) as TableName[];
+
+/**
+ * Tables added after version 1, each by its upgrade step below. They hold copies of data read from
+ * elsewhere, so backups leave them out (`TABLE_NAMES` lists version 1's tables only).
+ */
+export const ADDED_TABLES = {
+  /** Version 2 (P11-03): one row per local day of activity read from Health Connect. */
+  activity: 'day',
+} as const;
+
+/** Every table the current schema holds. */
+export type StoreName = TableName | keyof typeof ADDED_TABLES;
 
 // ---- Rows -----------------------------------------------------------------------------------
 
@@ -84,6 +97,37 @@ export interface KeyValueRow {
 /** A row whose shape belongs to its repository (`secrets`: P02-12, `drafts`: P02-13). */
 export type OwnedRow = { id: string } & Record<string, unknown>;
 
+/** A workout another app recorded in Health Connect (P11-03). Instants are epoch ms. */
+export interface ActivitySession {
+  /** Health Connect's own id of the record. */
+  id: string;
+  start: number;
+  end: number;
+  /** The exercise type as the plugin names it. */
+  type: string;
+  title: string | null;
+  activeKcal: number | null;
+  /** The app that recorded it. */
+  source: string;
+}
+
+/**
+ * One local day of activity read from Health Connect (P11-03). A value is null when it was not
+ * allowed or Health Connect had none; nothing here is ever added up by Platewise.
+ */
+export interface ActivityRow {
+  day: DayKey;
+  steps: number | null;
+  activeKcal: number | null;
+  totalKcal: number | null;
+  /** Metres. */
+  distanceM: number | null;
+  /** The day's workouts, by start. */
+  sessions: ActivitySession[];
+  /** When these values were stored, epoch ms. */
+  syncedAt: number;
+}
+
 /** The database with typed tables. */
 export type PlatewiseDb = Dexie & {
   profile: Table<ProfileRow, string>;
@@ -100,6 +144,7 @@ export type PlatewiseDb = Dexie & {
   drafts: Table<OwnedRow, string>;
   quarantine: EntityTable<QuarantineRow, 'seq'>;
   meta: Table<KeyValueRow, string>;
+  activity: Table<ActivityRow, string>;
 };
 
 // ---- Upgrades -------------------------------------------------------------------------------
@@ -116,8 +161,11 @@ export interface UpgradeStep {
   readonly migrate?: (tx: Transaction) => Promise<void> | void;
 }
 
-/** The upgrade steps in version order: 2, 3, … Empty until a later phase needs one. */
-export const UPGRADES: readonly UpgradeStep[] = [];
+/** The upgrade steps in version order: 2, 3, … */
+export const UPGRADES: readonly UpgradeStep[] = [
+  // P11-03: the Health Connect activity copy. A new, empty table: nothing to move.
+  { version: 2, stores: { activity: ADDED_TABLES.activity } },
+];
 
 /** The schema version the given steps lead to (1 with no steps). */
 export function schemaVersion(steps: readonly UpgradeStep[] = UPGRADES): number {

@@ -4,6 +4,7 @@ import { useToday } from '../../app/TodayProvider';
 import { useRouter, useSheet } from '../../app/useRoute';
 import {
   useActiveFast,
+  useActivity,
   useDayEntries,
   useDayWater,
   useFasts,
@@ -21,6 +22,7 @@ import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
 import { useToast } from '../../ui/Toast';
 import { AddMenu } from '../log/AddMenu';
+import { countedBurn, withBurn } from './burn';
 import { CaptureSheet, type CapturePicker, type CaptureRequest } from '../log/capture/CaptureSheet';
 import { CopyDaySheet } from '../log/CopyDaySheet';
 import { DescribeSheet } from '../log/DescribeSheet';
@@ -75,6 +77,9 @@ const FastEditor = onDemand(() =>
   import('../fasting/FastEditor').then((module) => module.FastEditor),
 );
 
+// The Health Connect card (P11-04) exists only in the Android app; fetched when it is first drawn.
+const ActivityCard = onDemand(() => import('./ActivityCard').then((module) => module.ActivityCard));
+
 /** The entry editor a row's tap opens (P06-19). */
 export const EDITOR_SHEET = 'entry';
 
@@ -103,6 +108,8 @@ const SETTINGS = [
   'water.unit',
   'home.sort',
   'fasting.on',
+  'health.connected',
+  'health.countActiveCalories',
 ] as const;
 
 /**
@@ -128,7 +135,9 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
  * stored. Photos gathered for a meal before a reload bring their sheet back when Home opens
  * (D-16.46). A tap on a food row opens its editor; a long-press starts picking rows, and the bar
  * to combine them takes the "+" button's place (P06-19); each row's heart keeps a copy in the
- * saved meals.
+ * saved meals. On the Android app with Health Connect connected (P11-04), an activity card follows
+ * the gauge and, while counting is on, the day's energy target is the goal plus its active
+ * calories.
  */
 export function HomePage() {
   const today = useToday();
@@ -140,11 +149,13 @@ export function HomePage() {
   const waterLogs = useSteadyRead(waterRead);
   const fastsRead = useFasts(dayKey, dayKey);
   const fasts = useSteadyRead(fastsRead);
+  const activityRead = useActivity(dayKey, dayKey);
+  const activity = useSteadyRead(activityRead);
   const activeFast = useActiveFast();
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
-  const { captureDrafts, analysis, barcode, homePrefs } = useServices();
+  const { captureDrafts, analysis, barcode, homePrefs, health } = useServices();
   const toast = useToast();
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
@@ -297,6 +308,8 @@ export function HomePage() {
     entries.status === 'ready' &&
     waterLogs.status === 'ready' &&
     fasts.status === 'ready' &&
+    // Health Connect's copy is waited for, but a failed read of it never keeps the diary away.
+    activity.status !== 'loading' &&
     activeFast.status === 'ready' &&
     targets.status === 'ready' &&
     settings.status === 'ready'
@@ -317,6 +330,14 @@ export function HomePage() {
           unit: waterUnit,
         }
       : null;
+    // Health Connect (P11-04): the day's activity, and its burn counted in the energy target.
+    const connected = health !== undefined && settings.value['health.connected'];
+    const shownDay = connected && activity.status === 'ready' ? (activity.value[0] ?? null) : null;
+    const burned =
+      plan && connected && settings.value['health.countActiveCalories']
+        ? countedBurn(plan.kcal, shownDay)
+        : null;
+    const dayPlan = plan && withBurn(plan, burned);
     body = (
       <>
         <WeekBar
@@ -333,14 +354,20 @@ export function HomePage() {
         >
           <DaySummary
             entries={entries.value}
-            targets={plan}
+            targets={dayPlan}
             goals={goals}
             energyUnit={unit}
             pillars={pillars}
             water={water}
             onShowAll={nutrients.show}
+            burn={plan && burned !== null ? { goalKcal: plan.kcal, burnedKcal: burned } : null}
           />
         </DaySwipe>
+        {connected ? (
+          <Suspense fallback={null}>
+            <ActivityCard day={shownDay} energyUnit={unit} />
+          </Suspense>
+        ) : null}
         <Diary
           entries={entries.value}
           energyUnit={unit}
@@ -382,7 +409,7 @@ export function HomePage() {
           day={dayKey}
           isToday={selection.isToday}
           entries={entries.value}
-          targets={plan}
+          targets={dayPlan}
           goals={goals}
           energyUnit={unit}
           pillars={pillars}
@@ -424,7 +451,7 @@ export function HomePage() {
   return (
     <section
       className={styles.page}
-      aria-busy={reads.some((read) => read.status === 'loading') || undefined}
+      aria-busy={[...reads, activityRead].some((read) => read.status === 'loading') || undefined}
       data-ui="screen.home"
     >
       <h1 className={styles.title}>{tx('common.tabs.home')}</h1>

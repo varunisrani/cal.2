@@ -13,6 +13,7 @@ import {
   makeWeighIn,
 } from '../test/factories';
 import {
+  ADDED_TABLES,
   DB_NAME,
   TABLES,
   TABLE_NAMES,
@@ -48,7 +49,7 @@ describe('schema version 1', () => {
   it('names the database platewise and declares fourteen tables', () => {
     expect(DB_NAME).toBe('platewise');
     expect(TABLE_NAMES).toHaveLength(14);
-    expect(schemaVersion()).toBe(1);
+    expect(schemaVersion([])).toBe(1);
   });
 
   it('creates every table with its key and indexes on a fresh open', async () => {
@@ -72,22 +73,48 @@ describe('schema version 1', () => {
       drafts: { key: 'id', autoIncrement: false, indexes: [] },
       quarantine: { key: 'seq', autoIncrement: true, indexes: ['at', 'table'] },
       meta: { key: 'key', autoIncrement: false, indexes: [] },
+      activity: { key: 'day', autoIncrement: false, indexes: [] },
     });
     const dayIndex = db.backendDB().transaction('entries').objectStore('entries');
     expect(dayIndex.index('[dayKey+loggedAt]').keyPath).toEqual(['dayKey', 'loggedAt']);
     db.close();
   });
 
-  it('lists the same tables in TABLES as the database holds', async () => {
+  it('lists the same tables in TABLES and ADDED_TABLES as the database holds', async () => {
     const { db } = await openTestDb();
-    expect(Array.from(db.backendDB().objectStoreNames).sort()).toEqual(Object.keys(TABLES).sort());
+    expect(Array.from(db.backendDB().objectStoreNames).sort()).toEqual(
+      Object.keys({ ...TABLES, ...ADDED_TABLES }).sort(),
+    );
     db.close();
   });
 });
 
+describe('schema version 2 (P11-03)', () => {
+  it('is the current version and adds the activity table, keyed by day', () => {
+    expect(schemaVersion()).toBe(2);
+    expect(UPGRADES).toEqual([{ version: 2, stores: { activity: 'day' } }]);
+    expect(ADDED_TABLES).toEqual({ activity: 'day' });
+  });
+
+  it('moves a version 1 database with rows in every table to version 2, every row kept and the activity table empty', async () => {
+    const factory = new IDBFactory();
+    const before = connect(factory, []);
+    await before.open();
+    await seedEveryTable(before);
+    const seeded = await keysByTable(before);
+    before.close();
+
+    const after = connect(factory, UPGRADES);
+    await after.open();
+    expect(after.verno).toBe(2);
+    const kept = await keysByTable(after);
+    after.close();
+    expect(kept).toEqual({ ...seeded, activity: [] });
+  });
+});
+
 describe('upgrade registry', () => {
-  it('is empty and usable today', () => {
-    expect(UPGRADES).toEqual([]);
+  it('is usable as registered', () => {
     expect(checkSteps(UPGRADES)).toEqual([]);
   });
 

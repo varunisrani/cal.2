@@ -37,11 +37,17 @@ export interface DaySummaryProps {
   readonly water: WaterDay | null;
   /** "All nutrients": opens the day's nutrient sheet. */
   readonly onShowAll: () => void;
+  /**
+   * The burn counted in the energy target (P11-04): `targets` already holds goal + burn, and a
+   * line under the gauge says so. None while Health Connect's burn is not counted.
+   */
+  readonly burn?: { readonly goalKcal: number; readonly burnedKcal: number } | null;
 }
 
 /**
- * The top of Home for one day: the energy gauge (headed Calories or Kilojoules), the chosen
- * pillars with water after them, and the link to every nutrient of the day.
+ * The top of Home for one day: the energy gauge (headed Calories or Kilojoules), with the counted
+ * burn under it on the Android app, the chosen pillars with water after them, and the link to
+ * every nutrient of the day.
  */
 export function DaySummary({
   entries,
@@ -51,6 +57,7 @@ export function DaySummary({
   pillars,
   water,
   onShowAll,
+  burn = null,
 }: DaySummaryProps) {
   const eaten = entries.reduce((sum, entry) => sum + entry.kcal, 0);
   const plan = targets ?? NO_TARGETS;
@@ -65,6 +72,14 @@ export function DaySummary({
         status={gaugeStatus(eaten, plan.kcal, energyUnit)}
         data-ui="home.gauge"
       />
+      {burn === null ? null : (
+        <p className={styles.burn} data-ui="home.burn">
+          {tx('health.home.budget', {
+            goal: energyAmount(burn.goalKcal, energyUnit),
+            burned: energyAmount(burn.burnedKcal, energyUnit),
+          })}
+        </p>
+      )}
       <PillarRow entries={entries} pillars={pillars} targets={plan} goals={goals} water={water} />
       <Button
         variant="quiet"

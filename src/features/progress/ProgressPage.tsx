@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
+import { onDemand } from '../../app/onDemand';
 import { useToday } from '../../app/TodayProvider';
 import { useSheet } from '../../app/useRoute';
 import { useBodyFat, useProfile, useSettings, useWeighIns } from '../../data/hooks';
@@ -41,7 +42,12 @@ export const LOG_WEIGHT_SHEET = 'logWeight';
 /** The Log body fat sheet's place on the sheet stack. */
 export const LOG_BODY_FAT_SHEET = 'logBodyFat';
 
-const SETTINGS = ['units.weight', 'progress.countToday'] as const;
+const SETTINGS = ['units.weight', 'progress.countToday', 'health.connected'] as const;
+
+// Health Connect's card (P11-04) exists only in the Android app; fetched when it is first drawn.
+const ActivityHistoryCard = onDemand(() =>
+  import('./ActivityHistoryCard').then((module) => module.ActivityHistoryCard),
+);
 
 const NO_WEIGH_INS: readonly WeighIn[] = [];
 const NO_BODY_FAT: readonly BodyFatReading[] = [];
@@ -82,7 +88,8 @@ function CountToday({ on, view, today, onChange }: CountTodayProps) {
 
 /**
  * The Progress tab: the recap, the range and its periods, the metric switch with the chosen
- * metric's card and history, the Count today switch and the nutrition cards. Nothing with a
+ * metric's card and history, the Count today switch and the nutrition cards, then, on the
+ * Android app with Health Connect connected, the activity card (P11-04). Nothing with a
  * number is drawn until the settings, the profile and every weigh-in and body-fat reading are
  * read. The range opens on 1W at every visit and is never stored; Count today is stored.
  */
@@ -186,6 +193,11 @@ export function ProgressPage() {
         />
         <CountToday on={countToday} view={view} today={today} onChange={setCountToday} />
         <NutritionCards window={nutritionWindow(view, today, countToday)} />
+        {services.health && settings.value['health.connected'] ? (
+          <Suspense fallback={null}>
+            <ActivityHistoryCard today={today} />
+          </Suspense>
+        ) : null}
         <LogWeightSheet
           open={logWeight.open}
           seedKg={seedWeightKg(latest?.kg, profile?.weightKg)}

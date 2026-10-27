@@ -27,6 +27,7 @@ export const LOCAL_SETTINGS = [
   'backup.lastAt',
   'storage.persistAsked',
   'storage.nudgeDone',
+  'health.connected',
 ] as const satisfies readonly SettingKey[];
 
 /** The table whose rows are counted as photo files instead. */

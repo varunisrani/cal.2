@@ -1,0 +1,82 @@
+/*
+ * Settings › Health Connect (P11-04): the connection card with its actions, the data allowed, the
+ * switches and the sync card. Every value comes from tokens.css; logical properties throughout.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.status {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* ---- The data allowed and the switches --------------------------------------------------- */
+
+.listCard {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.listCard > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.dataRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: var(--space-4);
+}
+
+.dataState {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.switchItem {
+  padding-inline: var(--space-4);
+}

@@ -15,6 +15,7 @@ import { editor } from './en/editor';
 import { fasting } from './en/fasting';
 import { fitCheck } from './en/fitCheck';
 import { goals } from './en/goals';
+import { health } from './en/health';
 import { home } from './en/home';
 import { ingredients } from './en/ingredients';
 import { log } from './en/log';
@@ -67,6 +68,7 @@ export const enPartitions = {
   appSettings,
   backup,
   data,
+  health,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

@@ -40,6 +40,10 @@ describe('SETTING_SPECS', () => {
         'fasting.on',
         'goals.nutrients',
         'goals.rebuildBaseline',
+        'health.connected',
+        'health.countActiveCalories',
+        'health.importWeights',
+        'health.writeBack',
         'home.pillars',
         'home.sort',
         'log.gramsFirst',
@@ -89,6 +93,16 @@ describe('SETTING_SPECS', () => {
     ]);
     expect(settings['remind.fastGoal']).toBe(false);
     expect(settings['alerts.goalReached']).toBe(false);
+  });
+
+  it('starts Health Connect disconnected, counting active calories and importing weigh-ins, not writing back (P11-03)', () => {
+    const settings = defaultSettings(metric);
+    expect(settings['health.connected']).toBe(false);
+    expect(settings['health.countActiveCalories']).toBe(true);
+    expect(settings['health.writeBack']).toBe(false);
+    expect(settings['health.importWeights']).toBe(true);
+    expect(readSetting('health.writeBack', true)).toBe(true);
+    expect(readSetting('health.connected', 'yes')).toBeUndefined();
   });
 
   it('reads the tune-up switch as on when nothing is stored', () => {
