@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useToday } from '../../app/TodayProvider';
 import { useRouter, useSheet } from '../../app/useRoute';
-import { useDayEntries, useSettings, useTargets, type LiveState } from '../../data/hooks';
+import {
+  useDayEntries,
+  useDayWater,
+  useSettings,
+  useTargets,
+  type LiveState,
+} from '../../data/hooks';
 import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
+import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
 import { AddMenu } from '../log/AddMenu';
@@ -13,10 +20,13 @@ import { ManualSheet } from '../log/ManualSheet';
 import { ReuseSheet } from '../log/reuse/ReuseSheet';
 import { LookupOverlay } from '../log/scan/LookupOverlay';
 import { ScanSheet } from '../log/scan/ScanSheet';
+import { DayNutrientsSheet } from './DayNutrientsSheet';
+import type { WaterDay } from './dayNutrients';
 import { DaySummary } from './DaySummary';
 import { DaySwipe } from './DaySwipe';
 import { Diary } from './Diary';
 import styles from './home.module.css';
+import { PillarPicker } from './PillarPicker';
 import { tx } from './text';
 import { useSelectedDay } from './useSelectedDay';
 import { oldestDay, WeekBar } from './WeekBar';
@@ -35,6 +45,9 @@ export const SAVED_SHEET = 'saved';
 export const COPY_DAY_SHEET = 'copyDay';
 /** The barcode scanner's place on the sheet stack. */
 export const SCAN_SHEET = 'scan';
+/** The selected day's nutrients, and the pillar picker that opens over them (P07-04). */
+export const NUTRIENTS_SHEET = 'nutrients';
+export const PILLAR_PICKER_SHEET = 'pillars';
 
 const SETTINGS = [
   'units.energy',
@@ -42,6 +55,10 @@ const SETTINGS = [
   'goals.nutrients',
   'menu.layout',
   'display.weekStart',
+  'home.pillars',
+  'water.on',
+  'water.goalMl',
+  'water.unit',
 ] as const;
 
 /**
@@ -57,12 +74,13 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
 
 /**
  * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
- * pillars (a sideways swipe over them changes the day), the diary by meal, and the "+" button with
- * the add menu of the stored layout. What is logged from here goes to the day shown. Nothing with
- * a number is drawn until the profile, the settings and the day's entries have been read, so a
- * fallback goal never flashes (R05.12); the "+" waits too, since its menu depends on what is
- * stored. Photos gathered for a meal before a reload bring their sheet back when Home opens
- * (D-16.46).
+ * the chosen pillars with water after them (a sideways swipe over them changes the day; "All
+ * nutrients" under them opens the day's nutrient sheet and, from it, the pillar picker), the
+ * diary by meal, and the "+" button with the add menu of the stored layout. What is logged from
+ * here goes to the day shown. Nothing with a number is drawn until the profile, the settings and
+ * the day's entries and water have been read, so a fallback goal never flashes (R05.12); the "+"
+ * waits too, since its menu depends on what is stored. Photos gathered for a meal before a reload
+ * bring their sheet back when Home opens (D-16.46).
  */
 export function HomePage() {
   const today = useToday();
@@ -70,10 +88,12 @@ export function HomePage() {
   const dayKey = selection.day;
   const dayRead = useDayEntries(dayKey);
   const entries = useSteadyRead(dayRead);
+  const waterRead = useDayWater(dayKey);
+  const waterLogs = useSteadyRead(waterRead);
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
-  const { captureDrafts, analysis, barcode } = useServices();
+  const { captureDrafts, analysis, barcode, homePrefs } = useServices();
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
   const describe = useSheet(DESCRIBE_SHEET);
@@ -82,6 +102,8 @@ export function HomePage() {
   const saved = useSheet(SAVED_SHEET);
   const copyDay = useSheet(COPY_DAY_SHEET);
   const scan = useSheet(SCAN_SHEET);
+  const nutrients = useSheet(NUTRIENTS_SHEET);
+  const pillarPicker = useSheet(PILLAR_PICKER_SHEET);
   // What the capture sheet's "Add photo" opens; a sheet brought back after a reload uses the library.
   const [picker, setPicker] = useState<CapturePicker>('library');
 
@@ -164,7 +186,12 @@ export function HomePage() {
     capture.show();
   };
 
-  const reads = [dayRead, targets, settings];
+  const savePillars = async (keys: readonly PillarKey[]): Promise<void> => {
+    if (!homePrefs) throw new Error('HomePage: no homePrefs service to store the pillars');
+    await homePrefs.setPillars(keys);
+  };
+
+  const reads = [dayRead, waterRead, targets, settings];
   const failed = reads.some((read) => read.status === 'error');
   let body;
   if (failed) {
@@ -175,12 +202,25 @@ export function HomePage() {
     );
   } else if (
     entries.status === 'ready' &&
+    waterLogs.status === 'ready' &&
     targets.status === 'ready' &&
     settings.status === 'ready'
   ) {
     const unit = settings.value['units.energy'];
     const weekStart = settings.value['display.weekStart'];
     const read = targets.value;
+    const plan = read.kind === 'ok' ? read.targets : null;
+    const goals = settings.value['goals.nutrients'];
+    const pillars = settings.value['home.pillars'];
+    const waterOn = settings.value['water.on'];
+    // Water counts only its own logs, and only while it is tracked (R05.4).
+    const water: WaterDay | null = waterOn
+      ? {
+          totalMl: waterLogs.value.reduce((sum, log) => sum + log.ml, 0),
+          goalMl: settings.value['water.goalMl'],
+          unit: settings.value['water.unit'],
+        }
+      : null;
     body = (
       <>
         <WeekBar
@@ -197,9 +237,12 @@ export function HomePage() {
         >
           <DaySummary
             entries={entries.value}
-            targets={read.kind === 'ok' ? read.targets : null}
-            goals={settings.value['goals.nutrients']}
+            targets={plan}
+            goals={goals}
             energyUnit={unit}
+            pillars={pillars}
+            water={water}
+            onShowAll={nutrients.show}
           />
         </DaySwipe>
         <Diary
@@ -218,6 +261,26 @@ export function HomePage() {
             data-ui="home.add"
           />
         </div>
+        <DayNutrientsSheet
+          open={nutrients.open}
+          onClose={nutrients.close}
+          day={dayKey}
+          isToday={selection.isToday}
+          entries={entries.value}
+          targets={plan}
+          goals={goals}
+          energyUnit={unit}
+          pillars={pillars}
+          water={water}
+          onChoosePillars={pillarPicker.show}
+        />
+        <PillarPicker
+          open={pillarPicker.open}
+          chosen={pillars}
+          waterOn={waterOn}
+          onSave={savePillars}
+          onClose={pillarPicker.close}
+        />
       </>
     );
   } else {

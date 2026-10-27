@@ -1,9 +1,9 @@
 /*
  * Home (P04-10..12; P07 adds more rows): the page, the summary card with the gauge and pillars,
  * the diary's meal sections and rows, and the floating add button (the week bar and the day
- * swipe have week.module.css). Every value comes from tokens.css; logical properties throughout.
- * The tab bar's size comes from the shell (`--tabbar-height`, `--tabbar-gap`), with fallbacks for
- * a page drawn without it.
+ * swipe have week.module.css; the all-nutrients sheet and the picker, nutrients.module.css).
+ * Every value comes from tokens.css; logical properties throughout. The tab bar's size comes from
+ * the shell (`--tabbar-height`, `--tabbar-gap`), with fallbacks for a page drawn without it.
  */
 
 .page {
@@ -31,10 +31,19 @@
   padding-block: var(--space-5);
 }
 
+/* One to four chosen pillars and water: as many equal columns as there are pillars. */
 .pillars {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
   gap: var(--space-1);
+}
+
+/* "All nutrients", centred under the pillars and drawn closer to them than the card's gap. */
+.allNutrients {
+  justify-self: center;
+  margin-block-start: calc(-1 * var(--space-3));
+  font-weight: var(--weight-medium);
 }
 
 /* ---- Diary ------------------------------------------------------------------------------- */

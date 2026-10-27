@@ -1,0 +1,159 @@
+/*
+ * The all-nutrients sheet and the pillar picker (P07-04): sections with a small heading over a
+ * card of rows separated by hairlines. Every value comes from tokens.css; logical properties
+ * throughout.
+ */
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.day,
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.heading {
+  margin: 0;
+  padding: 0 var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+/* ---- Rows -------------------------------------------------------------------------------- */
+
+.lines {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  list-style: none;
+}
+
+.line,
+.choose,
+.choice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-block-size: calc(var(--space-8) + var(--space-4));
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+.lines > li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.lineText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.lineLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.lineSub {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+/* The day's amount in the accent, its unit and goal muted after it. */
+.amount {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.value {
+  color: var(--accent);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+}
+
+.unit,
+.goal {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.goal {
+  flex: none;
+  min-inline-size: 4.5rem;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.mark {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* ---- The home-pillars row and the picker's choices --------------------------------------- */
+
+.choose {
+  inline-size: 100%;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.choice {
+  cursor: pointer;
+}
+
+.choose:focus-visible,
+.choice:has(.check:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.check {
+  flex: none;
+  inline-size: 1.25rem;
+  block-size: 1.25rem;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.position {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}

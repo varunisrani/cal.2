@@ -1,8 +1,9 @@
 import type { MessageTree } from '../catalogue';
 
 /**
- * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the diary and
- * its rows, and the add button. Meal names are logging words, in `log.meal`.
+ * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the all-nutrients
+ * sheet and the pillar picker, the diary and its rows, and the add button. Meal names are logging
+ * words, in `log.meal`.
  */
 export const home = {
   home: {
@@ -14,6 +15,17 @@ export const home = {
       kcal: 'kcal',
       kJ: 'kJ',
       g: 'g',
+      mg: 'mg',
+      mcg: 'mcg',
+      ml: 'ml',
+      flOz: 'fl oz',
+    },
+    amount: {
+      g: '{amount} g',
+      mg: '{amount} mg',
+      mcg: '{amount} mcg',
+      ml: '{amount} ml',
+      flOz: '{amount} fl oz',
     },
     energy: {
       kcal: '{amount} kcal',
@@ -29,15 +41,85 @@ export const home = {
       over: '{amount} over',
       reached: 'Goal reached',
     },
+    // The names of the 32 nutrients a pillar can show, in the model's order (the macros; grams,
+    // milligrams and micrograms; the sports compounds), then Home's own water pillar.
     pillar: {
       protein: 'Protein',
       carbs: 'Carbs',
       fat: 'Fat',
+      addedSugar: 'Added sugar',
       fibre: 'Fibre',
+      omega3: 'Omega-3',
+      saturatedFat: 'Saturated fat',
+      sugar: 'Sugar',
+      transFat: 'Trans fat',
+      caffeine: 'Caffeine',
+      calcium: 'Calcium',
+      cholesterol: 'Cholesterol',
+      iron: 'Iron',
+      magnesium: 'Magnesium',
+      potassium: 'Potassium',
+      sodium: 'Sodium',
+      vitaminC: 'Vitamin C',
+      vitaminE: 'Vitamin E',
+      zinc: 'Zinc',
+      folate: 'Folate',
+      vitaminA: 'Vitamin A',
+      vitaminB12: 'Vitamin B12',
+      vitaminD: 'Vitamin D',
+      vitaminK: 'Vitamin K',
+      arginine: 'L-arginine',
+      betaAlanine: 'Beta-alanine',
+      betaine: 'Betaine',
+      carnitine: 'L-carnitine',
+      citrulline: 'L-citrulline',
+      creatine: 'Creatine',
+      hmb: 'HMB',
+      taurine: 'Taurine',
+      water: 'Water',
       noGoal: 'No goal',
       left: '{amount} g left',
       over: '{amount} g over',
+      leftMg: '{amount} mg left',
+      overMg: '{amount} mg over',
+      leftMcg: '{amount} mcg left',
+      overMcg: '{amount} mcg over',
+      leftMl: '{amount} ml left',
+      overMl: '{amount} ml over',
+      leftFlOz: '{amount} fl oz left',
+      overFlOz: '{amount} fl oz over',
       reached: 'Goal reached',
+    },
+    nutrients: {
+      link: 'All nutrients',
+      title: 'All nutrients',
+      today: 'Today',
+      pillarsHeading: 'Home pillars',
+      pillarsRow: 'Choose pillars',
+      waterHeading: 'Water',
+      waterNote: 'While water tracking is on, Home shows water after the pillars you choose.',
+      macrosHeading: 'Macros',
+      detailHeading: 'Detailed nutrition',
+      energy: {
+        kcal: 'Calories',
+        kJ: 'Kilojoules',
+      },
+      // The two fats that are tracked but never get a goal (every other name is a pillar's).
+      monounsaturatedFat: 'Monounsaturated fat',
+      polyunsaturatedFat: 'Polyunsaturated fat',
+      goal: '/ {amount}',
+      none: '—',
+    },
+    picker: {
+      title: 'Home pillars',
+      intro:
+        'Pick one to four nutrients for Home. A fifth pick takes the place of your latest one.',
+      orderHeading: 'On Home, in this order',
+      waterLast: 'Always last while water tracking is on',
+      waterLocked: 'Fixed',
+      listHeading: 'Nutrients',
+      reset: 'Reset to default',
+      saveFailed: "Your pillars couldn't be saved. Please try again.",
     },
     diary: {
       today: 'Today',

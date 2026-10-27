@@ -7,6 +7,7 @@ import type { CaptureDraftService } from './captureDrafts';
 import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
 import type { FitCheckService } from './fitCheck';
+import type { HomePrefsService } from './homePrefs';
 import type { PlanBuilder } from './goals/planBuilder';
 import type { RebuildService } from './goals/rebuild';
 import type { TargetEditsService } from './goals/targetEdits';
@@ -56,6 +57,8 @@ export interface Services {
   readonly fitCheck?: FitCheckService;
   /** The Progress tab's writes: weigh-ins, the weight unit, Count today (P07-09, P07-12). */
   readonly progress?: ProgressService;
+  /** Home's own choices: the pillars (P07-04); optional for the same reason. */
+  readonly homePrefs?: HomePrefsService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

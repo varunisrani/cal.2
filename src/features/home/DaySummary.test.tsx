@@ -1,27 +1,40 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import type { DiaryEntry, Targets } from '../../domain/model';
+import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { DEFAULT_GOAL_VALUES } from '../../domain/nutrients/goalDefaults';
+import { DEFAULT_PILLARS } from '../../domain/nutrients/pillars';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { home } from '../../i18n/en/home';
 import { makeEntry } from '../../test/factories';
-import { amountIn, DaySummary } from './DaySummary';
+import type { WaterDay } from './dayNutrients';
+import { DaySummary, type DaySummaryProps } from './DaySummary';
 
 const words = home.home;
 const PLAN: Targets = { kcal: 2_000, protein: 150, carbs: 220, fat: 70 };
 
-function renderSummary({
+function summaryProps({
   entries = [],
   targets = PLAN,
   goals = DEFAULT_GOAL_VALUES,
   unit = 'kcal',
+  pillars = DEFAULT_PILLARS,
+  water = null,
+  onShowAll = () => undefined,
 }: {
   entries?: DiaryEntry[];
   targets?: Targets | null;
   goals?: typeof DEFAULT_GOAL_VALUES;
   unit?: EnergyDisplayUnit;
-} = {}) {
-  return render(<DaySummary entries={entries} targets={targets} goals={goals} energyUnit={unit} />);
+  pillars?: readonly PillarKey[];
+  water?: WaterDay | null;
+  onShowAll?: () => void;
+} = {}): DaySummaryProps {
+  return { entries, targets, goals, energyUnit: unit, pillars, water, onShowAll };
+}
+
+function renderSummary(options: Parameters<typeof summaryProps>[0] = {}) {
+  return render(<DaySummary {...summaryProps(options)} />);
 }
 
 /** Entries adding up to `kcal`, split over two meals. */
@@ -73,23 +86,9 @@ describe('DaySummary gauge', () => {
 
     // One kcal short is still "left" (4 kJ), and an exact kcal match is reached, whatever the
     // rounding of the kJ numbers.
-    rerender(
-      <DaySummary
-        entries={eaten(1_999)}
-        targets={PLAN}
-        goals={DEFAULT_GOAL_VALUES}
-        energyUnit="kJ"
-      />,
-    );
+    rerender(<DaySummary {...summaryProps({ entries: eaten(1_999), unit: 'kJ' })} />);
     expect(gauge('kJ')).toHaveAccessibleDescription('8,364 4 left');
-    rerender(
-      <DaySummary
-        entries={eaten(2_000)}
-        targets={PLAN}
-        goals={DEFAULT_GOAL_VALUES}
-        energyUnit="kJ"
-      />,
-    );
+    rerender(<DaySummary {...summaryProps({ entries: eaten(2_000), unit: 'kJ' })} />);
     expect(gauge('kJ')).toHaveAccessibleDescription(`8,368 ${words.gauge.reached}`);
   });
 });
@@ -158,13 +157,35 @@ describe('DaySummary pillars', () => {
   });
 });
 
-describe('amountIn', () => {
-  it('reads macros, optional nutrients and extras, and counts an unknown one as 0', () => {
-    const entry = makeEntry({ protein: 12, nutrients: { sodium: 820 }, extras: { creatine: 5 } });
-    expect(amountIn(entry, 'protein')).toBe(12);
-    expect(amountIn(entry, 'sodium')).toBe(820);
-    expect(amountIn(entry, 'creatine')).toBe(5);
-    expect(amountIn(entry, 'fibre')).toBe(0);
-    expect(amountIn(entry, 'taurine')).toBe(0);
+describe('DaySummary pillars, chosen (P07-03)', () => {
+  it('shows the stored pillars in their order, then water while it is tracked', () => {
+    renderSummary({
+      entries: [makeEntry({ nutrients: { sodium: 1_250, iron: 4.25 } })],
+      pillars: ['sodium', 'protein', 'iron'],
+      water: { totalMl: 750, goalMl: 2_000, unit: 'ml' },
+    });
+    const pillars = Array.from(document.querySelectorAll('[data-ui^="home.pillar."]'));
+    expect(pillars.map((pillar) => pillar.getAttribute('data-ui'))).toEqual([
+      'home.pillar.sodium',
+      'home.pillar.protein',
+      'home.pillar.iron',
+      'home.pillar.water',
+    ]);
+    expect(screen.getByRole('group', { name: words.pillar.sodium })).toHaveAccessibleDescription(
+      '1,250 1,050 mg left',
+    );
+    expect(screen.getByRole('group', { name: words.pillar.water })).toHaveAccessibleDescription(
+      '750 1,250 ml left',
+    );
+  });
+
+  it('opens every nutrient of the day from the All nutrients link under the pillars', () => {
+    const onShowAll = vi.fn();
+    renderSummary({ onShowAll });
+
+    const link = screen.getByRole('button', { name: words.nutrients.link });
+    expect(document.querySelector('[data-ui="home.pillars"]')?.nextElementSibling).toBe(link);
+    fireEvent.click(link);
+    expect(onShowAll).toHaveBeenCalledTimes(1);
   });
 });

@@ -22,6 +22,7 @@ import { OFF_PRODUCT_URL } from '../../services/barcode/off';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
 import { createCopyDayService } from '../../services/copyDay';
+import { createHomePrefsService } from '../../services/homePrefs';
 import { formatDay } from '../../i18n/format';
 import type { PhotoService } from '../../services/photos';
 import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
@@ -388,6 +389,168 @@ describe('HomePage: the selected day (P07-01, P07-02)', () => {
     expect(await h.repos.diaryRepo.byDay('2026-10-25')).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: 'Lentil soup' })]),
     );
+  });
+});
+
+// ---- Pillars and the day's nutrients (P07-03, P07-04) -------------------------------------------
+
+/** Home over the harness with the pillars' store wired in, as `main.tsx` does. */
+async function openWithPillars() {
+  const h = await openHarness();
+  await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+  const services: Services = {
+    ...h.services,
+    homePrefs: createHomePrefsService({ settingsRepo: h.repos.settingsRepo }),
+  };
+  const mount = () =>
+    h.mount(
+      <ServicesProvider services={services}>
+        <HomePage />
+      </ServicesProvider>,
+    );
+  return { h, mount };
+}
+
+const shownPillars = () =>
+  Array.from(document.querySelectorAll('[data-ui^="home.pillar."]')).map((node) =>
+    node.getAttribute('data-ui'),
+  );
+const nutrientsSheet = () => screen.getByRole('dialog', { name: words.nutrients.title });
+const pillarPicker = () => screen.getByRole('dialog', { name: words.picker.title });
+
+describe("HomePage: pillars and the day's nutrients (P07-03, P07-04)", () => {
+  it("shows the stored pillars, then water with the shown day's logs while it is tracked (ACC-H4-1)", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.settingsRepo.set('home.pillars', ['sodium', 'protein']);
+    await h.repos.diaryRepo.add(
+      makeEntry({ kcal: 500, nutrients: { sodium: 2_500 }, loggedAt: FACTORY_NOW - HOUR }),
+    );
+    await h.repos.waterRepo.add({ at: FACTORY_NOW - 2 * HOUR, ml: 500 });
+    await h.repos.waterRepo.add({ at: FACTORY_NOW - HOUR, ml: 250 });
+    await h.repos.waterRepo.add({ at: FACTORY_NOW - 24 * HOUR, ml: 1_000 });
+    mount();
+    await untilShown('[data-ui="home.pillar.sodium"]');
+
+    // Water tracking is off by default: no water pillar.
+    expect(shownPillars()).toEqual(['home.pillar.sodium', 'home.pillar.protein']);
+    expect(screen.getByRole('group', { name: words.pillar.sodium })).toHaveAccessibleDescription(
+      '2,500 200 mg over',
+    );
+
+    await act(async () => {
+      await h.repos.settingsRepo.set('water.on', true);
+    });
+    await untilShown('[data-ui="home.pillar.water"]');
+    expect(shownPillars()).toEqual([
+      'home.pillar.sodium',
+      'home.pillar.protein',
+      'home.pillar.water',
+    ]);
+    expect(screen.getByRole('group', { name: words.pillar.water })).toHaveAccessibleDescription(
+      '750 1,250 ml left',
+    );
+    // Water never enters the food totals (R05.4).
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}5001,500 left`);
+
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => textOf('home.pillar.water').startsWith('1,000'));
+    expect(screen.getByRole('group', { name: words.pillar.water })).toHaveAccessibleDescription(
+      '1,000 1,000 ml left',
+    );
+  });
+
+  it("opens the shown day's nutrients from All nutrients: yesterday's while yesterday is shown (ACC-F6-1)", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ kcal: 300, nutrients: { sodium: 400 }, loggedAt: FACTORY_NOW - HOUR }),
+      makeEntry({
+        kcal: 700,
+        protein: 40,
+        nutrients: { sodium: 1_900, potassium: 650 },
+        loggedAt: FACTORY_NOW - 24 * HOUR,
+      }),
+    ]);
+    mount();
+    await untilShown('[data-ui="home.week"]');
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => textOf('home.gauge').startsWith(`${words.gauge.heading.kcal}700`));
+
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
+    await untilShown('[data-ui="home.nutrients"]');
+
+    expect(h.router.current().sheets).toEqual(['nutrients']);
+    expect(within(nutrientsSheet()).getByText(dayName('2026-10-25'))).toBeVisible();
+    expect(textOf('home.nutrients.row.energy')).toBe('Calories 700 kcal / 2,000 kcal');
+    expect(textOf('home.nutrients.row.sodium')).toBe('Sodium 1,900 mg / 2,300 mg');
+    expect(textOf('home.nutrients.row.potassium')).toBe('Potassium 650 mg / 3,500 mg');
+    expect(textOf('home.nutrients.row.protein')).toMatch(/^Protein 40 g \/ \d+ g$/);
+
+    fireEvent.click(within(nutrientsSheet()).getByRole('button', { name: common.common.done }));
+    await untilGone('[data-ui="home.nutrients"]');
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it('chooses pillars over the sheet: Done stores them and Home shows them (ACC-F5-1)', async () => {
+    const { h, mount } = await openWithPillars();
+    mount();
+    await untilShown('[data-ui="home.allNutrients"]');
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
+    await untilShown('[data-ui="home.nutrients"]');
+
+    fireEvent.click(within(nutrientsSheet()).getByRole('button', { name: /Choose pillars/ }));
+    await untilShown('[data-ui="home.picker"]');
+    expect(h.router.current().sheets).toEqual(['nutrients', 'pillars']);
+    // A fifth pick takes the place of the latest one.
+    fireEvent.click(within(pillarPicker()).getByRole('checkbox', { name: words.pillar.sodium }));
+    await act(async () => {
+      fireEvent.click(within(pillarPicker()).getByRole('button', { name: common.common.done }));
+    });
+    await untilGone('[data-ui="home.picker"]');
+
+    expect(await h.repos.settingsRepo.get('home.pillars')).toEqual([
+      'protein',
+      'carbs',
+      'fat',
+      'sodium',
+    ]);
+    expect(h.router.current().sheets).toEqual(['nutrients']);
+    await until(() => shownPillars().includes('home.pillar.sodium'));
+    expect(shownPillars()).toEqual([
+      'home.pillar.protein',
+      'home.pillar.carbs',
+      'home.pillar.fat',
+      'home.pillar.sodium',
+    ]);
+    expect(
+      within(nutrientsSheet()).getByRole('button', { name: /Choose pillars/ }),
+    ).toHaveTextContent('Protein, Carbs, Fat, Sodium');
+  });
+
+  it('leaves the stored pillars as they were on Cancel, and opens again from them', async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.settingsRepo.set('home.pillars', ['iron', 'zinc']);
+    mount();
+    await untilShown('[data-ui="home.pillar.iron"]');
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
+    await untilShown('[data-ui="home.nutrients"]');
+    fireEvent.click(within(nutrientsSheet()).getByRole('button', { name: /Choose pillars/ }));
+    await untilShown('[data-ui="home.picker"]');
+
+    fireEvent.click(within(pillarPicker()).getByRole('button', { name: words.picker.reset }));
+    fireEvent.click(within(pillarPicker()).getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="home.picker"]');
+
+    expect(await h.repos.settingsRepo.get('home.pillars')).toEqual(['iron', 'zinc']);
+    expect(shownPillars()).toEqual(['home.pillar.iron', 'home.pillar.zinc']);
+    expect(nutrientsSheet()).toBeVisible();
+
+    fireEvent.click(within(nutrientsSheet()).getByRole('button', { name: /Choose pillars/ }));
+    await untilShown('[data-ui="home.picker"]');
+    const ticked = within(pillarPicker())
+      .getAllByRole('checkbox')
+      .filter((box) => (box as HTMLInputElement).checked)
+      .map((box) => box.getAttribute('data-ui'));
+    expect(ticked).toEqual(['home.picker.option.iron', 'home.picker.option.zinc']);
   });
 });
 

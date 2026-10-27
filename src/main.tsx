@@ -35,6 +35,7 @@ import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
 import { createFitCheckService } from './services/fitCheck';
+import { createHomePrefsService } from './services/homePrefs';
 import { createRebuildService } from './services/goals/rebuild';
 import { createTargetEditsService } from './services/goals/targetEdits';
 import { createTuneUpRunner } from './services/goals/tuneUp';
@@ -192,6 +193,7 @@ async function start(): Promise<void> {
       fetch: browserFetch,
     }),
     progress: createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: systemClock }),
+    homePrefs: createHomePrefsService({ settingsRepo }),
     clock: systemClock,
   };
   const data: DataSources = {

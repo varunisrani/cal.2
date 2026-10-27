@@ -564,17 +564,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-F4-1** Home shows protein, carbs, fat and fibre pillars by default
   - Test: src/features/home/DaySummary.test.tsx > DaySummary pillars > shows protein, carbs, fat and fibre against their goals, in that order (ACC-F4-1)
 - **ACC-F4-2** A sodium pillar shows how far over its limit the day is
-  - Review: P07-03
+  - Test: src/features/home/PillarRow.test.tsx > PillarRow > shows 200 mg over on a sodium pillar with a goal of 2 300 and 2 500 eaten (ACC-F4-2)
 
 ### F5 · Pillar picker (P1)
 
 - **ACC-F5-1** Choosing a fifth nutrient replaces the most recent choice
-  - Review: P07-04
+  - Test: src/features/home/PillarPicker.test.tsx > PillarPicker > replaces the latest pick when a fifth nutrient is picked (ACC-F5-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > chooses pillars over the sheet: Done stores them and Home shows them (ACC-F5-1)
 
 ### F6 · All-nutrients sheet for the selected day (P1)
 
 - **ACC-F6-1** The sheet lists every nutrient for the selected day with its goal
-  - Review: P07-04
+  - Test: src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > lists every nutrient of the day with its unit and its goal (ACC-F6-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > opens the shown day's nutrients from All nutrients: yesterday's while yesterday is shown (ACC-F6-1)
 
 ### F7 · Diary grouped by meal with food-only section totals (P0)
 
@@ -701,7 +703,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H4 · Water pillar and water section in the all-nutrients sheet (P1)
 
 - **ACC-H4-1** The water pillar shows today's amount against the goal
-  - Review: P07-03
+  - Test: src/features/home/PillarRow.test.tsx > PillarRow > shows the day's water against the daily goal in the water unit (ACC-H4-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > shows the stored pillars, then water with the shown day's logs while it is tracked (ACC-H4-1)
 
 ### H5 · Water reminder with a time picker, default 14 (P1)
 
