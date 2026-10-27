@@ -142,6 +142,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.8** A photo is deleted only when no entry, line, saved meal or draft uses it; cleanup stops if any owner is unreadable
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps a photo shared by an entry and a saved meal when the entry is deleted (ACC-D28-1, R02.8)
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps the saved meal’s copy when an edit removes the photo from the entry (R02.8)
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: photos > leaves a photo shared with a saved meal in the saved meal (R02.8)
+  - Test: src/services/diary.test.ts > updateEntry (P06-11) > deletes only the photos the edit dropped, and keeps one a saved meal still names (R02.8)
 - **R02.9** Combine sums every nutrient all rows know (D-16.20) and keeps unknown-weight lines visible
   - Test: src/domain/food/combine.test.ts > combineEntries > sums sodium when both entries know it and leaves it unknown when one lacks it (D-16.20, R02.9)
   - Test: src/domain/food/combine.test.ts > combineEntries > adds a visible 0 g line for an unknown-weight entry and sums the known weights (R02.9)
@@ -209,7 +211,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > drops a held code when another method is chosen from the menu (R02.20)
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)
 - **R02.21** Saving an untouched entry keeps its exact timestamp
-  - Review: owned by P06-11
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps loggedAt to the millisecond and every value when an untouched entry is saved (ACC-D12-1, R02.21)
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps the instant when the time is changed and changed back (R02.21)
 - **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator
   - Test: src/domain/servings/expression.test.ts > evalAmount > rejects a trailing operator, letters and division by about zero (R02.22)
   - Test: src/domain/servings/expression.test.ts > pushOperator > replaces a trailing operator instead of stacking one (R02.22)

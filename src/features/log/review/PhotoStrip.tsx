@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { t } from '../../../i18n/t';
 import { useServices } from '../../../services/context';
 import { IconButton } from '../../../ui/Button';
+import { cx } from '../../../ui/classes';
 import { Icon } from '../../../ui/icons';
 import { useModalLayer } from '../../../ui/modalLayer';
 import styles from './review.module.css';
@@ -66,14 +67,18 @@ export interface PhotoStripProps {
   readonly photoIds: readonly string[];
   /** Shown large when there is no photo; a plate icon stands in when there is none either. */
   readonly emoji?: string;
+  /** Gives each photo a remove button (the entry editor, P06-11); called with its index. */
+  readonly onRemove?: (index: number) => void;
+  /** Turns the remove buttons off (while the editor reprocesses). */
+  readonly removeDisabled?: boolean;
 }
 
 /**
  * The meal's photos in a sideways strip (02 §3.5), each with an "i/n" badge when there are
  * several; a tap opens the full-screen viewer on that photo. Without photos, the food's emoji
- * or a plate.
+ * or a plate. Given `onRemove`, each photo also has a remove button on its corner.
  */
-export function PhotoStrip({ photoIds, emoji }: PhotoStripProps) {
+export function PhotoStrip({ photoIds, emoji, onRemove, removeDisabled = false }: PhotoStripProps) {
   const [viewing, setViewing] = useState<number | null>(null);
   const count = photoIds.length;
 
@@ -98,7 +103,10 @@ export function PhotoStrip({ photoIds, emoji }: PhotoStripProps) {
         {photoIds.map((id, index) => {
           const place = { number: index + 1, count };
           return (
-            <li key={`${index}:${id}`} className={styles.stripItem}>
+            <li
+              key={`${index}:${id}`}
+              className={cx(styles.stripItem, onRemove && styles.removableItem)}
+            >
               <button
                 type="button"
                 className={styles.photoButton}
@@ -113,6 +121,16 @@ export function PhotoStrip({ photoIds, emoji }: PhotoStripProps) {
                   </span>
                 ) : null}
               </button>
+              {onRemove ? (
+                <IconButton
+                  className={styles.removePhoto}
+                  icon={<Icon name="close" size={20} />}
+                  label={t('editor.photos.remove', place)}
+                  disabled={removeDisabled}
+                  onClick={() => onRemove(index)}
+                  data-ui={`review.photo.${index + 1}.remove`}
+                />
+              ) : null}
             </li>
           );
         })}

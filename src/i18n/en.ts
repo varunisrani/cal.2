@@ -8,6 +8,7 @@ import { charts } from './en/charts';
 import { coach } from './en/coach';
 import { common } from './en/common';
 import { display } from './en/display';
+import { editor } from './en/editor';
 import { fasting } from './en/fasting';
 import { fitCheck } from './en/fitCheck';
 import { goals } from './en/goals';
@@ -51,6 +52,7 @@ export const enPartitions = {
   review,
   ingredients,
   fitCheck,
+  editor,
   progress,
   trackers,
   coach,

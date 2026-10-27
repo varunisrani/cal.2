@@ -76,6 +76,20 @@
   font-weight: var(--weight-semibold);
 }
 
+/* The entry editor's remove button sits on the photo's top corner (P06-11). */
+.removableItem {
+  position: relative;
+}
+
+.removePhoto {
+  position: absolute;
+  inset-block-start: var(--space-2);
+  inset-inline-end: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--sheet) 88%, transparent);
+  color: var(--text);
+}
+
 .photoSpinner {
   inline-size: var(--space-8);
   block-size: var(--space-8);

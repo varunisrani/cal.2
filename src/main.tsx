@@ -48,6 +48,7 @@ import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
 import { createProgressService } from './services/progress';
+import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 import { createWaterService } from './services/water';
 
@@ -140,6 +141,8 @@ async function start(): Promise<void> {
     diary: createDiaryService({
       diaryRepo,
       photoRepo: createPhotoRepo(db),
+      // The entry editor's Saved switch (P06-11).
+      savedMealsRepo: createSavedMealsRepo(db),
       onFirstEntry: () => storage.requestPersistence(),
     }),
     onboarding: createOnboardingService({
@@ -192,6 +195,11 @@ async function start(): Promise<void> {
     }),
     fitCheck: createFitCheckService({
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+      fetch: browserFetch,
+    }),
+    reprocess: createReprocessService({
+      aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+      photoRepo,
       fetch: browserFetch,
     }),
     progress: createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: systemClock }),

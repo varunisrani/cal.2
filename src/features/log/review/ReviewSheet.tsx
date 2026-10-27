@@ -143,7 +143,7 @@ export function withLines(working: ReviewWorking, lines: readonly IngredientLine
 }
 
 /** The value with `key` set to `base`, or without it when `base` is unknown. */
-function withValue<K extends string>(
+export function withValue<K extends string>(
   values: Partial<Record<K, number>>,
   key: K,
   base: number | undefined,
@@ -173,7 +173,7 @@ export function instantOf(value: DateTimeValue): number {
 }
 
 /** The same calendar day `years` years earlier (29 February becomes 1 March). */
-function yearsBefore(day: DayKey, years: number): DayKey {
+export function yearsBefore(day: DayKey, years: number): DayKey {
   const { year, month, day: date } = splitDayKey(day);
   return dayKeyOf(new Date(year - years, month - 1, date).getTime());
 }

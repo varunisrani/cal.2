@@ -334,11 +334,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D12 · Edit a logged entry (P1)
 
 - **ACC-D12-1** Saving an untouched entry keeps its exact time
-  - Review: P06-11
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps loggedAt to the millisecond and every value when an untouched entry is saved (ACC-D12-1, R02.21)
 - **ACC-D12-2** Editing calories of a logged entry saves the new value
-  - Review: P06-11
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > saves calories edited through the unlock (ACC-D12-2, D-16.19), at the amount shown
 - **ACC-D12-3** Delete asks before removing the entry
-  - Review: P06-11
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Saved and Delete > asks before deleting, and deletes on Delete (ACC-D12-3)
 
 ### D13 · Ingredient lines added by camera, photo, barcode, text, manual or … (P1)
 

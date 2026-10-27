@@ -153,6 +153,22 @@ describe('PhotoStrip', () => {
     expect(none?.querySelector('[data-icon="plate"]')).not.toBeNull();
   });
 
+  it('gives each photo a remove button when asked, which names its place (P06-11)', async () => {
+    const onRemove = vi.fn();
+    const user = await renderStrip({ photoIds: ['photo-1', 'photo-2'], onRemove }, photoService());
+    await user.click(screen.getByRole('button', { name: 'Remove photo 2 of 2' }));
+    expect(onRemove).toHaveBeenCalledWith(1);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('turns the remove buttons off when asked', async () => {
+    await renderStrip(
+      { photoIds: ['photo-1'], onRemove: vi.fn(), removeDisabled: true },
+      photoService(),
+    );
+    expect(screen.getByRole('button', { name: 'Remove photo 1 of 1' })).toBeDisabled();
+  });
+
   it('leaves the frames empty when there is no photo service', async () => {
     await renderStrip({ photoIds: ['photo-1', 'photo-2'] }, undefined);
     expect(document.querySelectorAll('img')).toHaveLength(0);

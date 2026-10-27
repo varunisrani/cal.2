@@ -1,0 +1,73 @@
+/*
+ * The entry editor (P06-11): the form around the review's parts, the note for the AI with its
+ * problem lines, the Saved switch and Delete. Every value comes from tokens.css; logical
+ * properties throughout.
+ */
+
+/* The body is a fieldset so a reprocess turns every control off at once; no frame of its own. */
+.form {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.note {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.noteLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.noteInput {
+  min-block-size: calc(var(--space-8) * 2);
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  resize: vertical;
+}
+
+.noteInput::placeholder {
+  color: var(--text-muted);
+}
+
+.noteInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.noteInput:disabled {
+  opacity: 0.6;
+}
+
+.problem {
+  display: grid;
+  gap: var(--space-1);
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+.problem > p {
+  margin: 0;
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.missing {
+  margin: 0;
+  padding: var(--space-4) 0;
+  color: var(--text-muted);
+  text-align: center;
+}

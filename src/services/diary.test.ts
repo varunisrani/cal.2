@@ -1,14 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
-import { FastActiveError, createDiaryRepo, type DiaryRepo } from '../data/repos/diaryRepo';
+import {
+  FastActiveError,
+  createDiaryRepo,
+  type DiaryRepo,
+  type UpdateResult,
+} from '../data/repos/diaryRepo';
 import { createFastRepo } from '../data/repos/fastRepo';
 import { createPhotoRepo, type PhotoRepo } from '../data/repos/photoRepo';
+import { createSavedMealsRepo } from '../data/repos/savedMealsRepo';
 import type { PlatewiseDb } from '../data/schema';
 import type { DiaryEntry } from '../domain/model';
 import { withIdSequence } from '../lib/ids';
 import { storableBlob } from '../test/blobs';
 import { openTestDb } from '../test/db';
-import { FACTORY_NOW, makeDraft, makeEntry, makeFast } from '../test/factories';
-import { createDiaryService, type DiaryServiceDeps, type LogContext } from './diary';
+import { FACTORY_NOW, makeDraft, makeEntry, makeFast, makeLine } from '../test/factories';
+import { createDiaryService, withoutPhotos, type DiaryServiceDeps, type LogContext } from './diary';
 
 const LUNCH: LogContext = { loggedAt: FACTORY_NOW, meal: 'lunch', source: 'manual' };
 
@@ -16,13 +22,15 @@ async function setUp(extra: Partial<DiaryServiceDeps> = {}) {
   const { db } = await openTestDb();
   const diaryRepo = createDiaryRepo(db);
   const photoRepo = createPhotoRepo(db, { newId: withIdSequence('photo') });
+  const savedMealsRepo = createSavedMealsRepo(db, { newId: withIdSequence('saved') });
   const service = createDiaryService({
     diaryRepo,
     photoRepo,
+    savedMealsRepo,
     newId: withIdSequence('entry'),
     ...extra,
   });
-  return { db, diaryRepo, photoRepo, service };
+  return { db, diaryRepo, photoRepo, savedMealsRepo, service };
 }
 
 /** A promise the test settles by hand. */
@@ -53,7 +61,8 @@ async function storedPhotoIds(db: PlatewiseDb): Promise<string[]> {
 function heldDiary() {
   const adds: Array<ReturnType<typeof deferred<DiaryEntry>>> = [];
   const removes: Array<{ id: string; done: ReturnType<typeof deferred<string[]>> }> = [];
-  const repo: Pick<DiaryRepo, 'add' | 'remove'> = {
+  const updates: Array<ReturnType<typeof deferred<UpdateResult>>> = [];
+  const repo: Pick<DiaryRepo, 'add' | 'remove' | 'update'> = {
     add: vi.fn(() => {
       const held = deferred<DiaryEntry>();
       adds.push(held);
@@ -64,8 +73,13 @@ function heldDiary() {
       removes.push({ id, done });
       return done.promise;
     }),
+    update: vi.fn(() => {
+      const held = deferred<UpdateResult>();
+      updates.push(held);
+      return held.promise;
+    }),
   };
-  return { repo, adds, removes };
+  return { repo, adds, removes, updates };
 }
 
 const noPhotos: Pick<PhotoRepo, 'releaseIfUnused'> = {
@@ -182,11 +196,12 @@ describe('logEntry', () => {
 
   it('turns only the fast refusal into an answer', async () => {
     const fast = makeFast({ end: null });
-    const refusing: Pick<DiaryRepo, 'add' | 'remove'> = {
+    const refusing: Pick<DiaryRepo, 'add' | 'remove' | 'update'> = {
       add: async () => {
         throw new FastActiveError(fast);
       },
       remove: async () => [],
+      update: async () => ({ kind: 'missing' }),
     };
     const service = createDiaryService({ diaryRepo: refusing, photoRepo: noPhotos });
     expect(await service.logEntry(makeDraft(), LUNCH)).toEqual({ kind: 'fastActive', fast });
@@ -230,9 +245,10 @@ describe('deleteEntry', () => {
         throw new Error('The photo store is busy');
       },
     };
-    const removing: Pick<DiaryRepo, 'add' | 'remove'> = {
+    const removing: Pick<DiaryRepo, 'add' | 'remove' | 'update'> = {
       add: async (entry) => entry,
       remove: async () => ['photo-1'],
+      update: async () => ({ kind: 'missing' }),
     };
     const service = createDiaryService({ diaryRepo: removing, photoRepo: failingPhotos });
     expect(await service.deleteEntry('entry-1')).toEqual({
@@ -298,5 +314,231 @@ describe('first entry hook', () => {
     const second = await setUp({ onFirstEntry: rejecting });
     expect((await second.service.logEntry(makeDraft(), LUNCH)).kind).toBe('logged');
     expect(rejecting).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('updateEntry (P06-11)', () => {
+  /** Logs a soup with the given photos and returns the stored entry. */
+  async function loggedSoup(
+    service: ReturnType<typeof createDiaryService>,
+    photoIds: readonly string[] = [],
+  ): Promise<DiaryEntry> {
+    const result = await service.logEntry(makeDraft({ name: 'Soup' }), {
+      ...LUNCH,
+      source: 'photo',
+      photoIds,
+    });
+    if (result.kind !== 'logged') throw new Error('the entry should be logged');
+    return result.entry;
+  }
+
+  it('stores the entry as given, its day following its instant', async () => {
+    const { diaryRepo, service } = await setUp();
+    const entry = await loggedSoup(service);
+    const moved = Date.parse('2026-10-24T19:15:00-04:00');
+
+    const result = await service.updateEntry!({
+      ...entry,
+      name: 'Pea soup',
+      kcal: 380,
+      loggedAt: moved,
+      meal: 'dinner',
+    });
+
+    const expected: DiaryEntry = {
+      ...entry,
+      name: 'Pea soup',
+      kcal: 380,
+      loggedAt: moved,
+      dayKey: '2026-10-24',
+      meal: 'dinner',
+    };
+    expect(result).toEqual({ kind: 'updated', entry: expected, releasedPhotoIds: [] });
+    expect(await diaryRepo.byDay('2026-10-26')).toEqual([]);
+    expect(await diaryRepo.byDay('2026-10-24')).toEqual([expected]);
+  });
+
+  it('deletes only the photos the edit dropped, and keeps one a saved meal still names (R02.8)', async () => {
+    const { db, savedMealsRepo, photoRepo, service } = await setUp();
+    const [kept, savedToo, dropped] = await storePhotos(photoRepo, 3);
+    const entry = await loggedSoup(service, [kept!, savedToo!, dropped!]);
+    // The saved copy was taken when the soup named only one of them.
+    await savedMealsRepo.toggleFromEntry({ ...entry, photoIds: [savedToo!] });
+
+    const result = await service.updateEntry!({ ...entry, photoIds: [kept!] });
+
+    expect(result.kind === 'updated' && result.releasedPhotoIds).toEqual([dropped]);
+    expect(await storedPhotoIds(db)).toEqual([kept, savedToo].sort());
+    expect((await savedMealsRepo.list()).map((meal) => meal.photoIds)).toEqual([[savedToo]]);
+  });
+
+  it('answers missing for an entry deleted meanwhile, and never brings it back', async () => {
+    const { diaryRepo, service } = await setUp();
+    const entry = await loggedSoup(service);
+    await service.deleteEntry(entry.id);
+
+    expect(await service.updateEntry!({ ...entry, name: 'Pea soup' })).toEqual({
+      kind: 'missing',
+    });
+    expect(await diaryRepo.count()).toBe(0);
+  });
+
+  it('turns a fast refusal into fastActive', async () => {
+    const fast = makeFast({ end: null });
+    const refusing: Pick<DiaryRepo, 'add' | 'remove' | 'update'> = {
+      add: async (entry) => entry,
+      remove: async () => [],
+      update: async () => {
+        throw new FastActiveError(fast);
+      },
+    };
+    const service = createDiaryService({ diaryRepo: refusing, photoRepo: noPhotos });
+    expect(await service.updateEntry!(makeEntry())).toEqual({ kind: 'fastActive', fast });
+  });
+
+  it('ignores a repeat save of the same entry while it is written, and passes a failure on', async () => {
+    const held = heldDiary();
+    const service = createDiaryService({ diaryRepo: held.repo, photoRepo: noPhotos });
+    const entry = makeEntry();
+
+    const first = service.updateEntry!(entry);
+    expect(await service.updateEntry!(entry)).toEqual({ kind: 'ignored' });
+    held.updates[0]!.resolve({ kind: 'updated', entry, releasedPhotoIds: [] });
+    expect(await first).toEqual({ kind: 'updated', entry, releasedPhotoIds: [] });
+
+    const failing = service.updateEntry!(entry);
+    held.updates[1]!.reject(new Error('The disk is full'));
+    await expect(failing).rejects.toThrow('The disk is full');
+    expect(held.repo.update).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps the edit when the photo cleanup fails', async () => {
+    const failingPhotos: Pick<PhotoRepo, 'releaseIfUnused'> = {
+      releaseIfUnused: async () => {
+        throw new Error('The photo store is busy');
+      },
+    };
+    const entry = makeEntry();
+    const updating: Pick<DiaryRepo, 'add' | 'remove' | 'update'> = {
+      add: async (row) => row,
+      remove: async () => [],
+      update: async () => ({ kind: 'updated', entry, releasedPhotoIds: ['photo-1'] }),
+    };
+    const service = createDiaryService({ diaryRepo: updating, photoRepo: failingPhotos });
+    expect(await service.updateEntry!(entry)).toEqual({
+      kind: 'updated',
+      entry,
+      releasedPhotoIds: [],
+    });
+  });
+});
+
+describe('toggleSaved (P06-11)', () => {
+  it('saves a copy of the entry, then removes it and deletes its photos nothing else names', async () => {
+    const { db, photoRepo, savedMealsRepo, service } = await setUp();
+    const [photo] = await storePhotos(photoRepo, 1);
+    const logged = await service.logEntry(makeDraft({ name: 'Soup' }), {
+      ...LUNCH,
+      photoIds: [photo!],
+    });
+    if (logged.kind !== 'logged') throw new Error('the entry should be logged');
+
+    expect(await service.toggleSaved!(logged.entry)).toEqual({ kind: 'saved' });
+    expect((await savedMealsRepo.list()).map((meal) => meal.originEntryId)).toEqual([
+      logged.entry.id,
+    ]);
+    // The entry goes; its photo stays for the saved copy.
+    await service.deleteEntry(logged.entry.id);
+    expect(await storedPhotoIds(db)).toEqual([photo]);
+
+    expect(await service.toggleSaved!(logged.entry)).toEqual({
+      kind: 'unsaved',
+      releasedPhotoIds: [photo],
+    });
+    expect(await savedMealsRepo.list()).toEqual([]);
+    expect(await storedPhotoIds(db)).toEqual([]);
+  });
+
+  it('is left out when the service has no saved meals', () => {
+    const service = createDiaryService({ diaryRepo: heldDiary().repo, photoRepo: noPhotos });
+    expect(service.toggleSaved).toBeUndefined();
+    expect(service.updateEntry).toBeTypeOf('function');
+  });
+});
+
+describe('withoutPhotos (P06-11)', () => {
+  const salad = () =>
+    makeEntry({
+      name: 'Grain salad',
+      kcal: 450,
+      protein: 24.5,
+      nutrients: { sugar: 4.234567, sodium: 320 },
+      photoIds: ['p-1', 'p-2', 'p-3'],
+      lines: [],
+    });
+
+  it('promotes the next photo when the primary goes, and changes nothing else', () => {
+    const before = salad();
+    expect(withoutPhotos(before, ['p-1'])).toEqual({ ...before, photoIds: ['p-2', 'p-3'] });
+  });
+
+  it('keeps the primary and the order of the others when another photo goes', () => {
+    const before = salad();
+    expect(withoutPhotos(before, ['p-2'])).toEqual({ ...before, photoIds: ['p-1', 'p-3'] });
+  });
+
+  it('takes the photo off the parts too, and leaves their values alone', () => {
+    const tofu = makeLine({ name: 'Tofu', photoIds: ['p-1', 'p-2'] });
+    const rice = makeLine({ name: 'Rice', photoIds: ['p-1'] });
+    const before = { ...salad(), lines: [tofu, rice] };
+
+    const after = withoutPhotos(before, ['p-1']);
+
+    expect(after).toEqual({
+      ...before,
+      photoIds: ['p-2', 'p-3'],
+      lines: [
+        { ...tofu, photoIds: ['p-2'] },
+        { ...rice, photoIds: [] },
+      ],
+    });
+  });
+
+  it('makes the first part photo the primary when the last own photo goes', () => {
+    const part = makeLine({ photoIds: ['part-1'] });
+    const before = { ...salad(), photoIds: ['p-1'], lines: [part] };
+
+    const after = withoutPhotos(before, ['p-1']);
+
+    expect(after.photoIds).toEqual(['part-1']);
+    expect(after.lines).toEqual([part]);
+  });
+
+  it('leaves no photo when every one goes, values and parts otherwise the same', () => {
+    const part = makeLine({ photoIds: ['part-1'] });
+    const before = { ...salad(), lines: [part] };
+
+    const after = withoutPhotos(before, ['p-1', 'p-2', 'p-3', 'part-1']);
+
+    expect(after).toEqual({ ...before, photoIds: [], lines: [{ ...part, photoIds: [] }] });
+  });
+
+  it('gives the record itself back for no photo, or photos it does not name', () => {
+    const before = salad();
+    expect(withoutPhotos(before, [])).toBe(before);
+    expect(withoutPhotos(before, ['elsewhere'])).toBe(before);
+  });
+
+  it('never changes the record it was given, nor a saved copy of it', () => {
+    const before = { ...salad(), lines: [makeLine({ photoIds: ['p-1'] })] };
+    const copy = structuredClone(before);
+    const savedCopy = { ...before, id: 'saved-1' };
+
+    const after = withoutPhotos(before, ['p-1', 'p-2', 'p-3']);
+
+    expect(after.photoIds).toEqual([]);
+    expect(before).toEqual(copy);
+    expect(savedCopy.photoIds).toEqual(['p-1', 'p-2', 'p-3']);
+    expect(savedCopy.lines[0]?.photoIds).toEqual(['p-1']);
   });
 });

@@ -4,13 +4,24 @@
 // plain answer for the "logging paused" dialog. A delete hands the photos the entry held to the
 // photo store, which deletes only those no other record uses. The first entry this service logs
 // calls a hook once: the composition root points it at the persistent-storage request (D-16.8).
-// P06 adds edit, combine, re-log and "end fast and log" here.
+// An edit (P06-11) replaces the stored entry and then offers the photos that write dropped to the
+// photo store, the same way, so a photo a saved meal or another entry still names stays (R02.8).
+// The editor's Saved switch passes through here to the saved meals. P06 adds combine, re-log and
+// "end fast and log" here.
 
 import { dayKeyOf } from '../domain/dates/dayKey';
-import type { DiaryEntry, EntrySource, Fast, MealKind, NutritionDraft } from '../domain/model';
+import type {
+  DiaryEntry,
+  EntrySource,
+  Fast,
+  IngredientLine,
+  MealKind,
+  NutritionDraft,
+} from '../domain/model';
 import { newId as randomId, type IdSource } from '../lib/ids';
 import { FastActiveError, type DiaryRepo } from '../data/repos/diaryRepo';
-import type { PhotoRepo } from '../data/repos/photoRepo';
+import { photoIdsOf, type PhotoRepo } from '../data/repos/photoRepo';
+import type { SavedMealsRepo } from '../data/repos/savedMealsRepo';
 
 /** Where a draft goes in the diary. */
 export interface LogContext {
@@ -35,6 +46,28 @@ export type DeleteResult =
   /** The same entry was already being deleted: this call did nothing. */
   | { readonly kind: 'ignored' };
 
+export type UpdateEntryResult =
+  /** Stored as given; `releasedPhotoIds` are the photos the edit dropped that were deleted. */
+  | {
+      readonly kind: 'updated';
+      readonly entry: DiaryEntry;
+      readonly releasedPhotoIds: readonly string[];
+    }
+  /** The entry was deleted meanwhile: nothing was written, and it does not come back. */
+  | { readonly kind: 'missing' }
+  /** The store refused the write while a fast runs: nothing was written. */
+  | { readonly kind: 'fastActive'; readonly fast: Fast }
+  /** The same entry was still being written: this call did nothing. */
+  | { readonly kind: 'ignored' };
+
+export type SavedToggleResult =
+  /** The entry is now in the saved list, as a copy of it as given. */
+  | { readonly kind: 'saved' }
+  /** Its saved copies are gone; `releasedPhotoIds` are their photos nothing else named. */
+  | { readonly kind: 'unsaved'; readonly releasedPhotoIds: readonly string[] }
+  /** The entry's saved state was still being changed: this call did nothing. */
+  | { readonly kind: 'ignored' };
+
 export interface DiaryService {
   /**
    * Logs `draft` as a new entry. Rejects only when the write fails for another reason (storage);
@@ -43,11 +76,26 @@ export interface DiaryService {
   logEntry(draft: NutritionDraft, ctx: LogContext): Promise<LogResult>;
   /** Deletes an entry (nothing happens when it is already gone) and releases its photos. */
   deleteEntry(id: string): Promise<DeleteResult>;
+  /**
+   * Replaces the stored entry with the same id by `entry` exactly as given (its day follows its
+   * instant), then deletes the photos the old entry held that `entry` does not, unless something
+   * else names them. Rejects only when the write fails for another reason (storage). Optional
+   * only until every stand-in diary carries it; `createDiaryService` always provides it.
+   */
+  updateEntry?(entry: DiaryEntry): Promise<UpdateEntryResult>;
+  /**
+   * Saves a copy of the entry as given to the saved list, or removes its saved copies when it has
+   * any (D-16.17). Present when the service has the saved meals (`createDiaryService` with
+   * `savedMealsRepo`); stand-ins may leave it out.
+   */
+  toggleSaved?(entry: DiaryEntry): Promise<SavedToggleResult>;
 }
 
 export interface DiaryServiceDeps {
-  readonly diaryRepo: Pick<DiaryRepo, 'add' | 'remove'>;
+  readonly diaryRepo: Pick<DiaryRepo, 'add' | 'remove' | 'update'>;
   readonly photoRepo: Pick<PhotoRepo, 'releaseIfUnused'>;
+  /** The saved list, for `toggleSaved`; without it the service has no `toggleSaved`. */
+  readonly savedMealsRepo?: Pick<SavedMealsRepo, 'toggleFromEntry'>;
   /** Ids for new entries; defaults to random UUIDs. */
   readonly newId?: IdSource;
   /** Called once, after the first entry this service logs (D-16.8). Its failures are dropped. */
@@ -85,8 +133,35 @@ export function entryFrom(draft: NutritionDraft, ctx: LogContext, id: string): D
   };
 }
 
+/** A record with photos of its own (the first is the primary) and parts with theirs. */
+export interface PhotoHolder {
+  readonly photoIds: readonly string[];
+  readonly lines: readonly IngredientLine[];
+}
+
+/**
+ * The record without the photos in `removed`, wherever it names them: its own list and every
+ * part's. The photos left keep their order, so removing the primary makes the next one primary.
+ * When the record's last own photo goes, the first photo its parts still hold becomes its primary
+ * (the part keeps naming it). Nutrition and parts never change. Returns the record itself when it
+ * names none of `removed`.
+ */
+export function withoutPhotos<R extends PhotoHolder>(record: R, removed: Iterable<string>): R {
+  const gone = new Set(removed);
+  if (!photoIdsOf(record).some((id) => gone.has(id))) return record;
+  const kept = (ids: readonly string[]) => ids.filter((id) => !gone.has(id));
+  const lines = record.lines.map((line) =>
+    line.photoIds.some((id) => gone.has(id)) ? { ...line, photoIds: kept(line.photoIds) } : line,
+  );
+  let photoIds = kept(record.photoIds);
+  if (photoIds.length === 0 && record.photoIds.length > 0) {
+    photoIds = lines.flatMap((line) => line.photoIds).slice(0, 1);
+  }
+  return { ...record, photoIds, lines };
+}
+
 export function createDiaryService(deps: DiaryServiceDeps): DiaryService {
-  const { diaryRepo, photoRepo, onFirstEntry } = deps;
+  const { diaryRepo, photoRepo, savedMealsRepo, onFirstEntry } = deps;
   const newId = deps.newId ?? randomId;
   const gate = createGate();
   let loggedOnce = false;
@@ -103,7 +178,14 @@ export function createDiaryService(deps: DiaryServiceDeps): DiaryService {
     }
   }
 
-  return {
+  /** Deletes those of `ids` nothing names; the write before it already happened. */
+  async function release(ids: readonly string[]): Promise<readonly string[]> {
+    if (ids.length === 0) return [];
+    // A failed cleanup leaves the photos for the next prune.
+    return photoRepo.releaseIfUnused(ids).catch(() => []);
+  }
+
+  const service: DiaryService = {
     logEntry(draft, ctx) {
       return gate(
         'log',
@@ -127,15 +209,44 @@ export function createDiaryService(deps: DiaryServiceDeps): DiaryService {
         `delete:${id}`,
         async (): Promise<DeleteResult> => {
           const held = await diaryRepo.remove(id);
-          let released: readonly string[] = [];
-          if (held.length > 0) {
-            // The entry is already gone; a failed cleanup leaves the photos for the next prune.
-            released = await photoRepo.releaseIfUnused(held).catch(() => []);
+          return { kind: 'deleted', releasedPhotoIds: await release(held) };
+        },
+        IGNORED,
+      );
+    },
+
+    updateEntry(entry) {
+      return gate(
+        `update:${entry.id}`,
+        async (): Promise<UpdateEntryResult> => {
+          let result: Awaited<ReturnType<DiaryRepo['update']>>;
+          try {
+            result = await diaryRepo.update(entry);
+          } catch (error) {
+            if (error instanceof FastActiveError) return { kind: 'fastActive', fast: error.fast };
+            throw error;
           }
-          return { kind: 'deleted', releasedPhotoIds: released };
+          if (result.kind === 'missing') return result;
+          // Only what this edit dropped: the photos it kept, and every other photo, stay.
+          const released = await release(result.releasedPhotoIds);
+          return { kind: 'updated', entry: result.entry, releasedPhotoIds: released };
         },
         IGNORED,
       );
     },
   };
+
+  if (savedMealsRepo) {
+    service.toggleSaved = (entry) =>
+      gate(
+        `saved:${entry.id}`,
+        async (): Promise<SavedToggleResult> => {
+          const toggled = await savedMealsRepo.toggleFromEntry(entry);
+          if (toggled.saved) return { kind: 'saved' };
+          return { kind: 'unsaved', releasedPhotoIds: await release(toggled.photoIds) };
+        },
+        IGNORED,
+      );
+  }
+  return service;
 }

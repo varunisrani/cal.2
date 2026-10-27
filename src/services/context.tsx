@@ -19,6 +19,7 @@ import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
 import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
+import type { ReprocessService } from './reprocess';
 import type { WaterService } from './water';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
@@ -57,6 +58,8 @@ export interface Services {
   readonly ingredientIntake?: IngredientIntakeService;
   /** The fit check's AI suggestion (P06-10); optional for the same reason. */
   readonly fitCheck?: FitCheckService;
+  /** The entry editor's Reprocess (P06-11); optional for the same reason. */
+  readonly reprocess?: ReprocessService;
   /** The Progress tab's writes: weigh-ins, the weight unit, Count today (P07-09, P07-12). */
   readonly progress?: ProgressService;
   /** Home's own choices: the pillars (P07-04); optional for the same reason. */
