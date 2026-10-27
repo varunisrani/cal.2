@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s13 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S13 = P09-13: backup and restore. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); D-16.29, D-16.30, D-16.42; R06.6, R06.8. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/backup-and-restore.md.
+
+You own:
+- src/services/backup/{backup,restore}.ts (+ tests) on the landed codec: src/services/backup/{zip,archive,hash}.ts (P09-12: `packBackup`/`unpackBackup`, `contentHash` with its exported `LOCAL_TABLES` and `LOCAL_SETTINGS`; pass contentHash the same rows you pack and photos as {name, size}; name photo files `<id>.<ext>`; map ZipError and BackupArchiveError reasons to restore's messages)
+- src/features/settings/data/{BackupSection,RestoreSheet}.tsx (+ tests) as components P09-15 mounts on the Your data page later; a new catalogue partition src/i18n/en/backup.ts (register it in src/i18n/en.ts: one additive line); `backup?` in Services and its wiring in main.tsx (additive)
+- a repository method only if restore's one-transaction replace needs one: add it in src/data/repos/ with its own tests, and say so
+
+Do not touch:
+- other src/features/settings/** files (other builders now), src/features/{home,log,coach,fasting,water,progress,onboarding}/** (P09-14 adds Restore on Welcome later), src/services/backup/{zip,archive,hash}.ts (landed: import; extend additively only if a hook is missing), src/domain/** (import only), other src/data/** files, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts (see the profile, goals and tracking entries; P09-01 reworks the hub later, so add entries, do not restyle the hub). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 217): pages load on demand.
+- As the row says: snapshot every table except secrets and quarantine (and meta, as P09-12 decided), settings without device-local keys; the Coach messages with thumbnails; every photo; document {format: 'platewise-backup', version: 1, exportedAt, appVersion, contentHash, payload}; a photo that vanished between snapshot and packing fails the whole backup; Web Share or a download named platewise-backup-<yyyy-MM-dd>.zip; record backup.lastAt. Restore reads and validates the whole file (entries, CRC, format id; a newer version says it needs a newer Platewise; payload shape) and checks free space before changing anything, shows what the file holds and asks first (R06.8), then replaces in one transaction.
+- Open question from P09-12: a small photo kept with its own bytes can be GIF or HEIC, which R06.9's safe-name list (jpg/jpeg/png/webp) refuses. Decide in the note (for example: store such photos re-encoded, or name them by their real type only if the list is widened by the lead) and say so in the report; do not widen the list yourself.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/backup src/features/settings/data src/data/repos src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

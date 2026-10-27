@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s05 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S05 = P09-05: the Add-menu editor. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.6; R06.21; the P06-01 rules in src/domain/food/addMenu.ts. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/add-menu-editor.md.
+
+You own:
+- src/features/settings/app/MenuEditorPage.tsx (+ test; css), its entry in src/features/settings/registry.ts (id `menu`, additive), and your words in the settings partition (src/i18n/en/settings.ts: additive keys)
+- a settings write for the layout through the landed settings repository or an additive service method
+
+Do not touch:
+- other src/features/settings/** files (other builders now), src/features/log/AddMenu.tsx (landed: the menu reads the stored layout), src/domain/** (import only: addMenu rules), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts (see the profile, goals and tracking entries; P09-01 reworks the hub later, so add entries, do not restyle the hub). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 217): pages load on demand.
+- As the row says: group count 0–3 (0 = flat; 0 → ≥ 1 rebuilds the default groups when nothing is loose, else one group with the loose methods; extra groups start empty; reducing drops the last); per group rename, move up/down, move methods, remove a method, Add method from the hidden ones; a loose section; Hidden methods with restore; Reset to default; a footer saying water and fasting entries stay separate. Edits wait for the stored layout and a late load never overwrites an edit; empty groups and names are kept while editing and sanitised on save (R06.21).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings src/domain/food src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

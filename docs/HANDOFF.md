@@ -119,20 +119,21 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Three wave 12 builders started at 11:01 IST, base 9357cad (prompts in `docs/handoff/wave12/`, filled copies in
-`/root/wt/prompt-<slice>.txt`):
-- P07-05 + P07-08 (diary sort, water and fast rows; the + menu's Water page and fasting rows), `/root/wt/wt-p07s2c`.
-- P06-19 (selection bar and combine; row tap → `EntryEditor`; saved heart; `PausedDialog` on combine), `/root/wt/wt-p06s19`.
-- P08-08 + P08-09 (chat engine; Coach session with the `CoachSession` shape), `/root/wt/wt-p08s4`.
-Expected merges: P07-05/08 and P06-19 both edit `Diary.tsx` and `HomePage.tsx` (each keeps to its own parts).
-Three P09 builders started next, base 2215f6e: P09-08 reminder engine (`/root/wt/wt-p09s08`), P09-10 + P09-11
-export and import with their sheets (`/root/wt/wt-p09s10`), P09-12 backup archive codec and hash
-(`/root/wt/wt-p09s12`). Prompts in `docs/handoff/wave12/w12-p09s*.txt`.
-Next: P08-10 + P08-11 (Coach page and composer, against `CoachSession`) once P08-08/09 land; then the e2e
-tasks P06-20 (logging), P07-17 (Home and Progress), P08-14 (Coach); then P09 and P10.
-Landed this window (10:20–15:20 IST): d18dd7a, 29d15b9, 0a3cbdb, 3458a92, 9357cad (latest full loop: unit 4162
-passed + 2 expected-fail, bundle 213.07 kB, e2e 6/6). **Progress: 133/176 tasks** (P00 10/10, P01 19/19, P02
-15/15, P03 19/19, P04 14/14, P05 15/15, P06 18/20, P07 14/17, P08 9/14, P09 0/19, P10 0/14).
+Landing: five slices stacked on `/root/wt/verify` over 0130532 in one full loop (P09-08 reminder engine, P08-08/09
+engine and session, P07-05/08 tracker rows and + menu, P06-19 selection and combine, P09-10/11 export and import);
+push with `/root/wt/land-multi.sh 0130532 18113fb /root/wt/msgs/w12-02.txt bcc8761 /root/wt/msgs/w12-03.txt
+0f02c14 /root/wt/msgs/w12-05.txt fdf26fd /root/wt/msgs/w12-04.txt 3181313 /root/wt/msgs/w12-06.txt` once the loop
+ends with ci=0 (each sha is one slice commit on verify; the ledger scripts are already applied).
+Builders running:
+- P08-10/11 Coach page and composer, `/root/wt/wt-p08s5` (base b8e5789 = branch head plus the P08-08/09 patch as a
+  local commit; extract its patch against that commit).
+- Wave 13 at 0130532 (prompts in `docs/handoff/wave13/`), started 11:41 IST: P09-02/04/06 App settings, units, tabs and
+  product fields (`/root/wt/wt-p09s02`); P09-07 AI providers page (`/root/wt/wt-p09s07`); P09-13 backup and restore
+  (`/root/wt/wt-p09s13`); P09-17/18 service worker, manifest, install prompt and CSP (`/root/wt/wt-p09s17`).
+Next: P09-05 menu editor (prompt ready: `w13-p09s05.txt`); P09-09 notifier and reminders section (after P09-08 lands);
+P09-01 hub and load gate, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data page, P09-16 About; the e2e
+tasks P06-20, P07-17, P08-14, P09-19; then P10.
+**Progress: 133/176 landed** (P06 18/20, P07 14/17, P08 9/14, P09 1/19); the loop above brings it to 141.
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and

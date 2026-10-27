@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s07 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S07 = P09-07: the AI providers page and the food-database key. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 03 §3.3; D-16.7, D-16.23–D-16.26; R03.9. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/ai-providers-page.md.
+
+You own:
+- src/features/settings/ai/{AiPage,RoleCard,InstructionsField,FoodDbSection}.tsx (+ tests; css) and the page's entry in src/features/settings/registry.ts (additive)
+- your words in the aiSetup partition (src/i18n/en/aiSetup.ts: additive keys)
+- additive methods on the landed aiSetup service (src/services/aiSetup.ts) for the roles, standbys, limits, notes and forgetting keys, if it lacks them
+
+Do not touch:
+- other src/features/settings/** files (other builders now), src/features/ai-setup/** (the P05-04 form: import and reuse it in RoleCard; extend additively only if a prop is missing), src/features/{home,log,coach,fasting,water,progress,onboarding}/**, src/ai/** (import only: provider catalogue, presets, settings, endpoints), src/domain/**, src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts (see the profile, goals and tracking entries; P09-01 reworks the hub later, so add entries, do not restyle the hub). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 217): pages load on demand.
+- As the row says: the primary card is the P05-04 form; Different model for text with its own card; image and text standby cards (on/off, provider, model, the key shared per provider, its own server-URL slot; the model list hides the backed role's model when provider and server are the same; picking the same provider switches to its next preset); Give up after 30–600 s (default 180) and the answer length limit (default 1 024, min 1) for every provider; reasoning effort when OpenRouter fills any role; Notes for the AI (trimmed, saved with a button, blank turns them off); the plain storage warning; forget-key buttons; the Food databases section with the FoodData Central key.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings src/features/ai-setup src/services/aiSetup.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

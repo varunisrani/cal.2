@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s17 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S17 = P09-17 and P09-18: the service worker with the update flow, and the manifest, install prompt and CSP. Spec: those two rows in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); docs/plan/04-architecture.md §4 row 14; L6. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/service-worker-and-updates.md, docs/notes/P09/manifest-install-and-csp.md.
+
+You own:
+- src/sw/sw.ts (+ test), src/app/{swRegistration,UpdateBanner,InstallPrompt}.tsx/ts (+ tests), a small Vite plugin of our own in vite.config.ts that writes the precache list and a version, public/manifest.webmanifest, and index.html (manifest link, theme-color, the CSP meta)
+- the banner's and prompt's places in src/app/App.tsx (additive) and their words in the shell partition (src/i18n/en/shell.ts: additive keys)
+
+Do not touch:
+- src/features/** (other builders now), src/services/** and src/data/** (import only), src/ai/** (cross-origin requests stay network-only: never cache them), e2e/** (P09-19 tests offline later), eslint.config.js, scripts/** (the clean-room and bundle checks must keep passing: the service worker is its own build entry, not part of the initial JS)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts (see the profile, goals and tracking entries; P09-01 reworks the hub later, so add entries, do not restyle the hub). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 217): pages load on demand.
+- As the rows say: precache the app shell from the build manifest; same-origin static assets cache-first; navigations network-first with the cached index.html offline; never touch cross-origin requests; delete old `platewise-` caches on activate; skipWaiting only when the page asks; register in production only, update() on launch and on visibility; UpdateBanner "Update ready — Reload" never reloads by itself. Manifest: name Platewise, our icons from P00-04 (maskable included), colours from the dark tokens, standalone, start_url and scope ./, an id, shortcuts for Camera, Describe and Scan. InstallPrompt uses beforeinstallprompt where offered, explains Add to Home Screen on iOS Safari, never nags twice in a week. The CSP exactly as the row gives it; no third-party scripts or fonts. The e2e and REA runs use vite preview: make sure they still pass with the worker registered.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/sw src/app --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4190 PLATEWISE_FAKE_AI_PORT=4336 pnpm exec playwright test e2e/walking-skeleton.spec.ts e2e/onboarding.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
