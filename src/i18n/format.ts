@@ -151,6 +151,12 @@ export function formatPeriod(
 const HOURS: Intl.NumberFormatOptions = { style: 'unit', unit: 'hour', unitDisplay: 'narrow' };
 const MINUTES: Intl.NumberFormatOptions = { style: 'unit', unit: 'minute', unitDisplay: 'narrow' };
 const UNIT_LIST: Intl.ListFormatOptions = { type: 'unit', style: 'narrow' };
+const NAME_LIST: Intl.ListFormatOptions = { type: 'unit', style: 'short' };
+
+/** Names joined as a plain list in the locale, without "and": "Protein, Fibre, Water" (en). */
+export function formatNameList(names: readonly string[], locale: string = currentLocale()): string {
+  return listFormat(locale, NAME_LIST).format(names);
+}
 
 /**
  * A length of time given in minutes (fractions floored, negatives as 0), in the locale's narrow

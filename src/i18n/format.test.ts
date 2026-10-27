@@ -5,6 +5,7 @@ import {
   formatDecimal,
   formatDuration,
   formatInt,
+  formatNameList,
   formatPercent,
   formatPeriod,
   formatTime,
@@ -188,6 +189,14 @@ describe('formatDuration', () => {
 
   it('uses the units of the locale', () => {
     expect(plain(formatDuration(990, 'de-DE'))).toBe('16 Std., 30 Min.');
+  });
+});
+
+describe('formatNameList', () => {
+  it('joins names without "and", as the locale lists them', () => {
+    expect(formatNameList(['Protein', 'Fibre', 'Water'], 'en-US')).toBe('Protein, Fibre, Water');
+    expect(formatNameList(['Protein'], 'en-US')).toBe('Protein');
+    expect(formatNameList([], 'en-US')).toBe('');
   });
 });
 

@@ -5,8 +5,7 @@ import { isGoalKey, unitOf, type PillarKey } from '../../domain/nutrients/catalo
 import type { GoalValues } from '../../domain/nutrients/goalDefaults';
 import { MAX_PILLARS } from '../../domain/nutrients/pillars';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
-import { formatDay } from '../../i18n/format';
-import { currentLocale } from '../../i18n/locale';
+import { formatDay, formatNameList } from '../../i18n/format';
 import { Icon } from '../../ui/icons';
 import { Sheet } from '../../ui/Sheet';
 import {
@@ -83,9 +82,7 @@ function SheetBody({
   const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
   const shown = pillars.slice(0, MAX_PILLARS).map(nutrientName);
   if (water) shown.push(tx('home.pillar.water'));
-  const names = new Intl.ListFormat(currentLocale(), { type: 'unit', style: 'short' }).format(
-    shown,
-  );
+  const names = formatNameList(shown);
 
   return (
     <div className={styles.body}>
