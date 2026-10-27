@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s09 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S09 = P09-09 and P09-03: the notifications section with the notifier, and the meal times editor, both on the Tracking page. Spec: those two rows in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.4.1, §3.9–3.10; D-16.5; R06.13; P01-08 meal-time bounds. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/notifications-and-notifier.md, docs/notes/P09/meal-times-editor.md.
+
+You own:
+- src/features/settings/tracking/{RemindersSection,MealTimesSheet}.tsx (+ tests) and their places on TrackingPage.tsx (the marked places), src/services/reminders/notifier.ts (+ test), and the wiring in src/main.tsx that replaces the reminder engine's `permitted: () => false` and `show: () => undefined` with the real permission and the notifier (missed notices as an in-app banner)
+- your words in the reminders and trackers partitions (additive keys)
+
+Do not touch:
+- src/services/reminders/{schedule,engine,ports}.ts (P09-08 landed: import; extend additively only if a hook is missing), other src/features/settings/** files (other builders now), src/features/{home,log,coach,fasting,water,progress,onboarding}/**, src/domain/** (import only), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts; a plain state update after an awaited service call is drawn only after `until`'s act ends, so wait for such updates with `settle` (src/features/water/testing/openWater.tsx). Bundle budget 250 kB gzip (now about 229): pages load on demand; nothing new in the start-up download unless the row needs it there.
+- As the rows say: the master switch asks for permission and turns on only on a grant; a denial leaves it off with a pointer to the browser's site settings; the real permission is re-read on every focus; rows for breakfast, lunch, dinner, the daily summary (switch and time each), water (only while water is tracked), the fasting goal (only while fasting is tracked) and goal reached; a note that reminders show while the app is open or on the next open, best when installed. The notifier shows through ServiceWorkerRegistration.showNotification when permitted and the page is alive, else an in-app banner; the goal-reached event (P05-14) also notifies when its switch and the master are on. Meal times: four boundaries, each a 15-minute wheel limited by its neighbours ±15 minutes, the current value always offered even off-step; Save, Restore default times, Cancel.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings/tracking src/services/reminders src/i18n src/app --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

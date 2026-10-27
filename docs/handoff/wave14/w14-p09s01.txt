@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s01 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S01 = P09-01: the Settings hub and the load gate. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.1, §5; R06.22; Proposed D-16.66. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/settings-hub-and-load-gate.md.
+
+You own:
+- src/features/settings/{SettingsHub,CategoryPage,CategoryFrame,SettingsScreen}.tsx and registry.ts (+ tests): the two cards and their order (Personal info → Goals & nutrition → Tracking & reminders → AI providers → App settings → Your data; About Platewise → Help & feedback → Privacy & terms), sub-pages nested under their parent (App settings' Tab bar and Product details, and the Add menu editor id `menu`) so the hub lists only top-level rows and the back link follows the parent, the spinner until the settings snapshot is read on every category page (R06.22), back link "Settings", and the update dot on the About row and the Settings tab from `useAppUpdate()` (src/app/swRegistration.ts)
+- the Settings tab's dot in src/app/TabBar.tsx (additive) and your words in the settings partition (additive keys)
+
+Do not touch:
+- the pages themselves (src/features/settings/{profile,goals,tracking,ai,app,data}/**, src/features/about/**: other builders now; register-only changes in registry.ts are yours), src/features/{home,log,coach,fasting,water,progress,onboarding}/**, src/domain/**, src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts; a plain state update after an awaited service call is drawn only after `until`'s act ends, so wait for such updates with `settle` (src/features/water/testing/openWater.tsx). Bundle budget 250 kB gzip (now about 229): pages load on demand; nothing new in the start-up download unless the row needs it there.
+- Categories without v1 content (speech, voice, workouts, health) are absent. Your data (`data`) and About (`about`) register later from P09-15 and P09-16: leave their slots so a registered entry with those ids lands in place; Help & feedback and Privacy & terms are links from src/config/links.ts (P09-16 creates it: use placeholders behind one import you add now if it does not exist, and say so).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings src/app src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

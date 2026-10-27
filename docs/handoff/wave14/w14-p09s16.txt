@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s16 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S16 = P09-16: About, licences and credits. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.20; D-16.43; Proposed D-16.66; docs/plan/00-decisions.md and 01-clean-room-protocol.md §7 for the credit lines. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/about-and-credits.md.
+
+You own:
+- src/features/about/{AboutPage,CreditsPage}.tsx (+ tests), src/config/links.ts (our own URLs, placeholders until the owner supplies them), scripts/notices.ts (+ test) generating src/generated/notices.json at build time (wire it into the build script additively), a build constant for the version (vite.config.ts `define`, additive), and the About entries in registry.ts (id `about`, additive)
+- your words in the about partition (additive keys)
+
+Do not touch:
+- other src/features/** (other builders now; the methods page in src/features/about landed: link to it), src/services/**, src/domain/**, src/data/**, e2e/**, eslint.config.js, the other scripts/** files (the clean-room checks must keep passing: the generated notices hold licence texts of our dependencies, so check the licences check still passes)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts; a plain state update after an awaited service call is drawn only after `until`'s act ends, so wait for such updates with `settle` (src/features/water/testing/openWater.tsx). Bundle budget 250 kB gzip (now about 229): pages load on demand; nothing new in the start-up download unless the row needs it there.
+- As the row says: our mark, the version, update status from `useAppUpdate()` ("up to date" / "update ready — reload"), a changelog link, share Platewise (navigator.share, else copy the link), help and contact links from links.ts, the calculation methods page; Credits lists third-party licences from notices.json plus the reference's MIT notice as credit and the "inspired by" line. No What's New dialog. Replace `appVersion: '0.1.0'` in main.tsx with the build constant.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/about scripts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

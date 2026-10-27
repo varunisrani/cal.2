@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s15 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S15 = P09-15: the Your data page, the storage card and persistence. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.15–3.16; D-16.8; R06.5, R06.15, R06.19. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/your-data-page.md.
+
+You own:
+- src/features/settings/data/{DataPage,StorageCard}.tsx (+ tests) and the page's entry in registry.ts (id `data`, additive); src/services/storageNudge.ts (+ test) and its nudge UI; mounting the landed ExportSheet, ImportSheet, BackupSection and RestoreSheet on the page
+- Clear diary and Erase everything: Erase invalidates any running backup (`backup.invalidate()`), stops the reminder engine (`reminders.stop()`), then `eraseEverything`, then onboarding
+- your words in a data partition or the settings partition (additive keys)
+
+Do not touch:
+- src/services/backup/**, src/services/transfer/**, src/services/reminders/** (landed: import), other src/features/settings/** files (other builders now), src/features/{home,log,coach,fasting,water,progress,onboarding}/**, src/domain/**, src/data/** (import only: storage estimates, erase, the photo store's sizes), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts; a plain state update after an awaited service call is drawn only after `until`'s act ends, so wait for such updates with `settle` (src/features/water/testing/openWater.tsx). Bundle budget 250 kB gzip (now about 229): pages load on demand; nothing new in the start-up download unless the row needs it there.
+- As the row says: Clear diary (confirm; entries removed, photos pruned; profile, weights, saved meals and settings kept); the storage card with photo bytes, thumbnail bytes, usage and quota, persistence status, Clear cache (thumbnails only), "…" until measured, one action at a time; after the first logged entry ask for persistent storage once; when not granted or not installed a dismissible nudge to install and back up; a reminder when the last backup is older than 14 days; a nudge is marked done only after it was shown and dismissed.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/settings/data src/services src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

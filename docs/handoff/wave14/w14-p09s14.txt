@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s14 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S14 = P09-14: restore from a file on Welcome. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 01 §3.5; D-16.30. Traps and acceptance ids: every row whose Review line names one of these tasks.
+Task notes (each before its code): docs/notes/P09/restore-on-welcome.md.
+
+You own:
+- src/features/onboarding/RestoreFromFile.tsx (+ test) and the Welcome link to it (the onboarding step that shows Welcome: additive)
+- your words in the onboarding partition (additive keys)
+
+Do not touch:
+- src/services/backup/** and src/features/settings/data/** (P09-13 landed: reuse `RestoreSheet` with its preview and confirmation and its `onRestored(summary)` with hasProfile and onboardingDone; extend additively only if a prop is missing), other src/features/** (other builders now), src/domain/**, src/data/** (import only), e2e/** (P09-19 tests it end to end), eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` in src/features/settings/registry.ts. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts; a plain state update after an awaited service call is drawn only after `until`'s act ends, so wait for such updates with `settle` (src/features/water/testing/openWater.tsx). Bundle budget 250 kB gzip (now about 229): pages load on demand; nothing new in the start-up download unless the row needs it there.
+- As the row says: a restored profile with onboarding done → "Open Platewise" to Home without seeding anything; data restored but no finished setup → continue the wizard over the restored data; failure → the message with Try again or Start fresh; leaving is impossible while it runs.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/onboarding src/features/settings/data src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
