@@ -2,10 +2,10 @@
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
   "state": "ACTIVE",
-  "usage_pct": 0,
-  "remaining_pct": 100,
+  "usage_pct": 29,
+  "remaining_pct": 71,
   "resets_at": "2026-10-27T20:20:00+05:30",
-  "last_check": "2026-10-27T15:24:00+05:30",
-  "current_step": "152/176 tasks; window reset; 7 builders (P09-01, P09-09/03, P09-14, P09-15, P09-16, P07-17, P08-14) at 1430e0b",
-  "last_commit": "1430e0b"
+  "last_check": "2026-10-27T15:51:00+05:30",
+  "current_step": "152/176 tasks; 8 builders (wave 14 + P10-13 user docs); about 1 %/min",
+  "last_commit": "0fc0373"
 }

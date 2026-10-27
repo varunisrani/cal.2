@@ -59,3 +59,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 12:57 | Agent 1 | Account 1 | 81 (reading 12:53) | 19 | 2026-10-27 15:20 | 151/176 tasks (P06-20 landed); 1 builder (P09-05) |
 | 2026-10-27 13:24 | Agent 1 | Account 1 | 83 (reading 13:10) | 17 | 2026-10-27 15:20 | 152/176 tasks (P09-05 landed); no builders; waiting for the reset |
 | 2026-10-27 15:24 | Agent 1 | Account 1 | 0 (reading 15:23) | 100 | 2026-10-27 20:20 | 152/176 tasks; window reset; 7 wave 14 builders launched |
+| 2026-10-27 15:51 | Agent 1 | Account 1 | 29 (reading 15:50) | 71 | 2026-10-27 20:20 | 152/176 tasks; 8 builders ≈ 1 %/min; no new builders until some land |
