@@ -773,16 +773,20 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I1 · Coach tab (P1)
 
 - **ACC-I1-1** An empty chat shows four prompts that send when tapped
-  - Review: P08-10
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: empty chat (P08-10) > shows the title, what the Coach can see and four cards in place of a conversation (ACC-I1-1)
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: empty chat (P08-10) > sends a card’s words at once when it is tapped (ACC-I1-1)
 - **ACC-I1-2** While a reply is pending three animated dots show
-  - Review: P08-10
+  - Test: src/features/coach/TypingDots.test.tsx > TypingDots (P08-10) > moves the lit dot on every 350 ms and back to the first after the third (ACC-I1-2)
+  - Test: src/features/coach/TypingDots.test.tsx > TypingDots (P08-10) > shows three dots with the first lit, and says the Coach is writing (ACC-I1-2)
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: conversation > shows the typing dots while a reply is pending, the lit one moving every 350 ms (ACC-I1-2)
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: typing dots > shows the dots after the last message only while a reply is pending (ACC-I1-2)
 
 ### I2 · Composer (P1)
 
 - **ACC-I2-1** A photo alone can be sent
-  - Review: P08-11
+  - Test: src/features/coach/Composer.test.tsx > Composer: Send (P08-11) > turns Send on for a photo alone and sends it with no words (ACC-I2-1)
 - **ACC-I2-2** Shift+Enter adds a new line instead of sending
-  - Review: P08-11
+  - Test: src/features/coach/Composer.test.tsx > Composer: keys > adds a line on Shift+Enter instead of sending (ACC-I2-2)
 
 ### I3 · Goal-aware prompt chips (P1)
 

@@ -74,6 +74,8 @@ export interface MenuProps {
   readonly triggerClassName?: string;
   /** Hook for the button; each row gets `<hook>.<entry id>`, the Back row `<hook>.back`. */
   readonly 'data-ui'?: string;
+  /** Turns the button off; a menu that is open closes. */
+  readonly disabled?: boolean;
 }
 
 /** One focusable row of the page on screen. */
@@ -126,6 +128,7 @@ export function Menu({
   backLabel,
   triggerClassName,
   'data-ui': dataUi,
+  disabled = false,
 }: MenuProps) {
   const id = useId();
   const triggerId = `${id}-button`;
@@ -137,6 +140,12 @@ export function Menu({
   const [open, setOpen] = useState(false);
   const [path, setPath] = useState<readonly string[]>([]);
   const [active, setActive] = useState(0);
+
+  // Turned off while open: closed during this render, so no frame shows a menu that cannot act.
+  if (disabled && open) {
+    setOpen(false);
+    setPath([]);
+  }
 
   const nested = path.length > 0;
   const openPage = nested
@@ -340,6 +349,7 @@ export function Menu({
         aria-expanded={open}
         aria-controls={open ? menuId : undefined}
         aria-label={hideLabel ? label : undefined}
+        disabled={disabled}
         data-ui={dataUi}
         onClick={() => (open ? close(false) : openAt('first'))}
         onKeyDown={onTriggerKeyDown}

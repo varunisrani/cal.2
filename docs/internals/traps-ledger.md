@@ -341,6 +341,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > turns are always alternating, opening with the person and closing on a reply
 - **R04.4** A failed turn keeps the question and offers Retry without duplicating it (D-16.31)
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: error banner (D-16.31, R04.4) > shows our message for the newest failed question, its Details, and Retry asks again
 - **R04.5** Pending is set before the first await, so double taps start one turn
   - Test: src/services/coach/session.test.ts > createCoachSession: send (04 §3.6) > starts one turn for two sends in the same tick (R04.5)
 - **R04.6** Reset aborts the request and drops any late reply by generation (D-16.34)

@@ -1,8 +1,39 @@
-/* The Coach tab (a placeholder until P08). Every value comes from tokens.css. */
+/*
+ * The Coach tab (P08-10, P08-11): the page column, the conversation and its bubbles, the typing
+ * dots, the error banner, the empty chat and the composer. Every value comes from tokens.css.
+ */
 
+/* ---- Page ---------------------------------------------------------------------------------- */
+
+/*
+ * The page fills the shell's content area exactly, so only the conversation scrolls and the
+ * composer stays above the floating tab bar. The two paddings repeat the content area's own
+ * (src/app/shell.module.css). With the on-screen keyboard open the bar is under the keyboard, so
+ * the page ends just above the keyboard instead (`--coach-keyboard`, from `visualViewport`).
+ */
 .page {
-  display: grid;
-  gap: var(--space-4);
+  --coach-top: calc(var(--safe-top) + var(--space-4));
+  --coach-bottom: calc(
+    var(--tabbar-height, calc(var(--space-8) * 2)) + var(--tabbar-gap, var(--space-3)) * 2 +
+      var(--safe-bottom) + var(--space-6)
+  );
+  display: flex;
+  flex-direction: column;
+  block-size: calc(100dvh - var(--coach-top) - var(--coach-bottom));
+  min-block-size: 0;
+}
+
+.page[data-keyboard='open'] {
+  block-size: calc(100dvh - var(--coach-top) - var(--coach-keyboard) - var(--space-2));
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-2);
 }
 
 .title {
@@ -10,4 +41,387 @@
   font-size: var(--type-heading);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+}
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+
+.unreadable {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.dock {
+  flex: none;
+  display: grid;
+  /* One column no wider than the page: the chips' row scrolls inside it instead of widening it. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  padding-block-start: var(--space-2);
+}
+
+/* The chips' row pads itself, so it runs edge to edge across the content area's padding. */
+.chipRow {
+  min-inline-size: 0;
+  margin-inline: calc(var(--space-4) * -1);
+}
+
+/* For screen readers only. */
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---- Conversation -------------------------------------------------------------------------- */
+
+.list {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-block: var(--space-2) var(--space-4);
+}
+
+/* After the first jump to the end, later ones glide. */
+.list[data-settled] {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list[data-settled] {
+    scroll-behavior: auto;
+  }
+}
+
+.userRow {
+  display: flex;
+  justify-content: flex-end;
+  padding-inline-start: var(--space-8);
+}
+
+.userBubble {
+  display: grid;
+  gap: var(--space-2);
+  max-inline-size: min(22rem, 100%);
+  min-inline-size: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-card) var(--space-2) var(--radius-card) var(--radius-card);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.userText {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* The frame is there from the first draw, so the conversation does not grow once it loads. */
+.sentPhoto {
+  display: block;
+  inline-size: 100%;
+  min-inline-size: calc(var(--space-8) * 5);
+  block-size: calc(var(--space-8) * 4 + var(--space-4));
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--accent-ink) 12%, transparent);
+}
+
+.assistantRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-8);
+}
+
+.badge {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: calc(var(--space-6) + var(--space-1));
+  block-size: calc(var(--space-6) + var(--space-1));
+  margin-block-start: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--accent);
+}
+
+.assistantBubble,
+.typingBubble {
+  min-inline-size: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--space-2) var(--radius-card) var(--radius-card) var(--radius-card);
+  background: var(--card);
+  color: var(--text);
+}
+
+.assistantBubble {
+  display: grid;
+  padding: var(--space-3) var(--space-4) var(--space-1);
+}
+
+.typingBubble {
+  padding: var(--space-3) var(--space-4);
+}
+
+/* The copy button sits under the reply, at its end. */
+.copy {
+  justify-self: end;
+  margin-inline-end: calc(var(--space-3) * -1);
+  color: var(--text-muted);
+}
+
+/* ---- Typing dots --------------------------------------------------------------------------- */
+
+.dots {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  block-size: var(--space-5);
+}
+
+.dot {
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  opacity: 0.3;
+  transition:
+    opacity var(--motion-slow) var(--ease-move),
+    transform var(--motion-slow) var(--ease-move);
+}
+
+.dot[data-on] {
+  opacity: 1;
+  transform: scale(1.15);
+}
+
+/* ---- Error banner -------------------------------------------------------------------------- */
+
+.banner {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--danger) 8%, var(--card));
+}
+
+.bannerMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.bannerIcon {
+  flex: none;
+  color: var(--danger);
+}
+
+.bannerLines {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.bannerLine {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.bannerDetails {
+  margin: 0;
+  padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--line);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.bannerActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ---- Empty chat ---------------------------------------------------------------------------- */
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 0;
+  overflow-y: auto;
+  padding-block: var(--space-6) var(--space-4);
+  text-align: center;
+}
+
+.hero {
+  display: grid;
+  place-items: center;
+  inline-size: calc(var(--space-8) * 3);
+  block-size: calc(var(--space-8) * 3);
+  margin-block-end: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.emptyTitle {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.emptyLead {
+  max-inline-size: 22rem;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.cards {
+  align-self: stretch;
+  margin-block-start: var(--space-5);
+}
+
+/* ---- Composer ------------------------------------------------------------------------------ */
+
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.photoProblem {
+  margin: 0 0 var(--space-2);
+  padding-inline: var(--space-3);
+  color: var(--danger);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+}
+
+.capsule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sheet);
+  background: var(--raised);
+  box-shadow: var(--shadow-raised);
+}
+
+.capsule:focus-within {
+  border-color: var(--accent);
+}
+
+.preview {
+  position: relative;
+  justify-self: start;
+  inline-size: calc(var(--space-8) * 2 + var(--space-4));
+  block-size: calc(var(--space-8) * 2);
+  margin: var(--space-2) var(--space-2) var(--space-1);
+}
+
+.previewImage {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.previewRemove {
+  position: absolute;
+  inset-block-start: var(--space-1);
+  inset-inline-end: var(--space-1);
+  min-inline-size: 0;
+  min-block-size: 0;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  padding: var(--space-1);
+  background: var(--scrim);
+  color: var(--text);
+}
+
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+
+.attach {
+  flex: none;
+  justify-content: center;
+  inline-size: calc(var(--space-8) + var(--space-3));
+  block-size: calc(var(--space-8) + var(--space-3));
+  padding: 0;
+  border-radius: var(--radius-pill);
+}
+
+.attach:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.field {
+  flex: 1;
+  min-inline-size: 0;
+  box-sizing: border-box;
+  max-block-size: calc(5lh + var(--space-3) * 2);
+  margin: 0;
+  padding: var(--space-3) var(--space-1);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  /* At least 16 px, so phones do not zoom in when the field takes the focus. */
+  font-size: var(--type-lead);
+  line-height: var(--leading-snug);
+  resize: none;
+  overflow-y: auto;
+}
+
+.field::placeholder {
+  color: var(--text-muted);
+}
+
+.field:focus {
+  outline: none;
+}
+
+.send {
+  flex: none;
 }

@@ -6,7 +6,6 @@ import { RouterProvider, useRoute } from '../../app/useRoute';
 import { appearance } from '../../i18n/en/appearance';
 import { common } from '../../i18n/en/common';
 import { settings } from '../../i18n/en/settings';
-import { CoachPage } from '../coach/CoachPage';
 import { defineCategories, type SettingsCategory } from './registry';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -130,14 +129,5 @@ describe('SettingsHub', () => {
     expect(screen.getByText(settings.settings.empty)).toBeVisible();
     expect(screen.queryByRole('region')).toBeNull();
     expect(document.querySelector('[data-ui="settings.empty"]')).not.toBeNull();
-  });
-});
-
-describe('tab placeholders', () => {
-  // Progress has its real page now (P07-09); its own tests cover the heading.
-  it('give Coach a page titled with the tab name', () => {
-    render(<CoachPage />);
-    expect(screen.getByRole('heading', { level: 1, name: common.common.tabs.coach })).toBeVisible();
-    expect(document.querySelector('[data-ui="screen.coach"]')).not.toBeNull();
   });
 });
