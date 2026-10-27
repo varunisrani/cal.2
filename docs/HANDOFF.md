@@ -162,6 +162,12 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P11 status (23:35 IST):** P11-01/02 landed as e62b917 (Android shell, Kotlin Health Connect plugin, 62 JVM tests;
+`ANDROID_HOME=<sdk> PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk`), P11-03/04 as 1ccefe1 (sync, activity table, Settings →
+Health Connect, Home activity card and goal + burned, Progress steps and burn; ACC-M11-1..7, strict green; bundle
+237.51 kB). The Health Connect debug APK built from 1ccefe1 was sent to the user (same debug key as the first APK).
+P11-05 (docs, CHANGELOG 1.1.0, naming, Android licence notices) is with a builder in `/root/wt/wt-p11s3` (base cbc7a27,
+prompt `docs/handoff/wave17/w17-p11s3.txt`).
 **P11 (the user asked 21:50 IST): Android app and Health Connect** — `docs/plan/phases/P11-android-and-health-connect.md`
 (D-16.89 replaces D-16.4 on Android; plugin contract in the phase file). Wave 17: S1 = P11-01/02 native shell and Kotlin
 plugin (`docs/handoff/wave17/w17-p11s1.txt`), S2 = P11-03/04 web service, data and UI (`w17-p11s2.txt`); S3 = P11-05
