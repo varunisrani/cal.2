@@ -115,6 +115,22 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     page: onDemand(() => import('./app/TabsPage').then((module) => module.TabsPage)),
   },
+  // The mark, version, update status, sharing, help links and the pages below (P09-16).
+  {
+    id: 'about',
+    titleKey: 'about.page.title',
+    icon: 'info',
+    group: 'info',
+    page: onDemand(() => import('../about/AboutPage').then((module) => module.AboutPage)),
+  },
+  // Opened from About: third-party licences and the credit to the app that inspired us (P09-16).
+  {
+    id: 'credits',
+    titleKey: 'about.credits.title',
+    icon: 'text',
+    group: 'info',
+    page: onDemand(() => import('../about/CreditsPage').then((module) => module.CreditsPage)),
+  },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
     id: 'methods',

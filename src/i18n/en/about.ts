@@ -3,7 +3,9 @@ import type { MessageTree } from '../catalogue';
 /**
  * Words of the About pages (src/features/about): the calculation methods page (P05-13), shown in
  * Settings and from Plan ready. Its numbers are params filled from the domain, never typed here;
- * the activity level names come from the onboarding words (`onboarding.activity.levels`).
+ * the activity level names come from the onboarding words (`onboarding.activity.levels`). `page`
+ * is About Platewise and `credits` the licences and credits page (P09-16); the name of the app
+ * that inspired Platewise is a param, filled at build time, never typed here.
  */
 export const about = {
   about: {
@@ -112,6 +114,53 @@ export const about = {
       advice: {
         heading: 'This is not medical advice',
         body: 'Platewise estimates; it does not measure. Equations like these usually land within about 10% of a person’s real resting energy, and some people sit further off. Talk to a doctor or a registered dietitian before a big change in how you eat, above all if you are pregnant or breastfeeding, under 18, managing a medical condition, or have had an eating disorder.',
+      },
+    },
+    page: {
+      title: 'About Platewise',
+      version: 'Version {version}',
+      updates: {
+        heading: 'Updates',
+        current: 'Up to date',
+        currentHint: 'No newer version is waiting.',
+        ready: 'Update ready',
+        readyHint: 'Reload to start the new version. Finish anything you are typing first.',
+        reload: 'Reload',
+        changelog: 'What’s changed',
+      },
+      help: {
+        heading: 'Help',
+        help: 'Help and feedback',
+        contact: 'Contact',
+        source: 'Source code',
+      },
+      more: {
+        heading: 'More',
+      },
+      share: {
+        label: 'Share Platewise',
+        text: 'Platewise tracks calories and nutrients with your own AI key and keeps your diary on your device.',
+        copied: 'Link copied',
+        failed: 'Sharing and copying both failed. The address is {url}',
+      },
+      inspired: 'Inspired by {name}',
+    },
+    credits: {
+      title: 'Licences and credits',
+      inspiration: {
+        heading: 'Inspiration',
+        body: 'The features and flows of Platewise are inspired by {name}, an open-source app. Platewise is a separate product, written from scratch for the web: none of its code, words or artwork comes from {name}.',
+        visit: 'Visit {name}',
+        notice: 'Licence notice of {name}',
+      },
+      packages: {
+        heading: 'Open-source packages',
+        intro:
+          'Platewise is built with these packages. Each one comes under its own licence; open a package to read it.',
+        version: 'Version {version}',
+        license: 'Licence: {license}',
+        homepage: 'Project page of {name}',
+        noText: 'This package ships no licence text of its own.',
       },
     },
   },

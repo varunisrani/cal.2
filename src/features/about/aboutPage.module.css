@@ -1,0 +1,216 @@
+/*
+ * About Platewise and Licences and credits (P09-16): the mark and version on top, cards of rows,
+ * and licence texts that open on demand. Every value comes from tokens.css; logical properties
+ * throughout.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+/* ---- The mark, the name and the version ------------------------------------------------- */
+
+.identity {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-2);
+  text-align: center;
+}
+
+.mark {
+  inline-size: 64px;
+  block-size: 64px;
+  margin-block-end: var(--space-2);
+}
+
+.name {
+  margin: 0;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+}
+
+.version {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Cards of rows ------------------------------------------------------------------------ */
+
+.card {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.card > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  text-align: start;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.rowIcon {
+  flex: none;
+  color: var(--accent);
+}
+
+.rowTitle {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.chevron:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* The update row: its state over a hint, and Reload beside them while a version waits. */
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+}
+
+.statusText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.statusTitle {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.footer {
+  margin: 0;
+  padding-inline: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  text-align: center;
+}
+
+/* ---- Licences and credits ----------------------------------------------------------------- */
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.body {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.inlineLink {
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+.inlineLink:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.packages {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.package + .package {
+  border-block-start: 1px solid var(--line);
+}
+
+.details > summary {
+  display: grid;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.details > summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.packageName {
+  font-weight: var(--weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+.packageMeta {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.licenseText {
+  max-block-size: 60vh;
+  margin: 0 0 var(--space-3);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  overflow: auto;
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+  line-height: var(--leading-body);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

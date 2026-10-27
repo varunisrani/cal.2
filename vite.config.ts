@@ -1,9 +1,14 @@
 /// <reference types="vitest/config" />
 import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { CREDIT_SOURCE, readCredit, writeNotices } from './scripts/notices.js';
+
+/** The product root: this file's folder. */
+const ROOT = dirname(fileURLToPath(import.meta.url));
 
 /** The service worker's source, and its file at the root of the build (its address and scope). */
 const WORKER_SOURCE = 'src/sw/sw.ts';
@@ -98,8 +103,35 @@ function platewiseWorker(): Plugin[] {
   ];
 }
 
+/**
+ * P09-16: refreshes src/generated/notices.json (the credits page's list of third-party licences)
+ * from the installed packages at the start of every build, before anything reads it.
+ */
+function platewiseNotices(): Plugin {
+  return {
+    name: 'platewise:notices',
+    apply: 'build',
+    buildStart() {
+      writeNotices(ROOT);
+    },
+  };
+}
+
+/** This build's version, from package.json. */
+const VERSION = (
+  JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string }
+).version;
+
 export default defineConfig({
-  plugins: [react(), platewiseWorker()],
+  plugins: [react(), platewiseWorker(), platewiseNotices()],
+  // P09-16: build constants, typed in src/config/constants.d.ts and read through src/config. The
+  // credit is read out of THIRD_PARTY_NOTICES.md, so product code never names that app.
+  define: {
+    __PLATEWISE_VERSION__: JSON.stringify(VERSION),
+    __PLATEWISE_CREDIT__: JSON.stringify(
+      readCredit(readFileSync(join(ROOT, CREDIT_SOURCE), 'utf8')),
+    ),
+  },
   build: {
     target: 'es2022',
     sourcemap: true,

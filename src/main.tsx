@@ -9,6 +9,7 @@ import type { ShellPorts } from './app/ports';
 import { createRouter, windowHost } from './app/router';
 import { installOffer } from './app/installOffer';
 import { appUpdates, registerServiceWorker } from './app/swRegistration';
+import { APP_VERSION } from './config/build';
 import { documentVisibility } from './app/useTuneUp';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
@@ -289,8 +290,8 @@ async function start(): Promise<void> {
       photoRepo,
       storage,
       clock: systemClock,
-      // Until the build constant of P09-16 exists.
-      appVersion: '0.1.0',
+      // P09-16: package.json's version, written into the build.
+      appVersion: APP_VERSION,
     }),
     clock: systemClock,
   };
