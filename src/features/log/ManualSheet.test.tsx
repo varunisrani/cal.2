@@ -5,6 +5,7 @@ import type { NutritionDraft } from '../../domain/model';
 import { mergePartitions } from '../../i18n/catalogue';
 import { enPartitions } from '../../i18n/en';
 import { common } from '../../i18n/en/common';
+import { fasting } from '../../i18n/en/fasting';
 import { home } from '../../i18n/en/home';
 import { log } from '../../i18n/en/log';
 import { settings } from '../../i18n/en/settings';
@@ -18,6 +19,8 @@ import {
   untilShown,
   type HarnessOptions,
 } from '../../test/screenHarness';
+import { openFasting } from '../fasting/testing/openFasting';
+import { settle } from '../water/testing/openWater';
 import { ManualSheet, MEAL_PICKER_SHEET } from './ManualSheet';
 
 afterEach(closeHarnesses);
@@ -227,18 +230,43 @@ describe('ManualSheet', () => {
     expect(diary.logEntry).toHaveBeenCalledTimes(1);
   });
 
-  it('stays open with a short message while a fast is running', async () => {
+  it('stays open behind the paused dialog while a fast is running; Cancel keeps what was typed', async () => {
     const { sheet, diary, onClose } = await openSheet({
       logEntry: async () => ({ kind: 'fastActive', fast: makeFast({ end: null }) }),
     });
     fill(sheet, { [words.name]: 'Toast', [words.energy.kcal]: '250' });
     await save(sheet);
 
-    expect(screen.getByRole('status')).toHaveTextContent(words.paused);
+    const paused = screen.getByRole('alertdialog', { name: fasting.fasting.paused.title });
+    fireEvent.click(within(paused).getByRole('button', { name: common.common.cancel }));
     expect(onClose).not.toHaveBeenCalled();
+    expect(sheet.getByLabelText(words.name)).toHaveValue('Toast');
     expect(saveButton(sheet)).not.toHaveAttribute('aria-busy');
     await save(sheet);
     expect(diary.logEntry).toHaveBeenCalledTimes(2);
+  });
+
+  it('ends the fast and stores the entry with End fast and log (ACC-D27-1, D-16.35)', async () => {
+    const running = makeFast({ id: 'running', start: FACTORY_NOW - 10 * 3_600_000, end: null });
+    const h = await openFasting({ on: true, fasts: [running] });
+    const onClose = vi.fn();
+    h.mount(<ManualSheet open onClose={onClose} dayKey={TODAY} />);
+    await untilShown('[data-ui="manual.name"]');
+    const sheet = within(screen.getByRole('dialog', { name: words.title }));
+    fill(sheet, { [words.name]: 'Toast', [words.energy.kcal]: '250' });
+    await save(sheet);
+    await settle(() => document.querySelector('[data-ui="fasting.paused"]') !== null);
+    expect(await h.db.entries.count()).toBe(0);
+
+    const paused = screen.getByRole('alertdialog', { name: fasting.fasting.paused.title });
+    fireEvent.click(within(paused).getByRole('button', { name: fasting.fasting.paused.endAndLog }));
+
+    await settle(() => onClose.mock.calls.length > 0);
+    expect(await h.storedFasts()).toEqual([{ ...running, end: FACTORY_NOW }]);
+    const stored = await h.repos.diaryRepo.byDay(TODAY);
+    expect(stored.map((entry) => [entry.name, entry.kcal, entry.source])).toEqual([
+      ['Toast', 250, 'manual'],
+    ]);
   });
 
   it('stays open and says so when the save fails', async () => {

@@ -1,10 +1,12 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { fasting } from '../../../i18n/en/fasting';
 import { goals } from '../../../i18n/en/goals';
 import { profile } from '../../../i18n/en/profile';
 import { settings } from '../../../i18n/en/settings';
 import { trackers } from '../../../i18n/en/trackers';
+import { createFastingService } from '../../../services/fasting';
 import { createHomePrefsService } from '../../../services/homePrefs';
 import { ServicesProvider } from '../../../services/context';
 import { makeProfile } from '../../../test/factories';
@@ -20,6 +22,13 @@ import { TrackingPage } from './TrackingPage';
 afterEach(closeHarnesses);
 
 const words = trackers.trackers;
+const fastingWords = fasting.fasting;
+
+/** The hooks of the fasting card's rows, in order. */
+const fastingRows = (): string[] =>
+  Array.from(document.querySelectorAll('[data-ui="fasting.settings"] li > button')).map(
+    (row) => row.getAttribute('data-ui') ?? '',
+  );
 
 /** The hooks of the water card's rows, in order. */
 const waterRows = (): string[] =>
@@ -78,6 +87,33 @@ describe('TrackingPage', () => {
     await settle(() => !(tracking as HTMLButtonElement).disabled);
     await user.click(tracking);
     await until(() => waterRows().length === 1);
+  });
+
+  it("shows fasting's own rows only while fasting is switched on (ACC-J10-1)", async () => {
+    const user = userEvent.setup();
+    const h = await openWater();
+    const fasting = createFastingService({ ...h.repos, clock: h.clock });
+    h.mount(
+      <ServicesProvider services={{ ...h.services, fasting }}>
+        <TrackingPage />
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="fasting.settings"]');
+    const tracking = screen.getByRole('switch', { name: fastingWords.settings.tracking });
+    expect(screen.getByRole('region', { name: fastingWords.settings.heading })).toBeVisible();
+
+    expect(tracking).toHaveAttribute('aria-checked', 'false');
+    expect(fastingRows()).toEqual(['fasting.tracking']);
+
+    await user.click(tracking);
+    await until(() => fastingRows().length === 2);
+    expect(fastingRows()).toEqual(['fasting.tracking', 'fasting.goal']);
+    // Water's card is not changed by it.
+    expect(waterRows()).toEqual(['water.tracking']);
+
+    await settle(() => !(tracking as HTMLButtonElement).disabled);
+    await user.click(tracking);
+    await until(() => fastingRows().length === 1);
   });
 
   it('adds the water pillar on Home once water is turned on, and a log from the water page fills it (ACC-H1-1)', async () => {

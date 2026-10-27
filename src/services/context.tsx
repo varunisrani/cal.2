@@ -6,6 +6,7 @@ import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
+import type { FastingService } from './fasting';
 import type { FitCheckService } from './fitCheck';
 import type { HomePrefsService } from './homePrefs';
 import type { PlanBuilder } from './goals/planBuilder';
@@ -62,6 +63,8 @@ export interface Services {
   readonly homePrefs?: HomePrefsService;
   /** Water logs for the shown day and the water settings (P07-06); optional for the same reason. */
   readonly water?: WaterService;
+  /** Fasts, the fasting settings and "End fast and log" (P07-07); optional for the same reason. */
+  readonly fasting?: FastingService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

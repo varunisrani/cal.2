@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { DayKey } from '../../domain/dates/dayKey';
 import { common } from '../../i18n/en/common';
+import { fasting } from '../../i18n/en/fasting';
 import { reuse } from '../../i18n/en/reuse';
 import { ServicesProvider, type Services } from '../../services/context';
 import { createCopyDayService, type CopyDayService } from '../../services/copyDay';
+import { createFastingService } from '../../services/fasting';
 import { FACTORY_NOW, makeEntry } from '../../test/factories';
 import {
   closeHarnesses,
@@ -14,6 +16,7 @@ import {
   untilShown,
   type Harness,
 } from '../../test/screenHarness';
+import { settle } from '../water/testing/openWater';
 import { CopyDaySheet } from './CopyDaySheet';
 
 afterEach(closeHarnesses);
@@ -47,7 +50,8 @@ async function openSheet(
     ? service(h)
     : createCopyDayService({ diaryRepo: h.repos.diaryRepo, clock: h.clock });
   const copyDay: RecordedCopy = { copy: vi.fn((entries, day) => inner.copy(entries, day)) };
-  const services: Services = { ...h.services, copyDay };
+  const fasting = createFastingService({ ...h.repos, clock: h.clock });
+  const services: Services = { ...h.services, copyDay, fasting };
   h.mount(
     <ServicesProvider services={services}>
       <Host targetDay={targetDay} />
@@ -197,12 +201,32 @@ describe('CopyDaySheet', () => {
       kind: 'fastActive',
     });
 
-    const paused = screen.getByRole('alertdialog', { name: words.paused.title });
-    expect(paused).toHaveTextContent(words.paused.message);
-    fireEvent.click(within(paused).getByRole('button', { name: words.paused.ok }));
-    expect(document.querySelector('[data-ui="copyDay.paused"]')).toBeNull();
+    const paused = screen.getByRole('alertdialog', { name: fasting.fasting.paused.title });
+    expect(paused).toHaveTextContent(fasting.fasting.paused.message);
+    fireEvent.click(within(paused).getByRole('button', { name: common.common.cancel }));
+    expect(document.querySelector('[data-ui="fasting.paused"]')).toBeNull();
     expect(sheet()).toBeVisible();
     expect(await h.repos.diaryRepo.byDay(TODAY)).toEqual([]);
+    expect(await h.repos.fastRepo.active()).not.toBeNull();
+  });
+
+  it('ends the fast and copies with End fast and log, then closes (D-16.35)', async () => {
+    const { h, copyDay } = await openSheet(async (harness) => {
+      await yesterday(harness);
+      await harness.repos.fastRepo.start(960, FACTORY_NOW - HOUR);
+    });
+    await untilShown('[data-ui="copyDay.all"]');
+    fireEvent.click(screen.getByRole('button', { name: 'Copy 4 foods' }));
+    await settled(copyDay);
+
+    const paused = screen.getByRole('alertdialog', { name: fasting.fasting.paused.title });
+    fireEvent.click(within(paused).getByRole('button', { name: fasting.fasting.paused.endAndLog }));
+
+    await settle(() => document.querySelector('[data-ui="copyDay"]') === null);
+    expect(await h.repos.fastRepo.list()).toEqual([
+      expect.objectContaining({ start: FACTORY_NOW - HOUR, end: FACTORY_NOW }),
+    ]);
+    expect(await h.repos.diaryRepo.byDay(TODAY)).toHaveLength(4);
   });
 
   it('names the target day when it is not today, and starts from the day before it', async () => {

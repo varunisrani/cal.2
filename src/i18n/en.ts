@@ -8,6 +8,7 @@ import { charts } from './en/charts';
 import { coach } from './en/coach';
 import { common } from './en/common';
 import { display } from './en/display';
+import { fasting } from './en/fasting';
 import { fitCheck } from './en/fitCheck';
 import { goals } from './en/goals';
 import { home } from './en/home';
@@ -53,6 +54,7 @@ export const enPartitions = {
   progress,
   trackers,
   coach,
+  fasting,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

@@ -11,10 +11,11 @@ import { t } from '../../i18n/t';
 import { useServices } from '../../services/context';
 import { Button } from '../../ui/Button';
 import { DateTimeField } from '../../ui/DateTimeField';
-import { Dialog } from '../../ui/Dialog';
 import { Icon } from '../../ui/icons';
 import { Sheet } from '../../ui/Sheet';
 import { useToast } from '../../ui/Toast';
+import { useFasting } from '../fasting/hours';
+import { PausedDialog } from '../fasting/PausedDialog';
 import { energyText } from '../home/energy';
 import { MEAL_NAME_KEYS } from './meals';
 import styles from './reuse/reuse.module.css';
@@ -23,6 +24,12 @@ const SETTINGS = ['units.energy'] as const;
 
 /** How far back the source day may go: the first of January ten years ago. */
 const YEARS_BACK = 10;
+
+/** A copy a running fast refused: what was chosen, and the fast. */
+interface Paused {
+  readonly chosen: readonly DiaryEntry[];
+  readonly fastId: string;
+}
 
 export interface CopyDaySheetProps {
   readonly open: boolean;
@@ -37,7 +44,8 @@ export interface CopyDaySheetProps {
  * under their meals, and copy all of them, one meal or one food onto the target day. The copies
  * keep their meals (Proposed D-16.50) and share their photos; the originals stay as they are. A
  * running fast refuses the copy before anything is written: the paused dialog says so and the
- * sheet stays. After a copy the sheet closes. Renders nothing while closed.
+ * sheet stays, and its "End fast and log" ends the fast and copies them (D-16.35). After a copy
+ * the sheet closes. Renders nothing while closed.
  */
 export function CopyDaySheet(props: CopyDaySheetProps) {
   return props.open ? <OpenCopyDaySheet {...props} /> : null;
@@ -45,10 +53,11 @@ export function CopyDaySheet(props: CopyDaySheetProps) {
 
 function OpenCopyDaySheet({ onClose, targetDay }: CopyDaySheetProps) {
   const { copyDay } = useServices();
+  const fasting = useFasting();
   const toast = useToast();
   const today = useToday();
   const [sourceDay, setSourceDay] = useState(() => addDays(targetDay, -1));
-  const [paused, setPaused] = useState(false);
+  const [paused, setPaused] = useState<Paused | null>(null);
   const entries = useDayEntries(sourceDay);
   const settings = useSettings(SETTINGS);
 
@@ -57,11 +66,30 @@ function OpenCopyDaySheet({ onClose, targetDay }: CopyDaySheetProps) {
       if (!copyDay) throw new Error('No copy service');
       const result = await copyDay.copy(chosen, targetDay);
       if (result.kind === 'copied') onClose();
-      else if (result.kind === 'fastActive') setPaused(true);
+      else if (result.kind === 'fastActive') setPaused({ chosen, fastId: result.fast.id });
     } catch (error) {
       console.error('Copying a day failed', error);
       toast.show(t('reuse.copyDay.failed'));
     }
+  };
+
+  // "End fast and log": ends the fast, then copies again (a fast already ended elsewhere is fine).
+  const endFastAndCopy = async (): Promise<void> => {
+    if (!paused) return;
+    try {
+      if (!copyDay) throw new Error('No copy service');
+      await fasting().end(paused.fastId);
+      const result = await copyDay.copy(paused.chosen, targetDay);
+      if (result.kind === 'copied') {
+        onClose();
+        return;
+      }
+      if (result.kind === 'fastActive') toast.show(t('fasting.paused.failed'));
+    } catch (error) {
+      console.error('Ending the fast and copying failed', error);
+      toast.show(t('reuse.copyDay.failed'));
+    }
+    setPaused(null);
   };
 
   let body;
@@ -101,15 +129,10 @@ function OpenCopyDaySheet({ onClose, targetDay }: CopyDaySheetProps) {
         </p>
         {body}
       </div>
-      <Dialog
-        open={paused}
-        title={t('reuse.copyDay.paused.title')}
-        message={t('reuse.copyDay.paused.message')}
-        confirmLabel={t('reuse.copyDay.paused.ok')}
-        cancelLabel={null}
-        onConfirm={() => setPaused(false)}
-        onCancel={() => setPaused(false)}
-        data-ui="copyDay.paused"
+      <PausedDialog
+        open={paused !== null}
+        onEndAndLog={endFastAndCopy}
+        onCancel={() => setPaused(null)}
       />
     </Sheet>
   );

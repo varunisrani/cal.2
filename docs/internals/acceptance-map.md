@@ -435,7 +435,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D27 · Food logging is paused during a fast, with End fast and log (D-16.35) (P1)
 
 - **ACC-D27-1** During a fast, Log shows the paused dialog and End fast and log does both
-  - Review: P07-07
+  - Test: src/features/fasting/PausedDialog.test.tsx > the review during a fast (D-16.35) > ends the fast and logs the food in one step with End fast and log (ACC-D27-1)
+  - Test: src/features/log/ManualSheet.test.tsx > ManualSheet > ends the fast and stores the entry with End fast and log (ACC-D27-1, D-16.35)
+  - Test: src/services/fasting.test.ts > endFastAndLog (D-16.35) > ends the running fast now and stores the food, in one step (ACC-D27-1)
 - **ACC-D27-2** No path writes food during an active fast
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
 
@@ -722,27 +724,31 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H6 · Fasting tracking switch (off by default) and a default goal of … (P1)
 
 - **ACC-H6-1** Turning fasting on offers Start fast in the + menu
-  - Review: P07-07
+  - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > shows the default goal of 16 hours once fasting is on (ACC-J10-1, ACC-H6-1)
+  - Review: P07-08
 
 ### H7 · Start, end and cancel a fast from the + menu (P1)
 
 - **ACC-H7-1** Starting a 16 h fast shows it as active; cancelling removes it from history
-  - Review: P07-07
+  - Test: src/features/fasting/StartFastSheet.test.tsx > StartFastSheet > opens on the default 16 hours and starts a running fast now (ACC-H7-1)
+  - Test: src/features/fasting/FastEditor.test.tsx > FastEditor > cancels a running fast so it leaves no history (ACC-H7-1)
 
 ### H8 · Fast editor (P1)
 
 - **ACC-H8-1** End fast now applies the edited start and ends the fast in one step
   - Test: src/data/repos/fastRepo.test.ts > endNow (R05.3) > applies the edited start and ends the fast in one step (ACC-H8-1, R05.3)
+  - Test: src/features/fasting/FastEditor.test.tsx > FastEditor > applies the edited start and goal and ends the fast now in one write (ACC-H8-1, R05.3)
 
 ### H9 · One active fast, no overlaps, an end never before the start (P1)
 
 - **ACC-H9-1** Editing a fast to overlap another shows the overlap message and changes nothing
-  - Review: P07-07
+  - Test: src/features/fasting/FastEditor.test.tsx > FastEditor > refuses an edit that overlaps another fast: says so with a hint and changes nothing (ACC-H9-1, R05.3)
 
 ### H10 · Turning fasting off ends the active fast (P1)
 
 - **ACC-H10-1** Switching fasting off ends the active fast and food logging works again
   - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > switching fasting off ends the running fast, keeps it and the water logs, and leaves no fast to block food (ACC-H10-1, R05.2)
+  - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > ends the running fast when switched off, keeps it, says so, and food logs again (ACC-H10-1, R05.2)
 
 ### H11 · Fasting goal-reached alert (P1)
 
@@ -883,7 +889,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-J10-1** The tracking page shows water and fasting rows only when each is switched on
   - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > shows water's own rows only while water is switched on (ACC-J10-1)
   - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > shows the goal, the unit and the quick-add amounts once water is on (ACC-J10-1)
-  - Review: P07-07
+  - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > shows fasting's own rows only while fasting is switched on (ACC-J10-1)
+  - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > shows the default goal of 16 hours once fasting is on (ACC-J10-1, ACC-H6-1)
 
 ### J11 · Reminders (P1)
 

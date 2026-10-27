@@ -313,14 +313,14 @@ describe('ReviewSheet', () => {
     expect(ctx.source).toBe('text');
   });
 
-  it('keeps the sheet open with a message while a fast is running, and logs once it ends', async () => {
+  it('keeps the sheet open behind the paused dialog while a fast is running, and logs once it ends', async () => {
     const { sheet, onClose, db } = await openReview();
     const fast = makeFast({ end: null, start: FACTORY_NOW - 3_600_000 });
     await db.fasts.put(fast);
 
     fireEvent.click(logButton(sheet));
-    await settle(() => hooked('toast.message') !== null);
-    expect(hooked('toast.message')).toHaveTextContent(words.paused);
+    await settle(() => hooked('fasting.paused') !== null);
+    fireEvent.click(hooked('fasting.paused.cancel') as HTMLElement);
     await settle(() => logButton(sheet).getAttribute('aria-busy') === null);
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole('dialog', { name: words.title })).toBeInTheDocument();

@@ -15,6 +15,7 @@ import { Icon } from '../../ui/icons';
 import { ListPicker } from '../../ui/ListPicker';
 import { Sheet } from '../../ui/Sheet';
 import { useToast } from '../../ui/Toast';
+import { PausedDialog, useLogPause } from '../fasting/PausedDialog';
 import { tx, type TxKey } from '../home/text';
 import styles from './log.module.css';
 import { MEAL_NAME_KEYS } from './meals';
@@ -133,6 +134,7 @@ function OpenManualSheet({ onClose, dayKey }: ManualSheetProps) {
   const [typed, setTyped] = useState<Typed>(EMPTY);
   const [chosenMeal, setChosenMeal] = useState<MealKind | null>(null);
   const [saving, setSaving] = useState(false);
+  const paused = useLogPause(onClose);
 
   const loaded = settings.status === 'ready' ? settings.value : null;
   const unit = loaded?.['units.energy'] ?? 'kcal';
@@ -154,17 +156,14 @@ function OpenManualSheet({ onClose, dayKey }: ManualSheetProps) {
     inFlight.current = true;
     setSaving(true);
     try {
-      const result = await diary.logEntry(draft, {
-        loggedAt: stampForDay(dayKey, clock.now()),
-        meal,
-        source: 'manual',
-      });
+      const ctx = { loggedAt: stampForDay(dayKey, clock.now()), meal, source: 'manual' } as const;
+      const result = await diary.logEntry(draft, ctx);
       if (result.kind === 'logged') {
         // The sheet goes; the gate stays shut, so nothing more is logged from it.
         onClose();
         return;
       }
-      if (result.kind === 'fastActive') toast.show(tx('log.manual.paused'));
+      if (result.kind === 'fastActive') paused.pause(draft, ctx);
     } catch (error) {
       console.error('Saving a manual entry failed', error);
       toast.show(tx('log.manual.failed'));
@@ -301,6 +300,7 @@ function OpenManualSheet({ onClose, dayKey }: ManualSheetProps) {
         onClose={picker.close}
         data-ui="manual.mealPicker"
       />
+      <PausedDialog {...paused.dialog} />
     </Sheet>
   );
 }

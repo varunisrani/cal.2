@@ -34,6 +34,7 @@ import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
+import { createFastingService } from './services/fasting';
 import { createFitCheckService } from './services/fitCheck';
 import { createHomePrefsService } from './services/homePrefs';
 import { createRebuildService } from './services/goals/rebuild';
@@ -196,6 +197,13 @@ async function start(): Promise<void> {
     progress: createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: systemClock }),
     homePrefs: createHomePrefsService({ settingsRepo }),
     water: createWaterService({ waterRepo: createWaterRepo(db), settingsRepo, clock: systemClock }),
+    fasting: createFastingService({
+      fastRepo,
+      diaryRepo,
+      settingsRepo,
+      clock: systemClock,
+      onFirstEntry: () => storage.requestPersistence(),
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

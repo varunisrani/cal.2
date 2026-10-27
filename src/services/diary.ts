@@ -72,7 +72,7 @@ function createGate() {
 }
 
 /** The entry to store: the draft's values with whole kcal, a new id and the day of its instant. */
-function entryFrom(draft: NutritionDraft, ctx: LogContext, id: string): DiaryEntry {
+export function entryFrom(draft: NutritionDraft, ctx: LogContext, id: string): DiaryEntry {
   return {
     ...draft,
     kcal: Math.round(draft.kcal),

@@ -36,6 +36,7 @@ import { Icon } from '../../../ui/icons';
 import { ListPicker } from '../../../ui/ListPicker';
 import { Sheet } from '../../../ui/Sheet';
 import { useToast } from '../../../ui/Toast';
+import { PausedDialog, useLogPause } from '../../fasting/PausedDialog';
 import { useAnalysis } from '../AnalysisOverlay';
 import { FitCheckSheet } from '../FitCheckSheet';
 import logStyles from '../log.module.css';
@@ -241,7 +242,7 @@ export interface ReviewSheetProps {
  * The sheet edits its own copy of the draft; Log stores every value at the shown amount, the
  * weight when it is known, the draft's note, plate-in-steps flag and photos, once (R02.11). The
  * meal follows the picked date and time until the person picks one (D-16.16). A fast in progress
- * keeps the sheet open with a message (the paused dialog arrives in P07).
+ * keeps the sheet open behind the paused dialog, whose "End fast and log" logs it (D-16.35).
  */
 export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetProps) {
   const { diary, clock } = useServices();
@@ -259,6 +260,7 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   const [unlocked, setUnlocked] = useState(false);
   const [fitCheckOpen, setFitCheckOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const paused = useLogPause(onClose);
 
   const loaded = settings.status === 'ready' ? settings.value : null;
   // Until the first edit the copy follows the settings, so grams-first applies once they are read.
@@ -290,19 +292,20 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
     inFlight.current = true;
     setSaving(true);
     const food = foodOf(working);
+    const ctx = {
+      loggedAt: food.loggedAt,
+      meal: food.meal,
+      source: food.source,
+      photoIds: food.photoIds,
+    };
     try {
-      const result = await diary.logEntry(food.draft, {
-        loggedAt: food.loggedAt,
-        meal: food.meal,
-        source: food.source,
-        photoIds: food.photoIds,
-      });
+      const result = await diary.logEntry(food.draft, ctx);
       if (result.kind === 'logged') {
         // The sheet goes; the guard stays shut, so nothing more is logged from it.
         onClose();
         return;
       }
-      if (result.kind === 'fastActive') toast.show(t('review.paused'));
+      if (result.kind === 'fastActive') paused.pause(food.draft, ctx);
     } catch (error) {
       console.error('Logging the reviewed food failed', error);
       toast.show(t('review.failed'));
@@ -441,6 +444,7 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
       {fitCheckOpen && working && slots.fitCheck
         ? slots.fitCheck({ food: foodOf(working), onClose: () => setFitCheckOpen(false) })
         : null}
+      <PausedDialog {...paused.dialog} />
     </Sheet>
   );
 }
