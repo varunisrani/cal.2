@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s4b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 slice S4b = P06-12, P06-13 — reuse lists (recent, often eaten, saved); copy a day. (P06-18, the product block, allergen line and label text, follows once the review sheet has landed.) Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.16, §3.17; decisions D-16.17 and Proposed D-16.50. Traps and acceptance ids: every row whose Review line names P06-12 or P06-13 (R02.7 among them).
+Task notes (each before its code): docs/notes/P06/reuse-lists-recent-often-eaten-saved.md, docs/notes/P06/copy-a-day.md.
+
+You own:
+- src/domain/food/reuse.ts (+ test), src/features/log/reuse/** (ReuseSheet, ReuseRow + tests), src/i18n/en/reuse.ts and its line in src/i18n/en.ts
+- src/features/log/CopyDaySheet.tsx (+ test), src/services/copyDay.ts (+ test); copy-day words in the reuse partition
+- the menu wiring: delete recent, often, saved and copyDay from METHODS_NOT_BUILT_YET in src/features/log/AddMenu.tsx and fill their cases in `choose` in src/features/home/HomePage.tsx (another builder does the same for barcode now; the lead merges)
+- additive: an `openForReview(draft, {photoIds, source})` method on the analysis service (src/services/analysis.ts + its test) that puts a reuse draft into the same `reviewReady` state a finished analysis reaches (the review sheet, landing now, opens from it; never an instant log); `copyDay` in Services and main.tsx
+
+Do not touch:
+- src/features/log/review/** (another builder, now), src/services/barcode/** and src/features/log/scan/** (another builder, now), src/features/settings/** (another builder, now), src/ai/**, src/data/** (import only: diaryRepo.addMany, savedMealsRepo list/move/remove, photo ids are shared, never copied), other src/domain/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, AddMenu.tsx, HomePage.tsx): additive edits only; the lead merges. New Services members are optional until every stand-in carries them. With fake timers over the test database, fake only setTimeout, setInterval and Date.
+- Reuse lists per the row: recent = the last 30 days (now − 30 × 24 h) newest first, not de-duplicated; often eaten = the last 90 days grouped by normalised name (trimmed, lower-case, accents folded) plus kcal, the group's latest entry as template, sorted by count then name; search case- and accent-insensitive on the trimmed query. A tap opens review (known weight → grams and units; unknown → servings), photos reused, source kept, stamped on the viewed day, meal by the review rule. Saved: remove with a visible button (and swipe), reorder with up/down buttons hidden while searching (savedMealsRepo.move takes positions).
+- Copy a day: source date default the day before the target; entries grouped by meal in fixed order; copy all, one meal group or one entry; a line that originals stay unchanged; empty day → empty state. Each copy gets a new id, the target day at the current clock time, the original meal kind (Proposed D-16.50), everything else including photo ids (shared blobs), note, lines and product info, in one diaryRepo.addMany; an active fast stops the copy before anything is written and shows the paused dialog.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/food src/features/log src/features/home src/services/copyDay.test.ts src/services/analysis.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
