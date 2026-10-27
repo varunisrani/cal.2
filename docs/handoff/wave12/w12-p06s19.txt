@@ -15,6 +15,11 @@ Do not touch:
 - src/features/home/{SortMenu,WaterRow,FastRow}.tsx and src/features/log/AddMenu.tsx (another builder adds the diary's sort, water and fast rows and the + menu's tracker rows now; keep your Diary.tsx and HomePage.tsx changes to selection, the editor sheet and the heart so the merge stays small), src/features/log/** other than importing EntryEditor, src/features/fasting/** and src/features/water/** (landed: import), src/domain/** (import only), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
 - docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
 
+Landed APIs to use:
+- `EntryEditor({entryId, dayKey?, onClose})` (src/features/log/EntryEditor.tsx): pass the row's day.
+- `diary.toggleSaved(entry)` (src/services/diary.ts, optional on the interface) for the heart.
+- `PausedDialog({open, onEndAndLog, onCancel})` (src/features/fasting/PausedDialog.tsx); the fasting service's `endFastAndLog` logs one entry: for combine, end the fast with `fasting.end` and then combine (two writes, as copy-a-day does), or add a list-taking variant only if a repository method for it exists.
+
 Decisions already made:
 - Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 209): the editor and the dialog load on demand.
 - As the row says: three rows → Combine → one entry named "A + B + C" at the latest time, the originals gone, in one transaction; a nutrient is summed only when every row knows it; with a fast active nothing changes and the paused dialog shows; only food rows can be selected (water and fast rows cannot).

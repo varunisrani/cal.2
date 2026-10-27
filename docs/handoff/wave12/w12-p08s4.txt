@@ -1,0 +1,32 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s4 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 wave B slice S4 = P08-08 and P08-09: the chat engine and the Coach session service. Spec: those two rows in docs/plan/phases/P08-coach.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 04 §3.6, §3.11–3.12; R04.1, R04.4–R04.6, R04.11, R04.19, R04.22; D-16.23, D-16.29, D-16.31, D-16.34. Traps and acceptance ids: every row whose Review line names P08-08 or P08-09.
+Task notes (each before its code): docs/notes/P08/chat-engine.md, docs/notes/P08/coach-session.md.
+
+You own:
+- src/services/coach/engine.ts and session.ts (+ tests), and the snapshot filling the session does at send time (src/services/coach/snapshot.ts landed with the type: add a builder from the repositories, additively)
+- `coachSession?` in Services (src/services/context.tsx) and its wiring in src/main.tsx (additive)
+
+Landed, to use (import; extend additively only if a hook is missing):
+- src/ai/chat/** (P08-05..07): `chatWireFor(provider)`, `wire.open`, `askRound`, `wire.continueWith(transcript, reply, run)`; the engine keeps the 6-request cap, roundLimit, the key check, photo preparation, the notes and the standby.
+- src/services/coach/{context,tools,toolSchemas,limiter,snapshot}.ts (P08-01..03): `coachContext`, `runCoachTool`, `NUTRITION_TOOLS`, `limitToolResult`, `CoachSnapshot`; src/ai/prompts/coach.ts `coachSystemPrompt` already appends the notes (do not append them again). The two `ToolSchema` types (ai/chat and services/coach) have the same fields; align them at the call if TypeScript asks.
+- src/services/coach/history.ts (P08-04): `coachHistory(messages, {id, text}, format)` → `{turns, text}`.
+- the coach repository (src/data/repos/coachRepo.ts, P02-11): messages, the 200-message cap, failure state.
+
+Do not touch:
+- src/features/** (the Coach page and composer are the next slice; other builders work on Home and log now), src/ai/chat/** and the landed coach modules beyond additive hooks, src/domain/** (import only), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- The session is an app-level store a page can subscribe to (pending survives tab switches): export a `CoachSession` with `getState(): { pending: boolean }`, `subscribe(listener): () => void`, `send(text, image?)`, `retry(id)`, `reset()`; messages are read from the coach repository's live hook by the page, so the session does not duplicate them. The next slice (P08-10/11) builds against exactly this shape: keep it.
+- send: ignore when pending or empty; pending set synchronously before any await; image prepared per P03-10 (1 600 px at 0.78 for the model, 700 px at 0.68 thumbnail); image-only stores a fixed short request in our words; the user message stored first with the conversation generation; a reply whose generation changed is dropped; failures mark the user message with kind and Details (any stored key redacted). retry stores no second user message. reset aborts the in-flight request and bumps the generation.
+- engine: tools run against the snapshot taken at send time, never live stores (R04.22); every result through the limiter; at most 6 requests, the answer included (R04.19); a sixth round asking for tools → roundLimit (R04.11); cut twice → truncated; on any failure but cancel, with a valid standby, the whole turn re-runs from round 1 on the standby and the failed attempt's work is discarded (R04.1).
+- No live network in tests: the fake fetch only. AI code loads with `await import(...)` at send time, never statically from main.tsx (bundle budget 250 kB gzip; now about 211).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/coach src/ai/chat --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, and `pnpm build && pnpm check:bundle` (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
