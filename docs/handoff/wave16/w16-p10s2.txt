@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P10 slice S2 = P10-05 and P10-06: the acceptance strict pass and the traps ledger completion. Spec: those two rows in docs/plan/phases/P10-hardening-and-release.md; the "How rows change" paragraph at the top of docs/internals/acceptance-map.md and of docs/internals/traps-ledger.md; scripts/check (the acceptance and traps checks).
+Task notes (each before its text): docs/notes/P10/acceptance-strict-pass.md, docs/notes/P10/traps-ledger-completion.md.
+
+State at <BASE> (`PLATEWISE_REF=/root/reference/fud-ai pnpm check:acceptance --strict` and `grep -n "Review:" docs/internals/traps-ledger.md`):
+- Acceptance rows covered by review only: ACC-B11-1 (Review: P01-04; unit defaults en-US lb and ft-in, en-GB kg and cm), ACC-B13-1 (Review: P05-13; the methods page opens from Plan Ready and from Settings), ACC-C12-2 (Review: P01-03; opening and saving the kJ goal wheel unchanged keeps 2 000 kcal), ACC-L6-2 (Review: P10-08) and ACC-L9-1 (Review: P10-07).
+- Trap rows owned by a v1 task that still carry a Review line: R05.18 (Review: owned by P07-03; the row also says the feature is v1.x, F13), R06.1's banner part (Review: the banner owned by P09 (K9)), R06.22's settings screens part (Review: the settings screens owned by P09-01). Every other Review line in the traps ledger names L1–L5, a v1.x item or an N-id: check each one says so plainly and leave it.
+
+You own:
+- docs/internals/acceptance-map.md and docs/internals/traps-ledger.md: Review lines turned into Test lines (`file > describe > test name`, exactly as written in the file, so the checker finds it as a substring of the source; avoid escaped quotes in names you write), and a Known gaps entry with its N-id for anything with no planned task
+- new tests in the owning modules for any row whose behaviour is landed but untested (additive test files or new `it` blocks only; a test name carries its ACC or R id). If a row's behaviour is not in the app at all, do not build the feature: say so in your report with what is missing
+- scripts/ledger-gaps.ts (+ a small test): lists every trap row owned by a v1 task (a P-task id, or none of L1–L5 / v1.x / N-id) that has no Test line; `package.json` script `ledger:gaps` (that one line only)
+- the two task notes
+
+Do not touch:
+- ACC-L6-2 and ACC-L9-1 rows: the P10-07/08/11 builder (running now) owns them and the lead will fold its tests in
+- src/** beyond new tests, e2e/** beyond new tests in a new spec file if a row needs a browser, docs/plan/**, pnpm-lock.yaml, parity/** (if you add Test lines to an ACC row that a parity claim binds, run `python3 /root/wt/msgs/sync_parity_manifest.py .` and keep `pnpm exec vitest run scripts/parity.test.ts` green)
+
+Decisions already made:
+- Search the landed tests first (`grep -rn` for the id and for the behaviour): many rows are covered by tests that never got their Test line. Only write a test where none exists.
+- R05.18: if the fill animation is not in v1 (F13 is v1.x), the Review line says "owned by v1.x item F13" and drops P07-03; if P07-03 did land a cold-start-only rule, point at its test.
+- Run e2e only if you write an e2e test, on ports PLATEWISE_E2E_PORT=4184 and PLATEWISE_FAKE_AI_PORT=4334, that spec only.
+
+Tests:
+- unit: the files you add or touch, with --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`, `pnpm check:acceptance --strict` (expected to fail only on ACC-L6-2 and ACC-L9-1), `pnpm ledger:gaps` (must list none).
+
+Final report as the rules file says: each acceptance id and trap id you changed, with its Test line(s) or its new Review/Known-gaps text, every test you wrote (file > describe > test name), and any row whose behaviour is missing from the app. Leave everything uncommitted.
