@@ -1,0 +1,23 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s2c (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: finish P06-09 — the add-ingredient menu's barcode and reuse sources. Everything else of P06-09 has landed (IngredientsCard, LineEditor, AddIngredientMenu with camera, single photo, describe and manual; `SOURCES_NOT_BUILT_YET` in src/features/log/review/AddIngredientMenu.tsx holds barcode, recent, often and saved). Spec: the P06-09 row in docs/plan/phases/P06-logging-flows.md and its task note docs/notes/P06/ingredients-card-and-recipe-split.md (update its status and decisions; no new note). Traps: R02.15 says the same lookup order on every scan path, ingredient scans included.
+
+You own:
+- src/features/log/review/{AddIngredientMenu,IngredientsCard}.tsx and their tests, src/services/ingredientIntake.ts and its test, your words in src/i18n/en/ingredients.ts
+- empty SOURCES_NOT_BUILT_YET by wiring: barcode → the landed scanner sheet (src/features/log/scan/ScanSheet.tsx) and `lookupBarcode` (src/services/barcode/lookup.ts, the same order as Home, R02.15; a refused FDC key has its own message, the other failures `scan.failure.<kind>`), the found product collapses to one part (with its photo when OFF has one); recent, often and saved → the landed reuse sheets (src/features/log/reuse/ReuseSheet.tsx) in a pick mode that hands the chosen entry back instead of opening a review; a saved-meal pick collapses that meal to one part
+
+Do not touch:
+- src/features/home/**, src/features/log/{AddMenu.tsx,capture/**}, src/app/** (other builders, now), src/services/{analysis,barcode/**,copyDay,savedMeals}.ts (import; a pick mode on ReuseSheet is a prop of ReuseSheet.tsx, which you may add additively), src/domain/** (import only), src/data/**, src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services; every visible word comes from the catalogue. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate).
+- Every part change still applies through P01-10; a busy state while a barcode lookup runs; the request is dropped when the sheet closes.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/log src/services/ingredientIntake.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says. Leave everything uncommitted.
