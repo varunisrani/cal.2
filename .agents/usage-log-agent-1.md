@@ -37,3 +37,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 02:45 | Agent 1 | Account 1 | 75 (reading 02:45) | 25 | 2026-10-27 05:20 | 96/176 tasks (P06-04/05 landed); no builders; wave 10 prompts ready; next check 05:22 IST, after the reset |
 | 2026-10-27 05:23 | Agent 1 | Account 1 | 0 (reading 05:23) | 100 | 2026-10-27 10:20 | window reset; container restarted (state intact); 96/176 tasks; launching wave 10 (4 builders) |
 | 2026-10-27 05:56 | Agent 1 | Account 1 | 24 (reading 05:54) | 76 | 2026-10-27 10:20 | 97/176 tasks (P06-01, P05-10 landed); P05-11/12 loop running; 4 builders (P06 S2a, S3b, S4b, P05-15); about 48 %/h |
+| 2026-10-27 06:28 | Agent 1 | Account 1 | 46 (reading 06:26) | 54 | 2026-10-27 10:20 | 108/176 tasks (P05-15, P06-12/13, P06-14/17 landed; a lint fix for the barcode merge is in its loop); 4 builders; about 41 %/h |
