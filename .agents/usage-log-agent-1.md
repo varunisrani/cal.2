@@ -39,3 +39,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 05:56 | Agent 1 | Account 1 | 24 (reading 05:54) | 76 | 2026-10-27 10:20 | 97/176 tasks (P06-01, P05-10 landed); P05-11/12 loop running; 4 builders (P06 S2a, S3b, S4b, P05-15); about 48 %/h |
 | 2026-10-27 06:28 | Agent 1 | Account 1 | 46 (reading 06:26) | 54 | 2026-10-27 10:20 | 108/176 tasks (P05-15, P06-12/13, P06-14/17 landed; a lint fix for the barcode merge is in its loop); 4 builders; about 41 %/h |
 | 2026-10-27 07:00 | Agent 1 | Account 1 | 62 (reading 06:58) | 38 | 2026-10-27 10:20 | 114/176 tasks (P06-09/10, lazy loading, P07-09/12, P07-01/02 landed; worker restarted at 06:54, state intact); 3 builders running; about 30 %/h |
+| 2026-10-27 07:21 | Agent 1 | Account 1 | 71 (reading 07:17) | 29 | 2026-10-27 10:20 | 116/176 tasks (P07-13/14 landed); P06-18 loop running; 1 builder (P07 S1b); no new builders from here |
