@@ -473,7 +473,8 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
 
 - Builder rules: `/root/wt/builder-rules.md` (outside the repo; copy from the skill template if
   lost). Worktrees go under `/root/wt/`, patches under `/root/wt/patches/`.
-- Full loop (repository root): `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh`
+- Full loop (repository root): `PLATEWISE_REF=/root/reference/fud-ai bash scripts/ci-local.sh` (while builders
+  run e2e or REA, give the lead's loop its own ports: `PLATEWISE_E2E_PORT=4290 PLATEWISE_FAKE_AI_PORT=4390`)
   (install, lint, fmt, typecheck, unit, check --require-ref, build, bundle budget, e2e). The
   Playwright install step is a no-op here: chromium-1243 is already in `/opt/pw-browsers`.
 - Landing: `extract-patch.sh` / `land-patches.sh` (copies in `/root/wt/`, from the skill's

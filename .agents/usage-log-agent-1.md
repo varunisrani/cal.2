@@ -62,3 +62,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 15:51 | Agent 1 | Account 1 | 29 (reading 15:50) | 71 | 2026-10-27 20:20 | 152/176 tasks; 8 builders ≈ 1 %/min; no new builders until some land |
 | 2026-10-27 16:18 | Agent 1 | Account 1 | 41 (reading 16:10) | 59 | 2026-10-27 20:20 | 152/176 tasks; 7 slices in one loop; 1 builder (P09-15) |
 | 2026-10-27 16:43 | Agent 1 | Account 1 | 49 (reading 16:42) | 51 | 2026-10-27 20:20 | 159/176 tasks (wave 14 landed, P07 and P08 done); P09-15 loop; 3 P10 builders |
+| 2026-10-27 17:05 | Agent 1 | Account 1 | 58 (reading 17:03) | 42 | 2026-10-27 20:20 | 159/176 tasks; P09-15 loop rerun (port clash with a builder); 3 P10 builders |
