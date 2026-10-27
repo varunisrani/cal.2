@@ -198,6 +198,7 @@ function decodeProduct(raw: unknown): ProductInfo | undefined {
   };
   put(product, 'package', text(fields.package));
   put(product, 'ingredients', text(fields.ingredients));
+  put(product, 'markedIngredients', text(fields.markedIngredients));
   put(product, 'nutri', text(fields.nutri));
   put(product, 'nova', isNovaGroup(fields.nova) ? fields.nova : undefined);
   put(product, 'eco', text(fields.eco));

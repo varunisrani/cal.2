@@ -18,6 +18,7 @@ import type { DiaryRepo } from '../../data/repos/diaryRepo';
 import type { DraftsRepo } from '../../data/repos/draftsRepo';
 import type { PhotoRepo } from '../../data/repos/photoRepo';
 import type { SecretsRepo } from '../../data/repos/secretsRepo';
+import { markAllergens } from '../../domain/food/labelText';
 import type { AnalysisDraft, DiaryEntry, NutritionDraft } from '../../domain/model';
 import { systemClock, type Clock } from '../../lib/clock';
 import { err, ok, type Result } from '../../lib/result';
@@ -207,6 +208,18 @@ function entryDraft(entry: DiaryEntry): NutritionDraft {
   return draft;
 }
 
+/**
+ * A database product's draft, with Open Food Facts' allergen markup turned into the label's
+ * markers (`markedIngredients`, P06-18) when they add something to the plain list.
+ */
+function productDraftOf({ draft, ingredientsMarkup }: BarcodeProduct): NutritionDraft {
+  const product = draft.product;
+  if (!product || ingredientsMarkup === undefined) return draft;
+  const marked = markAllergens(product.ingredients, ingredientsMarkup);
+  if (marked === undefined || marked === product.ingredients?.trim()) return draft;
+  return { ...draft, product: { ...product, markedIngredients: marked } };
+}
+
 export function createBarcodeService(deps: BarcodeServiceDeps): BarcodeService {
   const clock = deps.clock ?? systemClock;
   const scanner = deps.scanner ?? createScanner();
@@ -281,7 +294,7 @@ export function createBarcodeService(deps: BarcodeServiceDeps): BarcodeService {
     const photoIds =
       found.source === 'openFoodFacts' ? await productPhoto(found.product, attempt) : [];
     return {
-      draft: found.product.draft,
+      draft: productDraftOf(found.product),
       photoIds,
       source: found.product.source,
       createdAt: clock.now(),

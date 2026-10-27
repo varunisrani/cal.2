@@ -436,6 +436,57 @@ describe('createBarcodeService', () => {
     expect(s.reviews).toEqual([stored?.draft]);
   });
 
+  /** A service that keeps every draft it hands the drafts repository. */
+  async function openSavingService() {
+    const saved: AnalysisDraft[] = [];
+    const s = await openService({
+      draftsRepo: (real) => ({
+        ...real,
+        saveResult: (generation, draft) => {
+          saved.push(draft);
+          return real.saveResult(generation, draft);
+        },
+      }),
+    });
+    return { ...s, saved };
+  }
+
+  it("marks Open Food Facts' allergens on the stored product's ingredient list (P06-18)", async () => {
+    const s = await openSavingService();
+    s.fake.on(
+      OFF_PRODUCT_URL,
+      offProduct({
+        ingredients_text: 'Rye flour, sesame seeds, salt',
+        ingredients_text_with_allergens:
+          '<span class="allergen">Rye</span> flour, <span class="allergen">sesame</span> seeds, salt',
+      }),
+    );
+
+    await s.barcode.lookup(CODE);
+
+    expect(s.saved).toHaveLength(1);
+    expect(s.saved[0]?.draft.product).toMatchObject({
+      ingredients: 'Rye flour, sesame seeds, salt',
+      markedIngredients: '_Rye_ flour, _sesame_ seeds, salt',
+    });
+  });
+
+  it.each([
+    ['marks nothing', 'Rye flour, salt'],
+    ['says other words', '<span class="allergen">Wheat</span> flour, salt'],
+  ])('adds no marked list when the markup %s', async (_case, markup) => {
+    const s = await openSavingService();
+    s.fake.on(
+      OFF_PRODUCT_URL,
+      offProduct({ ingredients_text: 'Rye flour, salt', ingredients_text_with_allergens: markup }),
+    );
+
+    await s.barcode.lookup(CODE);
+
+    expect(s.saved[0]?.draft.product?.ingredients).toBe('Rye flour, salt');
+    expect(s.saved[0]?.draft.product).not.toHaveProperty('markedIngredients');
+  });
+
   it('opens the product without a photo when the photo cannot be had', async () => {
     const s = await openService();
     s.fake

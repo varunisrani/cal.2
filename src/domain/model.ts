@@ -143,6 +143,12 @@ export interface ProductInfo {
   package?: string;
   /** The printed ingredient list. */
   ingredients?: string;
+  /**
+   * The ingredient list with the allergens Open Food Facts marks wrapped in underscores
+   * (`_milk_`), made from its marked-up text at lookup (`markAllergens`); present only when it
+   * differs from `ingredients`. The product block shows it in place of `ingredients`.
+   */
+  markedIngredients?: string;
   allergens: readonly string[];
   /** "May contain" items. */
   traces: readonly string[];

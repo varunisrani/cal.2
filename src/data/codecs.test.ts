@@ -129,6 +129,20 @@ describe('other food codecs', () => {
     });
   });
 
+  it('keep the marked ingredient list of a product through a stored analysis draft (ACC-D23-1)', () => {
+    const product = {
+      barcode: '4012345678901',
+      ingredients: 'Wheat flour, milk, salt',
+      markedIngredients: 'Wheat flour, _milk_, salt',
+    };
+    const decoded = decodeAnalysisDraft({
+      draft: { name: 'Crackers', kcal: 120, protein: 3, carbs: 20, fat: 4, product },
+      photoIds: [],
+      createdAt: FACTORY_NOW,
+    });
+    expect(decoded?.draft.product).toMatchObject(product);
+  });
+
   it('give a bare draft empty collections', () => {
     expect(decodeNutritionDraft({ name: 'Tea', kcal: 2, protein: 0, carbs: 0, fat: 0 })).toEqual({
       name: 'Tea',

@@ -408,17 +408,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D22 · Product information block (barcode, source, package, Nutri-Score, … (P1)
 
 - **ACC-D22-1** A barcode product shows only the fields that have data and are not hidden
-  - Review: P06-18
+  - Test: src/features/log/review/ProductBlock.test.tsx > ProductBlock > shows only the fields with data that are not hidden: a hidden NOVA group stays out (ACC-D22-1)
 
 ### D23 · Ingredient label shown with allergen emphasis (P1)
 
 - **ACC-D23-1** Allergens marked by Open Food Facts are shown in bold in the label text
-  - Review: P06-18
+  - Test: src/features/log/review/ProductBlock.test.tsx > ProductBlock > shows Open Food Facts' marked allergens in bold in the label (ACC-D23-1)
+  - Test: src/data/codecs.test.ts > other food codecs > keep the marked ingredient list of a product through a stored analysis draft (ACC-D23-1)
 
 ### D24 · Allergen line for the profile's sensitivities (P1)
 
 - **ACC-D24-1** With "dairy" listed, a product containing whey shows a possible-allergen line
-  - Review: P06-18
+  - Test: src/domain/food/allergens.test.ts > checkAllergens: the ladder (D24) > finds whey in the ingredient list for "dairy" as a possible allergen (ACC-D24-1)
+  - Test: src/features/log/review/AllergenLine.test.tsx > AllergenLine > says "Possible allergen: dairy" for whey in the ingredient list (ACC-D24-1)
 
 ### D25 · Analysis drafts survive a reload and reopen the review (D-16.46) (P1)
 

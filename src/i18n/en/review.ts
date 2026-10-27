@@ -3,8 +3,9 @@ import type { MessageTree } from '../catalogue';
 /**
  * Words of the review sheet (src/features/log/review): its toolbar, the photo strip and viewer,
  * the serving card and its calculator keys, the nutrition rows and their lock, the
- * micronutrients, the meal and the time, and why a log did not go through. Nutrient names and
- * unit words live here until a shared nutrients partition exists.
+ * micronutrients, the meal and the time, why a log did not go through, the allergen line and the
+ * product block with its ingredient label. Nutrient names and unit words live here until a shared
+ * nutrients partition exists.
  */
 export const review = {
   review: {
@@ -106,5 +107,32 @@ export const review = {
       picker: 'Choose a meal',
     },
     when: 'Date and time',
+    allergens: {
+      line: '{verdict}: {matches}',
+      verdict: {
+        declared: 'Declared allergen',
+        mayContain: 'May contain',
+        possible: 'Possible allergen',
+        unknown: "Can't assess",
+      },
+    },
+    product: {
+      heading: 'Product details',
+      field: {
+        barcode: 'Barcode',
+        source: 'Source',
+        package: 'Package',
+        nutri: 'Nutri-Score',
+        nova: 'NOVA group',
+        eco: 'Eco-Score',
+        allergens: 'Allergens',
+        traces: 'May contain',
+        labels: 'Labels',
+        categories: 'Categories',
+        ingredients: 'Ingredients',
+      },
+      fdc: 'FoodData Central (USDA)',
+      flagged: 'Possible allergen:',
+    },
   },
 } as const satisfies MessageTree;

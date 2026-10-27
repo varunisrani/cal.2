@@ -40,10 +40,13 @@ import { useAnalysis } from '../AnalysisOverlay';
 import { FitCheckSheet } from '../FitCheckSheet';
 import logStyles from '../log.module.css';
 import { MEAL_NAME_KEYS } from '../meals';
+import { SavedLabelNotice } from '../scan/SavedLabelNotice';
+import { AllergenLine } from './AllergenLine';
 import { IngredientsCard } from './IngredientsCard';
 import { MoreNutrition } from './MoreNutrition';
 import { NutritionRows } from './NutritionRows';
 import { PhotoStrip } from './PhotoStrip';
+import { ProductBlock } from './ProductBlock';
 import styles from './review.module.css';
 import { ServingCard } from './ServingCard';
 
@@ -442,9 +445,15 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   );
 }
 
-/** The parts the analysis review fills itself: the ingredients card and the fit check. */
+/**
+ * The parts the analysis review fills itself: the saved-label notice, the allergen line, the
+ * ingredients card, the product block and the fit check.
+ */
 const ANALYSIS_SLOTS: ReviewSlots = {
+  savedLabelNotice: <SavedLabelNotice />,
+  allergenLine: (food) => <AllergenLine food={food.draft} />,
   ingredients: (slot) => <IngredientsCard {...slot} />,
+  productBlock: (product) => <ProductBlock product={product} />,
   fitCheck: (slot) => <FitCheckSheet {...slot} />,
 };
 
