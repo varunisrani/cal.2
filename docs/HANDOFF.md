@@ -137,9 +137,9 @@ whether to fast-forward `main` to the work branch.
 
 1. After the 10:20 IST reset: wave 11 (above), landing each slice as it returns.
 2. Wave 12, then wave 13 (above); then P08 (Coach), P09 (settings, data, platform), P10 (hardening).
-3. Follow-ups noted by builders, not yet done: a public `formatList` in `src/i18n/format.ts` (the
-   nutrients sheet uses `Intl.ListFormat` directly); the gauge says "No goal set" while the pillars say
-   "No goal"; unify the three AI-setup readers; lazy onboarding and Home sheets; a shared nutrients
+3. Follow-ups noted by builders, not yet done (the shared list formatter landed in a37c20d): the
+   gauge says "No goal set" while the pillars say "No goal"; energy and nutrient unit words used from
+   the `home` partition by Progress (a shared units partition); unify the three AI-setup readers; lazy onboarding and Home sheets; a shared nutrients
    partition; `data/barcodeKey` re-exporting the domain barcode key.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
