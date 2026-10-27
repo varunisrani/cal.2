@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s4a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave B slice S4a = P07-09, P07-12 — Progress layout, ranges and periods; the weight card and logging. (P07-13 body fat and P07-14 history sheets follow in the next slice; P07-15/16 recap and averages after that: leave clearly named slots in the page for them.) Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.5.2, §3.5.3, §3.5.7; decisions D-16.37 and Proposed D-16.56. Traps and acceptance ids: every row whose Review line names P07-09 or P07-12 (R05.11 among them; ACC-G3-2 for the 0.0 change).
+Task notes (each before its code): docs/notes/P07/progress-layout-ranges-and-periods.md, docs/notes/P07/weight-card-and-logging.md.
+
+You own:
+- src/domain/progress/ranges.ts (+ test)
+- src/features/progress/{ProgressPage,RangeBar,MetricSwitch,WeightCard,LogWeightSheet}.tsx (+ tests; a css module) and a `progress` partition with its line in src/i18n/en.ts
+- showing ProgressPage on the Progress tab (src/app/Screen.tsx maps the tab to it; another builder is making tab screens lazy in Screen.tsx now: export ProgressPage as a named export and change only the Progress mapping; the lead merges)
+- src/services/progress.ts (+ test) if the page needs writes beyond the landed services (log weight goes through weightRepo, which posts goal-reached; the weight unit toggle writes the app-wide unit, R05.11); additive in Services and main.tsx
+
+Do not touch:
+- src/ui/charts/** and src/domain/progress/chartMath.ts (landed: import LineChart; the charts must load with the Progress chunk, never the initial one), src/features/{home,log,settings,onboarding}/**, src/services/{analysis,barcode/**,copyDay,savedMeals,ingredientIntake}.ts (other builders), src/data/** and other src/domain/** (import only), src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks (useWeighIns, useBodyFat, useProfile, useSettings, useTargets) and act through src/services; every visible word comes from the catalogue. Shared files: additive edits only; the lead merges. With fake timers over the test database, fake only setTimeout, setInterval and Date.
+- Ranges and periods exactly as the P07-09 row (1W 7 … All 3 650 days; offset steps of whole windows, reset on a range change; nutrition windows end yesterday when "Count today" is off; metric availability with the fallback to weight). The range is not persisted.
+- Weight card per the P07-12 row: badges Current (latest overall), Goal, Net change (last − first in the window; |x| < 0.05 → 0.0 without a sign, ACC-G3-2), Average; one decimal in kg or lb; the line chart with the goal line. Log weight: kg / lb toggle that changes the app-wide unit (R05.11), whole + tenth wheels 20–250 kg or 50–500 lb, converting and clamping on toggle, seeded latest → profile → 70 kg, the date field per the row.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/progress src/features/progress src/app/Screen src/i18n --maxWorkers=1
+- pnpm build && pnpm check:bundle (the charts stay out of the initial chunk: say what you see)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
