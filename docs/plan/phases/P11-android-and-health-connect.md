@@ -1,6 +1,6 @@
 # P11 · Android app and Health Connect
 
-**Weeks:** 1–2 · **Tracks:** native (Android shell, Health Connect plugin); web (health service, data, UI) · **Depends on:** P00–P10 · **Status:** 🔨 in progress: P11-01..04 landed (4/5, 2026-10-27)
+**Weeks:** 1–2 · **Tracks:** native (Android shell, Health Connect plugin); web (health service, data, UI) · **Depends on:** P00–P10 · **Status:** 🔨 in progress: P11-01..05 landed (5/5, 2026-10-27); follow-up fixes (future-dated write-back, total burn and distance on Home, reminders copy in the app) in progress
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`. The clean-room protocol (01) applies as in every phase: read, note in our words, rewrite, compare.
 

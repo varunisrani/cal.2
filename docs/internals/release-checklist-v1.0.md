@@ -35,6 +35,25 @@ were filled by the lead from the full loop on `73aedfb`, where that slice landed
 | 19 | Notices | `pnpm exec tsx scripts/notices.ts --check` | "src/generated/notices.json and THIRD_PARTY_NOTICES.md are up to date" (exit 0). Both list zxing-cpp (Apache-2.0) and zint (BSD-3-Clause), bundled in zxing-wasm 3.1.5, without licence texts: the package ships neither | 2026-10-27, here |
 | 20 | Dependency audit | `pnpm audit --audit-level high` | "No known vulnerabilities found" (exit 0) | 2026-10-27, here |
 
+## After 1.0: Android app (1.1, unreleased)
+
+P11 (`docs/plan/phases/P11-android-and-health-connect.md`, D-16.89) adds the Android app and
+Health Connect; `CHANGELOG.md` describes it under "Unreleased (1.1.0)" and
+[docs/user/android.md](../user/android.md) is its user page. Nothing here is released, tagged or
+uploaded. These rows say what was proved on a computer and what waits for a phone: the container
+has no KVM, so no emulator, and no row runs the app. Rows marked "here" were run on 2026-10-27 in
+the P11-05 worktree (`cbc7a27`, P11-01..04, with this slice uncommitted on top), with
+`ANDROID_HOME` pointing at a local SDK (platform `android-36`), JDK 21 and
+`PLATEWISE_MAVEN_MIRROR=1` (Maven Central throttles this machine).
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| A1 | Debug APK | `pnpm android:apk` | OK (exit 0): `android/app/build/outputs/apk/debug/app-debug.apk`, **9 007 790 bytes** (8.6 MB), signed with this machine's debug key. `aapt dump badging`: package `app.platewise.android`, versionCode 1, versionName `1.0.0` (from `package.json`, which moves to 1.1.0 at the release), minSdk 26, targetSdk 35; permissions INTERNET, CAMERA, the six Health Connect reads (steps, active and total calories, distance, exercise, weight) and the two writes (nutrition, weight). The P11-01 build on `614fdb8`, before the health UI, was 8 931 474 bytes | 2026-10-27, here |
+| A2 | JVM unit tests | `cd android && ./gradlew testDebugUnitTest` | **62 passed** in 7 classes, 0 failures, 0 skipped (`android/app/build/test-results/testDebugUnitTest`): the plugin's contract (read from the phase file), the manifest, kinds, day keys, rows, writes and failures. They run on the JVM; none calls a real Health Connect | 2026-10-27, here |
+| A3 | Release signing | `pnpm android:apk --release` with `PLATEWISE_KEYSTORE`, `PLATEWISE_KEYSTORE_PASSWORD`, `PLATEWISE_KEY_ALIAS`, `PLATEWISE_KEY_PASSWORD` | Proved with a throwaway PKCS12 key kept outside the repository: `apksigner verify` accepts the release APK, which carries versionCode 7 from `PLATEWISE_BUILD_NUMBER=7`; a partial set of the four variables and a bad build number stop the build with a message naming them ([P11-01 note](../notes/P11/android-shell.md)). The owner's real key has not been used: a release for others needs it | 2026-10-27, P11-01 (`wt-p11s1`) |
+| A4 | Device test | Install the debug APK on the owner's phone: open it, set up or restore from a backup, log a meal by photo and by barcode (camera through the app's file provider), back up; look at the splash and system-bar colours and, on Android 15, the edge-to-edge margins | **Open** (the owner's first device run) | — |
+| A5 | Health Connect permission flow | On Android 13 (Health Connect from Google Play) and on Android 14 or newer (built in): Connect with some kinds allowed and some not, the privacy note from Health Connect's screen, a sync on return to the app, "goal + N burned" on Home, write-back on and off, access removed in Health Connect and Grant access | **Open** (the owner, on a phone of each kind) | — |
+
 ## Release files
 
 | File | State |

@@ -3,6 +3,81 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.1.0)
+
+Platewise comes to Android as an app that reads your steps, burned calories, workouts and
+weigh-ins from Health Connect, and can count the calories you burn in the day's target. The web
+app and the installable web app are unchanged and show none of it. How to install the app and
+what each setting does: [docs/user/android.md](docs/user/android.md).
+
+### The Android app
+
+- The same Platewise in an Android shell (Capacitor 7), with the application id
+  `app.platewise.android`, for Android 8.0 and newer. It keeps its own diary on the phone; a
+  backup file moves a diary between the web app and the Android app.
+- `pnpm android:apk` builds a debug APK to install by hand. A release APK is signed only when the
+  owner's signing key is passed in four environment variables; no key is ever stored in the
+  repository. The version follows `package.json`.
+- Platewise's own launcher icon and splash screen, drawn from its web icons. The camera works for
+  meal photos and barcodes.
+- Android's cloud backup is off for Platewise, so the diary and the AI keys are not copied to a
+  Google account. Platewise's own backup files stay the way to keep and move data.
+- In the app, Licences and credits also lists the libraries the app carries (Capacitor, the
+  Cordova framework, AndroidX with the Health Connect client, Kotlin, Guava and others), each with
+  its licence text.
+
+### Health Connect: reading
+
+- Settings › Health Connect, in the Android app only: whether Health Connect is on the phone,
+  Connect, which kinds of data are allowed, Open Health Connect, the last sync and Sync now.
+- Platewise reads steps, active and total calories burned, distance, workouts and weigh-ins for
+  the last 30 days: when the app opens, each time you come back to it, and on Sync now. A kind
+  you did not allow is left out; access removed in Health Connect shows as such, with Grant
+  access.
+- Weigh-ins from other apps join your weight history once each, and one you delete in Platewise
+  does not come back. "Import weigh-ins" (on by default) turns this off.
+- Records Platewise wrote itself are left out of what it reads.
+- A failed sync is shown on the page and tried again later; it never blocks the diary.
+
+### Health Connect: counting burned calories
+
+- "Count active calories" (on by default once connected): the day's calorie target on Home is
+  your goal plus that day's active calories, with the line "goal + N burned" under the gauge. The
+  day's nutrient sheet uses the same target. Your stored goal and your macro targets never change.
+- Only active calories are counted. Total calories and steps are never added to the target.
+
+### Health Connect: writing back
+
+- "Send meals and weigh-ins" (off by default) asks for write access, then sends each meal you log
+  (calories, protein, carbs and fat) and each weigh-in you enter to Health Connect, starting with
+  the last 30 days. Editing a meal replaces its record and deleting it removes the record.
+- Turning it off stops sending and leaves what was sent in Health Connect. Weigh-ins that came
+  from Health Connect are never sent back.
+- Disconnect stops reading, counting and sending; removing Platewise's access is done in Health
+  Connect, which the page opens.
+
+### Settings, Home and Progress
+
+- Settings: the Health Connect page, after Tracking & reminders.
+- Home: an Activity card for the day on show, with steps, active calories and workouts, or a note
+  that Health Connect has nothing for that day.
+- Progress: steps and active calories for the last 7 or 30 days, as charts with their averages.
+
+### Known issues
+
+- The Android app has not been run on a real phone in this project yet: there is no emulator in
+  the build machine, so the native code is tested on a computer and the web side against a
+  stand-in for Health Connect. The first device tests, including Health Connect's permission
+  screens on Android 13 and on Android 14 and newer, are the owner's.
+- Reminders cannot be turned on in the Android app: its built-in browser view has no
+  notifications.
+- The app targets Android 15 (API level 35), as Capacitor 7 does. Google Play's yearly rule very
+  likely asks new apps and updates for API level 36 since 31 August 2026: check it before a Play
+  upload, which would first need Capacitor 8. Installing the APK directly is not affected.
+- Total calories burned and distance are read and stored, but no screen shows them yet.
+- Health data is read only while the app is open, and only for the last 30 days. A meal older
+  than 30 days that was sent before is no longer updated or removed in Health Connect.
+
 ## 1.0.0 (2026-10-27)
 
 The first release. Platewise is a food diary that runs in the browser and can be installed like an

@@ -15,7 +15,7 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 |---|---|---|
 | Product | Fud AI | **Platewise** |
 | Repository slug, site | `fud-ai`, `fud-ai.app` | `platewise`; no site yet (About links are placeholders, Proposed D-16.66) |
-| Package id and path | `com.apoorvdarshan.calorietracker`; iOS target `calorietracker` | none (web app); manifest `id` `./` |
+| Package id and path | `com.apoorvdarshan.calorietracker`; iOS target `calorietracker` | web app: manifest `id` `./`; Android app (P11, D-16.89): application id and Kotlin package `app.platewise.android` (`android/app/src/main/java/app/platewise/android/`), app name Platewise |
 | Environment prefix | — | `PLATEWISE_` (`PLATEWISE_REF`, `PLATEWISE_FAKE_AI_PORT`, `PLATEWISE_PROBE`) |
 | URL schemes and deep links | `fudai://add-meal`, `fudai://log-food?method=` | hash routes: `#/home`, `#/progress`, `#/coach`, `#/settings/<page>`, `#/log/<method>` (manifest shortcuts) |
 | OpenRouter attribution headers | the reference's repository URL and product name | Platewise's own URL and name |
@@ -26,7 +26,7 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 
 | Concept | Reference name (reading only) | Platewise name |
 |---|---|---|
-| Store | Android DataStore file `fudai_prefs`; iOS UserDefaults | IndexedDB database `platewise` (Dexie), schema version 1 |
+| Store | Android DataStore file `fudai_prefs`; iOS UserDefaults | IndexedDB database `platewise` (Dexie), schema version 2 (version 2 adds `activity`, P11-03) |
 | Profile blob | `userProfile` | table `profile`, row `me` |
 | Food diary | `foodEntries` | table `entries` |
 | Favourites | `favoriteFoodEntries`, legacy `favorites` | table `savedMeals` (own ids, D-16.17) |
@@ -37,6 +37,8 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 | Quarantine for unreadable data | `CorruptDataBackups`, `corrupt-backups`, `<key>.json.corrupt-<ms>` | table `quarantine` |
 | Secrets | `fudai_keychain`, iOS Keychain service; entries `apikey_<provider>`, `speechApiKey_<provider>`, `usdaFoodDataCentralApiKey` | table `secrets`, slots `<providerId>` and `fdc`, wrapped by a device key (Proposed D-16.51) |
 | Misc metadata | migration markers (`aiModelRegistryMigrationVersion`, `fallbackBaseURLMigrationVersion`, `geminiModelMigrationVersion`) | table `meta` (`presetUpgradeVersion`, `wrapKey`, `coachGeneration`, `unreadableData`, `restoring`) |
+| Health activity copy (Android app) | none: Home reads the health store live | table `activity` (key: day key; `{day, steps, activeKcal, totalKcal, distanceM, sessions, syncedAt}`), schema version 2; never in a backup |
+| Health sync state (Android app) | `deletedWeightEntryIds`, `healthNutritionImportedKeys`, `importedHealthWorkoutsV1`; a background write-retry worker | table `meta`: `healthImported` (weigh-in ids imported once, so a deleted one never returns), `healthLastSync` (when the last sync ended), `healthSent` (what write-back last sent, by client record id); device state, never in a backup |
 
 ### 1.3 Settings keys
 
@@ -56,6 +58,7 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 | Onboarding | `acceptedTermsAndPrivacy`, `aiAnalysisConsentGiven`, `hasCompletedOnboarding` | `onboarding.termsAccepted`, `onboarding.done` |
 | AI | `aiRequestTimeoutSeconds`, `aiUserContext`/`userContext`, `customBaseURL_<p>`, `fallbackCustomBaseURL_<p>`, `maxResponseTokens`/`aiMaxResponseTokens`, `openRouterReasoningEffort`, `selected(Text)(Fallback)AIProvider/Model`, `separateTextProviderEnabled`, `textAIFallbackEnabled`, `aiFallbackEnabled` | one record `ai.settings`: `{primary, textRole: {on, provider, model}, imageStandby, textStandby, endpoints: {<p>: {main, standby}}, instructions, maxTokens, timeoutSec, openRouterEffort}` |
 | Backup and prompts | `cloudBackup…`, `hasSeenWhatsNew.*`, `lastNotifiedUpdateVersion`, `reviewPromptedAfterFirstLog` | `backup.lastAt`, `storage.persistAsked`, `storage.nudgeDone`; no What's New or review prompt (D-16.43) |
+| Health Connect (Android app, P11) | `energyBurnEnabledV2` (I), `healthConnectEnabled`, `healthEnergyGoalsEnabled` (A), `healthKitEnabled` | `health.connected` (false; device-local, never in a backup), `health.countActiveCalories` (true), `health.importWeights` (true), `health.writeBack` (false); no Energy Burn goal setting (later item) |
 
 ### 1.4 Formats and enum values
 
@@ -124,6 +127,7 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 | `GoalCalculation`, `calculateGoals`, `parseGoalCalculation` | plan reply, `requestPlan`, `readPlanReply` + `checkPlan` |
 | `GoalEnergyMath`, `MaintenanceBreakdown` | `src/domain/goals/{formulas,maintenance}.ts` |
 | `GoalEvidence`, `GoalEvidenceBuilder`, `NutritionDayCompleteness` | `buildEvidence`, `DayCoverage` (`none`, `partial`, `full`) |
+| `HealthConnectManager` (`A/services/health/`) | Capacitor plugin `HealthConnect` (`HealthConnectPlugin`, `HealthConnectGateway`, in `android/app/src/main/java/app/platewise/android/health/`); web side `src/services/health/` (`createHealthService`, `isHealthAvailable`, `loadHealth`), `healthRepo` |
 | `HomeTopNutrient`, `MacroCard`, `MacroVerticalBar` | pillar nutrient, `Pillar`, `PillarRow` |
 | `IngredientLabelParser` | `src/domain/food/labelText.ts` |
 | `IngredientPortion`, `MealIngredient`, `MealMicronutrientStretch` | `IngredientLine`, `rescaleLine`, `applyLineChange` |

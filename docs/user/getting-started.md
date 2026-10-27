@@ -125,6 +125,7 @@ Settings always stay.
 - [The Coach](coach.md): what it can see and how to ask.
 - [Privacy and storage](privacy-and-storage.md): what stays on your device and what is sent where.
 - [Backup and restore](backup.md): keeping your diary safe and moving it to another device.
+- [The Android app](android.md): installing it, and steps and burned calories from Health Connect.
 
 Platewise gives estimates, not medical advice. If you have a health condition or a very low
 calorie target, talk to a doctor or dietitian.

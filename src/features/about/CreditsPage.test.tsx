@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { dependencies } from '../../../package.json';
 import { INSPIRATION } from '../../config/credit';
 import generated from '../../generated/notices.json';
 import { about } from '../../i18n/en/about';
 import { categoryFor } from '../settings/registry';
-import { CreditsPage, PACKAGE_NOTICES, type PackageNotice } from './CreditsPage';
+import { ANDROID_NOTICES, CreditsPage, PACKAGE_NOTICES, type PackageNotice } from './CreditsPage';
 
 const words = about.about.credits;
 
@@ -106,5 +106,62 @@ describe('CreditsPage', () => {
       'https://example.org/',
     );
     expect(part('credits.inspiration.notice')).toHaveTextContent('Text.');
+  });
+});
+
+describe('CreditsPage in the Android app (P11-05)', () => {
+  const texts: Readonly<Record<string, string>> = generated.licenseTexts;
+  const insideTheAndroidApp = () => vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('lists the libraries of its APK after the packages, each with its licence text', () => {
+    insideTheAndroidApp();
+    render(<CreditsPage />);
+    expect(ANDROID_NOTICES.map((each) => each.name)).toEqual(
+      generated.android.map((each) => each.name),
+    );
+    expect(ANDROID_NOTICES.length).toBeGreaterThan(0);
+    const rows = within(part('credits.packages')).getAllByRole('listitem');
+    expect(rows).toHaveLength(PACKAGE_NOTICES.length + ANDROID_NOTICES.length);
+    ANDROID_NOTICES.forEach((notice, index) => {
+      const row = rows[PACKAGE_NOTICES.length + index]!;
+      expect(row).toHaveAttribute('data-ui', `credits.package.${notice.name}`);
+      expect(row).toHaveTextContent(fill(words.packages.version, { version: notice.version }));
+      expect(row).toHaveTextContent(fill(words.packages.license, { license: notice.license }));
+      expect(texts[notice.license], notice.name).toMatch(/\S/);
+      expect(notice.text?.endsWith(texts[notice.license]!), notice.name).toBe(true);
+    });
+  });
+
+  it('puts the copyright line over the standard text where the licence asks for one', () => {
+    insideTheAndroidApp();
+    render(<CreditsPage />);
+    const row = part('credits.package.org.checkerframework:checker-qual');
+    fireEvent.click(within(row).getByText('org.checkerframework:checker-qual'));
+    expect(row.querySelector('pre')?.textContent).toBe(
+      `Copyright 2004-present by the Checker Framework developers\n\n${texts.MIT}`,
+    );
+
+    const client = part('credits.package.androidx.health.connect:connect-client');
+    fireEvent.click(within(client).getByText('androidx.health.connect:connect-client'));
+    expect(client.querySelector('pre')?.textContent).toBe(texts['Apache-2.0']);
+    expect(
+      within(client).getByRole('link', {
+        name: 'Project page of androidx.health.connect:connect-client',
+      }),
+    ).toHaveAttribute(
+      'href',
+      'https://developer.android.com/jetpack/androidx/releases/health-connect',
+    );
+  });
+
+  it('shows none of them on the web', () => {
+    render(<CreditsPage />);
+    const rows = within(part('credits.packages')).getAllByRole('listitem');
+    expect(rows).toHaveLength(PACKAGE_NOTICES.length);
+    expect(document.querySelector('[data-ui="credits.package.@capacitor/android"]')).toBeNull();
   });
 });

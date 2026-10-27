@@ -7,10 +7,13 @@
  * notice files it ships, plus the code some of them bundle under other licences (BUNDLED_CODE),
  * and writes the list twice: in full to src/generated/notices.json for the credits page, and as
  * the "Runtime dependencies" section of THIRD_PARTY_NOTICES.md (names, versions, licences and
- * project pages). The build refreshes both (vite.config.ts). The output holds no dates and no
- * paths, so the same installed packages always give the same bytes. `--check` writes nothing and
- * exits 1 when a file is missing or stale. Exit codes: 0 done, 1 stale (`--check`), 2 setup
- * problem.
+ * project pages). The libraries the Android app's APK carries besides the web build (P11-05) come
+ * from a hand-kept table (ANDROID_LIBRARIES), with the standard text of each of their licences
+ * read once from scripts/licenses/; they go to the same two files, as an `android` list and an
+ * "Android app" section. The build refreshes both files (vite.config.ts). The output holds no
+ * dates and no paths, so the same installed packages always give the same bytes. `--check`
+ * writes nothing and exits 1 when a file is missing or stale. Exit codes: 0 done, 1 stale
+ * (`--check`), 2 setup problem.
  *
  * `readCredit` reads the credit to the app that inspired Platewise out of THIRD_PARTY_NOTICES.md;
  * the build turns it into a constant, so that app's name and notice never sit in product code.
@@ -41,6 +44,16 @@ export const CREDIT_SOURCE = 'THIRD_PARTY_NOTICES.md';
 /** The heading of the section of CREDIT_SOURCE this script writes. */
 export const DEPENDENCY_HEADING = '## Runtime dependencies';
 
+/** The heading of the Android app's section, which this script writes after the dependencies. */
+export const ANDROID_HEADING = '## Android app';
+
+/**
+ * The standard licence texts the Android list refers to, one `<SPDX id>.txt` each, next to this
+ * script: the SPDX License List's plain-text files, release v3.29.0, unchanged
+ * (https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/text/<id>.txt).
+ */
+export const LICENSE_TEXTS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'licenses');
+
 /** One package as the credits page lists it. */
 export interface PackageNotice {
   name: string;
@@ -55,6 +68,10 @@ export interface PackageNotice {
 
 export interface Notices {
   packages: PackageNotice[];
+  /** The Android app's own libraries (ANDROID_LIBRARIES), sorted by name. */
+  android: AndroidLibrary[];
+  /** The standard text of each licence the `android` list names, once each, by SPDX id. */
+  licenseTexts: Record<string, string>;
 }
 
 /** The app that inspired Platewise, as THIRD_PARTY_NOTICES.md credits it. */
@@ -106,6 +123,145 @@ export const BUNDLED_CODE: readonly BundledCode[] = [
     homepage: 'https://sourceforge.net/projects/zint/',
     licenseUrl: 'https://sourceforge.net/p/zint/code/ci/master/tree/LICENSE',
   },
+];
+
+/**
+ * A library the Android app's APK carries besides the web build (P11-05). Gradle, not
+ * node_modules, decides which ones, so the list is written by hand from Gradle's report of the
+ * app's runtime classpath (the release and debug ones are the same):
+ *
+ *   cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath
+ *
+ * (add `--init-script ../scripts/android/mirror.init.gradle` with PLATEWISE_MAVEN_MIRROR=1 where
+ * Maven Central refuses requests). Re-read it after any change under android/ that touches a
+ * dependency. Licences and pages come from each library's POM, checked against its project.
+ */
+export interface AndroidLibrary {
+  /** Maven `group:artifact`, or the npm package of Capacitor's own Android library. */
+  name: string;
+  version: string;
+  /** Its SPDX licence id; LICENSE_TEXTS_DIR holds the text as `<id>.txt`. */
+  license: string;
+  homepage: string;
+  /** The copyright line the MIT and BSD licences ask to keep with their text; null for the rest. */
+  copyright: string | null;
+}
+
+const ANDROIDX = 'https://developer.android.com/jetpack/androidx/releases/';
+const COROUTINES = 'https://github.com/Kotlin/kotlinx.coroutines';
+const GUAVA = 'https://github.com/google/guava';
+
+/** An Apache-2.0 library, which asks for no copyright line beside the licence text. */
+const apache = (name: string, version: string, homepage: string): AndroidLibrary => ({
+  name,
+  version,
+  license: 'Apache-2.0',
+  homepage,
+  copyright: null,
+});
+
+/**
+ * What the APK carries, read from Gradle's report on 2026-10-27 (Capacitor 7.6.9, Health Connect
+ * client 1.1.0, Kotlin 2.2.21): every resolved module but the two BOMs (`kotlin-bom`,
+ * `kotlinx-coroutines-bom`, version constraints with no code) and Capacitor's generated
+ * `capacitor-cordova-android-plugins` module (empty: Platewise uses no Cordova plugin). Copyright
+ * lines: Capacitor's from @capacitor/android's LICENSE; the protobuf runtime's from the protobuf
+ * project's LICENSE (the jar ships the BSD text without it); jsr305's from the JSR 305 reference
+ * implementation's LICENSE (its POM says Apache-2.0, the JSR 305 project publishes it under BSD);
+ * checker-qual's from the jar's META-INF/LICENSE.txt.
+ */
+export const ANDROID_LIBRARIES: readonly AndroidLibrary[] = [
+  {
+    name: '@capacitor/android',
+    version: '7.6.9',
+    license: 'MIT',
+    homepage: 'https://capacitorjs.com',
+    copyright: 'Copyright (c) 2017-present Drifty Co.',
+  },
+  apache('androidx.activity:activity', '1.9.2', `${ANDROIDX}activity`),
+  apache('androidx.annotation:annotation', '1.8.1', `${ANDROIDX}annotation`),
+  apache('androidx.annotation:annotation-experimental', '1.4.1', `${ANDROIDX}annotation`),
+  apache('androidx.annotation:annotation-jvm', '1.8.1', `${ANDROIDX}annotation`),
+  apache('androidx.appcompat:appcompat', '1.7.0', `${ANDROIDX}appcompat`),
+  apache('androidx.appcompat:appcompat-resources', '1.7.0', `${ANDROIDX}appcompat`),
+  apache('androidx.arch.core:core-common', '2.2.0', `${ANDROIDX}arch-core`),
+  apache('androidx.arch.core:core-runtime', '2.2.0', `${ANDROIDX}arch-core`),
+  apache('androidx.collection:collection', '1.4.2', `${ANDROIDX}collection`),
+  apache('androidx.collection:collection-jvm', '1.4.2', `${ANDROIDX}collection`),
+  apache('androidx.concurrent:concurrent-futures', '1.1.0', `${ANDROIDX}concurrent`),
+  apache('androidx.coordinatorlayout:coordinatorlayout', '1.2.0', `${ANDROIDX}coordinatorlayout`),
+  apache('androidx.core:core', '1.15.0', `${ANDROIDX}core`),
+  apache('androidx.core:core-ktx', '1.15.0', `${ANDROIDX}core`),
+  apache('androidx.core:core-splashscreen', '1.0.1', `${ANDROIDX}core`),
+  apache('androidx.cursoradapter:cursoradapter', '1.0.0', `${ANDROIDX}cursoradapter`),
+  apache('androidx.customview:customview', '1.0.0', `${ANDROIDX}customview`),
+  apache('androidx.drawerlayout:drawerlayout', '1.0.0', `${ANDROIDX}drawerlayout`),
+  apache('androidx.emoji2:emoji2', '1.3.0', `${ANDROIDX}emoji2`),
+  apache('androidx.emoji2:emoji2-views-helper', '1.3.0', `${ANDROIDX}emoji2`),
+  apache('androidx.fragment:fragment', '1.8.4', `${ANDROIDX}fragment`),
+  apache('androidx.health.connect:connect-client', '1.1.0', `${ANDROIDX}health-connect`),
+  {
+    name: 'androidx.health.connect:connect-client-external-protobuf',
+    version: '1.1.0',
+    license: 'BSD-3-Clause',
+    homepage: `${ANDROIDX}health-connect`,
+    copyright: 'Copyright 2008 Google Inc. All rights reserved.',
+  },
+  apache('androidx.health.connect:connect-client-proto', '1.1.0', `${ANDROIDX}health-connect`),
+  apache('androidx.interpolator:interpolator', '1.0.0', `${ANDROIDX}interpolator`),
+  apache('androidx.lifecycle:lifecycle-common', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-livedata', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-livedata-core', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-process', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-runtime', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-viewmodel', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.lifecycle:lifecycle-viewmodel-savedstate', '2.6.2', `${ANDROIDX}lifecycle`),
+  apache('androidx.loader:loader', '1.0.0', `${ANDROIDX}loader`),
+  apache('androidx.profileinstaller:profileinstaller', '1.3.1', `${ANDROIDX}profileinstaller`),
+  apache(
+    'androidx.resourceinspection:resourceinspection-annotation',
+    '1.0.1',
+    `${ANDROIDX}resourceinspection`,
+  ),
+  apache('androidx.savedstate:savedstate', '1.2.1', `${ANDROIDX}savedstate`),
+  apache('androidx.startup:startup-runtime', '1.1.1', `${ANDROIDX}startup`),
+  apache('androidx.tracing:tracing', '1.2.0', `${ANDROIDX}tracing`),
+  apache('androidx.vectordrawable:vectordrawable', '1.1.0', `${ANDROIDX}vectordrawable`),
+  apache('androidx.vectordrawable:vectordrawable-animated', '1.1.0', `${ANDROIDX}vectordrawable`),
+  apache(
+    'androidx.versionedparcelable:versionedparcelable',
+    '1.1.1',
+    `${ANDROIDX}versionedparcelable`,
+  ),
+  apache('androidx.viewpager:viewpager', '1.0.0', `${ANDROIDX}viewpager`),
+  apache('androidx.webkit:webkit', '1.12.1', `${ANDROIDX}webkit`),
+  {
+    name: 'com.google.code.findbugs:jsr305',
+    version: '3.0.2',
+    license: 'BSD-3-Clause',
+    homepage: 'https://findbugs.sourceforge.net/',
+    copyright: 'Copyright (c) 2007-2009, JSR305 expert group. All rights reserved.',
+  },
+  apache('com.google.errorprone:error_prone_annotations', '2.11.0', 'https://errorprone.info/'),
+  apache('com.google.guava:failureaccess', '1.0.1', GUAVA),
+  apache('com.google.guava:guava', '31.1-android', GUAVA),
+  apache('com.google.guava:listenablefuture', '9999.0-empty-to-avoid-conflict-with-guava', GUAVA),
+  apache('com.google.j2objc:j2objc-annotations', '1.3', 'https://github.com/google/j2objc'),
+  apache('org.apache.cordova:framework', '10.1.1', 'https://cordova.apache.org/'),
+  {
+    name: 'org.checkerframework:checker-qual',
+    version: '3.12.0',
+    license: 'MIT',
+    homepage: 'https://checkerframework.org/',
+    copyright: 'Copyright 2004-present by the Checker Framework developers',
+  },
+  apache('org.jetbrains.kotlin:kotlin-stdlib', '2.2.21', 'https://kotlinlang.org/'),
+  apache('org.jetbrains.kotlinx:kotlinx-coroutines-android', '1.10.2', COROUTINES),
+  apache('org.jetbrains.kotlinx:kotlinx-coroutines-core', '1.10.2', COROUTINES),
+  apache('org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm', '1.10.2', COROUTINES),
+  apache('org.jetbrains.kotlinx:kotlinx-coroutines-guava', '1.10.2', COROUTINES),
+  apache('org.jetbrains:annotations', '23.0.0', 'https://github.com/JetBrains/java-annotations'),
+  apache('org.jspecify:jspecify', '1.0.0', 'https://jspecify.dev/'),
 ];
 
 /** The installed packages or the notices file cannot give a right answer. */
@@ -206,10 +362,12 @@ function noticeOf(dir: string, manifest: Manifest, fallbackName: string): Packag
  * carry, sorted by name and then version. A required dependency that is not installed is a
  * NoticesError, and so is a carrying package installed at another version than its entry names;
  * a missing optional dependency is skipped, and so is an entry whose carrying package is absent.
+ * Then the Android app's libraries (`android`, see androidNotices).
  */
 export function collectNotices(
   productRoot: string,
   bundled: readonly BundledCode[] = BUNDLED_CODE,
+  android: readonly AndroidLibrary[] = ANDROID_LIBRARIES,
 ): Notices {
   const pending: Array<{ name: string; from: string; optional: boolean }> = runtimeDependencies(
     readManifest(productRoot),
@@ -236,7 +394,49 @@ export function collectNotices(
   }
   packages.push(...bundledNotices(packages, bundled));
   packages.sort((a, b) => byCodePoint(a.name, b.name) || byCodePoint(a.version, b.version));
-  return { packages };
+  return { packages, ...androidNotices(productRoot, android) };
+}
+
+/**
+ * The `android` libraries sorted by name and then version, and the text of each licence they
+ * name, read once from LICENSE_TEXTS_DIR. A licence without a text there is a NoticesError, and
+ * so is an entry that names an npm package (Capacitor's Android library) installed under
+ * `productRoot` at another version: the table was read for that one. An entry whose npm package
+ * is not installed is kept as it is.
+ */
+function androidNotices(
+  productRoot: string,
+  android: readonly AndroidLibrary[],
+): Pick<Notices, 'android' | 'licenseTexts'> {
+  const libraries = android
+    .map((library) => ({ ...library }))
+    .sort((a, b) => byCodePoint(a.name, b.name) || byCodePoint(a.version, b.version));
+  for (const library of libraries) {
+    // Maven coordinates hold a colon, which no npm package name does.
+    const dir = library.name.includes(':') ? null : findInstalled(library.name, productRoot);
+    const installed = dir === null ? library.version : readManifest(dir).version;
+    if (installed !== library.version) {
+      throw new NoticesError(
+        `${library.name} ${String(installed)} is installed, but ANDROID_LIBRARIES lists it at ` +
+          `${library.version}: re-read the Android app's libraries from Gradle and update ` +
+          'ANDROID_LIBRARIES in scripts/notices.ts',
+      );
+    }
+  }
+  const licenseTexts: Record<string, string> = {};
+  for (const id of [...new Set(libraries.map((library) => library.license))].sort(byCodePoint)) {
+    const file = join(LICENSE_TEXTS_DIR, `${id}.txt`);
+    const text = existsSync(file) ? tidy(readFileSync(file, 'utf8')) : '';
+    if (!text) {
+      const users = libraries.filter((library) => library.license === id).map((each) => each.name);
+      throw new NoticesError(
+        `no text for the ${id} licence of ${users.join(', ')}: add scripts/licenses/${id}.txt ` +
+          "(the SPDX License List's text)",
+      );
+    }
+    licenseTexts[id] = text;
+  }
+  return { android: libraries, licenseTexts };
 }
 
 /** The entries of `bundled` whose carrying package is among `installed`, as notices. */
@@ -302,7 +502,7 @@ export function dependencySection(
     DEPENDENCY_HEADING,
     '',
     '<!-- Written by scripts/notices.ts from the installed packages (pnpm build runs it too).',
-    'Change the script, not this section: it runs to the end of the file. -->',
+    'Change the script, not this section or the next: the script writes the file from here on. -->',
     '',
     'The packages that ship in the app, with their licences. The licence and notice texts each',
     "package ships are in `src/generated/notices.json` and on the app's Licences and credits page;",
@@ -312,6 +512,45 @@ export function dependencySection(
     ...lines,
     '',
   ].join('\n');
+}
+
+/**
+ * The Android app's section of THIRD_PARTY_NOTICES.md (P11-05), which follows the dependency
+ * section to the end of the file: one line per library of the `android` list, in its order, with
+ * its version, licence, project page and, where its licence asks for one, its copyright line.
+ * The same Prettier-proof shapes as the dependency section.
+ */
+export function androidSection(notices: Notices): string {
+  const lines = notices.android.map((library) => {
+    const copyright = library.copyright === null ? '' : `; ${library.copyright}`;
+    return (
+      `- \`${library.name}\` ${library.version}: ${library.license}, <${library.homepage}>` +
+      copyright
+    );
+  });
+  return [
+    ANDROID_HEADING,
+    '',
+    '<!-- Written by scripts/notices.ts from its ANDROID_LIBRARIES table (pnpm build runs it too). -->',
+    '',
+    'The Android app (`app.platewise.android`) is the web app above in a Capacitor shell. Its APK',
+    'also carries these libraries, as Gradle resolves them for it (`scripts/notices.ts` names the',
+    'command). The standard texts of their licences are in `scripts/licenses/`, unchanged from the',
+    'SPDX License List, and once each in `src/generated/notices.json`. The MIT and BSD-3-Clause',
+    'licences also ask for the copyright notice, given after the project page. The Android app',
+    'adds these libraries to its Licences and credits page, each with its licence text.',
+    '',
+    ...lines,
+    '',
+  ].join('\n');
+}
+
+/** Everything this script writes into CREDIT_SOURCE, from DEPENDENCY_HEADING to the end. */
+export function generatedSections(
+  notices: Notices,
+  bundled: readonly BundledCode[] = BUNDLED_CODE,
+): string {
+  return `${dependencySection(notices, bundled)}\n${androidSection(notices)}`;
 }
 
 /**
@@ -331,8 +570,9 @@ export function withDependencySection(markdown: string, section: string): string
 function expectedFiles(
   productRoot: string,
   bundled: readonly BundledCode[],
+  android: readonly AndroidLibrary[],
 ): Array<{ file: string; text: string }> {
-  const notices = collectNotices(productRoot, bundled);
+  const notices = collectNotices(productRoot, bundled, android);
   const markdownPath = join(productRoot, CREDIT_SOURCE);
   if (!existsSync(markdownPath)) throw new NoticesError(`${CREDIT_SOURCE} is missing`);
   const markdown = readFileSync(markdownPath, 'utf8');
@@ -340,22 +580,23 @@ function expectedFiles(
     { file: NOTICES_FILE, text: formatNotices(notices) },
     {
       file: CREDIT_SOURCE,
-      text: withDependencySection(markdown, dependencySection(notices, bundled)),
+      text: withDependencySection(markdown, generatedSections(notices, bundled)),
     },
   ];
 }
 
 /**
- * Writes the notices of the packages installed under `productRoot` to NOTICES_FILE and to the
- * dependency section of CREDIT_SOURCE, each only when its bytes would change; returns the files
- * it wrote. The build calls this before anything reads them.
+ * Writes the notices of the packages installed under `productRoot` and of the Android app's
+ * libraries to NOTICES_FILE and to the generated sections of CREDIT_SOURCE, each only when its
+ * bytes would change; returns the files it wrote. The build calls this before anything reads them.
  */
 export function writeNotices(
   productRoot: string,
   bundled: readonly BundledCode[] = BUNDLED_CODE,
+  android: readonly AndroidLibrary[] = ANDROID_LIBRARIES,
 ): string[] {
   const written: string[] = [];
-  for (const { file, text } of expectedFiles(productRoot, bundled)) {
+  for (const { file, text } of expectedFiles(productRoot, bundled, android)) {
     const path = join(productRoot, file);
     if (existsSync(path) && readFileSync(path, 'utf8') === text) continue;
     mkdirSync(dirname(path), { recursive: true });
@@ -392,6 +633,7 @@ const USAGE = 'usage: tsx scripts/notices.ts [--check]';
 export interface MainOverrides {
   productRoot?: string;
   bundled?: readonly BundledCode[];
+  android?: readonly AndroidLibrary[];
   write?: (text: string) => void;
 }
 
@@ -399,6 +641,7 @@ export function main(argv: string[], overrides: MainOverrides = {}): number {
   const write = overrides.write ?? ((text: string) => process.stdout.write(`${text}\n`));
   const root = overrides.productRoot ?? PRODUCT_ROOT;
   const bundled = overrides.bundled ?? BUNDLED_CODE;
+  const android = overrides.android ?? ANDROID_LIBRARIES;
   const unknown = argv.find((arg) => arg !== '--check');
   if (unknown !== undefined) {
     write(`unknown argument "${unknown}"\n${USAGE}`);
@@ -407,7 +650,7 @@ export function main(argv: string[], overrides: MainOverrides = {}): number {
   const both = `${NOTICES_FILE} and ${CREDIT_SOURCE}`;
   try {
     if (!argv.includes('--check')) {
-      const written = writeNotices(root, bundled);
+      const written = writeNotices(root, bundled, android);
       write(
         written.length > 0
           ? `notices: wrote ${written.join(' and ')}`
@@ -415,7 +658,7 @@ export function main(argv: string[], overrides: MainOverrides = {}): number {
       );
       return 0;
     }
-    const stale = expectedFiles(root, bundled).flatMap(({ file, text }) => {
+    const stale = expectedFiles(root, bundled, android).flatMap(({ file, text }) => {
       const path = join(root, file);
       if (!existsSync(path)) return [`${file} is missing`];
       return readFileSync(path, 'utf8') === text ? [] : [`${file} is stale`];
