@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 17:11 IST (Agent 1, session 3). 160/176 tasks; P00–P08 complete; the app runs on the
-real database. Window reset 15:20 IST (next reset 20:20 IST); P09-19 and P10 builders running.
+Updated: 2026-10-27 17:45 IST (Agent 1, session 3). 163/176 tasks; P00–P08 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); P10 security and similarity landed; 3 builders running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -138,6 +138,7 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 14 | P09-14 (restore from a backup file on Welcome) | 9055c15 |
 | Wave 14 | P07-17 (Home and Progress e2e, Demo 4). P07 done | e370445 |
 | Wave 14 | P09-15 (Your data page, storage card, persistence nudges; `photoRepo.clearThumbs`) | 465e353 |
+| Wave 15 | P10-09, P10-10, P10-12 (security review with planted-key tests and the CSV formula fix; similarity report; gated live check, skipped without keys) | 0ed03fa |
 
 ## In progress
 
@@ -155,7 +156,10 @@ handler; onboarding still has its own notification ask; `diaryRepo.clear()` coul
 rewrite; nothing listens to `db.ts`'s reload-needed message for schema upgrades from another tab; zxing-wasm's
 bundled zxing-cpp (Apache-2.0) and zint (BSD-3) notices are not in Credits; a small stored photo keeps its own bytes
 (and any location data) in backups.
-**Progress: 160/176 tasks** (P00–P08 complete, P09 18/19, P10 1/14).
+**Progress: 163/176 tasks** (P00–P08 complete, P09 18/19, P10 4/14). Open security decisions from P10-09
+(lead, before P10-14): S-3 drop the CSP's `http://[::1]:*` (and refuse `[::1]` in `checkServerUrl`, changing
+D-16.26's list), S-5 add `form-action 'none'`, S-4 host headers, S-15 `pnpm audit` in CI; S-6..S-9, S-12 small fixes
+proposed in `docs/internals/security-review-v1.0.md`.
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
