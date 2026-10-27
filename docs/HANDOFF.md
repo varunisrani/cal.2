@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 22:00 IST (Agent 1, session 3). v1.0 complete: 176/176 tasks, release commit 1fa1f1b; P11
-(Android app and Health Connect) planned at the user's request.
+Updated: 2026-10-28 00:20 IST (Agent 1, session 3). v1.0 complete: 176/176 tasks, release commit 1fa1f1b; P11
+(Android app and Health Connect, at the user's request) complete at 6e80369.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -162,7 +162,14 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
-**P11 status (23:35 IST):** P11-01/02 landed as e62b917 (Android shell, Kotlin Health Connect plugin, 62 JVM tests;
+**P11 complete (00:20 IST, 2026-10-28):** 344e4ca P11-05 (Android user guide, CHANGELOG 1.1.0 unreleased, naming,
+59 Android licence notices shown on Credits inside the app) and 6e80369 the follow-ups (future-dated write-back held back
+until its time, total burn and distance on Home, reminders copy in the app; ACC-M11-8/9). Full loop: unit 5279 passed +
+2 expected-fail, check 6/6 with --strict, bundle 237.67 kB, e2e 47 + 1 skipped by design. The APK built from 6e80369 was
+sent to the user. Open: the owner's device test (release checklist A4/A5); follow-ups from the notes: a timer for a
+held-back record, hiding onboarding's "Turn on reminders" in the app, Progress's activity card shows only steps and
+active calories; 1.1.0 is unreleased (version stays 1.0.0 until the owner asks).
+Earlier: **P11 status (23:35 IST):** P11-01/02 landed as e62b917 (Android shell, Kotlin Health Connect plugin, 62 JVM tests;
 `ANDROID_HOME=<sdk> PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk`), P11-03/04 as 1ccefe1 (sync, activity table, Settings →
 Health Connect, Home activity card and goal + burned, Progress steps and burn; ACC-M11-1..7, strict green; bundle
 237.51 kB). The Health Connect debug APK built from 1ccefe1 was sent to the user (same debug key as the first APK).
