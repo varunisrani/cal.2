@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 18:55 IST (Agent 1, session 3), STOPPED at 98 % (user: work to 100 %). 170/176 tasks; P00–P09 complete; the app runs on the
+Updated: 2026-10-27 18:55 IST (Agent 1, session 3), ACTIVE (new window from 20:20 IST; user: work to 100 %). 170/176 tasks; P00–P09 complete; the app runs on the
 real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, ledgers, security and similarity landed; two slices in .agents/wip/.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -142,7 +142,8 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-**STOPPED at 19:52 IST (98 % read at 19:43; reset 20:20 IST).** Both builders stopped; their work is saved as plain
+**20:21 IST: window reset; the user said "Continue".** Both saved slices relaunched at 68a1456 from `.agents/wip/`:
+P10-07/08/11 in `/root/wt/wt-p10s3-r` and S6 (K9 banner + security fixes) in `/root/wt/wt-p10s6-r`. Earlier: **STOPPED at 19:52 IST (98 % read at 19:43; reset 20:20 IST).** Both builders stopped; their work is saved as plain
 diffs in `.agents/wip/`: `p10s3.patch` (P10-07/08/11 on 71e9727; nearly done: the fast-row restructure was finished
 and it was tidying the last ids before its checks) and `p10s6.patch` (S6, K9 banner + security fixes on 5ce6e07; the
 code and tests were written, it was about to run the clean-room checks and `ledger:gaps`). Resume each: a new
