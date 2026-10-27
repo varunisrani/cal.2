@@ -1,0 +1,110 @@
+/*
+ * Settings › Add menu (P09-05): the group count, a group's name and moves, method rows with their
+ * buttons, the hidden methods to put back. Cards, rows and notes come from appSettings.module.css;
+ * every value here comes from tokens.css, with logical properties throughout.
+ */
+
+/* The group count: its name, then the stepper. */
+.count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+.countLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+/* A group's name field, with the group's moves beside it. */
+.groupHead {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding-block-end: var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+.name {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+/* An input's default width would set the card's least width; the field fills what is left. */
+.name input {
+  inline-size: 100%;
+}
+
+.moves {
+  display: flex;
+  flex: none;
+}
+
+/* A method: its picture and name, then up, down and remove. */
+.method {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-1);
+  padding-inline: var(--space-4) var(--space-2);
+}
+
+.methodIcon {
+  flex: none;
+  margin-inline-end: var(--space-2);
+  color: var(--accent);
+}
+
+.methodName {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  font-size: var(--type-body);
+  overflow-wrap: anywhere;
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.add {
+  padding-inline: var(--space-1);
+  border-block-start: 1px solid var(--line);
+}
+
+.add svg {
+  margin-inline-end: var(--space-1);
+  vertical-align: middle;
+}
+
+/* A hidden method: the whole row puts it back. */
+.restore {
+  display: flex;
+  align-items: center;
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-4));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.restore:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.restoreIcon {
+  flex: none;
+  color: var(--accent);
+}

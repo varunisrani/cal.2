@@ -89,6 +89,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     page: onDemand(() => import('./app/AppPage').then((module) => module.AppPage)),
   },
+  // Opened from App settings: the groups and methods of the + menu (P09-05).
+  {
+    id: 'menu',
+    titleKey: 'settings.menuEditor.title',
+    icon: 'plus',
+    group: 'prefs',
+    page: onDemand(() => import('./app/MenuEditorPage').then((module) => module.MenuEditorPage)),
+  },
   // Opened from App settings: what the product block of a review shows (P09-06).
   {
     id: 'product-fields',

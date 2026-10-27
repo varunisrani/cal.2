@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { createProfileRepo } from '../data/repos/profileRepo';
 import { createSettingsRepo, InvalidSettingError } from '../data/repos/settingsRepo';
 import type { AccentSetting } from '../data/settingsSchema';
+import { DEFAULT_MENU_LAYOUT } from '../domain/food/addMenu';
 import { openTestDb } from '../test/db';
 import { makeProfile } from '../test/factories';
 import { createAppSettingsService } from './appSettings';
@@ -111,5 +112,62 @@ describe('setProductFieldHidden', () => {
       key: 'product.hiddenFields',
       value: ['nutri', 'eco', 'labels'],
     });
+  });
+});
+
+describe('setMenuLayout (P09-05)', () => {
+  it('stores the menu tidied: empty groups gone, names trimmed, each method once (R06.21)', async () => {
+    const h = await setUp();
+
+    const stored = await h.service.setMenuLayout({
+      groups: [
+        { id: 'snapScan', name: 'snapScan', methods: ['camera', 'barcode'] },
+        { id: 'g1', name: '   ', methods: [] },
+        { id: 'g2', name: '  Later  ', methods: ['barcode', 'recent'] },
+        { id: 'g3', name: 'Fourth', methods: ['manual'] },
+      ],
+      loose: ['recent', 'copyDay'],
+    });
+
+    const tidy = {
+      version: 1,
+      groups: [
+        { id: 'snapScan', name: 'snapScan', methods: ['camera', 'barcode'] },
+        { id: 'g2', name: 'Later', methods: ['recent'] },
+      ],
+      loose: ['copyDay'],
+    };
+    expect(stored).toEqual(tidy);
+    expect(await h.settingsRepo.get('menu.layout')).toEqual(tidy);
+  });
+
+  it('keeps a blank name blank, for the generic label', async () => {
+    const h = await setUp();
+    await h.service.setMenuLayout({
+      groups: [{ id: 'g1', name: '  ', methods: ['manual'] }],
+      loose: [],
+    });
+    expect(await h.settingsRepo.get('menu.layout')).toEqual({
+      version: 1,
+      groups: [{ id: 'g1', name: '', methods: ['manual'] }],
+      loose: [],
+    });
+  });
+
+  it('stores a menu emptied on purpose as empty', async () => {
+    const h = await setUp();
+    expect(
+      await h.service.setMenuLayout({ groups: [{ id: 'g1', name: 'x', methods: [] }], loose: [] }),
+    ).toEqual({ version: 1, groups: [], loose: [] });
+  });
+});
+
+describe('resetMenuLayout (P09-05)', () => {
+  it('clears the stored menu, which reads as the default three groups', async () => {
+    const h = await setUp();
+    await h.service.setMenuLayout({ groups: [], loose: ['manual'] });
+
+    expect(await h.service.resetMenuLayout()).toEqual(DEFAULT_MENU_LAYOUT);
+    expect(await h.settingsRepo.get('menu.layout')).toBeNull();
   });
 });

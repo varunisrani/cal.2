@@ -883,7 +883,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J5 · Add-menu editor (P1)
 
 - **ACC-J5-1** Hiding Copy a day removes it from the + menu and restoring it brings it back
-  - Review: P09-05
+  - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > takes Copy a day off the + menu when hidden and brings it back when put back (ACC-J5-1)
 
 ### J6 · Product information settings (P1)
 

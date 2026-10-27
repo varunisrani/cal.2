@@ -622,7 +622,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > shows and edits the energy target in kJ, keeping the exact kcal when untouched (R06.20)
   - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > shows kilojoules, stores a typed kJ value as kcal over the scale, and never converts an untouched field (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
-  - Review: owned by P09-05
+  - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > draws nothing until the stored menu is read, then shows it with a change made meanwhile (R06.21, R06.22)
+  - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > keeps a newer edit when the read of an earlier one lands after it (R06.21)
+  - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > keeps an edit whose write is still on its way when a change from elsewhere is read (R06.21)
+  - Test: src/services/appSettings.test.ts > setMenuLayout (P09-05) > stores the menu tidied: empty groups gone, names trimmed, each method once (R06.21)
 - **R06.22** Settings pages wait for stored values before showing switches
   - Test: src/data/repos/settingsRepo.test.ts > loaded > resolves with the first snapshot only after a write in flight has landed (R06.22)
   - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > draws nothing until the settings are read (R06.22)
@@ -630,6 +633,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/settings/app/AppPage.test.tsx > AppPage > draws nothing until the settings are read (R06.22)
   - Test: src/features/settings/app/TabsPage.test.tsx > TabsPage > draws nothing until the settings are read (R06.22)
   - Test: src/features/settings/app/ProductFieldsPage.test.tsx > ProductFieldsPage > draws nothing until the settings are read (R06.22)
+  - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > draws nothing until the stored menu is read, then shows it with a change made meanwhile (R06.21, R06.22)
   - Review: the settings screens owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue

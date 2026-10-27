@@ -2,7 +2,8 @@
 // make. Each change stores one setting at once. A unit is only how numbers are shown and typed, so
 // changing one never touches a stored entry, goal, weight or height. Hiding a tab or a product
 // detail reads the stored list inside the write and changes that one name, so a page showing an
-// older list never undoes a change made elsewhere (R05.13).
+// older list never undoes a change made elsewhere (R05.13). The add menu's layout is stored tidied
+// (P09-05, R06.21): the editor may hold empty groups and names as typed; what is stored has neither.
 
 import type { SettingsRepo } from '../data/repos/settingsRepo';
 import {
@@ -11,6 +12,12 @@ import {
   type ProductField,
   type SettingValue,
 } from '../data/settingsSchema';
+import {
+  decodeLayout,
+  sanitiseLayout,
+  type AddMenuLayout,
+  type LayoutDraft,
+} from '../domain/food/addMenu';
 
 /** The settings these pages store as chosen, one row each. */
 export const PLAIN_APP_SETTINGS = [
@@ -33,6 +40,10 @@ export interface AppSettingsService {
   setTabHidden(tab: HideableTab, hidden: boolean): Promise<readonly HideableTab[]>;
   /** Hides or shows one product detail; resolves with the hidden details as stored. */
   setProductFieldHidden(field: ProductField, hidden: boolean): Promise<readonly ProductField[]>;
+  /** Stores the add menu's layout tidied; resolves with the menu as stored. */
+  setMenuLayout(layout: LayoutDraft): Promise<AddMenuLayout>;
+  /** Puts the default add menu back; resolves with it. */
+  resetMenuLayout(): Promise<AddMenuLayout>;
 }
 
 export interface AppSettingsDeps {
@@ -53,5 +64,14 @@ export function createAppSettingsService({ settingsRepo }: AppSettingsDeps): App
       settingsRepo.update('product.hiddenFields', (current) =>
         PRODUCT_FIELDS.filter((each) => (each === field ? hidden : current.includes(each))),
       ),
+
+    async setMenuLayout(layout) {
+      return decodeLayout(await settingsRepo.set('menu.layout', { ...sanitiseLayout(layout) }));
+    },
+
+    // Nothing stored is the default menu, so a later default reaches whoever reset.
+    async resetMenuLayout() {
+      return decodeLayout(await settingsRepo.set('menu.layout', null));
+    },
   };
 }

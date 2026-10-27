@@ -105,13 +105,12 @@ describe('AppPage', () => {
     ]);
     expect(gramsFirst()).toHaveAttribute('aria-checked', 'true');
     expect(checkedIn(words.days.weekStart)).toEqual([words.days.sun]);
-    // The Add menu page is not registered yet (P09-05), so it has no row.
     const pages = screen.getByRole('region', { name: words.pages.heading });
     expect(
       within(pages)
         .getAllByRole('button')
         .map((row) => row.textContent),
-    ).toEqual([words.product.title, words.tabBar.title]);
+    ).toEqual([settingsWords.settings.menuEditor.title, words.product.title, words.tabBar.title]);
     // Nothing the web cannot do is offered.
     expect(screen.getAllByRole('switch')).toEqual([gramsFirst()]);
   });
@@ -265,7 +264,8 @@ describe('AppPage', () => {
   });
 
   it('opens the pages under it, with Add menu first once that page is registered', async () => {
-    const specs: CategorySpec[] = SETTINGS_CATEGORIES.map(
+    // Without the registered Add menu page, so a stand-in takes its place.
+    const specs: CategorySpec[] = SETTINGS_CATEGORIES.filter(({ id }) => id !== 'menu').map(
       ({ route: _route, ...spec }: SettingsCategory) => spec,
     );
     const categories = defineCategories([
