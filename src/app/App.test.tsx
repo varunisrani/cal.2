@@ -7,10 +7,12 @@ import { capture } from '../i18n/en/capture';
 import { common } from '../i18n/en/common';
 import { goals } from '../i18n/en/goals';
 import { onboarding } from '../i18n/en/onboarding';
+import { review } from '../i18n/en/review';
 import { shell } from '../i18n/en/shell';
 import { fixedClock } from '../lib/clock';
 import type { AnalysisService, AnalysisState } from '../services/analysis';
 import { ServicesProvider, type Services } from '../services/context';
+import { makeAnalysisDraft } from '../test/factories';
 import { App } from './App';
 import { createAppState } from './appState';
 import {
@@ -172,6 +174,40 @@ describe('App', () => {
     ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
     expect(analysis.cancel).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the review over the tab screen while the analysis has a draft waiting (P06-06)', () => {
+    let state: AnalysisState = { phase: 'idle' };
+    const listeners = new Set<() => void>();
+    const analysis: AnalysisService = {
+      getSnapshot: () => state,
+      subscribe(onChange) {
+        listeners.add(onChange);
+        return () => {
+          listeners.delete(onChange);
+        };
+      },
+      start: vi.fn(),
+      cancel: vi.fn(),
+      retry: vi.fn(),
+      closeReview: vi.fn(),
+      restore: vi.fn(),
+    };
+    const boot = controlledStore<BootState>({ status: 'ready' });
+    const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
+    renderApp({ boot, settings }, '#/home', { ...services, analysis });
+    expect(screen.queryByRole('dialog', { name: review.review.title })).toBeNull();
+
+    act(() => {
+      state = { phase: 'reviewReady', draft: makeAnalysisDraft(), generation: 1 };
+      for (const listener of listeners) listener();
+    });
+    expect(screen.getByRole('dialog', { name: review.review.title })).toBeInTheDocument();
+    // The settings are still being read: nothing can be logged yet.
+    expect(screen.getByRole('button', { name: review.review.log })).toBeDisabled();
+    expect(
+      screen.getByRole('heading', { level: 1, name: common.common.tabs.home }),
+    ).toBeInTheDocument();
   });
 
   it('puts every screen inside the toast provider', () => {

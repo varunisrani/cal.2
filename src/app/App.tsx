@@ -1,5 +1,6 @@
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
 import { AnalysisOverlay } from '../features/log/AnalysisOverlay';
+import { AnalysisReview } from '../features/log/review/ReviewSheet';
 import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
 import { systemClock, type Clock } from '../lib/clock';
 import type { TuneUpRunner } from '../services/goals/tuneUp';
@@ -52,7 +53,12 @@ function Shell() {
       <TabBar />
       <GoalReachedDialog />
       {tuneUp ? <TuneUp runner={tuneUp} /> : null}
-      {services?.analysis ? <AnalysisOverlay /> : null}
+      {services?.analysis ? (
+        <>
+          <AnalysisOverlay />
+          <AnalysisReview />
+        </>
+      ) : null}
     </div>
   );
 }

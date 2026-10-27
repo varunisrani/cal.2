@@ -13,6 +13,7 @@ import { log } from './en/log';
 import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
 import { profile } from './en/profile';
+import { review } from './en/review';
 import { settings } from './en/settings';
 import { shell } from './en/shell';
 
@@ -37,6 +38,7 @@ export const enPartitions = {
   goals,
   aiSetup,
   profile,
+  review,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

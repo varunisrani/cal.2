@@ -253,7 +253,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D1 · Diary entry with energy, macros, 23 optional nutrients and 8 … (P0)
 
 - **ACC-D1-1** An entry without sodium shows a dash for sodium, not 0
-  - Review: P06-08
+  - Test: src/features/log/review/MoreNutrition.test.tsx > MoreNutrition > shows each value at the shown amount to 0.1 with its unit, and a dash when unknown (ACC-D1-1)
 
 ### D2 · Manual entry (name, energy in your unit, protein, carbs, fat, … (P0)
 
@@ -295,28 +295,28 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D7 · Review before logging (P1)
 
 - **ACC-D7-1** Changing the time to the evening switches the suggested meal to dinner
-  - Review: P06-06
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > suggests the meal for the picked time: 08:00 is breakfast and 19:30 dinner (ACC-D7-1, R02.13, D-16.16)
 - **ACC-D7-2** Log writes exactly one entry even when tapped twice
-  - Review: P06-06
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > writes one entry when Log is pressed twice (ACC-D7-2, R02.11)
 
 ### D8 · The amount field accepts arithmetic (+ − × ÷) with a calculator row (P1)
 
 - **ACC-D8-1** Typing 50+20 sets the amount to 70 g
-  - Review: P06-07
+  - Test: src/features/log/review/AmountField.test.tsx > AmountField > sets the amount to 70 while 50+20 is typed (ACC-D8-1)
 - **ACC-D8-2** An unfinished expression reverts on leaving the field
-  - Review: P06-07
+  - Test: src/features/log/review/AmountField.test.tsx > AmountField > puts an unfinished 50+ back to the amount on leaving the field (ACC-D8-2, R02.22)
 
 ### D9 · Serving units (P1)
 
 - **ACC-D9-1** An entry with an unknown weight reopens at its serving count and never shows grams
   - Test: src/domain/servings/scale.test.ts > initialAmount > reopens an unknown weight saved at 2 servings at 2 servings and never shows grams (R02.1)
 - **ACC-D9-2** Switching from slices to grams keeps the amount
-  - Review: P06-07
+  - Test: src/features/log/review/ServingCard.test.tsx > ServingCard > keeps the weight when switching from 2 slices of 30 g to grams, which shows 60 (ACC-D9-2)
 
 ### D10 · Nutrition unlock on review (P1)
 
 - **ACC-D10-1** Typing 40 g protein at double amount stores 20 g per base amount
-  - Review: P06-08
+  - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > stores protein typed at twice the amount as half, and shows what was typed (ACC-D10-1, R02.3)
 
 ### D11 · Fit check (what-if) (P1)
 
@@ -808,7 +808,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-J2-1** Choosing Sunday as the first weekday changes the week bar
   - Review: P09-02
 - **ACC-J2-2** Grams first opens reviews in grams
-  - Review: P06-07
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > opens in grams when grams come first, else in the unit the draft chose (ACC-J2-2)
 
 ### J3 · Height, weight and energy units as separate settings (P1)
 

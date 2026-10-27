@@ -105,6 +105,24 @@ const SHAPES = {
     </>
   ),
   sort: <path d="M8 19.5v-15M4.5 8L8 4.5 11.5 8M16 4.5v15M12.5 16l3.5 3.5 3.5-3.5" />,
+  plate: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <circle cx="12" cy="12" r="4.8" />
+    </>
+  ),
+  lock: (
+    <>
+      <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5M12 14.5v2" />
+    </>
+  ),
+  unlock: (
+    <>
+      <rect x="5" y="10.5" width="14" height="10" rx="2.5" />
+      <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.9-.8M12 14.5v2" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof SHAPES;

@@ -107,17 +107,21 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.1** An unknown food weight stays unknown: a serving-count basis, never 100 g
   - Test: src/domain/servings/units.test.ts > pickerUnits > offers only the serving count when the weight is unknown, never grams (R02.1)
   - Test: src/domain/servings/scale.test.ts > initialAmount > reopens an unknown weight saved at 2 servings at 2 servings and never shows grams (R02.1)
+  - Test: src/features/log/review/ServingCard.test.tsx > ServingCard > offers only servings, with no grams and no ≈ line, when the weight is unknown (R02.1)
 - **R02.2** The unknown-weight basis is its own kind, separate from a unit named serving
   - Test: src/domain/servings/units.test.ts > pickerUnits > keeps a recipe serving unit with known grams a named unit, not the servings basis (R02.2)
   - Test: src/domain/servings/scale.test.ts > initialAmount > keeps a split serving with known grams a named unit when reopened (R02.2)
 - **R02.3** A value typed at a scaled amount is stored divided by the scale; a scale of 0 or less is guarded
   - Test: src/domain/servings/scale.test.ts > baseFromTyped > stores typed 300 kcal at scale 2 as 150 (R02.3)
   - Test: src/domain/servings/scale.test.ts > baseFromTyped > treats a scale of 0 or less as 1 (R02.3)
+  - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > stores protein typed at twice the amount as half, and shows what was typed (ACC-D10-1, R02.3)
+  - Test: src/features/log/review/MoreNutrition.test.tsx > MoreNutrition > stores what is typed divided by the scale, for nutrients and extras alike (R02.3)
 - **R02.4** With ingredient lines the header is their sum and micronutrients stretch by the gram ratio
   - Test: src/domain/servings/ingredients.test.ts > applyLineChange > makes the header the sum of the lines: 120 + 80 kcal is 200 (R02.4)
   - Test: src/domain/servings/ingredients.test.ts > applyLineChange > scales sodium by 300/400 when a 100 g line leaves a 400 g meal (R02.4)
 - **R02.5** Header values edited through the unlock are replaced by the next line change (accepted behaviour, tested and hinted)
-  - Review: owned by P06-08
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > opens with the lines' sum as the header (R02.4) and lets the next line change replace values edited through the unlock (R02.5)
+  - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > says that a change of ingredients adds the values up again, only while unlocked and only with lines (R02.5)
 - **R02.6** A logged portion cannot be split again; a split survives line edits with its unit first
   - Test: src/domain/servings/recipe.test.ts > canSplit > refuses a re-logged portion, which would divide the portion again (R02.6)
   - Test: src/domain/servings/recipe.test.ts > keepSplit > keeps n and shows the edited portion when a line of a split recipe changes (R02.6)
@@ -138,10 +142,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/analysis.test.ts > late results (R02.10) > drops the draft waiting for review when a new analysis starts, with its photos
 - **R02.11** Log, Save and manual Save are single-flight
   - Test: src/services/diary.test.ts > logEntry > writes one entry for two rapid calls (R02.11, ACC-D26-1)
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > writes one entry when Log is pressed twice (ACC-D7-2, R02.11)
 - **R02.12** The active-fast refusal happens at write time for every food write path
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
 - **R02.13** The review's suggested meal follows its picked date and time (D-16.16)
-  - Review: owned by P06-06
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > suggests the meal for the picked time: 08:00 is breakfast and 19:30 dinner (ACC-D7-1, R02.13, D-16.16)
 - **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only
   - Test: src/data/barcodeKey.test.ts > barcodeKey > gives a UPC-A and its EAN-13 form the same key (R02.14)
   - Test: src/services/barcode/fdc.test.ts > gtinSpellings and sameGtin (R02.14) > spells 012345678905 as scanned, without zeros and padded to 13 and 14 digits
@@ -181,6 +186,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator
   - Test: src/domain/servings/expression.test.ts > evalAmount > rejects a trailing operator, letters and division by about zero (R02.22)
   - Test: src/domain/servings/expression.test.ts > pushOperator > replaces a trailing operator instead of stacking one (R02.22)
+  - Test: src/features/log/review/AmountField.test.tsx > AmountField > puts an unfinished 50+ back to the amount on leaving the field (ACC-D8-2, R02.22)
 - **R02.23** Add-menu decoding drops unknown methods; a menu emptied only by unknown ids falls back to the default; a deliberately empty menu stays empty
   - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > gives the default when a stored menu is empty only because its ids are unknown
   - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > keeps a menu that was emptied on purpose empty, with or without empty groups
@@ -463,6 +469,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > shows kJ to a kJ reader and keeps the exact kcal when the wheel is saved untouched (R06.20)
   - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > shows and edits the energy target in kJ, keeping the exact kcal when untouched (R06.20)
+  - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > shows kilojoules, stores a typed kJ value as kcal over the scale, and never converts an untouched field (R06.20)
 - **R06.21** The add-menu editor waits for the stored menu and a late load never overwrites an edit
   - Review: owned by P09-05
 - **R06.22** Settings pages wait for stored values before showing switches
