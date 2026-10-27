@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { dayKeyOf } from '../../../domain/dates/dayKey';
 import { formatDay, formatTime } from '../../../i18n/format';
 import { t, type TKey } from '../../../i18n/t';
@@ -41,6 +41,10 @@ export interface RestoreSheetProps {
   readonly onClose: () => void;
   /** After a restore went in (the Welcome restore continues from here, P09-14). */
   readonly onRestored?: (summary: BackupSummary) => void;
+  /** Restore was pressed: from here it runs to its end (Welcome locks its screen, P09-14). */
+  readonly onRestoring?: () => void;
+  /** The file was refused or the restore failed, changing nothing (Welcome offers Try again). */
+  readonly onProblem?: (problem: RestoreProblem) => void;
 }
 
 type Step =
@@ -57,21 +61,24 @@ type Step =
  * be dismissed; if it goes away anyway (Back, leaving the page) the restore still finishes and a
  * toast says so.
  */
-export function RestoreSheet({ file, onClose, onRestored }: RestoreSheetProps) {
-  return file ? <OpenRestoreSheet file={file} onClose={onClose} onRestored={onRestored} /> : null;
+export function RestoreSheet({ file, ...props }: RestoreSheetProps) {
+  return file ? <OpenRestoreSheet file={file} {...props} /> : null;
 }
 
-interface OpenProps {
+interface OpenProps extends RestoreSheetProps {
   readonly file: Blob;
-  readonly onClose: () => void;
-  readonly onRestored: ((summary: BackupSummary) => void) | undefined;
 }
 
-function OpenRestoreSheet({ file, onClose, onRestored }: OpenProps) {
+function OpenRestoreSheet({ file, onClose, onRestored, onRestoring, onProblem }: OpenProps) {
   const backup = useBackup();
   const toast = useToast();
   const [step, setStep] = useState<Step>({ kind: 'checking' });
   const shown = useRef(true);
+  // The latest handler, so a new one never starts the check again.
+  const reportProblem = useRef(onProblem);
+  useLayoutEffect(() => {
+    reportProblem.current = onProblem;
+  });
 
   useEffect(() => {
     shown.current = true;
@@ -86,6 +93,7 @@ function OpenRestoreSheet({ file, onClose, onRestored }: OpenProps) {
     void backup.inspect(file).then((result) => {
       if (!current) return;
       setStep(result.ok ? { kind: 'ready', checked: result.value } : problem(result.error));
+      if (!result.ok) reportProblem.current?.(result.error);
     });
     return () => {
       current = false;
@@ -94,9 +102,11 @@ function OpenRestoreSheet({ file, onClose, onRestored }: OpenProps) {
 
   const restore = async (checked: CheckedBackup): Promise<void> => {
     setStep({ kind: 'restoring' });
+    onRestoring?.();
     // Not tied to this sheet: once started, the restore runs to its end (R06.6).
     const result = await backup.apply(checked);
     if (result.ok) onRestored?.(result.value);
+    else reportProblem.current?.(result.error);
     if (!shown.current) {
       if (result.ok) toast.show(t('backup.restoreSheet.done'));
       return;

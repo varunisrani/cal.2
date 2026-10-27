@@ -2,8 +2,8 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of onboarding (src/features/onboarding): the wizard's frame, its steps from Welcome to
- * Reminders (P05-01..03), Building plan (P05-05) and Plan ready (P05-06), and the onboarding
- * route's message when finishing fails (P05-07).
+ * Reminders (P05-01..03), Building plan (P05-05) and Plan ready (P05-06), the onboarding
+ * route's message when finishing fails (P05-07), and restoring a backup from Welcome (P09-14).
  */
 export const onboarding = {
   onboarding: {
@@ -41,6 +41,19 @@ export const onboarding = {
       },
       start: 'Get started',
       restore: 'Restore from a backup file',
+    },
+    restore: {
+      title: 'Restore your data',
+      lead: 'A Platewise backup file brings back your diary, photos, Coach chat and settings.',
+      restoring: "Restoring your backup. Keep this page open until it's done.",
+      restoredTitle: 'Welcome back',
+      restoredSetup: 'Your profile, plan and diary are back on this device.',
+      restoredData: 'Your diary is back on this device. A few questions finish setting up.',
+      open: 'Open Platewise',
+      continue: 'Continue setup',
+      failedTitle: 'Nothing was restored',
+      tryAgain: 'Try again',
+      startFresh: 'Start fresh',
     },
     sex: {
       title: 'Which body should we plan for?',

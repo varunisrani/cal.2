@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { shell } from '../i18n/en/shell';
+import { AppStateContext, createAppState } from './appState';
 import { Boot } from './Boot';
 import {
   DEFAULT_SHELL_SETTINGS,
@@ -26,17 +27,20 @@ function renderBoot(initialHash = '#/home') {
   const router = createRouter(host);
   const boot = controlledStore<BootState>();
   const settings = controlledStore<ShellSettings>();
+  const appState = createAppState();
   const reload = vi.fn();
   render(
     <ShellPortsContext value={{ boot, settings }}>
-      <RouterProvider router={router}>
-        <Boot onReload={reload}>
-          <FakeHome />
-        </Boot>
-      </RouterProvider>
+      <AppStateContext value={appState}>
+        <RouterProvider router={router}>
+          <Boot onReload={reload}>
+            <FakeHome />
+          </Boot>
+        </RouterProvider>
+      </AppStateContext>
     </ShellPortsContext>,
   );
-  return { host, router, boot, settings, reload };
+  return { host, router, boot, settings, appState, reload };
 }
 
 function skeleton(): HTMLElement | null {
@@ -101,6 +105,20 @@ describe('Boot', () => {
     });
     expect(screen.getByTestId('app')).toHaveTextContent('#/onboarding');
     act(() => boot.set({ status: 'ready' }));
+    expect(screen.getByTestId('app')).toHaveTextContent('#/home');
+  });
+
+  it('keeps a held onboarding on screen once ready, and moves to Home when it is let go (P09-14)', () => {
+    const { boot, settings, appState } = renderBoot('#/onboarding');
+    act(() => {
+      appState.holdOnboarding(true);
+      settings.set(DEFAULT_SHELL_SETTINGS);
+      boot.set({ status: 'needsOnboarding' });
+    });
+    act(() => boot.set({ status: 'ready' }));
+    expect(screen.getByTestId('app')).toHaveTextContent('#/onboarding');
+
+    act(() => appState.holdOnboarding(false));
     expect(screen.getByTestId('app')).toHaveTextContent('#/home');
   });
 

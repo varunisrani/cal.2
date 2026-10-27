@@ -1,5 +1,10 @@
-import { useCallback, useRef, useState } from 'react';
+import { Suspense, useCallback, useRef, useState, type ChangeEvent } from 'react';
+import { onDemand } from '../../app/onDemand';
+import { Skeleton } from '../../app/Skeleton';
 import { useToday } from '../../app/TodayProvider';
+import type { DayKey } from '../../domain/dates/dayKey';
+import { defaultUnits } from '../../domain/units/defaults';
+import { currentLocale } from '../../i18n/locale';
 import { t } from '../../i18n/t';
 import { useServices } from '../../services/context';
 import type { OnboardingAnswers } from '../../services/onboarding';
@@ -8,13 +13,37 @@ import { AiAccess } from './steps/AiAccess';
 import { BuildingPlan } from './steps/BuildingPlan';
 import { PlanReady } from './steps/PlanReady';
 import { WizardPage, type LateSteps } from './WizardPage';
-import { remindersOn, wizardProfile, type PermissionReply, type WizardState } from './wizard';
+import {
+  remindersOn,
+  startWizard,
+  wizardProfile,
+  wizardReducer,
+  type PermissionReply,
+  type WizardState,
+} from './wizard';
 
 const LATE_STEPS: LateSteps = {
   aiAccess: AiAccess,
   buildingPlan: BuildingPlan,
   planReady: PlanReady,
 };
+
+// Fetched when a backup file is picked on Welcome (P09-14), with the restore sheet it opens.
+const RestoreFromFile = onDemand(() =>
+  import('./RestoreFromFile').then((module) => module.RestoreFromFile),
+);
+
+/** A backup file picked on Welcome; each pick (Try again too) starts a restore of its own. */
+interface PickedBackup {
+  readonly key: number;
+  readonly file: File;
+}
+
+/** The wizard on its first question, as Get started leaves it, for this browser's units. */
+function firstQuestion(today: DayKey): WizardState {
+  const { height, weight } = defaultUnits(currentLocale());
+  return wizardReducer(startWizard(today, { height, weight }), { type: 'next' });
+}
 
 /** Asks the browser for notification permission; `unsupported` where it has none to ask. */
 async function askNotifications(): Promise<PermissionReply> {
@@ -49,6 +78,10 @@ interface Reopened {
  * Plan ready's last button finishes the wizard, onboarding completes; the start-up gate then
  * moves the app to Home once the done flag is stored, so this screen never navigates itself. A
  * save that fails says so and opens Plan ready again with the same answers, to try once more.
+ * Welcome's restore link picks a backup file and shows the restore screen (P09-14); after a
+ * restore without a finished setup, or a refused file, the wizard goes on from its first question.
+ * Its completion then fills only what is empty (the first weigh-in) and starts the new plan's
+ * tune-up week, over the restored diary.
  */
 export function OnboardingRoute() {
   const { onboarding, clock } = useServices();
@@ -56,6 +89,8 @@ export function OnboardingRoute() {
   const toast = useToast();
   const [reopened, setReopened] = useState<Reopened | null>(null);
   const saving = useRef(false);
+  const picker = useRef<HTMLInputElement>(null);
+  const [picked, setPicked] = useState<PickedBackup | null>(null);
 
   const onStateChange = useCallback(
     (state: WizardState) => {
@@ -75,14 +110,58 @@ export function OnboardingRoute() {
     [onboarding, clock, toast],
   );
 
-  return (
-    <WizardPage
-      key={reopened?.key ?? 0}
-      today={today}
-      requestNotifications={askNotifications}
-      lateSteps={LATE_STEPS}
-      initialState={reopened?.state}
-      onStateChange={onStateChange}
+  const pickBackup = useCallback(() => picker.current?.click(), []);
+  const pickedFile = (event: ChangeEvent<HTMLInputElement>): void => {
+    const file = event.target.files?.[0] ?? null;
+    // Cleared, so picking the same file again still reports a change.
+    event.target.value = '';
+    if (file) setPicked((last) => ({ key: (last?.key ?? 0) + 1, file }));
+  };
+  const leaveRestore = useCallback(() => setPicked(null), []);
+  const setUp = useCallback(() => {
+    setPicked(null);
+    setReopened((last) => ({ key: (last?.key ?? 0) + 1, state: firstQuestion(today) }));
+  }, [today]);
+
+  const input = (
+    <input
+      ref={picker}
+      type="file"
+      accept=".zip,application/zip"
+      hidden
+      onChange={pickedFile}
+      data-ui="wizard.restoreFile"
     />
+  );
+
+  if (picked) {
+    return (
+      <>
+        <Suspense fallback={<Skeleton page data-ui="shell.screenLoading" />}>
+          <RestoreFromFile
+            key={picked.key}
+            file={picked.file}
+            onPickAgain={pickBackup}
+            onLeave={leaveRestore}
+            onSetUp={setUp}
+          />
+        </Suspense>
+        {input}
+      </>
+    );
+  }
+  return (
+    <>
+      <WizardPage
+        key={reopened?.key ?? 0}
+        today={today}
+        requestNotifications={askNotifications}
+        onRestore={pickBackup}
+        lateSteps={LATE_STEPS}
+        initialState={reopened?.state}
+        onStateChange={onStateChange}
+      />
+      {input}
+    </>
   );
 }

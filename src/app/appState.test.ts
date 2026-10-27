@@ -4,8 +4,24 @@ import { describe, expect, it, vi } from 'vitest';
 import { AppStateContext, createAppState, useAppState, viewedDay } from './appState';
 
 describe('createAppState', () => {
-  it('starts with no overlay and today selected', () => {
-    expect(createAppState().getSnapshot()).toEqual({ analysisOverlay: false, selectedDay: null });
+  it('starts with no overlay, today selected and onboarding not held', () => {
+    expect(createAppState().getSnapshot()).toEqual({
+      analysisOverlay: false,
+      selectedDay: null,
+      onboardingHeld: false,
+    });
+  });
+
+  it('holds onboarding and lets it go, telling listeners only on a change', () => {
+    const store = createAppState();
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.holdOnboarding(true);
+    store.holdOnboarding(true);
+    expect(store.getSnapshot().onboardingHeld).toBe(true);
+    store.holdOnboarding(false);
+    expect(store.getSnapshot().onboardingHeld).toBe(false);
+    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('raises and lowers the analysis overlay flag, telling listeners each time', () => {

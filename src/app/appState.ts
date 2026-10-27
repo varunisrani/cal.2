@@ -7,6 +7,11 @@ export interface AppState {
   readonly analysisOverlay: boolean;
   /** The day Home shows; `null` follows today, across midnight too (P07-02). */
   readonly selectedDay: DayKey | null;
+  /**
+   * Onboarding stays on screen although setup is complete: a restore from Welcome waits for
+   * "Open Platewise" (P09-14) instead of the start-up gate moving to Home by itself.
+   */
+  readonly onboardingHeld: boolean;
 }
 
 /**
@@ -22,14 +27,24 @@ export interface AppStateStore {
   subscribe(onChange: () => void): () => void;
   setAnalysisOverlay(visible: boolean): void;
   selectDay(day: DayKey | null): void;
+  holdOnboarding(held: boolean): void;
 }
 
 export function createAppState(initial: Partial<AppState> = {}): AppStateStore {
-  let state: AppState = { analysisOverlay: false, selectedDay: null, ...initial };
+  let state: AppState = {
+    analysisOverlay: false,
+    selectedDay: null,
+    onboardingHeld: false,
+    ...initial,
+  };
   const listeners = new Set<() => void>();
   const change = (patch: Partial<AppState>): void => {
     const next = { ...state, ...patch };
-    if (next.analysisOverlay === state.analysisOverlay && next.selectedDay === state.selectedDay) {
+    if (
+      next.analysisOverlay === state.analysisOverlay &&
+      next.selectedDay === state.selectedDay &&
+      next.onboardingHeld === state.onboardingHeld
+    ) {
       return;
     }
     state = next;
@@ -45,6 +60,7 @@ export function createAppState(initial: Partial<AppState> = {}): AppStateStore {
     },
     setAnalysisOverlay: (visible) => change({ analysisOverlay: visible }),
     selectDay: (day) => change({ selectedDay: day }),
+    holdOnboarding: (held) => change({ onboardingHeld: held }),
   };
 }
 

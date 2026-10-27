@@ -1,16 +1,20 @@
 import { useLayoutEffect, type ReactNode } from 'react';
 import { t } from '../i18n/t';
+import { useAppState } from './appState';
 import { useBootState, useShellSettings, type BootState } from './ports';
 import { HOME_ROUTE, ONBOARDING_ROUTE, type Route } from './router';
 import { reloadPage, ShellNotice } from './ShellNotice';
 import { Skeleton } from './Skeleton';
 import { useRoute, useRouter } from './useRoute';
 
-/** Where start-up must send the person from `route`, or `null` to stay. */
-function redirectFor(boot: BootState, route: Route): Route | null {
+/**
+ * Where start-up must send the person from `route`, or `null` to stay. A held onboarding (a
+ * restore from Welcome, P09-14) stays where it is once setup is complete.
+ */
+function redirectFor(boot: BootState, route: Route, held: boolean): Route | null {
   const onOnboarding = route.kind === 'onboarding';
   if (boot.status === 'needsOnboarding') return onOnboarding ? null : ONBOARDING_ROUTE;
-  if (boot.status === 'ready') return onOnboarding ? HOME_ROUTE : null;
+  if (boot.status === 'ready') return onOnboarding && !held ? HOME_ROUTE : null;
   return null;
 }
 
@@ -31,7 +35,8 @@ export function Boot({ children, onReload = reloadPage }: BootProps) {
   const settings = useShellSettings();
   const route = useRoute();
   const router = useRouter();
-  const redirect = boot && settings ? redirectFor(boot, route) : null;
+  const { onboardingHeld } = useAppState();
+  const redirect = boot && settings ? redirectFor(boot, route, onboardingHeld) : null;
 
   // Before paint, and replacing the address, so Back never returns to the wrong side.
   useLayoutEffect(() => {

@@ -137,9 +137,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B10 · Restore from a backup file on Welcome (P1)
 
 - **ACC-B10-1** Restoring a complete backup from Welcome lands on Home with its entries
-  - Review: P09-14
+  - Test: src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > restores a complete backup after its preview and lands on Home with its entries, seeding nothing (ACC-B10-1)
 - **ACC-B10-2** Restoring a backup without a profile continues the wizard and keeps the entries
-  - Review: P09-14
+  - Test: src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > continues a backup without a profile at the Sex step, keeping its entries through to the end (ACC-B10-2)
 
 ### B11 · Unit defaults from the browser locale (P1)
 
