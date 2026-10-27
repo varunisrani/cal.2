@@ -498,6 +498,27 @@ describe('write-back (D-16.89)', () => {
     expect(service.getSnapshot().failure).toBeNull();
   });
 
+  it('holds back an entry logged for later today, sends the others, and sends it once its time has passed', async () => {
+    const { plugin, service, diaryRepo, clock, visibility } = await setup({
+      settings: { 'health.writeBack': true },
+    });
+    // Like the native plugin, the stand-in refuses a record dated after the phone's clock.
+    plugin.set({ now: clock.now });
+    await diaryRepo.add(makeEntry({ id: 'lunch', loggedAt: FACTORY_NOW - HOUR }));
+    await diaryRepo.add(makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR }));
+    service.start();
+    await service.idle();
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch']);
+    expect(service.getSnapshot().failure).toBeNull();
+
+    // The first pass after its time: here the sync on coming back to the front.
+    clock.move(6 * HOUR);
+    visibility.leaveAndReturn();
+    await service.idle();
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch', 'dinner']);
+    expect(service.getSnapshot().failure).toBeNull();
+  });
+
   it('runs one pass at a time and one more for changes made meanwhile', async () => {
     const { plugin, service, diaryRepo, watch } = await setup({
       settings: { 'health.writeBack': true },

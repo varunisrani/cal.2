@@ -25,6 +25,11 @@ export interface FakeHealthState {
   days: DailyTotals[];
   sessions: ExerciseSession[];
   weights: HealthWeight[];
+  /**
+   * The phone's clock, when the test gives one: like the native plugin, a write dated after it is
+   * refused with `invalidInput`, and one such record fails the whole call. Null: no check.
+   */
+  now: (() => number) | null;
 }
 
 export interface FakeCall {
@@ -73,6 +78,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
     days: [],
     sessions: [],
     weights: [],
+    now: null,
     ...initial,
   };
   const calls: FakeCall[] = [];
@@ -93,6 +99,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
   const canRead = (kind: HealthReadKind) => state.granted.read.includes(kind);
   const canWrite = (kind: HealthWriteKind) => state.granted.write.includes(kind);
   const inRange = (day: string, o: { from: string; to: string }) => day >= o.from && day <= o.to;
+  const inFuture = (time: string) => state.now !== null && Date.parse(time) > state.now();
 
   return {
     calls,
@@ -158,6 +165,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
     async writeNutrition(o) {
       enter('writeNutrition', o);
       if (!canWrite('nutrition')) throw rejection('permissionDenied');
+      if (o.records.some((record) => inFuture(record.time))) throw rejection('invalidInput');
       for (const record of o.records) nutrition.set(record.clientId, record);
     },
     async deleteNutrition(o) {
@@ -168,6 +176,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
     async writeWeight(o) {
       enter('writeWeight', o);
       if (!canWrite('weight')) throw rejection('permissionDenied');
+      if (inFuture(o.time)) throw rejection('invalidInput');
       weightRecords.set(o.clientId, o);
     },
     async deleteWeight(o) {

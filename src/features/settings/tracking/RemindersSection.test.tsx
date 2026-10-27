@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { reminders } from '../../../i18n/en/reminders';
 import { closeHarnesses, openHarness, until, untilShown } from '../../../test/screenHarness';
 import { settle } from '../../water/testing/openWater';
@@ -10,6 +10,9 @@ import { openTracking, type TrackingSetup } from './testing/openTracking';
 import { TrackingPage } from './TrackingPage';
 
 afterEach(closeHarnesses);
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 const words = reminders.reminders.settings;
 const CARD = '[data-ui="reminders.settings"]';
@@ -239,6 +242,18 @@ describe('RemindersSection', () => {
 
     expect(s.master()).toBeDisabled();
     expect(screen.getByText(words.unsupported)).toBeVisible();
+    expect(screen.queryByText(words.unsupportedAndroid)).toBeNull();
+  });
+
+  it('says reminders are not available in the Android app, where the home screen cannot help (P11)', async () => {
+    vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+    const s = await openCard({ permission: 'unsupported' });
+
+    expect(s.master()).toBeDisabled();
+    expect(screen.getByText(words.unsupportedAndroid)).toBeVisible();
+    expect(screen.queryByText(words.unsupported)).toBeNull();
+    // Nor when reminders would show: they cannot, there.
+    expect(screen.queryByText(words.openNote)).toBeNull();
   });
 
   it('puts a switch back with a message when its change is not saved', async () => {

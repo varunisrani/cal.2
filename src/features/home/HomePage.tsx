@@ -110,6 +110,7 @@ const SETTINGS = [
   'fasting.on',
   'health.connected',
   'health.countActiveCalories',
+  'units.height',
 ] as const;
 
 /**
@@ -365,7 +366,11 @@ export function HomePage() {
         </DaySwipe>
         {connected ? (
           <Suspense fallback={null}>
-            <ActivityCard day={shownDay} energyUnit={unit} />
+            <ActivityCard
+              day={shownDay}
+              energyUnit={unit}
+              lengthUnit={settings.value['units.height']}
+            />
           </Suspense>
         ) : null}
         <Diary

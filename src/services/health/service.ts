@@ -230,13 +230,15 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
     const stored = await settings();
     if (!stored['health.connected'] || !stored['health.writeBack']) return;
     const granted = status.granted ?? cleanGrants(await plugin.grantedPermissions());
-    const window = syncWindow(dayKeyOf(clock.now()));
+    const now = clock.now();
+    const window = syncWindow(dayKeyOf(now));
     const [entries, weighIns, ledger] = await Promise.all([
       deps.diaryRepo.between(window.first, window.last),
       deps.weightRepo.between(window.first, window.last),
       healthRepo.sent(),
     ]);
-    const plan = writeBackPlan({ entries, weighIns, ledger, window });
+    // Records dated after `now` wait for a later pass (start, return, change or sync).
+    const plan = writeBackPlan({ entries, weighIns, ledger, window, now });
     if (plan.forget.length > 0) await healthRepo.updateSent({ remove: plan.forget });
 
     // Each call's ledger change is stored only after the call succeeded, so a failure is retried.

@@ -1120,6 +1120,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-M11-5** With writing on, entries and weigh-ins reach Health Connect under our ids and follow add, edit and delete; imported weigh-ins are never sent back
   - Test: src/services/health/service.test.ts > write-back (D-16.89) > sends the window's entries when turned on, then follows add, edit and delete
   - Test: src/services/health/service.test.ts > write-back (D-16.89) > sends weigh-ins typed here and removes deleted ones, never imported ones
+  - Test: src/services/health/service.test.ts > write-back (D-16.89) > holds back an entry logged for later today, sends the others, and sends it once its time has passed
 - **ACC-M11-6** Access removed in Health Connect shows with Grant access, and a failed sync never blocks the diary
   - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage (P11-04) > shows access removed in Health Connect with Grant access, and reads again once it is back
   - Test: src/services/health/service.test.ts > sync (P11-03) > keeps a failure in the status without rejecting, and clears it on the next success
@@ -1128,6 +1129,13 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/health/load.test.ts > loadHealth > fetches nothing and builds nothing on the web, where there is no Capacitor bridge
   - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > shows no health feature without a health service, as on the web (D-16.89)
   - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage: Health Connect on the Android app (P11-04) > shows no activity card without a health service, as on the web (D-16.89)
+- **ACC-M11-8** Home's activity card also shows the day's total calories burned and its distance (km beside centimetres, miles beside feet and inches); neither is added to the target
+  - Test: src/features/home/ActivityCard.test.tsx > ActivityCard (P11-04) > shows the total burn and the distance under steps and active calories, in km beside cm
+  - Test: src/features/home/ActivityCard.test.tsx > ActivityCard (P11-04) > writes the distance in miles for a person who reads feet and inches
+  - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > writes the day's distance in km for a person who reads centimetres
+- **ACC-M11-9** In the Android app, Tracking & reminders and the onboarding step say reminders are not available in the app yet, instead of suggesting the home screen
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > says reminders are not available in the Android app, where the home screen cannot help (P11)
+  - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > says reminders are not available in the Android app, where the home screen cannot help (P11)
 
 ## Known gaps
 

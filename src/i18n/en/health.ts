@@ -70,6 +70,17 @@ export const health = {
       title: 'Activity',
       steps: '{count, plural, one {# step} other {# steps}}',
       active: '{amount} active',
+      total: '{amount} total',
+      // Distance follows the length unit: km beside cm, miles beside feet and inches.
+      distance: {
+        km: '{amount} km',
+        mi: '{amount} mi',
+      },
+      // The distance's accessible name, with the unit spelled out.
+      distanceName: {
+        km: 'Distance {amount} kilometres',
+        mi: 'Distance {amount} miles',
+      },
       workouts: 'Workouts',
       workout: '{name}, {length}',
       workoutEnergy: '{name}, {length}, {amount}',

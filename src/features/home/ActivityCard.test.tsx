@@ -2,7 +2,7 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { ActivityDay, ActivitySession } from '../../data/hooks';
 import { health } from '../../i18n/en/health';
-import { ActivityCard, workoutName } from './ActivityCard';
+import { ActivityCard, distanceUnitOf, workoutName } from './ActivityCard';
 
 const words = health.health.home;
 const START = Date.parse('2026-10-26T07:00:00-04:00');
@@ -37,7 +37,7 @@ const card = () => screen.getByRole('region', { name: words.title });
 
 describe('ActivityCard (P11-04)', () => {
   it("shows the day's steps and active calories under its heading", () => {
-    render(<ActivityCard day={day()} energyUnit="kcal" />);
+    render(<ActivityCard day={day()} energyUnit="kcal" lengthUnit="cm" />);
     expect(within(card()).getByText('9,412 steps')).toBeVisible();
     expect(within(card()).getByText('513 kcal active')).toBeVisible();
     expect(document.querySelector('[data-ui="home.activity.workouts"]')).toBeNull();
@@ -53,6 +53,7 @@ describe('ActivityCard (P11-04)', () => {
           ],
         })}
         energyUnit="kcal"
+        lengthUnit="cm"
       />,
     );
     const workouts = within(card()).getByRole('list', { name: words.workouts });
@@ -65,21 +66,92 @@ describe('ActivityCard (P11-04)', () => {
   });
 
   it('writes energy in kJ for a kJ user, steps as counts', () => {
-    render(<ActivityCard day={day({ steps: 1, activeKcal: 100 })} energyUnit="kJ" />);
+    render(
+      <ActivityCard
+        day={day({ steps: 1, activeKcal: 100, totalKcal: 2_000 })}
+        energyUnit="kJ"
+        lengthUnit="cm"
+      />,
+    );
     expect(within(card()).getByText('1 step')).toBeVisible();
     expect(within(card()).getByText('418 kJ active')).toBeVisible();
+    expect(within(card()).getByText('8,368 kJ total')).toBeVisible();
+  });
+
+  it('shows the total burn and the distance under steps and active calories, in km beside cm', () => {
+    render(<ActivityCard day={day()} energyUnit="kcal" lengthUnit="cm" />);
+    const lists = within(card())
+      .getAllByRole('list')
+      .map((list) =>
+        within(list)
+          .getAllByRole('listitem')
+          .map((item) => item.textContent),
+      );
+    expect(lists).toEqual([
+      ['9,412 steps', '513 kcal active'],
+      ['2,390 kcal total', '7.1 km'],
+    ]);
+    expect(
+      within(card()).getByRole('listitem', { name: 'Distance 7.1 kilometres' }),
+    ).toHaveTextContent('7.1 km');
+  });
+
+  it('writes the distance in miles for a person who reads feet and inches', () => {
+    render(
+      <ActivityCard day={day({ distanceM: 1_609.344 })} energyUnit="kcal" lengthUnit="ftIn" />,
+    );
+    expect(within(card()).getByRole('listitem', { name: 'Distance 1.0 miles' })).toHaveTextContent(
+      '1.0 mi',
+    );
+  });
+
+  it('leaves out the total and the distance when Health Connect gave none', () => {
+    render(
+      <ActivityCard
+        day={day({ totalKcal: null, distanceM: null })}
+        energyUnit="kcal"
+        lengthUnit="cm"
+      />,
+    );
+    expect(within(card()).getByText('9,412 steps')).toBeVisible();
+    expect(document.querySelector('[data-ui="home.activity.more"]')).toBeNull();
+    expect(within(card()).queryByText(/total/)).toBeNull();
+  });
+
+  it('shows a day that has only a total burn or only a distance, not the empty line', () => {
+    const only = { steps: null, activeKcal: null, totalKcal: null, distanceM: null };
+    const { rerender } = render(
+      <ActivityCard day={day({ ...only, totalKcal: 1_650 })} energyUnit="kcal" lengthUnit="cm" />,
+    );
+    expect(within(card()).getByText('1,650 kcal total')).toBeVisible();
+    expect(within(card()).queryByText(words.empty)).toBeNull();
+    expect(document.querySelector('[data-ui="home.activity.distance"]')).toBeNull();
+
+    rerender(
+      <ActivityCard day={day({ ...only, distanceM: 0 })} energyUnit="kcal" lengthUnit="cm" />,
+    );
+    expect(within(card()).getByText('0.0 km')).toBeVisible();
+    expect(document.querySelector('[data-ui="home.activity.total"]')).toBeNull();
   });
 
   it('says Health Connect has nothing for the day, with no row or an empty one', () => {
-    const { rerender } = render(<ActivityCard day={null} energyUnit="kcal" />);
+    const { rerender } = render(<ActivityCard day={null} energyUnit="kcal" lengthUnit="cm" />);
     expect(within(card()).getByText(words.empty)).toBeVisible();
     rerender(
       <ActivityCard
-        day={day({ steps: null, activeKcal: null, totalKcal: 2_000, distanceM: null })}
+        day={day({ steps: null, activeKcal: null, totalKcal: null, distanceM: null })}
         energyUnit="kcal"
+        lengthUnit="cm"
       />,
     );
     expect(within(card()).getByText(words.empty)).toBeVisible();
+  });
+});
+
+describe('distanceUnitOf', () => {
+  it('follows the length unit: km beside cm, miles beside feet and inches', () => {
+    expect(distanceUnitOf('cm')).toBe('km');
+    expect(distanceUnitOf('ftIn')).toBe('mi');
   });
 });
 

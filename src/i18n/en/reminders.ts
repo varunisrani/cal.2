@@ -54,6 +54,8 @@ export const reminders = {
         "This browser is blocking notifications from Platewise. Allow them in the browser's site settings, then come back here.",
       unsupported:
         "This browser can't show notifications. Adding Platewise to your home screen may make them available.",
+      // Inside the Android app (P11), where the page has no notifications at all.
+      unsupportedAndroid: 'Reminders are not available in the Android app yet.',
       openNote:
         'Reminders show while Platewise is open, or the next time you open it. They work best with the app installed.',
       noneOn: 'Every reminder is off. Switch on the ones you want.',

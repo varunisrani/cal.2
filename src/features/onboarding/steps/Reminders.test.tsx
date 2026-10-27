@@ -1,12 +1,16 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { onboarding } from '../../../i18n/en/onboarding';
 import { renderWizard, wizardAt } from '../testing/renderWizard';
 import { remindersOn, type AskNotifications } from '../wizard';
 
 const words = onboarding.onboarding.reminders;
 const continueName = onboarding.onboarding.wizard.continue;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('Reminders', () => {
   it('explains meal reminders and leaves them off until the person asks', () => {
@@ -83,6 +87,22 @@ describe('Reminders', () => {
 
     expect(latest().reminders).toBe('unsupported');
     expect(screen.getByRole('status')).toHaveTextContent(words.unsupported);
+  });
+
+  it('says reminders are not available in the Android app, where the home screen cannot help (P11)', async () => {
+    vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+    const user = userEvent.setup();
+    const { latest } = renderWizard({
+      state: wizardAt('reminders'),
+      ask: async () => 'unsupported',
+    });
+
+    await user.click(screen.getByRole('button', { name: words.ask }));
+
+    expect(latest().reminders).toBe('unsupported');
+    expect(remindersOn(latest())).toBe(false);
+    expect(screen.getByRole('status')).toHaveTextContent(words.unsupportedAndroid);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/home screen/);
   });
 
   it('skips with Continue without asking', async () => {

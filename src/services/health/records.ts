@@ -171,19 +171,24 @@ export interface WriteBackInput {
   readonly weighIns: readonly WeighIn[];
   readonly ledger: SentLedger;
   readonly window: DayWindow;
+  /** Epoch ms. Health Connect refuses a record dated after this, so such records wait. */
+  readonly now: number;
 }
 
 /**
  * Compares what is stored in the window with what was last sent: a record is sent when it is new
  * or its fingerprint changed, removed when it was sent from a day in the window and is no longer
  * stored there, and forgotten when its day is before the window. Imported weigh-ins are never sent
- * back.
+ * back. A record dated after `now` (an entry logged for later today) waits: it is neither sent
+ * nor removed nor forgotten, and the first pass after its time sends it, since Health Connect
+ * refuses it until then and one refused record fails the whole call.
  */
 export function writeBackPlan({
   entries,
   weighIns,
   ledger,
   window,
+  now,
 }: WriteBackInput): WriteBackPlan {
   const plan: WriteBackPlan = {
     nutrition: [],
@@ -197,9 +202,10 @@ export function writeBackPlan({
 
   for (const entry of entries) {
     if (!inWindow(entry.dayKey, window)) continue;
+    stored.add(entry.id);
+    if (entry.loggedAt > now) continue;
     const record = nutritionRecord(entry);
     const sig = fingerprint(record);
-    stored.add(entry.id);
     if (ledger[entry.id]?.sig === sig) continue;
     plan.nutrition.push(record);
     plan.sent[entry.id] = { kind: 'nutrition', day: entry.dayKey, sig };
@@ -207,9 +213,10 @@ export function writeBackPlan({
   for (const weighIn of weighIns) {
     const day = dayKeyOf(weighIn.at);
     if (isImportedWeighIn(weighIn.id) || !inWindow(day, window)) continue;
+    stored.add(weighIn.id);
+    if (weighIn.at > now) continue;
     const record = weightRecord(weighIn);
     const sig = fingerprint(record);
-    stored.add(weighIn.id);
     if (ledger[weighIn.id]?.sig === sig) continue;
     plan.weights.push(record);
     plan.sent[weighIn.id] = { kind: 'weight', day, sig };

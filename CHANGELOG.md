@@ -59,8 +59,9 @@ what each setting does: [docs/user/android.md](docs/user/android.md).
 ### Settings, Home and Progress
 
 - Settings: the Health Connect page, after Tracking & reminders.
-- Home: an Activity card for the day on show, with steps, active calories and workouts, or a note
-  that Health Connect has nothing for that day.
+- Home: an Activity card for the day on show, with steps, active calories and workouts, then the
+  total calories burned and the distance (km or miles), or a note that Health Connect has nothing
+  for that day.
 - Progress: steps and active calories for the last 7 or 30 days, as charts with their averages.
 
 ### Known issues
@@ -74,7 +75,6 @@ what each setting does: [docs/user/android.md](docs/user/android.md).
 - The app targets Android 15 (API level 35), as Capacitor 7 does. Google Play's yearly rule very
   likely asks new apps and updates for API level 36 since 31 August 2026: check it before a Play
   upload, which would first need Capacitor 8. Installing the APK directly is not affected.
-- Total calories burned and distance are read and stored, but no screen shows them yet.
 - Health data is read only while the app is open, and only for the last 30 days. A meal older
   than 30 days that was sent before is no longer updated or removed in Health Connect.
 

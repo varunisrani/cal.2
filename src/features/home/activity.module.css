@@ -1,6 +1,7 @@
 /*
- * Home's activity card (P11-04): the day's steps and active calories from Health Connect, then
- * its workouts. Every value comes from tokens.css; logical properties throughout.
+ * Home's activity card (P11-04): the day's steps and active calories from Health Connect, its
+ * total burn and distance under them, then its workouts. Every value comes from tokens.css;
+ * logical properties throughout.
  */
 
 .card {
@@ -20,6 +21,19 @@
 .figure {
   font-size: var(--type-lead);
   font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Total burn and distance: shown, never counted, so quieter than the figures above. */
+.more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: var(--type-body);
   font-variant-numeric: tabular-nums;
 }
 

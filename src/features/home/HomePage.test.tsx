@@ -4,6 +4,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeFetch } from '../../ai/testing/fakeFetch';
 import { DataProvider } from '../../data/DataProvider';
 import { createDraftsRepo } from '../../data/repos/draftsRepo';
+import type { HeightDisplayUnit } from '../../domain/units/body';
 import { createHealthRepo } from '../../data/repos/healthRepo';
 import { createPhotoRepo } from '../../data/repos/photoRepo';
 import { createSecretsRepo } from '../../data/repos/secretsRepo';
@@ -1391,12 +1392,24 @@ describe('HomePage: Health Connect on the Android app (P11-04)', () => {
    * Home with a health service over a fake Health Connect holding today's activity, synced once
    * while connected; 1 200 kcal eaten today against a 2 000 kcal goal.
    */
-  async function openWithHealth({ connected = true, counting = true } = {}) {
+  interface HealthOptions {
+    readonly connected?: boolean;
+    readonly counting?: boolean;
+    /** The length unit; the harness's en-US starts with feet and inches. */
+    readonly heightUnit?: HeightDisplayUnit;
+  }
+
+  async function openWithHealth({
+    connected = true,
+    counting = true,
+    heightUnit,
+  }: HealthOptions = {}) {
     const h = await openHarness();
     await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
     await h.repos.diaryRepo.add(makeEntry({ kcal: 1_200, loggedAt: FACTORY_NOW - HOUR }));
     await h.repos.settingsRepo.set('health.connected', connected);
     await h.repos.settingsRepo.set('health.countActiveCalories', counting);
+    if (heightUnit) await h.repos.settingsRepo.set('units.height', heightUnit);
     const healthRepo = createHealthRepo(h.db);
     const health = createHealthService({
       plugin: fakeHealthPlugin({ days: [TODAY_TOTALS], sessions: [WALK] }),
@@ -1432,8 +1445,23 @@ describe('HomePage: Health Connect on the Android app (P11-04)', () => {
     const card = within(screen.getByRole('region', { name: healthWords.health.home.title }));
     expect(card.getByText('8,040 steps')).toBeVisible();
     expect(card.getByText('350 kcal active')).toBeVisible();
+    // Total burn and distance are shown, never counted: the target above is goal + active only.
+    // en-US starts in feet and inches, so the distance is in miles.
+    expect(card.getByText('2,310 kcal total')).toBeVisible();
+    expect(card.getByRole('listitem', { name: 'Distance 3.8 miles' })).toHaveTextContent('3.8 mi');
     expect(card.getByRole('list', { name: healthWords.health.home.workouts })).toHaveTextContent(
       'Walking, 30m, 120 kcal',
+    );
+  });
+
+  it("writes the day's distance in km for a person who reads centimetres", async () => {
+    await openWithHealth({ heightUnit: 'cm' });
+    await waitFor(() =>
+      expect(screen.getByRole('region', { name: healthWords.health.home.title })).toBeVisible(),
+    );
+    const card = within(screen.getByRole('region', { name: healthWords.health.home.title }));
+    expect(card.getByRole('listitem', { name: 'Distance 6.1 kilometres' })).toHaveTextContent(
+      '6.1 km',
     );
   });
 

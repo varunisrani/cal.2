@@ -1,7 +1,10 @@
 import { useId } from 'react';
 import type { ActivityDay, ActivitySession } from '../../data/hooks';
+import type { HeightDisplayUnit } from '../../domain/units/body';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
+import { formatNumber } from '../../domain/units/numbers';
 import { formatDuration } from '../../i18n/format';
+import { currentLocale } from '../../i18n/locale';
 import { t, type TKey } from '../../i18n/t';
 import { Card } from '../../ui/Card';
 import styles from './activity.module.css';
@@ -36,22 +39,61 @@ function workoutLine(session: ActivitySession, unit: EnergyDisplayUnit): string 
       });
 }
 
+type DistanceUnit = 'km' | 'mi';
+
+const METRES_PER: Readonly<Record<DistanceUnit, number>> = { km: 1_000, mi: 1_609.344 };
+
+/** Distances follow the person's length unit (`units.height`): km beside cm, miles beside ft/in. */
+export function distanceUnitOf(lengthUnit: HeightDisplayUnit): DistanceUnit {
+  return lengthUnit === 'ftIn' ? 'mi' : 'km';
+}
+
+/** The day's distance, to one decimal in the locale's marks: "7.1 km", "4.4 mi". */
+function DistanceFigure({
+  metres,
+  unit,
+}: {
+  readonly metres: number;
+  readonly unit: DistanceUnit;
+}) {
+  const amount = formatNumber(metres / METRES_PER[unit], currentLocale(), 1, 1);
+  return (
+    <li
+      aria-label={t(`health.home.distanceName.${unit}`, { amount })}
+      data-ui="home.activity.distance"
+    >
+      {t(`health.home.distance.${unit}`, { amount })}
+    </li>
+  );
+}
+
 function hasData(day: ActivityDay | null): day is ActivityDay {
-  return day !== null && (day.steps !== null || day.activeKcal !== null || day.sessions.length > 0);
+  return (
+    day !== null &&
+    (day.steps !== null ||
+      day.activeKcal !== null ||
+      day.totalKcal !== null ||
+      day.distanceM !== null ||
+      day.sessions.length > 0)
+  );
 }
 
 export interface ActivityCardProps {
   /** The day on show as Health Connect gave it, or null when it gave nothing. */
   readonly day: ActivityDay | null;
   readonly energyUnit: EnergyDisplayUnit;
+  /** The person's length unit (`units.height`), which picks km or miles for the distance. */
+  readonly lengthUnit: HeightDisplayUnit;
 }
 
 /**
  * Home's activity card (P11-04), on the Android app while Health Connect is connected: the day's
- * steps and active calories, then its workouts with their length and energy, or a line saying
- * Health Connect has nothing for the day. Figures are shown as Health Connect gives them, rounded.
+ * steps and active calories, under them its total calories burned and distance (shown, never
+ * counted in the target: D-16.89), then its workouts with their length and energy, or a line
+ * saying Health Connect has nothing for the day. Each figure shows only when Health Connect gave
+ * it, as it gave it, rounded.
  */
-export function ActivityCard({ day, energyUnit }: ActivityCardProps) {
+export function ActivityCard({ day, energyUnit, lengthUnit }: ActivityCardProps) {
   const workoutsId = useId();
   return (
     <Card heading={t('health.home.title')} className={styles.card} data-ui="home.activity">
@@ -69,6 +111,18 @@ export function ActivityCard({ day, energyUnit }: ActivityCardProps) {
               </li>
             )}
           </ul>
+          {day.totalKcal === null && day.distanceM === null ? null : (
+            <ul className={styles.more} data-ui="home.activity.more">
+              {day.totalKcal === null ? null : (
+                <li data-ui="home.activity.total">
+                  {t('health.home.total', { amount: energyText(day.totalKcal, energyUnit) })}
+                </li>
+              )}
+              {day.distanceM === null ? null : (
+                <DistanceFigure metres={day.distanceM} unit={distanceUnitOf(lengthUnit)} />
+              )}
+            </ul>
+          )}
           {day.sessions.length === 0 ? null : (
             <>
               <h3 id={workoutsId} className={styles.workoutsHeading}>

@@ -1,4 +1,5 @@
 import { t, type TKey } from '../../../i18n/t';
+import { isHealthAvailable } from '../../../services/health/platform';
 import { Button } from '../../../ui/Button';
 import { Icon } from '../../../ui/icons';
 import styles from '../onboarding.module.css';
@@ -17,6 +18,16 @@ const ANSWER_KEYS: Readonly<Record<ReminderAnswer, TKey>> = {
   dismissed: 'onboarding.reminders.dismissed',
   unsupported: 'onboarding.reminders.unsupported',
 };
+
+/**
+ * The line for an answer. The Android app's page has no notifications at all, so there the
+ * browser's advice (add it to the home screen) cannot help, and the line says so instead.
+ */
+function answerKey(answer: ReminderAnswer): TKey {
+  return answer === 'unsupported' && isHealthAvailable()
+    ? 'onboarding.reminders.unsupportedAndroid'
+    : ANSWER_KEYS[answer];
+}
 
 export interface RemindersProps extends StepProps {
   /** Asks the browser for notification permission. */
@@ -58,7 +69,7 @@ export function Reminders({ state, dispatch, requestNotifications }: RemindersPr
         </Button>
       ) : null}
       <p className={styles.note} role="status" data-ui="wizard.reminders.status">
-        {answer === null ? t('onboarding.reminders.skip') : t(ANSWER_KEYS[answer])}
+        {answer === null ? t('onboarding.reminders.skip') : t(answerKey(answer))}
       </p>
     </>
   );

@@ -60,9 +60,10 @@ What each kind is for:
 - **Steps:** the day's steps on Home and the steps chart on Progress.
 - **Active calories:** the calories you burned by moving, on Home and on Progress, and the ones
   counted in your target (see below).
-- **Total calories:** what you burned in all, resting included. Platewise reads it with the day
-  but does not show it yet, and never adds it to your target.
-- **Distance:** read with the day; not shown yet.
+- **Total calories:** what you burned in all, resting included, on Home's activity card under
+  your steps and active calories. It is never added to your target.
+- **Distance:** the day's distance on Home's activity card, in kilometres or miles following your
+  height unit (centimetres or feet and inches).
 - **Workouts:** the day's workouts on Home, with their length and, when known, their calories.
 - **Weight:** weigh-ins from other apps and scales, added to your weight history.
 
@@ -150,7 +151,8 @@ These are two different things:
 ## Limits
 
 - Reminders cannot be turned on in the Android app. Its built-in browser view has no
-  notifications, so Settings › Tracking & reminders says notifications are not available.
+  notifications, so Settings › Tracking & reminders and the onboarding step say reminders are not available in
+  the Android app yet.
 - Platewise has not yet been run on a real phone in this project. The app is built and its code is
   tested on a computer, against a stand-in for Health Connect; the first tests on a device are the
   owner's. Expect rough edges until then.

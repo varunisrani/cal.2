@@ -12,7 +12,8 @@ import {
   writeBackPlan,
 } from './records';
 
-const DAY = 86_400_000;
+const HOUR = 3_600_000;
+const DAY = 24 * HOUR;
 const TODAY = '2026-10-26';
 const WINDOW = syncWindow(TODAY);
 
@@ -173,6 +174,7 @@ describe('writeBackPlan', () => {
       weighIns: [typed, imported],
       ledger: {},
       window: WINDOW,
+      now: FACTORY_NOW,
     });
     expect(plan.nutrition).toEqual([nutritionRecord(entry)]);
     expect(plan.weights).toEqual([weightRecord(typed)]);
@@ -197,6 +199,7 @@ describe('writeBackPlan', () => {
         old: { kind: 'nutrition', day: '2026-09-26', sig: 's' },
       },
       window: WINDOW,
+      now: FACTORY_NOW,
     });
     expect(plan.nutrition.map((record) => record.clientId)).toEqual(['edited']);
     expect(plan.removeNutrition).toEqual(['deleted']);
@@ -211,8 +214,57 @@ describe('writeBackPlan', () => {
       weighIns: [],
       ledger: { moved: { kind: 'nutrition', day: '2026-10-25', sig: 's' } },
       window: WINDOW,
+      now: FACTORY_NOW,
     });
     expect(plan.nutrition).toEqual([]);
     expect(plan.removeNutrition).toEqual(['moved']);
+  });
+
+  it('holds back an entry and a weigh-in dated later today, and sends them once their time has passed', () => {
+    const lunch = makeEntry({ id: 'lunch', loggedAt: FACTORY_NOW - HOUR });
+    const exactlyNow = makeEntry({ id: 'now', loggedAt: FACTORY_NOW });
+    const dinner = makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR });
+    const evening = makeWeighIn({ id: 'evening', at: FACTORY_NOW + 8 * HOUR });
+    const input = {
+      entries: [lunch, exactlyNow, dinner],
+      weighIns: [evening],
+      ledger: {},
+      window: WINDOW,
+    };
+
+    const before = writeBackPlan({ ...input, now: FACTORY_NOW });
+    expect(before.nutrition.map((record) => record.clientId)).toEqual(['lunch', 'now']);
+    expect(before.weights).toEqual([]);
+    expect(Object.keys(before.sent)).toEqual(['lunch', 'now']);
+
+    const after = writeBackPlan({ ...input, now: FACTORY_NOW + 6 * HOUR });
+    expect(after.nutrition.map((record) => record.clientId)).toEqual(['lunch', 'now', 'dinner']);
+    expect(after.weights).toEqual([]);
+
+    const later = writeBackPlan({ ...input, now: FACTORY_NOW + 8 * HOUR });
+    expect(later.weights).toEqual([weightRecord(evening)]);
+  });
+
+  it('neither removes nor forgets a record sent before whose new time is still to come', () => {
+    const moved = makeEntry({ id: 'moved', loggedAt: FACTORY_NOW + 2 * HOUR });
+    const weighIn = makeWeighIn({ id: 'w-moved', at: FACTORY_NOW + 2 * HOUR });
+    const ledger = {
+      moved: { kind: 'nutrition', day: TODAY, sig: 'at its old time' },
+      'w-moved': { kind: 'weight', day: TODAY, sig: 'at its old time' },
+    } as const;
+    const input = { entries: [moved], weighIns: [weighIn], ledger, window: WINDOW };
+
+    expect(writeBackPlan({ ...input, now: FACTORY_NOW })).toEqual({
+      nutrition: [],
+      removeNutrition: [],
+      weights: [],
+      removeWeights: [],
+      sent: {},
+      forget: [],
+    });
+
+    const due = writeBackPlan({ ...input, now: FACTORY_NOW + 2 * HOUR });
+    expect(due.nutrition).toEqual([nutritionRecord(moved)]);
+    expect(due.weights).toEqual([weightRecord(weighIn)]);
   });
 });

@@ -174,6 +174,7 @@ export const onboarding = {
       dismissed: 'Reminders stay off for now. You can switch them on later in Settings.',
       unsupported:
         'This browser cannot show notifications, so reminders stay off. Adding Platewise to your home screen may help.',
+      unsupportedAndroid: 'Reminders are not available in the Android app yet, so they stay off.',
       skip: 'Not now? Continue, and nothing is switched on.',
     },
     building: {
