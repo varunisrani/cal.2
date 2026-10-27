@@ -19,6 +19,7 @@ import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
 import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
+import type { ReminderEngine } from './reminders/engine';
 import type { ReprocessService } from './reprocess';
 import type { WaterService } from './water';
 
@@ -68,6 +69,11 @@ export interface Services {
   readonly water?: WaterService;
   /** Fasts, the fasting settings and "End fast and log" (P07-07); optional for the same reason. */
   readonly fasting?: FastingService;
+  /**
+   * The reminder engine (P09-08): one for the app, started by `main.tsx`. Erase everything stops
+   * it; a restore or a permission the page re-read asks it to check again. Optional likewise.
+   */
+  readonly reminders?: ReminderEngine;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

@@ -19,6 +19,7 @@ import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
 import { profile } from './en/profile';
 import { progress } from './en/progress';
+import { reminders } from './en/reminders';
 import { review } from './en/review';
 import { reuse } from './en/reuse';
 import { scan } from './en/scan';
@@ -57,6 +58,7 @@ export const enPartitions = {
   trackers,
   coach,
   fasting,
+  reminders,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

@@ -7,6 +7,7 @@ import { App } from './app/App';
 import { appState } from './app/appState';
 import type { ShellPorts } from './app/ports';
 import { createRouter, windowHost } from './app/router';
+import { documentVisibility } from './app/useTuneUp';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
 import { hasUnreadableData } from './data/guard';
@@ -48,6 +49,12 @@ import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
 import { createProgressService } from './services/progress';
+import { createReminderEngine } from './services/reminders/engine';
+import {
+  browserTimers,
+  localReminderMemory,
+  storedReminderSources,
+} from './services/reminders/ports';
 import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 import { createWaterService } from './services/water';
@@ -136,6 +143,18 @@ async function start(): Promise<void> {
     unnamed: (code) => t('scan.unnamed', { code }),
   });
 
+  // P09-08: reminders are worked out in the page (D-16.5). P09-09 plugs in the browser's
+  // notification permission and the notifier; until then nothing is allowed, so nothing shows.
+  const reminders = createReminderEngine({
+    ...storedReminderSources({ settingsRepo, fastRepo, diaryRepo, profileRepo }),
+    clock: systemClock,
+    timers: browserTimers,
+    visibility: documentVisibility,
+    memory: localReminderMemory(),
+    permitted: () => false,
+    show: () => undefined,
+  });
+
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
     diary: createDiaryService({
@@ -212,6 +231,7 @@ async function start(): Promise<void> {
       clock: systemClock,
       onFirstEntry: () => storage.requestPersistence(),
     }),
+    reminders,
     clock: systemClock,
   };
   const data: DataSources = {
@@ -228,6 +248,7 @@ async function start(): Promise<void> {
     clock: systemClock,
   };
   render(createShellPorts({ profileRepo, settingsRepo }), services, data);
+  reminders.start();
   // D-16.46: an analysis that finished before a reload opens its review again.
   analysis.restore().catch((error: unknown) => {
     console.error('Platewise: the stored analysis could not be read', error);

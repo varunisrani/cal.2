@@ -509,7 +509,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows at most three lines, the first three in their order (ACC-G8-2, R05.19)
   - Test: src/domain/progress/recap.test.ts > highlightsFor > keeps the first three in their order when more improved (R05.19, ACC-G8-2)
 - **R05.20** The fasting goal alert is dropped on end, cancel and delete and re-evaluated after edits and on open
-  - Review: owned by P09-08
+  - Test: src/services/reminders/ports.test.ts > the engine over the stored data > drops the goal alert when the fast is cancelled in the store (R05.20)
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > moves the alert to the new goal after an edit
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > shows nothing when an edit puts the goal in the past
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > drops the goal when the fast is cancelled or deleted, even with no word before the goal time
+  - Test: src/services/reminders/schedule.test.ts > planFastGoal (R05.20) > never alerts for a fast first seen after its goal: the goal time must be ahead
 - **R05.21** Fasts show on the day they end; the active fast only on today
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows the running fast on today and not on the day it started (R05.21)
@@ -546,11 +550,16 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/backup/archive.test.ts > packBackup and unpackBackup > skips the same names when reading, with every other stray entry, and lists them (R06.9)
   - Test: src/services/backup/archive.test.ts > isSafePhotoName > refuses every other name rather than cleaning it up (R06.9)
 - **R06.10** Reminders re-check every switch and the permission when due; everything is cancelled on erase, master off or permission loss
-  - Review: owned by P09-08
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > does not show a reminder when the permission was taken back before fire time (R06.10)
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > cancels the pending timer when the master switch goes off (R06.10)
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > cancels everything on stop (erase everything): no timer, no listener, nothing shown (R06.10)
+  - Test: src/services/reminders/ports.test.ts > the engine over the stored data > cancels the timer when the master switch is turned off in the store (R06.10)
 - **R06.11** Reminder times are the next wall-clock occurrence each time (DST-safe)
-  - Review: owned by P09-08
+  - Test: src/services/reminders/schedule.test.ts > nextAt (R06.11) > gives 08:00 the morning after the March DST change in New York, 23 hours later, never 09:00
+  - Test: src/services/reminders/schedule.test.ts > nextAt (R06.11) > stays at 08:00 every day from March to November, through both changes, without drifting
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows 08:00 at 08:00 on the clock the morning after the March DST change (R06.11)
 - **R06.12** There is no streak reminder (D-16.41), so its never-firing condition cannot occur; tested by the reminder list
-  - Review: owned by P09-08
+  - Test: src/services/reminders/schedule.test.ts > the reminder list (D-16.41) > has breakfast, lunch, dinner, the summary, water and the fasting goal, and no streak or food-log reminder (R06.12)
 - **R06.13** The notifications switch turns on only after a grant and shows the real permission on every focus
   - Review: owned by P09-09
 - **R06.14** Exports always hold kcal; kJ users get a note and a kcal header

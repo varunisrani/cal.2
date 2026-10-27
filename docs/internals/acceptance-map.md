@@ -719,7 +719,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H5 · Water reminder with a time picker, default 14 (P1)
 
 - **ACC-H5-1** A water reminder set for 15:00 shows at 15:00 while the app is open
-  - Review: P09-08
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows a water reminder set for 15:00 at 15:00 while the app is open (ACC-H5-1)
 
 ### H6 · Fasting tracking switch (off by default) and a default goal of … (P1)
 
@@ -753,7 +753,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### H11 · Fasting goal-reached alert (P1)
 
 - **ACC-H11-1** A fast reaching its goal while the app is open shows the alert; an ended fast never does
-  - Review: P09-08
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > shows the goal at start + goal while the app is open, once (ACC-H11-1)
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > never shows the goal of a fast that ended before it (ACC-H11-1)
+  - Test: src/services/reminders/ports.test.ts > the engine over the stored data > shows the goal of a fast left running, at its goal time (ACC-H11-1)
 
 ## I · Coach
 
@@ -897,7 +899,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-J11-1** Denying notification permission leaves the switch off with a pointer to browser settings
   - Review: P09-09
 - **ACC-J11-2** A reminder missed while the app was closed shows once on the next open
-  - Review: P09-08
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows a lunch reminder missed while the app was closed once on the next open (ACC-J11-2)
+  - Test: src/services/reminders/schedule.test.ts > due > lists a reminder once when its time passed since it was dealt with (ACC-J11-2)
 
 ## K · Data management, backup and privacy
 
