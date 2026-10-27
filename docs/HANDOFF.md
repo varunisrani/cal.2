@@ -123,6 +123,10 @@ landed. The next window starts at the 10:20 IST reset: launch the other two wave
 - P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse
   (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page (the
   marked place in `src/features/settings/tracking/TrackingPage.tsx`; ACC-J10-1's fasting half).
+- P08 wave A (independent of P06/P07): `w11-p08s1` (P08-01..03 context, tools, limiter), `w11-p08s2`
+  (P08-05..07 chat wires; tool schemas passed in), `w11-p08s3` (P08-04 history, P08-12 chips, P08-13
+  Markdown; `coach` partition). Then P08 wave B: P08-08 engine + P08-09 session; P08-10 page + P08-11
+  composer; P08-14 e2e.
 Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
 water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
 `PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.

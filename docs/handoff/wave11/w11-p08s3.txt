@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s3 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 wave A slice S3 = P08-04, P08-12, P08-13: the history normaliser, the prompt chips, and the Markdown renderer with copy. Spec: those three rows in docs/plan/phases/P08-coach.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 04 §3.3, §3.4, §3.7; D-16.33, D-16.34, D-16.48. Traps and acceptance ids: every row whose Review line names P08-04, P08-12 or P08-13.
+Task notes (each before its code): docs/notes/P08/history-normaliser.md, docs/notes/P08/prompt-chips.md, docs/notes/P08/markdown-and-copy.md.
+
+You own:
+- src/services/coach/history.ts (+ test)
+- src/features/coach/{chips.ts,ChipRow.tsx,markdown.tsx} (+ tests; css) and a new catalogue partition src/i18n/en/coach.ts for the chip and copy words (register it in src/i18n/en.ts: one additive line). Do not replace CoachPage.tsx (P08-10 mounts your parts later): make ChipRow and the renderer components testable on their own.
+
+Do not touch:
+- src/services/coach/{context,tools,toolSchemas,limiter,engine,session}.ts and src/ai/chat/** (other P08 slices, now or next), src/features/coach/CoachPage.tsx
+- src/features/** (other builders, now: P06 and P07 slices on Home, log, fasting), src/domain/** (import only), src/data/** (import only: the coach repository and the stores the snapshot reads), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges.
+- Markdown to React elements, never innerHTML: headings # to ###, bullets, numbered items, fenced code, paragraphs; inline bold, italic, code and http/https links in a new tab with rel="noopener noreferrer"; everything else is text. Chips: four per goal in our own wording covering the intents the row lists; no text taken from the reference.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/coach src/features/coach src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s2 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 wave A slice S2 = P08-05, P08-06, P08-07: the three chat wires with tool calling (OpenAI-compatible, Anthropic, Gemini). Spec: those three rows in docs/plan/phases/P08-coach.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 04 §3.11; R04.13, R04.15. Traps and acceptance ids: every row whose Review line names P08-05, P08-06 or P08-07.
+Task notes (each before its code): docs/notes/P08/chat-wire-openai.md, docs/notes/P08/chat-wire-anthropic.md, docs/notes/P08/chat-wire-gemini.md.
+
+You own:
+- src/ai/chat/{openaiChat,anthropicChat,geminiChat}.ts (+ tests) and a small shared type module for a chat round (src/ai/chat/types.ts) that the engine (P08-08) will drive: one request in, either tool calls or a text answer out, plus the provider-specific message to append before the next round
+- wire fixtures under the existing fake-fetch fixtures (src/ai/testing/** or wherever P03-02 put them: additive)
+
+Do not touch:
+- src/services/coach/** (other P08 slices), src/ai/{client,transport,adapters,tasks,parse}/** and src/ai/*.ts (landed: import; reuse the token-cap rule of P03-08, the endpoints of P03-04 and the transport; extend additively only if a hook is missing), src/features/coach/** (another builder, now)
+- src/features/** (other builders, now: P06 and P07 slices on Home, log, fasting), src/domain/** (import only), src/data/** (import only: the coach repository and the stores the snapshot reads), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Tool calling is a third-party protocol (04 §2): check each field against the vendor's current public docs, not the reference. The tool names and schemas come from P08-02 (built now by another builder): take them as a parameter (`tools: readonly ToolSchema[]` with name, description, JSON Schema) so the wires do not import the coach service. Gemini: append the model's parts verbatim (thought signatures) and send `generationConfig.maxOutputTokens`. Anthropic: the browser header as the landed adapter sends it. OpenAI-compatible: `max_completion_tokens` for the families P03-08 names.
+- No live network in tests: the fake fetch only.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/ai --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s1 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 wave A slice S1 = P08-01, P08-02, P08-03: the Coach's per-turn context and system prompt, the six read-only nutrition tools with their schemas, and the tool-result limiter. Spec: those three rows in docs/plan/phases/P08-coach.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 04 §3.8–3.10; D-16.27, D-16.32. Traps and acceptance ids: every row whose Review line names P08-01, P08-02 or P08-03.
+Task notes (each before its code): docs/notes/P08/coach-context.md, docs/notes/P08/nutrition-tools.md, docs/notes/P08/tool-result-limiter.md.
+
+You own:
+- src/services/coach/{context,tools,toolSchemas,limiter}.ts (+ tests) and a coach prompt module if the row names one (src/ai/prompts/coach.ts or as the row says)
+- a data snapshot type the engine (P08-08) will take at send time: build the context and run the tools against a plain snapshot object, never live stores
+
+Do not touch:
+- src/ai/chat/** and src/services/coach/{history,engine,session}.ts (other P08 slices, now or next), src/features/coach/** (another builder, now)
+- src/features/** (other builders, now: P06 and P07 slices on Home, log, fasting), src/domain/** (import only), src/data/** (import only: the coach repository and the stores the snapshot reads), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Our tool names only: data_overview, weight_log, body_fat_log, daily_energy_totals, food_log, fasting_log (the reference's names are banned in product code; the banned check enforces it). Dates are local ISO days; a missing or unparseable `to` → today and `from` → `to` − 30 days, never rejected, the effective range echoed; limits clamped. The limiter applies to every result on every provider: ≤ 60 000 characters unchanged, otherwise keep the newest rows of the longest array by binary search, with the note the row gives.
+- Pure functions where the row allows; every visible word (none expected here: the model sees English text we write) stays out of the UI catalogue unless the row says otherwise.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/coach src/ai/prompts --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
