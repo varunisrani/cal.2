@@ -11,6 +11,8 @@ import { CopyDaySheet } from '../log/CopyDaySheet';
 import { DescribeSheet } from '../log/DescribeSheet';
 import { ManualSheet } from '../log/ManualSheet';
 import { ReuseSheet } from '../log/reuse/ReuseSheet';
+import { LookupOverlay } from '../log/scan/LookupOverlay';
+import { ScanSheet } from '../log/scan/ScanSheet';
 import { DaySummary } from './DaySummary';
 import { Diary } from './Diary';
 import styles from './home.module.css';
@@ -28,14 +30,10 @@ export const OFTEN_SHEET = 'often';
 export const SAVED_SHEET = 'saved';
 /** The copy-a-day sheet's place on the sheet stack (P06-13). */
 export const COPY_DAY_SHEET = 'copyDay';
+/** The barcode scanner's place on the sheet stack. */
+export const SCAN_SHEET = 'scan';
 
 const SETTINGS = ['units.energy', 'meals.times', 'goals.nutrients', 'menu.layout'] as const;
-
-/**
- * The hook every add-menu method runs first. P06-17 arms a label scan after a barcode miss and
- * passes its disarm here; until then nothing is ever armed.
- */
-const clearArmedLabelScan = (): void => undefined;
 
 /**
  * Home for today (the week bar and the day swipe come in P07): the gauge and pillars, the diary
@@ -52,7 +50,7 @@ export function HomePage() {
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
-  const { captureDrafts, analysis } = useServices();
+  const { captureDrafts, analysis, barcode } = useServices();
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
   const describe = useSheet(DESCRIBE_SHEET);
@@ -60,6 +58,7 @@ export function HomePage() {
   const often = useSheet(OFTEN_SHEET);
   const saved = useSheet(SAVED_SHEET);
   const copyDay = useSheet(COPY_DAY_SHEET);
+  const scan = useSheet(SCAN_SHEET);
   // What the capture sheet's "Add photo" opens; a sheet brought back after a reload uses the library.
   const [picker, setPicker] = useState<CapturePicker>('library');
 
@@ -80,6 +79,17 @@ export function HomePage() {
     };
   }, [captureDrafts, analysis, router]);
 
+  // A label scan armed after a barcode miss lives only as long as the photos sheet it opened:
+  // Cancel, removing the last photo, Back or leaving Home all drop it (R02.20).
+  const captureOpen = capture.open;
+  useEffect(() => {
+    if (!barcode || !captureOpen) return undefined;
+    return () => barcode.clearArmedLabel();
+  }, [barcode, captureOpen]);
+
+  /** What every add-menu method runs first: no other method may inherit an armed label scan. */
+  const clearArmedLabelScan = (): void => barcode?.clearArmedLabel();
+
   const choose = (method: OfferedMethod): void => {
     switch (method) {
       case 'camera':
@@ -92,6 +102,9 @@ export function HomePage() {
         return;
       case 'manual':
         manual.show();
+        return;
+      case 'barcode':
+        scan.show();
         return;
       case 'recent':
         recent.show();
@@ -112,9 +125,23 @@ export function HomePage() {
   };
 
   const analysePhotos = (request: CaptureRequest): void => {
+    // Taken before the sheet closes: closing drops whatever is still armed.
+    const armedLabel = barcode?.takeArmedLabel() ?? null;
     capture.close();
-    // Never rejects. P06-17 adds `armedLabel` when these photos are a label scan's.
-    void analysis?.start('photo', request);
+    // Never rejects; a label scan's photos run as that product's label.
+    void analysis?.start('photo', armedLabel === null ? request : { ...request, armedLabel });
+  };
+
+  const lookUp = (code: string): void => {
+    scan.close();
+    // Never rejects; the lookup layer shows how it goes.
+    void barcode?.lookup(code);
+  };
+
+  /** "Scan label" held the code: the label's photo comes from the camera. */
+  const photographLabel = (): void => {
+    setPicker('camera');
+    capture.show();
   };
 
   const reads = [entries, targets, settings];
@@ -188,6 +215,8 @@ export function HomePage() {
       <ReuseSheet list="often" open={often.open} onClose={often.close} />
       <ReuseSheet list="saved" open={saved.open} onClose={saved.close} />
       <CopyDaySheet open={copyDay.open} onClose={copyDay.close} targetDay={dayKey} />
+      <ScanSheet open={scan.open} onCode={lookUp} onClose={scan.close} />
+      {barcode ? <LookupOverlay onScanLabel={photographLabel} /> : null}
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
+import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
@@ -44,6 +45,8 @@ export interface Services {
   readonly savedMeals?: SavedMealsService;
   /** Copies a day's entries onto another day (P06-13); optional for the same reason. */
   readonly copyDay?: CopyDayService;
+  /** Barcode scanning, lookup and the label-scan hand-off (P06-14, P06-17); optional likewise. */
+  readonly barcode?: BarcodeService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

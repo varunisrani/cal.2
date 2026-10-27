@@ -160,9 +160,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/barcodeKey.test.ts > barcodeKey > gives a UPC-A and its EAN-13 form the same key (R02.14)
   - Test: src/services/barcode/fdc.test.ts > gtinSpellings and sameGtin (R02.14) > spells 012345678905 as scanned, without zeros and padded to 13 and 14 digits
   - Test: src/services/barcode/fdc.test.ts > lookupFdc: the exact Branded match (R02.14, R02.16) > ignores a fuzzy hit with another GTIN
-  - Review: the scan flow owned by P06-17
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > finds a label saved under the UPC-A form when the EAN-13 form is scanned, and back (R02.14)
+  - Test: src/domain/food/barcode.test.ts > barcodeKey (R02.14) > gives a UPC-A code and its EAN-13 form the same key
 - **R02.15** Open Food Facts wins; the saved label and FDC are tried only after not-found or no-nutrition; same order on every scan path
-  - Review: owned by P06-17
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > takes an Open Food Facts product and never asks the saved label or FoodData Central (ACC-D20-1)
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > reopens the newest label saved for the code after a not-found, without asking FoodData Central (ACC-D21-1)
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > asks FoodData Central after no nutrition and no saved label, with a stored key (ACC-J9-1)
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > keeps Open Food Facts’ own miss when FoodData Central is down or has no exact match
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > reports a key FoodData Central refuses as its own failure, which offers a label scan
+  - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > sends nothing to FoodData Central without a key or with a blank one, and keeps Open Food Facts’ not-found
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > reads our fixture per serving, preferring per-serving values to scaled per-100 g ones
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > scales per-100 g values by 0.3 for a 30 g serving
@@ -189,7 +195,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/photos.test.ts > stored photos are never rewritten (R02.19) > makes a missing thumbnail for a restored 4 000 px photo and leaves its bytes as they were
 - **R02.20** The capture note is stored on the entry; the label-scan barcode is armed once and cleared on every other exit
   - Test: src/features/log/AddMenu.test.tsx > AddMenu > clears an armed label scan before every method it hands on (R02.20)
-  - Review: owned by P06-17 (the arming and the analysis hand-off)
+  - Test: src/services/barcode/lookup.test.ts > createLabelScanHold (R02.20) > gives the held code once, trimmed
+  - Test: src/services/barcode/lookup.test.ts > createLabelScanHold (R02.20) > forgets the code when cleared, and holds nothing for a blank code
+  - Test: src/services/barcode/lookup.test.ts > createBarcodeService > forgets a held code when it is cleared, or when another lookup starts (R02.20)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > drops the held code when the photos sheet closes without Analyse, by Cancel or Back (R02.20)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > drops a held code when another method is chosen from the menu (R02.20)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)
 - **R02.21** Saving an untouched entry keeps its exact timestamp
   - Review: owned by P06-11
 - **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator

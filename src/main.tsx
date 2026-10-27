@@ -24,9 +24,11 @@ import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
+import { t } from './i18n/t';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
+import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
 import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
@@ -115,6 +117,17 @@ async function start(): Promise<void> {
     overlay: appState,
     fetch: browserFetch,
   });
+  // A product found by barcode becomes the analysis draft and opens through the same review.
+  const barcode = createBarcodeService({
+    fetch: browserFetch,
+    secretsRepo,
+    diaryRepo,
+    draftsRepo,
+    photoRepo,
+    photos,
+    openReview: () => analysis.restore(),
+    unnamed: (code) => t('scan.unnamed', { code }),
+  });
 
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
@@ -158,6 +171,7 @@ async function start(): Promise<void> {
     }),
     savedMeals: createSavedMealsService({ savedMealsRepo: createSavedMealsRepo(db), photoRepo }),
     copyDay: createCopyDayService({ diaryRepo }),
+    barcode,
     clock: systemClock,
   };
   const data: DataSources = {

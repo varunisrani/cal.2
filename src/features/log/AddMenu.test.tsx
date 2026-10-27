@@ -84,19 +84,18 @@ describe('AddMenu', () => {
     expect(row(words.method.saved)).toHaveAttribute('data-ui', 'home.add.saved');
   });
 
-  it('leaves off the methods whose sheets are not built yet, and a group they leave empty', () => {
-    expect(METHODS_NOT_BUILT_YET).toEqual(['barcode']);
-    mount(DEFAULT_MENU_LAYOUT);
+  it('holds nothing back by default, and leaves off a withheld method and a group it leaves empty', () => {
+    expect(METHODS_NOT_BUILT_YET).toEqual([]);
+    mount(DEFAULT_MENU_LAYOUT, { withheld: ['barcode'] });
     open();
     expect(rowNames()).toEqual([words.group.snapScan, words.group.describe, words.group.reuse]);
     fireEvent.click(row(words.group.snapScan));
     expect(rowNames()).toEqual([words.method.camera, words.method.library, BACK]);
     cleanup();
-    mount(layoutOf([['g1', 'Scan', ['barcode']]], ['manual']));
+    mount(layoutOf([['g1', 'Scan', ['barcode']]], ['manual']), { withheld: ['barcode'] });
     open();
     expect(rowNames()).toEqual([words.method.manual]);
   });
-
   it('clears an armed label scan before every method it hands on (R02.20)', () => {
     const offered = ADD_METHODS.filter(isOffered);
     const { steps, onChoose } = mount(layoutOf([], offered), { withheld: [] });
@@ -147,7 +146,7 @@ describe('AddMenu', () => {
   });
 
   it('never shows the reserved voice, and draws no button when nothing is left to offer', () => {
-    mount(layoutOf([['g1', 'Talk', ['voice']]], ['voice', 'barcode']));
+    mount(layoutOf([['g1', 'Talk', ['voice']]], ['voice', 'recent']), { withheld: ['recent'] });
     expect(screen.queryByRole('button')).toBeNull();
     cleanup();
     mount({ version: 1, groups: [], loose: [] });

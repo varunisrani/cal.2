@@ -1,11 +1,20 @@
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { fakeFetch } from '../../ai/testing/fakeFetch';
+import { createDraftsRepo } from '../../data/repos/draftsRepo';
+import { createPhotoRepo } from '../../data/repos/photoRepo';
+import { createSecretsRepo } from '../../data/repos/secretsRepo';
 import { capture } from '../../i18n/en/capture';
 import { common } from '../../i18n/en/common';
 import { home } from '../../i18n/en/home';
 import { log } from '../../i18n/en/log';
 import { menu } from '../../i18n/en/menu';
+import { scan } from '../../i18n/en/scan';
+import { err } from '../../lib/result';
 import type { AnalysisService, AnalysisState } from '../../services/analysis';
+import type { Scanner } from '../../services/barcode/decoder';
+import { createBarcodeService } from '../../services/barcode/lookup';
+import { OFF_PRODUCT_URL } from '../../services/barcode/off';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
 import { createCopyDayService } from '../../services/copyDay';
@@ -21,6 +30,7 @@ import {
   OFTEN_SHEET,
   RECENT_SHEET,
   SAVED_SHEET,
+  SCAN_SHEET,
 } from './HomePage';
 import {
   closeHarnesses,
@@ -412,5 +422,184 @@ describe('HomePage: the add menu opens its sheets (P06-01)', () => {
     fireEvent.click(screen.getByRole('menuitem', { name: menuWords.method.manual }));
     await untilShown('[data-ui="manual.name"]');
     expect(h.router.current().sheets).toEqual([MANUAL_SHEET]);
+  });
+});
+
+// ---- Barcodes (P06-14, P06-17) -----------------------------------------------------------------
+
+const scanWords = scan.scan;
+const CODE = '0712345000108';
+const OFF_MISS = { status: 404, json: { status: 0 } };
+const OFF_FOUND = {
+  json: {
+    status: 1,
+    product: {
+      product_name: 'Rye Crackers',
+      serving_quantity: 25,
+      nutriments: {
+        'energy-kcal_100g': 410,
+        proteins_100g: 11,
+        carbohydrates_100g: 68,
+        fat_100g: 9,
+      },
+    },
+  },
+};
+
+/** A camera that is never there: these tests type the digits. */
+const noCamera: Scanner = {
+  openCamera: () => Promise.resolve(err('unavailable')),
+  watch: () => () => undefined,
+};
+
+/**
+ * Home with the real barcode service over the harness's database and a scripted Open Food Facts.
+ * The capture draft is empty when Home opens and holds `labelPhotos` once the sheet opens.
+ */
+async function openHomeWithBarcodes(labelPhotos: readonly string[] = []) {
+  const h = await openHarness();
+  await h.repos.profileRepo.save(makeProfile());
+  const fake = fakeFetch();
+  const captureDrafts = captureStandIn();
+  captureDrafts.load
+    .mockResolvedValueOnce(NO_DRAFT)
+    .mockResolvedValue({ ...NO_DRAFT, photoIds: labelPhotos });
+  const analysis = analysisStandIn();
+  const draftsRepo = createDraftsRepo(h.db);
+  const barcode = createBarcodeService({
+    fetch: fake.fetch,
+    secretsRepo: createSecretsRepo(h.db),
+    diaryRepo: h.repos.diaryRepo,
+    draftsRepo,
+    photoRepo: createPhotoRepo(h.db),
+    photos,
+    openReview: analysis.restore,
+    unnamed: (code) => `Barcode ${code}`,
+    scanner: noCamera,
+  });
+  const services: Services = { ...h.services, photos, captureDrafts, analysis, barcode };
+  h.mount(
+    <ServicesProvider services={services}>
+      <HomePage />
+    </ServicesProvider>,
+  );
+  await untilShown('[data-ui="home.add"]');
+  return { h, fake, analysis, barcode, draftsRepo };
+}
+
+/**
+ * Lets promise callbacks run and draws what they changed. A plain state update made from a promise
+ * waits for the end of an act scope, so `until` alone would wait for it forever.
+ */
+const settle = () => act(async () => undefined);
+
+/** Opens the scanner from the menu and types `digits` into it. */
+async function typeBarcode(digits: string) {
+  chooseFromMenu('snapScan', menuWords.method.barcode);
+  await settle();
+  const field = screen.getByRole('textbox', { name: scanWords.digits.label });
+  fireEvent.change(field, { target: { value: digits } });
+  fireEvent.click(screen.getByRole('button', { name: scanWords.digits.submit }));
+}
+
+/** A miss, then "Scan label" on its failure: the meal-photos sheet opens for the label. */
+async function scanLabelAfterMiss() {
+  await typeBarcode(CODE);
+  await untilShown('[data-ui="scan.failed"]');
+  fireEvent.click(screen.getByRole('button', { name: scanWords.scanLabel }));
+  await untilShown('[data-ui="capture.add"]');
+  await settle();
+}
+
+describe('HomePage: barcodes (P06-14, P06-17)', () => {
+  it('opens the scanner from Barcode in the menu (P06-14)', async () => {
+    const { h } = await openHomeWithBarcodes();
+    chooseFromMenu('snapScan', menuWords.method.barcode);
+    await settle();
+
+    expect(screen.getByRole('dialog', { name: scanWords.title })).toBeVisible();
+    expect(textOf('scan.unavailable')).toBe(scanWords.unavailable);
+    expect(h.router.current().sheets).toEqual([SCAN_SHEET]);
+  });
+
+  it('closes the scanner on typed digits, and a product found opens its review (ACC-D20-1)', async () => {
+    const { h, fake, analysis, draftsRepo } = await openHomeWithBarcodes();
+    fake.on(OFF_PRODUCT_URL, OFF_FOUND);
+
+    await typeBarcode('0 71234 50001 08');
+    await untilGone('[data-ui="scan"]');
+    await untilGone('[data-ui="scan.looking"]');
+
+    expect(h.router.current().sheets).toEqual([]);
+    expect(new URL(fake.requests[0]?.url ?? '').pathname).toBe(`/api/v2/product/${CODE}.json`);
+    expect(analysis.restore).toHaveBeenCalledOnce();
+    expect((await draftsRepo.load())?.draft.draft.name).toBe('Rye Crackers');
+    expect(screen.queryByRole('alertdialog')).toBeNull();
+  });
+
+  it('offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)', async () => {
+    const { h, fake, analysis } = await openHomeWithBarcodes(['label-photo']);
+    fake.on(OFF_PRODUCT_URL, OFF_MISS);
+
+    await scanLabelAfterMiss();
+
+    expect(h.router.current().sheets).toEqual([CAPTURE_SHEET]);
+    // The label's photo comes from the camera.
+    expect(
+      within(captureSheet()).getByRole('button', { name: capture.capture.addPhoto }),
+    ).toBeVisible();
+    expect(document.querySelectorAll('[data-ui="capture.card"]')).toHaveLength(1);
+    const analyse = within(captureSheet()).getByRole('button', { name: capture.capture.analyse });
+    expect(analyse).toBeEnabled();
+    fireEvent.click(analyse);
+
+    expect(analysis.start).toHaveBeenCalledWith('photo', {
+      photoIds: ['label-photo'],
+      note: '',
+      progressive: false,
+      armedLabel: CODE,
+    });
+  });
+
+  it('shows the miss’s own message on its failure', async () => {
+    const { fake } = await openHomeWithBarcodes();
+    fake.on(OFF_PRODUCT_URL, OFF_MISS);
+
+    await typeBarcode(CODE);
+    await untilShown('[data-ui="scan.failed"]');
+
+    expect(screen.getByRole('alertdialog', { name: scanWords.failedTitle })).toHaveTextContent(
+      scanWords.failure.notFound,
+    );
+  });
+
+  it('drops the held code when the photos sheet closes without Analyse, by Cancel or Back (R02.20)', async () => {
+    const { h, fake, barcode } = await openHomeWithBarcodes(['label-photo']);
+    fake.on(OFF_PRODUCT_URL, OFF_MISS, OFF_MISS);
+
+    await scanLabelAfterMiss();
+    fireEvent.click(within(captureSheet()).getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="capture"]');
+    expect(barcode.takeArmedLabel()).toBeNull();
+
+    await scanLabelAfterMiss();
+    act(() => h.host.back());
+    await untilGone('[data-ui="capture"]');
+    expect(barcode.takeArmedLabel()).toBeNull();
+  });
+
+  it('drops a held code when another method is chosen from the menu (R02.20)', async () => {
+    const { fake, barcode } = await openHomeWithBarcodes();
+    fake.on(OFF_PRODUCT_URL, OFF_MISS);
+    await act(() => barcode.lookup(CODE));
+    act(() => {
+      barcode.armLabelScan();
+    });
+    await untilGone('[data-ui="scan.failed"]');
+
+    chooseFromMenu('describe', menuWords.method.describe);
+    await untilShown('[data-ui="describe.text"]');
+
+    expect(barcode.takeArmedLabel()).toBeNull();
   });
 });

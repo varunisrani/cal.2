@@ -1,0 +1,178 @@
+/*
+ * The barcode scanner (P06-14): the camera view filling the screen above a panel with the hint and
+ * the typed digits, and the review's saved-label line (P06-17). Every value comes from tokens.css;
+ * logical properties throughout. The lookup layer reuses the analysis overlay's styles.
+ */
+
+/* Over the page and its tab bar, like a sheet; the lookup layer and dialogs come above it. */
+.layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  display: flex;
+  background: var(--page);
+}
+
+.scanner {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.scanner:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+/* ---- Camera view ---------------------------------------------------------------------------- */
+
+.view {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--raised);
+}
+
+.video {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.top {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block-start: calc(var(--safe-top) + var(--space-2));
+  padding-inline: calc(var(--safe-left) + var(--space-2)) calc(var(--safe-right) + var(--space-4));
+}
+
+.close {
+  background: var(--sheet);
+  box-shadow: var(--shadow-raised);
+}
+
+.title {
+  margin: 0;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--sheet);
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+/* The camera's own state when it shows no picture: opening, refused, or unable to scan. */
+.state {
+  display: grid;
+  gap: var(--space-2);
+  max-inline-size: 22rem;
+  margin: var(--space-6);
+  margin-block-start: calc(var(--safe-top) + var(--space-8) * 2);
+  padding: var(--space-5);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  text-align: center;
+}
+
+.stateTitle {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+}
+
+.stateText {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+/* ---- Panel: hint and typed digits ----------------------------------------------------------- */
+
+.panel {
+  display: grid;
+  gap: var(--space-4);
+  padding-block: var(--space-4) calc(var(--safe-bottom) + var(--space-4));
+  padding-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
+  border-start-start-radius: var(--radius-sheet);
+  border-start-end-radius: var(--radius-sheet);
+  background: var(--sheet);
+  box-shadow: var(--shadow-sheet);
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--accent);
+}
+
+.hintText {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.hintLine {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.hintSource {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.digits {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.digitsField {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+/* Lines the button up with the input: one caption line (the field's label) and its gap lower. */
+.digitsSubmit {
+  flex: none;
+  margin-block-start: calc(var(--type-caption) * var(--leading-body) + var(--space-1));
+}
+
+/* ---- Saved-label line in the review ------------------------------------------------------- */
+
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.noticeIcon {
+  flex: none;
+  color: var(--accent);
+}

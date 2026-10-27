@@ -387,19 +387,21 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D19-1** Typing a barcode looks up the product
   - Review: P06-20
 - **ACC-D19-2** Without native barcode support the scanner still works
-  - Review: P06-14
+  - Test: src/services/barcode/decoder.test.ts > watch: the WASM reader (ACC-D19-2) > loads the WASM reader only when the first frame needs it, and once
 
 ### D20 · Barcode lookup (P1)
 
 - **ACC-D20-1** A product found by Open Food Facts opens its review
-  - Review: P06-17
+  - Test: src/services/barcode/lookup.test.ts > createBarcodeService > stores an Open Food Facts product with its photo as the analysis draft, then opens its review (ACC-D20-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > closes the scanner on typed digits, and a product found opens its review (ACC-D20-1)
 - **ACC-D20-2** A product missing everywhere offers Scan label
-  - Review: P06-17
+  - Test: src/services/barcode/lookup.test.ts > createBarcodeService > offers Scan label after a miss everywhere and holds the code for one analysis (ACC-D20-2, R02.20)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)
 
 ### D21 · Saved-label memory (P1)
 
 - **ACC-D21-1** Scanning the same unknown barcode again reopens the saved label with a notice
-  - Review: P06-17
+  - Test: src/services/barcode/lookup.test.ts > createBarcodeService > opens a saved label as a label draft marked as such, with its own photo (ACC-D21-1)
 
 ### D22 · Product information block (barcode, source, package, Nutri-Score, … (P1)
 
@@ -854,7 +856,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J9 · FoodData Central key setting (P1)
 
 - **ACC-J9-1** With a key stored, a barcode missing from Open Food Facts is looked up in FoodData Central
-  - Review: P06-17
+  - Test: src/services/barcode/lookup.test.ts > createBarcodeService > stores FoodData Central’s product without a photo (ACC-J9-1)
 
 ### J10 · Tracking & reminders page (P1)
 
