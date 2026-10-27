@@ -26,6 +26,8 @@ import {
 import { createRouter } from './router';
 import { controlledStore } from './testing/controlledStore';
 import { memoryHost } from './testing/memoryHost';
+// Loaded up front, so the lazily imported Progress screen resolves at once.
+import '../features/progress/ProgressPage';
 
 const services: Services = {
   diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
@@ -129,6 +131,8 @@ describe('App', () => {
     const boot = controlledStore<BootState>({ status: 'ready' });
     const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
     renderApp({ boot, settings }, '#/progress');
+    // The Progress screen is fetched on the tab's first visit.
+    await screen.findByRole('heading', { level: 1, name: common.common.tabs.progress });
     expect(screen.queryByRole('alertdialog')).toBeNull();
 
     act(() => {

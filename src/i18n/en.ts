@@ -15,6 +15,7 @@ import { log } from './en/log';
 import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
 import { profile } from './en/profile';
+import { progress } from './en/progress';
 import { review } from './en/review';
 import { reuse } from './en/reuse';
 import { scan } from './en/scan';
@@ -47,6 +48,7 @@ export const enPartitions = {
   review,
   ingredients,
   fitCheck,
+  progress,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

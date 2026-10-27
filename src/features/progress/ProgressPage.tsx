@@ -1,11 +1,205 @@
+import { useMemo, useState } from 'react';
+import { useToday } from '../../app/TodayProvider';
+import { useSheet } from '../../app/useRoute';
+import { useBodyFat, useProfile, useSettings, useWeighIns } from '../../data/hooks';
+import type { DayKey } from '../../domain/dates/dayKey';
+import type { DayWindow } from '../../domain/dates/ranges';
+import type { WeighIn } from '../../domain/model';
+import {
+  availableMetrics,
+  FIRST_READABLE_DAY,
+  FIRST_VIEW,
+  hasPeriods,
+  nutritionWindow,
+  periodWindow,
+  readingsIn,
+  shownMetric,
+  type BodyMetric,
+  type PeriodView,
+} from '../../domain/progress/ranges';
+import { latestWeighIn } from '../../domain/trackers/goalCrossing';
+import { formatPeriod } from '../../i18n/format';
 import { t } from '../../i18n/t';
+import { useServices } from '../../services/context';
+import { Card } from '../../ui/Card';
+import { Switch } from '../../ui/Switch';
+import { useToast } from '../../ui/Toast';
+import { LogWeightSheet, seedWeightKg } from './LogWeightSheet';
+import { MetricSwitch } from './MetricSwitch';
 import styles from './progress.module.css';
+import { RangeBar } from './RangeBar';
+import { WeightCard } from './WeightCard';
 
-/** The Progress tab: a titled placeholder until P07 builds the recap, charts and histories. */
-export function ProgressPage() {
+/** The Log weight sheet's place on the sheet stack. */
+export const LOG_WEIGHT_SHEET = 'logWeight';
+
+const SETTINGS = ['units.weight', 'progress.countToday'] as const;
+
+const NO_WEIGH_INS: readonly WeighIn[] = [];
+
+// ---- Places the next slices fill; each renders nothing until its card exists --------------------
+
+/** P07-15: the weekly recap card, at the top of the page. */
+function RecapSlot(): null {
+  return null;
+}
+
+/** P07-13: the body-fat card, in place of the weight card while Body fat is chosen. */
+function BodyFatSlot(): null {
+  return null;
+}
+
+/** P07-14: the chosen metric's history link, under its card (hidden with no readings). */
+function HistorySlot(_props: { readonly metric: BodyMetric }): null {
+  return null;
+}
+
+/** P07-16: the calorie card and the averages, over the nutrition window. */
+function NutritionSlot(_props: { readonly window: DayWindow }): null {
+  return null;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+interface CountTodayProps {
+  readonly on: boolean;
+  readonly view: PeriodView;
+  readonly today: DayKey;
+  readonly onChange: (on: boolean) => void;
+}
+
+/**
+ * The Count today switch. While it is off the calorie chart and the averages end yesterday, and
+ * the caption names the days they cover (for every range but All, whose window has no label).
+ */
+function CountToday({ on, view, today, onChange }: CountTodayProps) {
+  let description = t('progress.countToday.on');
+  if (!on && hasPeriods(view.range)) {
+    const window = nutritionWindow(view, today, false);
+    const period = formatPeriod(window.first, window.last, today);
+    description = t('progress.countToday.offWindow', { period });
+  } else if (!on) {
+    description = t('progress.countToday.off');
+  }
   return (
-    <section className={styles.page} data-ui="screen.progress">
+    <Card className={styles.switchCard}>
+      <Switch
+        label={t('progress.countToday.label')}
+        description={description}
+        checked={on}
+        onChange={onChange}
+        data-ui="progress.countToday"
+      />
+    </Card>
+  );
+}
+
+/**
+ * The Progress tab: the recap, the range and its periods, the metric switch with the chosen
+ * metric's card and history, the Count today switch and the nutrition cards. Nothing with a
+ * number is drawn until the settings, the profile and every weigh-in and body-fat reading are
+ * read. The range opens on 1W at every visit and is never stored; Count today is stored.
+ */
+export function ProgressPage() {
+  const today = useToday();
+  const services = useServices();
+  const toast = useToast();
+  const settings = useSettings(SETTINGS);
+  const profileRead = useProfile();
+  const weighIns = useWeighIns(FIRST_READABLE_DAY, today);
+  const bodyFat = useBodyFat(FIRST_READABLE_DAY, today);
+  const logWeight = useSheet(LOG_WEIGHT_SHEET);
+  const [view, setView] = useState<PeriodView>(FIRST_VIEW);
+  const [chosen, setChosen] = useState<BodyMetric>('weight');
+
+  const { first, last } = periodWindow(view, today);
+  const allWeighIns = weighIns.status === 'ready' ? weighIns.value : NO_WEIGH_INS;
+  const inWindow = useMemo(
+    () => readingsIn(allWeighIns, { first, last }),
+    [allWeighIns, first, last],
+  );
+  const latest = useMemo(() => latestWeighIn(allWeighIns), [allWeighIns]);
+
+  const setCountToday = (on: boolean): void => {
+    const progress = services.progress;
+    if (!progress) throw new Error('Progress: no progress service above it');
+    progress.setCountToday(on).catch((error: unknown) => {
+      console.error('Storing Count today failed', error);
+      toast.show(t('progress.countToday.failed'));
+    });
+  };
+
+  const reads = [settings, profileRead, weighIns, bodyFat];
+  const failed = reads.some((read) => read.status === 'error');
+  let body;
+  if (failed) {
+    body = (
+      <Card data-ui="progress.error">
+        <p className={styles.empty}>{t('progress.loadFailed')}</p>
+      </Card>
+    );
+  } else if (
+    settings.status === 'ready' &&
+    profileRead.status === 'ready' &&
+    weighIns.status === 'ready' &&
+    bodyFat.status === 'ready'
+  ) {
+    const profile = profileRead.value.kind === 'ok' ? profileRead.value.value : null;
+    const unit = settings.value['units.weight'];
+    const countToday = settings.value['progress.countToday'];
+    const metrics = availableMetrics({
+      readings: bodyFat.value.length,
+      profileValue: profile?.bodyFat,
+      goal: profile?.goalBodyFat,
+    });
+    const metric = shownMetric(chosen, metrics);
+    // A metric that went away stays away: Weight is the choice from then on.
+    if (metric !== chosen) setChosen(metric);
+    body = (
+      <>
+        <RecapSlot />
+        <RangeBar view={view} today={today} onChange={setView} />
+        <MetricSwitch metrics={metrics} value={metric} onChange={setChosen} />
+        {metric === 'weight' ? (
+          <WeightCard
+            readings={inWindow}
+            latest={latest}
+            goalKg={profile?.goalWeightKg}
+            unit={unit}
+            onLog={logWeight.show}
+          />
+        ) : (
+          <BodyFatSlot />
+        )}
+        <HistorySlot metric={metric} />
+        <CountToday on={countToday} view={view} today={today} onChange={setCountToday} />
+        <NutritionSlot window={nutritionWindow(view, today, countToday)} />
+        <LogWeightSheet
+          open={logWeight.open}
+          seedKg={seedWeightKg(latest?.kg, profile?.weightKg)}
+          unit={unit}
+          onClose={logWeight.close}
+        />
+      </>
+    );
+  } else {
+    body = (
+      <div className={styles.placeholder} aria-hidden="true" data-ui="progress.loading">
+        <div className={styles.placeholderBar} />
+        <div className={styles.placeholderCard} />
+        <div className={styles.placeholderBar} />
+      </div>
+    );
+  }
+
+  return (
+    <section
+      className={styles.page}
+      aria-busy={reads.some((read) => read.status === 'loading') || undefined}
+      data-ui="screen.progress"
+    >
       <h1 className={styles.title}>{t('common.tabs.progress')}</h1>
+      {body}
     </section>
   );
 }

@@ -388,11 +388,13 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
+  - Test: src/domain/progress/ranges.test.ts > readingsIn > keeps a reading logged at 21:00 on the last day and leaves out the day before the first (R05.5)
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
   - Test: src/data/guard.test.ts > readAll > never lets an unreadable row turn into an empty list that a save replaces (R05.6)
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
   - Test: src/domain/trackers/goalCrossing.test.ts > crossesGoal (R05.7, R01.11) > never fires for a back-dated 79 under target 79.5 (R05.7)
   - Test: src/domain/trackers/goalCrossing.test.ts > latestWeighIn (R05.7) > picks the latest by date, not the last added (R05.7)
+  - Test: src/services/progress.test.ts > logWeight > raises nothing for a back-dated weight under a lose target (R05.7)
 - **R05.8** Weight and body-fat writes sync the profile in the same transaction; deleting the last body-fat reading leaves the profile value
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > moves the profile weight to the newest reading only when it differs by more than 0.01 kg (R05.8)
   - Test: src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > deletes the reading and the profile change together, or neither (R05.8)
@@ -405,7 +407,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/units/body.test.ts > weightWheel > shows 160.0 lb after a round trip through kg, not 159.9 (R05.10)
   - Test: src/domain/units/body.test.ts > weightWheel > keeps every tenth of the lb wheel after a round trip through kg (R05.10)
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
-  - Review: owned by P07-12
+  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
+  - Test: src/services/progress.test.ts > settings > stores the weight unit for the whole app (R05.11)
 - **R05.12** No fallback goals flash before the profile is read
   - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves
 - **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time

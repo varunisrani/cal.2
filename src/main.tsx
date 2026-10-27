@@ -45,6 +45,7 @@ import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
+import { createProgressService } from './services/progress';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 
 // The composition root: the one place that opens the database, creates each repository once and
@@ -184,6 +185,7 @@ async function start(): Promise<void> {
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
       fetch: browserFetch,
     }),
+    progress: createProgressService({ weightRepo, settingsRepo, clock: systemClock }),
     clock: systemClock,
   };
   const data: DataSources = {

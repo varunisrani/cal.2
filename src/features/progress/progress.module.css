@@ -1,4 +1,9 @@
-/* The Progress tab (a placeholder until P07). Every value comes from tokens.css. */
+/*
+ * The Progress tab (P07-09, P07-12; P07-13..16 add their cards): the page, the range control and
+ * the period row, the metric card with its header, badges and empty prompt, the Count today card,
+ * the loading blocks and the Log weight sheet. Every value comes from tokens.css; logical
+ * properties throughout. The tab bar's size comes from the shell.
+ */
 
 .page {
   display: grid;
@@ -10,4 +15,112 @@
   font-size: var(--type-heading);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+}
+
+/* ---- Range and period ------------------------------------------------------------------------ */
+
+.rangeBar {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.period {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+.periodLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Metric cards ---------------------------------------------------------------------------- */
+
+.metricCard {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.actionIcon {
+  flex: none;
+  margin-inline-end: var(--space-1);
+  vertical-align: middle;
+  color: var(--accent);
+}
+
+/* Four badges in a row; at large text sizes they wrap to two rows instead of shrinking away. */
+.badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.75rem, 1fr));
+  gap: var(--space-2);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--space-6);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  text-align: center;
+}
+
+/* ---- Count today ----------------------------------------------------------------------------- */
+
+.switchCard {
+  padding-block: var(--space-1);
+}
+
+/* ---- Loading --------------------------------------------------------------------------------- */
+
+.placeholder {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.placeholderBar,
+.placeholderCard {
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.placeholderBar {
+  block-size: calc(var(--space-8) + var(--space-3));
+}
+
+.placeholderCard {
+  block-size: calc(var(--space-8) * 9);
+}
+
+/* ---- Log weight sheet ------------------------------------------------------------------------ */
+
+.sheetBody {
+  display: grid;
+  gap: var(--space-4);
 }

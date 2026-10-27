@@ -16,6 +16,7 @@ import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
 import type { SavedMealsService } from './savedMeals';
+import type { ProgressService } from './progress';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
 export interface Services {
@@ -53,6 +54,8 @@ export interface Services {
   readonly ingredientIntake?: IngredientIntakeService;
   /** The fit check's AI suggestion (P06-10); optional for the same reason. */
   readonly fitCheck?: FitCheckService;
+  /** The Progress tab's writes: weigh-ins, the weight unit, Count today (P07-09, P07-12). */
+  readonly progress?: ProgressService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

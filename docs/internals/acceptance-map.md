@@ -614,26 +614,29 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G1 · Ranges 1W, 1M, 3M, 6M, 1Y and All with period arrows and labels (P1)
 
 - **ACC-G1-1** The back arrow on 1M shows the previous 30 days with its label
-  - Review: P07-09
+  - Test: src/features/progress/RangeBar.test.tsx > RangeBar > shows the previous 30 days and their dates after the back arrow on 1M (ACC-G1-1)
 
 ### G2 · Metric switch between Weight and Body Fat (P1)
 
 - **ACC-G2-1** Body Fat is offered only after a reading or a body-fat goal exists
-  - Review: P07-09
+  - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage > offers no Body fat without a reading, a profile value or a goal (ACC-G2-1)
+  - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage > offers Body fat after Weight once only a body-fat goal exists (ACC-G2-1)
 
 ### G3 · Weight card (P1)
 
 - **ACC-G3-1** The weight chart shows the goal line and a tooltip when pressed
   - Test: src/ui/charts/LineChart.test.tsx > LineChart > draws the goal line and shows a tooltip on the nearest point while pressed and dragged (ACC-G3-1)
 - **ACC-G3-2** A change under 0.05 kg reads 0.0 without a sign
-  - Review: P07-12
+  - Test: src/features/progress/WeightCard.test.tsx > WeightCard > shows 0.0 without a sign for a net change of −0.04 kg (ACC-G3-2)
+  - Test: src/domain/progress/ranges.test.ts > changeToTenth > reads a change closer to zero than 0.05 as 0, never −0 (ACC-G3-2)
 
 ### G4 · Log weight (P1)
 
 - **ACC-G4-1** A weight logged for last week lands on that day without changing the current weight
-  - Review: P07-12
+  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > logs a weight for last week on that day at the current clock time, keeping the current weight (ACC-G4-1)
+  - Test: src/services/progress.test.ts > logWeight > puts an earlier day at the current clock time and keeps the newer profile weight (ACC-G4-1)
 - **ACC-G4-2** Toggling lb in the log sheet changes the app's weight unit
-  - Review: P07-12
+  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
 
 ### G5 · Body-fat card and Log body fat (3–60 % in 0.5 steps) (P1)
 

@@ -7,7 +7,6 @@ import { appearance } from '../../i18n/en/appearance';
 import { common } from '../../i18n/en/common';
 import { settings } from '../../i18n/en/settings';
 import { CoachPage } from '../coach/CoachPage';
-import { ProgressPage } from '../progress/ProgressPage';
 import { defineCategories, type SettingsCategory } from './registry';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -135,18 +134,10 @@ describe('SettingsHub', () => {
 });
 
 describe('tab placeholders', () => {
-  it('give Progress and Coach a page titled with the tab name', () => {
-    render(
-      <>
-        <ProgressPage />
-        <CoachPage />
-      </>,
-    );
-    expect(
-      screen.getByRole('heading', { level: 1, name: common.common.tabs.progress }),
-    ).toBeVisible();
+  // Progress has its real page now (P07-09); its own tests cover the heading.
+  it('give Coach a page titled with the tab name', () => {
+    render(<CoachPage />);
     expect(screen.getByRole('heading', { level: 1, name: common.common.tabs.coach })).toBeVisible();
-    expect(document.querySelector('[data-ui="screen.progress"]')).not.toBeNull();
     expect(document.querySelector('[data-ui="screen.coach"]')).not.toBeNull();
   });
 });
