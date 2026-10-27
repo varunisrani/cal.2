@@ -1,0 +1,28 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s2b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave B slice S2b = P06-09, P06-10 — the ingredients card and recipe split; the fit check (what-if) sheet. Both plug into the landed review sheet's typed slots (`ReviewSlots` in src/features/log/review/ReviewSheet.tsx: `ingredients` and `fitCheck`, filled in one place, `AnalysisReview`). Spec: those two rows in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.6, §3.15 and 03 §3.11. Traps and acceptance ids: every row whose Review line names P06-09 or P06-10 (R02.4, R02.5 and R02.6 among the line rules).
+Task notes (each before its code): docs/notes/P06/ingredients-card-and-recipe-split.md, docs/notes/P06/fit-check-what-if-sheet.md.
+
+You own:
+- src/features/log/review/{IngredientsCard,LineEditor,AddIngredientMenu}.tsx (+ tests), src/i18n/en/ingredients.ts and its line in src/i18n/en.ts
+- src/features/log/FitCheckSheet.tsx (+ test), src/i18n/en/fitCheck.ts and its line in src/i18n/en.ts
+- filling the `ingredients` and `fitCheck` slots in AnalysisReview, and refining the sheet's `withLines` handler for line changes (unknown-weight parts, recipe splits through P01-11's `keepSplit`), in src/features/log/review/ReviewSheet.tsx
+- src/services/ingredientIntake.ts (+ test): one line's analysis (photo, single photo, describe through the P03-18 tasks; its own deadline; dropped with its photos when the sheet closes); additive `ingredientIntake` in Services and main.tsx (read the AI setup with createAiAccess, fetch from browserFetch)
+
+Do not touch:
+- the other review files (PhotoStrip, ServingCard, AmountField, NutritionRows, MoreNutrition: import), src/features/log/{AddMenu.tsx,capture/**,scan/**,reuse/**,CopyDaySheet.tsx} and src/services/{barcode/**,copyDay.ts} (other builders, now), src/services/analysis.ts (import), src/ai/** and src/domain/** (import only: P01-10 line rules, P01-11 split, P03-18 fitCheck), src/data/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files: additive edits only; the lead merges. With fake timers over the test database, fake only setTimeout, setInterval and Date.
+- The add-ingredient menu offers camera, single photo, describe and manual now; barcode and the three reuse lists (recent, often, saved) are being built by other slices: keep them in one clearly named not-built list in AddIngredientMenu (as the add menu's METHODS_NOT_BUILT_YET) that a later slice deletes from. AI results collapse to one line (photo kept as the line's photo); a busy state while a line is analysed.
+- Every line change applies through P01-10; split into servings 1–50 only when P01-11 allows it, hidden for a re-logged portion.
+- Fit check: "+added" and "after / goal" with "N left" or "N over" for kcal, protein, carbs and fat, over-goal highlighted for kcal, carbs and fat (never protein), from the picked date's day and the effective targets; the AI suggestion (P03-18 fitCheck, text role) starts on open and re-runs debounced when the candidate numbers, the day's entry count or the goals change; loading / text (selectable) / error with Retry / empty → a neutral line; without a key it says how to add one; nothing is logged; Done closes.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/log src/services/ingredientIntake.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
