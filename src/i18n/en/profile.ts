@@ -40,10 +40,8 @@ export const profile = {
       cm: '{value} cm',
       ftIn: '{feet} ft {inches} in',
       kg: '{value} kg',
-      lb: '{value} lb',
       percent: '{value} %',
       paceKg: '{amount} kg a week',
-      paceLb: '{amount} lb a week',
     },
     goal: {
       lose: 'Lose weight',
@@ -56,11 +54,8 @@ export const profile = {
     },
     units: {
       height: 'Height unit',
-      weight: 'Weight unit',
       cm: 'cm',
       ftIn: 'ft and in',
-      kg: 'kg',
-      lb: 'lb',
     },
     weight: {
       addsWeighIn: 'Saving logs this as a weigh-in for today.',

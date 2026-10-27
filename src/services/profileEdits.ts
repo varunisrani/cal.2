@@ -2,7 +2,7 @@
 // profile transaction each, through the domain's edit rules, and never touch the saved targets or
 // the locks (R01.12): an edit to a plan input only makes the Goals page's rebuild nudge appear.
 // A new weight is a weigh-in through the weight repository, which moves the profile weight and
-// posts goal-reached itself. The two body units are settings of their own.
+// posts goal-reached itself. The height unit is a setting of its own; weight is kg only (D-16.91).
 
 import type { DayKey } from '../domain/dates/dayKey';
 import type { Activity, GoalKind, Profile, Sex } from '../domain/model';
@@ -64,7 +64,6 @@ export interface ProfileEditsService {
   addAllergen(name: string): Promise<AllergenAdd>;
   /** Takes that exact entry out of the allergen list. */
   removeAllergen(name: string): Promise<Profile>;
-  setWeightUnit(unit: WeightDisplayUnit): Promise<void>;
   setHeightUnit(unit: HeightDisplayUnit): Promise<void>;
 }
 
@@ -244,10 +243,6 @@ export function createProfileEditsService(deps: ProfileEditsDeps): ProfileEditsS
         ...current,
         allergens: current.allergens.filter((listed) => listed !== name),
       })),
-
-    async setWeightUnit(unit) {
-      await settingsRepo.set('units.weight', unit);
-    },
 
     async setHeightUnit(unit) {
       await settingsRepo.set('units.height', unit);

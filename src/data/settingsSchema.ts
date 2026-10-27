@@ -23,7 +23,6 @@ import { DEFAULT_PILLARS, decodePillars } from '../domain/nutrients/pillars';
 import { DEFAULT_FAST_GOAL_MINUTES, decodeFastGoal } from '../domain/trackers/fasting';
 import {
   isHeightDisplayUnit,
-  isWeightDisplayUnit,
   type HeightDisplayUnit,
   type WeightDisplayUnit,
 } from '../domain/units/body';
@@ -247,14 +246,16 @@ export const SETTING_SPECS = {
     () => DEFAULT_ENERGY_UNIT,
     (stored) => (isEnergyDisplayUnit(stored) ? stored : undefined),
   ),
-  // Height and weight follow one locale decision, so a first run never mixes them (R01.18).
+  // Height follows the locale (R01.18); weight is kg for every locale.
   'units.height': setting<HeightDisplayUnit>(
     (env) => defaultUnits(env.locale).height,
     (stored) => (isHeightDisplayUnit(stored) ? stored : undefined),
   ),
+  // kg is the only weight unit (D-16.91): an earlier build's `lb`, or anything else stored, reads
+  // as kg and is rewritten on the first read (`SETTINGS_REWRITTEN_ON_LOAD`), never kept aside.
   'units.weight': setting<WeightDisplayUnit>(
     (env) => defaultUnits(env.locale).weight,
-    (stored) => (isWeightDisplayUnit(stored) ? stored : undefined),
+    () => 'kg',
   ),
 
   // Logging and Home
@@ -331,6 +332,13 @@ export const SETTING_SPECS = {
 } as const;
 
 export type SettingKey = keyof typeof SETTING_SPECS;
+
+/**
+ * Settings whose stored value the repository rewrites as it reads it, once, when it starts: a
+ * value an earlier build stored that this one reads as something else (D-16.91: a stored `lb`
+ * reads as `kg`). Each of these holds a plain string.
+ */
+export const SETTINGS_REWRITTEN_ON_LOAD = ['units.weight'] as const satisfies readonly SettingKey[];
 
 type ValueOf<S> = S extends SettingSpec<infer T> ? T : never;
 

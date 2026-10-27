@@ -14,7 +14,6 @@ export const onboarding = {
       progressValue: 'Step {step} of {total}',
       units: {
         kg: 'kg',
-        lb: 'lb',
         cm: 'cm',
         ft: 'ft',
         in: 'in',
@@ -22,10 +21,8 @@ export const onboarding = {
       },
       weight: {
         wholeKg: 'Whole kilograms',
-        wholeLb: 'Whole pounds',
         tenths: 'Tenths',
         shownKg: '{value} kg',
-        shownLb: '{value} lb',
       },
     },
     welcome: {
@@ -72,9 +69,9 @@ export const onboarding = {
     body: {
       title: 'Height and weight',
       subtitle: 'These two set the size of your daily energy budget.',
-      units: 'Units',
-      metric: 'Metric',
-      imperial: 'Imperial',
+      heightUnit: 'Height unit',
+      cm: 'cm',
+      ftIn: 'ft and in',
       height: 'Height',
       weight: 'Weight',
       centimetres: 'Centimetres',

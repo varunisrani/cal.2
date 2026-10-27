@@ -5,7 +5,6 @@ import { createSettingsRepo } from '../data/repos/settingsRepo';
 import { createWeightRepo } from '../data/repos/weightRepo';
 import type { Profile } from '../domain/model';
 import { needsRebuild, planInputsKey } from '../domain/profile/signature';
-import { LB_PER_KG } from '../domain/units/body';
 import { fixedClock } from '../lib/clock';
 import { openTestDb } from '../test/db';
 import { FACTORY_NOW, makeProfile } from '../test/factories';
@@ -139,18 +138,18 @@ describe('setGoalWeight (D-16.11, D-16.80)', () => {
     expect(after.lockedMacros).toEqual(PLANNED.lockedMacros);
   });
 
-  it('compares the weights as the person reads them, to the tenth in their unit', async () => {
-    // 70.02 kg reads 70.0 kg and 154.4 lb; a 69.99 kg target reads the same, so it is refused.
+  it('compares the weights as the person reads them, to the tenth of a kg', async () => {
+    // 70.02 kg reads 70.0 kg; a 69.96 kg target reads the same, so it is refused.
     const h = await setUp(makeProfile({ goal: 'lose', weightKg: 70.02, goalWeightKg: 65 }));
     expect(await h.service.setGoalWeight(69.99, 'kg')).toEqual({
       ok: false,
       error: 'notBelowCurrent',
     });
-    expect(await h.service.setGoalWeight(154.4 / LB_PER_KG, 'lb')).toEqual({
+    expect(await h.service.setGoalWeight(69.96, 'kg')).toEqual({
       ok: false,
       error: 'notBelowCurrent',
     });
-    expect(await h.service.setGoalWeight(154.3 / LB_PER_KG, 'lb')).toMatchObject({ ok: true });
+    expect(await h.service.setGoalWeight(69.94, 'kg')).toMatchObject({ ok: true });
   });
 
   it('has no goal weight to store while the goal is maintain', async () => {
@@ -338,16 +337,14 @@ describe('allergens', () => {
 });
 
 describe('units', () => {
-  it('stores the weight unit and the height unit, each on its own', async () => {
+  it('stores the height unit; weight stays kg, with nothing to store (D-16.91)', async () => {
     const h = await setUp();
-
-    await h.service.setWeightUnit('lb');
-    expect(await h.settingsRepo.get('units.weight')).toBe('lb');
     expect(await h.settingsRepo.get('units.height')).toBe('cm');
 
     await h.service.setHeightUnit('ftIn');
     expect(await h.settingsRepo.get('units.height')).toBe('ftIn');
-    expect(await h.settingsRepo.get('units.weight')).toBe('lb');
+    expect(await h.settingsRepo.get('units.weight')).toBe('kg');
+    expect('setWeightUnit' in h.service).toBe(false);
   });
 });
 

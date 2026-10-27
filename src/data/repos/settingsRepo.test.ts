@@ -181,6 +181,46 @@ describe('unusable stored values', () => {
   });
 });
 
+describe('values an earlier build stored', () => {
+  it('rewrites a stored lb weight unit as kg on the first read, keeping nothing aside (D-16.91)', async () => {
+    const { db } = await openTestDb();
+    await plant(db, [{ key: 'units.weight', value: 'lb' }]);
+    const repo = createSettingsRepo(db, { ...env, clock });
+    expect((await repo.loaded)['units.weight']).toBe('kg');
+    await settleQuarantine(db);
+
+    expect(await db.settings.get('units.weight')).toEqual({ key: 'units.weight', value: 'kg' });
+    expect(await repo.get('units.weight')).toBe('kg');
+    expect(await db.quarantine.count()).toBe(0);
+    expect(await hasUnreadableData(db)).toBe(false);
+    await finish(db);
+  });
+
+  it('reads any other stored weight unit as kg as well, and writes no row that was not there', async () => {
+    const { db } = await openTestDb();
+    await plant(db, [{ key: 'units.weight', value: 42 }]);
+    await repoOn(db);
+    expect(await db.settings.get('units.weight')).toEqual({ key: 'units.weight', value: 'kg' });
+
+    const empty = await openTestDb();
+    const repo = await repoOn(empty.db);
+    expect(await repo.get('units.weight')).toBe('kg');
+    expect(await empty.db.settings.count()).toBe(0);
+    await finish(db);
+    await finish(empty.db);
+  });
+
+  it('reads a stored lb as kg even before a rewrite, as a restored older backup would hold it', async () => {
+    const { db } = await openTestDb();
+    const repo = await repoOn(db);
+    await plant(db, [{ key: 'units.weight', value: 'lb' }]);
+    expect(await repo.get('units.weight')).toBe('kg');
+    expect((await repo.snapshot())['units.weight']).toBe('kg');
+    expect(await hasUnreadableData(db)).toBe(false);
+    await finish(db);
+  });
+});
+
 describe('update', () => {
   it('keeps both changes when two updates run at once (R06.2)', async () => {
     const { db } = await openTestDb();

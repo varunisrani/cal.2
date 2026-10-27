@@ -73,12 +73,12 @@ describe('WizardPage', () => {
     await user.tab();
     await user.keyboard('{Enter}');
 
-    // Body: switch to imperial, then one inch taller and one pound heavier.
+    // Body: switch height to feet and inches, then one inch taller and a kilogram heavier.
     expect(heading()).toHaveTextContent(words.body.title);
     await user.tab();
-    expect(document.activeElement).toHaveAttribute('data-ui', 'wizard.body.units.metric');
+    expect(document.activeElement).toHaveAttribute('data-ui', 'wizard.body.heightUnit.cm');
     await user.keyboard('{ArrowRight}');
-    expect(latest().units).toEqual({ height: 'ftIn', weight: 'lb' });
+    expect(latest().units).toEqual({ height: 'ftIn', weight: 'kg' });
     await user.tab();
     expect(document.activeElement).toHaveAttribute('data-ui', 'wizard.body.height.feet');
     await user.tab();
@@ -104,9 +104,9 @@ describe('WizardPage', () => {
       birthDate: '2001-10-26',
       bodyFat: 0.2,
     });
-    // 175 cm is 5′9″ and 70 kg is 154.3 lb; one row down on each wheel.
+    // 175 cm is 5′9″; one row down on each wheel.
     expect(state.heightCm).toBeCloseTo(70 * 2.54, 6);
-    expect(state.weightKg).toBeCloseTo(155.3 / 2.20462, 6);
+    expect(state.weightKg).toBe(71);
     expect(screen.getByRole('combobox', { name: words.bodyFat.wheel })).toHaveValue('20');
   });
 
@@ -158,7 +158,7 @@ describe('WizardPage', () => {
     });
   });
 
-  it('shows weight in pounds in a fresh wizard in an en-US browser (ACC-B11-2)', async () => {
+  it('shows weight in kg and height in feet and inches in a fresh wizard in an en-US browser (ACC-B11-2, D-16.91)', async () => {
     const language = vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US');
     const user = userEvent.setup();
     const toBody = async (): Promise<void> => {
@@ -176,10 +176,10 @@ describe('WizardPage', () => {
     );
     await toBody();
 
-    expect(screen.getByRole('radio', { name: words.body.imperial })).toBeChecked();
-    expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeLb })).toHaveValue('154');
+    expect(screen.getByRole('radio', { name: words.body.ftIn })).toBeChecked();
+    expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeKg })).toHaveValue('70');
     expect(screen.getByRole('combobox', { name: words.body.feet })).toHaveValue('5');
-    expect(screen.queryByRole('combobox', { name: words.wizard.weight.wholeKg })).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\blb\b|pound/i);
     first.unmount();
 
     // The same fresh wizard in a British browser reads kilograms and centimetres.
@@ -192,7 +192,7 @@ describe('WizardPage', () => {
       />,
     );
     await toBody();
-    expect(screen.getByRole('radio', { name: words.body.metric })).toBeChecked();
+    expect(screen.getByRole('radio', { name: words.body.cm })).toBeChecked();
     expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeKg })).toHaveValue('70');
   });
 

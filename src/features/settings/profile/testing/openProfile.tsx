@@ -3,7 +3,7 @@
 
 import type { ReactNode } from 'react';
 import type { Profile } from '../../../../domain/model';
-import type { HeightDisplayUnit, WeightDisplayUnit } from '../../../../domain/units/body';
+import type { HeightDisplayUnit } from '../../../../domain/units/body';
 import { ServicesProvider } from '../../../../services/context';
 import { createProfileEditsService } from '../../../../services/profileEdits';
 import { openHarness } from '../../../../test/screenHarness';
@@ -11,7 +11,11 @@ import { openHarness } from '../../../../test/screenHarness';
 export interface ProfileSetup {
   /** The stored profile; null stores none. */
   readonly profile: Profile | null;
-  readonly weight?: WeightDisplayUnit;
+  /**
+   * The stored `units.weight` row as it is put on disk, so an earlier build's `lb` can be stored;
+   * kg is the only weight unit (D-16.91).
+   */
+  readonly weight?: string;
   readonly height?: HeightDisplayUnit;
   /** A stored rebuild baseline (`goals.rebuildBaseline`). */
   readonly baseline?: string;
@@ -26,7 +30,7 @@ export async function openProfile({
   const h = await openHarness({ hash: '#/settings/profile' });
   const { profileRepo, settingsRepo, weightRepo } = h.repos;
   if (profile) await profileRepo.save(profile);
-  await settingsRepo.set('units.weight', weight);
+  await h.db.settings.put({ key: 'units.weight', value: weight });
   await settingsRepo.set('units.height', height);
   if (baseline !== undefined) await settingsRepo.set('goals.rebuildBaseline', baseline);
   const profileEdits = createProfileEditsService({

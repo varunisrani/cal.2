@@ -100,8 +100,8 @@ describe('OnboardingRoute', () => {
       { id: expect.any(String), at: FACTORY_NOW, kg: 70 },
     ]);
     const settings = await settingsRepo.snapshot();
-    // The test browser reads en-US, so the wizard started imperial.
-    expect(settings['units.weight']).toBe('lb');
+    // The test browser reads en-US, so the wizard started in feet and inches, and in kg.
+    expect(settings['units.weight']).toBe('kg');
     expect(settings['units.height']).toBe('ftIn');
     expect(settings['tuneUp.on']).toBe(true);
     expect(settings['ai.settings']).toBeNull();
@@ -132,7 +132,7 @@ describe('OnboardingRoute', () => {
       plan: FORMULA,
       planEdited: false,
       remindersOn: false,
-      units: { height: 'ftIn', weight: 'lb' },
+      units: { height: 'ftIn', weight: 'kg' },
     });
     expect(complete.mock.calls[1]?.[1]).toEqual({ now: FACTORY_NOW });
     expect(finishButton()).toBeDisabled();
@@ -147,7 +147,7 @@ describe('answersOf', () => {
       plan,
       finished: true,
       reminders: 'granted',
-      units: { height: 'ftIn', weight: 'lb' },
+      units: { height: 'ftIn', weight: 'kg' },
     });
 
     expect(answersOf(state)).toEqual({
@@ -155,7 +155,7 @@ describe('answersOf', () => {
       plan: FORMULA,
       planEdited: true,
       remindersOn: true,
-      units: { height: 'ftIn', weight: 'lb' },
+      units: { height: 'ftIn', weight: 'kg' },
     });
   });
 

@@ -27,7 +27,6 @@ export const PLAIN_APP_SETTINGS = [
   'display.weekStart',
   'units.energy',
   'units.height',
-  'units.weight',
   'product.show',
 ] as const;
 

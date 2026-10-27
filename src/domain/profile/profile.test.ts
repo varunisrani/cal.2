@@ -68,10 +68,10 @@ describe('birthDateYearsBefore', () => {
 });
 
 describe('firstRunDefaults', () => {
-  it('seeds lb and feet and inches together for en-US', () => {
+  it('seeds kg and feet and inches for en-US (D-16.91)', () => {
     const { profile, units } = firstRunDefaults(TODAY, 'en-US');
     expect(profile).toStrictEqual(profileDefaults(TODAY));
-    expect(units).toStrictEqual({ energy: 'kcal', height: 'ftIn', weight: 'lb' });
+    expect(units).toStrictEqual({ energy: 'kcal', height: 'ftIn', weight: 'kg' });
   });
 
   it('seeds kg and cm together for de-DE and a tag that cannot be read', () => {

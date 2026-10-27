@@ -39,8 +39,7 @@ export const about = {
       },
       pace: {
         heading: 'Losing or gaining weight',
-        perWeight:
-          'Platewise counts {perKg} kcal for every kilogram you lose or gain, which is about {perLb} kcal for every pound.',
+        perWeight: 'Platewise counts {perKg} kcal for every kilogram you lose or gain.',
         rule: 'Your weekly pace in kg times {perKg}, divided by 7, comes off your daily burn when you want to lose and is added to it when you want to gain. Keeping your weight changes nothing.',
         example: '{weekly} kg a week: {perDay} kcal a day',
         kilojoules: 'All of this runs in kilocalories. One kcal is {kj} kJ.',

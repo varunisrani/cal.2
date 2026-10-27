@@ -527,20 +527,11 @@
       "timeout_ms": 10000
     },
     {
-      "step_id": "weight.kg",
-      "action": "click",
-      "locator": {
-        "kind": "css",
-        "selector": "[data-ui=\"progress.logWeight.unit.kg\"]"
-      },
-      "timeout_ms": 10000
-    },
-    {
-      "step_id": "weight.kg-on",
+      "step_id": "weight.no-unit-toggle",
       "action": "wait_for",
       "locator": {
         "kind": "css",
-        "selector": "[data-ui=\"progress.logWeight.unit.kg\"][aria-checked=\"true\"]"
+        "selector": "[data-ui=\"progress.logWeight\"]:not(:has([data-ui=\"progress.logWeight.unit\"]))"
       },
       "state": "visible",
       "timeout_ms": 10000

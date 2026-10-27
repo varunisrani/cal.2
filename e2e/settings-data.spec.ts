@@ -22,7 +22,7 @@ import {
   type TestInfo,
 } from '@playwright/test';
 import type { MealKind } from '../src/domain/model';
-import { formatWeight, type WeightDisplayUnit } from '../src/domain/units/body';
+import { formatWeight } from '../src/domain/units/body';
 import { formatEnergy, type EnergyDisplayUnit } from '../src/domain/units/energy';
 import { formatDay, formatInt, formatPeriod } from '../src/i18n/format';
 import {
@@ -94,10 +94,9 @@ function energyText(kcal: number, unit: EnergyDisplayUnit = 'kcal'): string {
   return words(unit === 'kJ' ? 'home.energy.kJ' : 'home.energy.kcal', { amount });
 }
 
-/** "70.0 kg", "154.3 lb": a weight with one decimal, as Progress writes it. */
-function weightText(kg: number, unit: WeightDisplayUnit): string {
-  const value = formatWeight(kg, unit, LOCALE);
-  return words(`onboarding.wizard.weight.${unit === 'kg' ? 'shownKg' : 'shownLb'}`, { value });
+/** "70.0 kg": a weight with one decimal, as Progress writes it. */
+function weightText(kg: number): string {
+  return words('onboarding.wizard.weight.shownKg', { value: formatWeight(kg, 'kg', LOCALE) });
 }
 
 // ---- Getting there ----------------------------------------------------------------------------
@@ -328,12 +327,8 @@ test.describe('settings and data (Demo 6)', () => {
     await enterManually(page, 'Toast', 250);
     await expect(diaryRow(page, 'breakfast', 'Toast', energyText(250))).toBeVisible();
 
-    await test.step("en-US units: the wizard's 70 kg reads 154.3 lb and its 175 cm 5 ft 9 in", async () => {
-      await expectBody(
-        page,
-        weightText(70, 'lb'),
-        words('profile.value.ftIn', { feet: 5, inches: 9 }),
-      );
+    await test.step("en-US units: the wizard's 70 kg reads 70.0 kg and its 175 cm 5 ft 9 in", async () => {
+      await expectBody(page, weightText(70), words('profile.value.ftIn', { feet: 5, inches: 9 }));
     });
 
     await test.step('Settings › App settings: Ember is drawn at once', async () => {
@@ -351,11 +346,11 @@ test.describe('settings and data (Demo 6)', () => {
       await expect(html).toHaveAttribute('data-accent', 'ember');
     });
 
-    await test.step('Units: kJ, kg and cm in place of the en-US kcal, lb and ft-in', async () => {
+    await test.step('Units: kJ and cm in place of the en-US kcal and ft-in; weight has no choice', async () => {
       const screen = ui(page, 'screen.settings.app');
+      await expect(ui(screen, 'appSettings.units.weight')).toHaveCount(0);
       const picks = [
         ['energy', words('home.unit.kcal'), words('home.unit.kJ'), 'kJ'],
-        ['weight', words('profile.units.lb'), words('profile.units.kg'), 'kg'],
         ['height', words('profile.units.ftIn'), words('profile.units.cm'), 'cm'],
       ] as const;
       for (const [setting, before, after, value] of picks) {
@@ -375,7 +370,7 @@ test.describe('settings and data (Demo 6)', () => {
     });
 
     await test.step('the same weight and height read 70.0 kg and 175 cm: nothing was converted', async () => {
-      await expectBody(page, weightText(70, 'kg'), words('profile.value.cm', { value: '175' }));
+      await expectBody(page, weightText(70), words('profile.value.cm', { value: '175' }));
     });
 
     await test.step('a reload keeps the accent and every unit', async () => {
@@ -388,7 +383,6 @@ test.describe('settings and data (Demo 6)', () => {
       ).toHaveAttribute('aria-checked', 'true');
       for (const [setting, name] of [
         ['energy', words('home.unit.kJ')],
-        ['weight', words('profile.units.kg')],
         ['height', words('profile.units.cm')],
       ] as const) {
         await expect(choice(ui(screen, `appSettings.units.${setting}`), name)).toHaveAttribute(

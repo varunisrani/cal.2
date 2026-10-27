@@ -17,7 +17,6 @@ import {
 } from '../../domain/goals/formulas';
 import { ACTIVITIES, type Activity } from '../../domain/model';
 import { PACE_IDS, PACE_PRESETS, type PaceId } from '../../domain/profile/editRules';
-import { LB_PER_KG } from '../../domain/units/body';
 import { KJ_PER_KCAL } from '../../domain/units/energy';
 
 /** Any fixed day works: only the difference between the probe ages matters. */
@@ -113,9 +112,9 @@ export function paceRows(): readonly PaceRow[] {
   }));
 }
 
-/** Energy per kilogram of body weight, and the same per pound to the nearest hundred. */
-export function energyPerWeight(): { readonly perKg: number; readonly perLb: number } {
-  return { perKg: KCAL_PER_KG, perLb: Math.round(KCAL_PER_KG / LB_PER_KG / 100) * 100 };
+/** Energy per kilogram of body weight (weight is kg only, D-16.91). */
+export function energyPerWeight(): { readonly perKg: number } {
+  return { perKg: KCAL_PER_KG };
 }
 
 /** Everything the page shows that is not an equation. */

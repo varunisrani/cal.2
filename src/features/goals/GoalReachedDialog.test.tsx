@@ -66,7 +66,7 @@ async function setUp(hash = '#/progress') {
         </RouterProvider>
       </DataProvider>,
     );
-  return { ...repos, bus: test.bus, host, mount };
+  return { ...repos, db: test.db, bus: test.bus, host, mount };
 }
 
 const dialog = () => screen.queryByRole('alertdialog', { name: words.title });
@@ -139,14 +139,16 @@ describe('GoalReachedDialog', () => {
     expect(screen.queryAllByRole('alertdialog')).toHaveLength(0);
   });
 
-  it('names the weight in pounds for a pound reader', async () => {
-    const { bus, settingsRepo, mount } = await setUp();
-    await settingsRepo.set('units.weight', 'lb');
+  it('names the weight in kg for a person whose stored weight unit is lb (D-16.91)', async () => {
+    const { db, bus, mount } = await setUp();
+    // As an earlier build stored it.
+    await db.settings.put({ key: 'units.weight', value: 'lb' });
     mount();
 
-    act(() => bus.post({ type: 'goal-reached', kg: 79.5 }));
-    await until(() => dialog()?.textContent?.includes('175.3 lb') ?? false);
-    expect(dialog()).toHaveTextContent(words.message.replace('{weight}', '175.3 lb'));
+    act(() => bus.post({ type: 'goal-reached', kg: 79.46 }));
+    await until(() => dialog()?.textContent?.includes('79.5 kg') ?? false);
+    expect(dialog()).toHaveTextContent(words.message.replace('{weight}', '79.5 kg'));
+    expect(dialog()?.textContent).not.toMatch(/\blb\b/);
   });
 
   it('shows no weight while the weight unit is not known yet', async () => {

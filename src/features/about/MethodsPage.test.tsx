@@ -105,7 +105,7 @@ describe('MethodsPage', () => {
     render(<MethodsPage />);
     const pace = part('methods.pace');
     expect(pace).toHaveTextContent('7,700 kcal for every kilogram');
-    expect(pace).toHaveTextContent('about 3,500 kcal for every pound');
+    expect(pace.textContent).not.toMatch(/pound|\blb\b/);
     expect(pace).toHaveTextContent('One kcal is 4.184 kJ.');
 
     const paces = within(part('methods.paces')).getAllByRole('listitem');

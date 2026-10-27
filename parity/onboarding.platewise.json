@@ -98,36 +98,17 @@
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.starts-in-lb",
+      "step_id": "body.starts-ft-in",
       "action": "wait_for",
       "locator": {
         "kind": "css",
-        "selector": "[data-ui=\"wizard.body.units.imperial\"][aria-checked=\"true\"]"
+        "selector": "[data-ui=\"wizard.body.heightUnit.ftIn\"][aria-checked=\"true\"]"
       },
       "state": "visible",
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.starts-154-lb",
-      "action": "wait_for",
-      "locator": {
-        "kind": "css",
-        "selector": "[data-ui=\"wizard.body.weight.whole\"]:has(option[value=\"154\"]:checked)"
-      },
-      "state": "visible",
-      "timeout_ms": 10000
-    },
-    {
-      "step_id": "body.metric",
-      "action": "click",
-      "locator": {
-        "kind": "css",
-        "selector": "[data-ui=\"wizard.body.units.metric\"]"
-      },
-      "timeout_ms": 10000
-    },
-    {
-      "step_id": "body.metric.70-kg",
+      "step_id": "body.starts-70-kg",
       "action": "wait_for",
       "locator": {
         "kind": "css",
@@ -137,35 +118,26 @@
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.imperial",
+      "step_id": "body.cm",
       "action": "click",
       "locator": {
         "kind": "css",
-        "selector": "[data-ui=\"wizard.body.units.imperial\"]"
+        "selector": "[data-ui=\"wizard.body.heightUnit.cm\"]"
       },
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.imperial.154-lb",
+      "step_id": "body.cm.175",
       "action": "wait_for",
       "locator": {
         "kind": "css",
-        "selector": "[data-ui=\"wizard.body.weight.whole\"]:has(option[value=\"154\"]:checked)"
+        "selector": "[data-ui=\"wizard.body.height.cm\"]:has(option[value=\"175\"]:checked)"
       },
       "state": "visible",
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.metric-again",
-      "action": "click",
-      "locator": {
-        "kind": "css",
-        "selector": "[data-ui=\"wizard.body.units.metric\"]"
-      },
-      "timeout_ms": 10000
-    },
-    {
-      "step_id": "body.metric-again.70-kg",
+      "step_id": "body.cm.70-kg",
       "action": "wait_for",
       "locator": {
         "kind": "css",
@@ -175,7 +147,65 @@
       "timeout_ms": 10000
     },
     {
-      "step_id": "body.metric-again.tenth-0",
+      "step_id": "body.ft-in",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.heightUnit.ftIn\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.ft-in.9-in",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.height.inches\"]:has(option[value=\"9\"]:checked)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.ft-in.70-kg",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.weight.whole\"]:has(option[value=\"70\"]:checked)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.cm-again",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.heightUnit.cm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.cm-again.175",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.height.cm\"]:has(option[value=\"175\"]:checked)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.cm-again.70-kg",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.body.weight.whole\"]:has(option[value=\"70\"]:checked)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "body.cm-again.tenth-0",
       "action": "wait_for",
       "locator": {
         "kind": "css",

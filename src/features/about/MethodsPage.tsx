@@ -200,12 +200,7 @@ export function MethodsPage({ headingLevel = 2 }: MethodsPageProps) {
         'about.methods.pace.heading',
         'pace',
         <>
-          <p>
-            {t('about.methods.pace.perWeight', {
-              perKg: perWeight.perKg,
-              perLb: perWeight.perLb,
-            })}
-          </p>
+          <p>{t('about.methods.pace.perWeight', { perKg: perWeight.perKg })}</p>
           <p>{t('about.methods.pace.rule', { perKg: perWeight.perKg })}</p>
           <ul className={styles.list} data-ui="methods.paces">
             {paceRows().map((row) => (

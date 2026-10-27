@@ -1,7 +1,7 @@
 /**
  * Home and Progress end to end (P07-17, Demo 4). Each test starts from an empty browser, walks the
  * wizard on its defaults with the AI set up later (the formula plan: 2,452 kcal and 112 g protein;
- * 70 kg as the first weigh-in, shown in lb as en-US gets) and lands on Home on Tuesday 2026-10-27
+ * 70 kg as the first weigh-in, in kg, the only weight unit) and lands on Home on Tuesday 2026-10-27
  * at 08:30 UTC, in a week that starts on Monday. Home: water logged on days picked in the week
  * bar, the day swipe over the summary, the pillar picker, both sort orders, fasts from the + menu
  * and food paused while one runs. Progress: a back-dated weigh-in on the chart, a delete from the
@@ -11,7 +11,7 @@
  */
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import type { MealKind } from '../src/domain/model';
-import { formatWeight, type WeightDisplayUnit } from '../src/domain/units/body';
+import { formatWeight } from '../src/domain/units/body';
 import { formatDay, formatDuration, formatInt, formatPeriod } from '../src/i18n/format';
 import {
   LOCALE,
@@ -84,10 +84,9 @@ function kcalText(kcal: number): string {
   return words('home.energy.kcal', { amount: formatInt(kcal, LOCALE) });
 }
 
-/** "72.4 kg", "154.3 lb": a weight with one decimal, as the cards and the history write it. */
-function weightText(kg: number, unit: WeightDisplayUnit = 'kg'): string {
-  const value = formatWeight(kg, unit, LOCALE);
-  return words(`onboarding.wizard.weight.${unit === 'kg' ? 'shownKg' : 'shownLb'}`, { value });
+/** "72.4 kg": a weight with one decimal, as the cards and the history write it. */
+function weightText(kg: number): string {
+  return words('onboarding.wizard.weight.shownKg', { value: formatWeight(kg, 'kg', LOCALE) });
 }
 
 /** "250 ml". */
@@ -827,13 +826,6 @@ async function openLogWeight(page: Page): Promise<Locator> {
   return sheet;
 }
 
-/** The sheet's kg | lb toggle on kg: the unit of the whole app from then on. */
-async function chooseKg(sheet: Locator): Promise<void> {
-  const kg = ui(sheet, 'progress.logWeight.unit.kg');
-  await kg.click();
-  await expect(kg).toHaveAttribute('aria-checked', 'true');
-}
-
 /** The open Log weight sheet's wheels to `kg` and its date to `day`; Save. */
 async function saveWeight(sheet: Locator, kg: number, day: string): Promise<void> {
   const whole = Math.floor(kg);
@@ -866,20 +858,19 @@ test.describe('Progress (Demo 4)', () => {
     const dots = ui(chart, 'progress.weight.chart.plot').locator('[data-part="dot"]');
     const badge = (key: string): Locator => ui(card, `progress.weight.${key}`);
 
-    await test.step("the wizard's weigh-in is today's, inside 1W, in the wizard's lb", async () => {
-      await expectSpans(badge('current'), [weightText(70, 'lb'), words('progress.weight.current')]);
+    await test.step("the wizard's weigh-in is today's, inside 1W, in kg though en-US", async () => {
+      await expectSpans(badge('current'), [weightText(70), words('progress.weight.current')]);
       await expect(dots).toHaveCount(1);
     });
 
-    await test.step('Log weight: the wheels go from 154.3 lb to 70.0 kg; a future day is held to today', async () => {
+    await test.step('Log weight: the wheels open on 70.0 kg, with no unit toggle; a future day is held to today', async () => {
       const sheet = await openLogWeight(page);
       const whole = ui(sheet, 'progress.logWeight.wheel.whole');
       const tenth = ui(sheet, 'progress.logWeight.wheel.tenth');
-      await expect(whole).toHaveValue('154');
-      await expect(tenth).toHaveValue('3');
-      await chooseKg(sheet);
       await expect(whole).toHaveValue('70');
       await expect(tenth).toHaveValue('0');
+      await expect(sheet.getByRole('radiogroup')).toHaveCount(0);
+      await expect(sheet).not.toContainText(/\blb\b/);
       const date = ui(sheet, 'progress.logWeight.date');
       await expect(date).toHaveValue(TODAY);
       await date.fill(TOMORROW);
@@ -887,7 +878,7 @@ test.describe('Progress (Demo 4)', () => {
       await saveWeight(sheet, 72.4, LAST_TUESDAY);
     });
 
-    await test.step('the whole app is in kg now; 1W still holds only today, Current 70.0 kg', async () => {
+    await test.step('1W still holds only today, Current 70.0 kg', async () => {
       await expectSpans(badge('current'), [weightText(70), words('progress.weight.current')]);
       await expect(dots).toHaveCount(1);
       await expectSpans(badge('change'), [weightText(0), words('progress.weight.change')]);
@@ -938,7 +929,6 @@ test.describe('Progress (Demo 4)', () => {
     await onboard(page);
     await openProgress(page);
     const logSheet = await openLogWeight(page);
-    await chooseKg(logSheet);
     await saveWeight(logSheet, 72.4, LAST_TUESDAY);
     await chooseRange(page, 'month');
     const current = ui(page, 'progress.weight.current');

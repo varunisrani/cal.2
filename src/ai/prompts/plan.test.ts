@@ -13,7 +13,7 @@ import type { DisplayUnits } from './shared';
 
 const today = FIXTURE_TODAY;
 const METRIC: DisplayUnits = { energy: 'kcal', weight: 'kg', height: 'cm' };
-const IMPERIAL_KJ: DisplayUnits = { energy: 'kJ', weight: 'lb', height: 'ftIn' };
+const FEET_INCHES_KJ: DisplayUnits = { energy: 'kJ', weight: 'kg', height: 'ftIn' };
 
 function promptFor(changes: Partial<PlanPromptInput> = {}): string {
   return planPrompt({ profile: defaultProfile, today, units: METRIC, ...changes }).prompt;
@@ -119,12 +119,13 @@ describe('planPrompt: the profile, reference values and current targets', () => 
 
   it("gives the profile in metric plus the person's own units", () => {
     const profile = profileWith({ goal: 'lose', weeklyKg: 1, goalWeightKg: 64.5, bodyFat: 0.18 });
-    const prompt = promptFor({ profile, units: IMPERIAL_KJ });
-    expect(prompt).toContain('- Weight: 70.0 kg (they read 154.3 lb)');
+    const prompt = promptFor({ profile, units: FEET_INCHES_KJ });
+    expect(prompt).toContain('- Weight: 70.0 kg\n');
     expect(prompt).toContain('- Height: 175.0 cm (they read 5 ft 9 in)');
     expect(prompt).toContain('- Body fat: 18.0 % (fraction 0.18)');
-    expect(prompt).toContain('- Weekly pace: 1 kg a week (they read 2.2 lb a week)');
-    expect(prompt).toContain('- Goal weight: 64.5 kg (they read 142.2 lb)');
+    expect(prompt).toContain('- Weekly pace: 1 kg a week\n');
+    expect(prompt).toContain('- Goal weight: 64.5 kg');
+    expect(prompt).not.toMatch(/\blb\b|pound/);
     expect(promptFor()).not.toContain('they read');
   });
 
@@ -160,7 +161,7 @@ describe('planPrompt: the evidence', () => {
     const { system, prompt } = planPrompt({
       profile: evidenceProfile,
       today,
-      units: IMPERIAL_KJ,
+      units: FEET_INCHES_KJ,
       evidence: secretEvidence(),
     });
     expect(prompt).toContain('2026-10-25 full, 2 logs: 1900 kcal');
@@ -173,10 +174,10 @@ describe('planPrompt: the evidence', () => {
 
 describe('planPrompt: energy unit', () => {
   it('adds the kJ line only for kJ readers, keeping the reply fields in kcal', () => {
-    const kj = promptFor({ units: IMPERIAL_KJ });
+    const kj = promptFor({ units: FEET_INCHES_KJ });
     expect(kj).toContain('The person reads energy in kilojoules');
     expect(kj).toContain('Number fields of the reply stay in kcal');
     expect(promptFor()).not.toContain('kilojoules');
-    expect(promptFor({ units: { ...IMPERIAL_KJ, energy: 'kcal' } })).not.toContain('kilojoules');
+    expect(promptFor({ units: { ...FEET_INCHES_KJ, energy: 'kcal' } })).not.toContain('kilojoules');
   });
 });

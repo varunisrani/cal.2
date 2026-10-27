@@ -31,7 +31,7 @@ export function GoalReachedDialog() {
     reachedKg === null || unit === null
       ? t('goals.reached.messageNoWeight')
       : t('goals.reached.message', {
-          weight: t(unit === 'lb' ? 'goals.reached.weight.lb' : 'goals.reached.weight.kg', {
+          weight: t('goals.reached.weight.kg', {
             amount: formatWeight(reachedKg, unit, currentLocale()),
           }),
         });

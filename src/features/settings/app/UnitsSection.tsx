@@ -1,6 +1,6 @@
 import { useSettings } from '../../../data/hooks';
 import type { Settings } from '../../../data/settingsSchema';
-import { HEIGHT_DISPLAY_UNITS, WEIGHT_DISPLAY_UNITS } from '../../../domain/units/body';
+import { HEIGHT_DISPLAY_UNITS } from '../../../domain/units/body';
 import { ENERGY_DISPLAY_UNITS } from '../../../domain/units/energy';
 import { t } from '../../../i18n/t';
 import { Card } from '../../../ui/Card';
@@ -8,16 +8,16 @@ import { Segmented, type SegmentedOption } from '../../../ui/Segmented';
 import styles from './appSettings.module.css';
 import { useAppSettingsService, usePendingWrites, useSaveFailed } from './writes';
 
-const UNITS = ['units.energy', 'units.height', 'units.weight'] as const;
+const UNITS = ['units.energy', 'units.height'] as const;
 
 type UnitKey = (typeof UNITS)[number];
 
 /**
- * The Units card of Settings › App settings (06 §3.3, 01 §3.9): energy (kcal or kJ), height (cm
- * or ft and in) and weight (kg or lb), three settings of their own, each stored the moment it is
- * picked. A unit changes only how numbers are shown and typed: nothing stored is converted, as the
- * note under the card says. Drawn once the settings are read, so a stored unit never shows its
- * default first (R06.22).
+ * The Units card of Settings › App settings (06 §3.3, 01 §3.9): energy (kcal or kJ) and height
+ * (cm or ft and in), two settings of their own, each stored the moment it is picked. Weight is kg
+ * only, so it has no choice here (D-16.91). A unit changes only how numbers are shown and typed:
+ * nothing stored is converted, as the note under the card says. Drawn once the settings are read,
+ * so a stored unit never shows its default first (R06.22).
  */
 export function UnitsSection() {
   const settings = useSettings(UNITS);
@@ -94,16 +94,6 @@ function UnitChoices({ stored }: { readonly stored: Pick<Settings, UnitKey> }) {
             value={pending.shown('units.height')}
             onChange={(value) => choose('units.height', value)}
             data-ui="appSettings.units.height"
-          />
-          <UnitRow
-            label={t('appSettings.units.weight')}
-            options={WEIGHT_DISPLAY_UNITS.map((value) => ({
-              value,
-              label: t(`profile.units.${value}`),
-            }))}
-            value={pending.shown('units.weight')}
-            onChange={(value) => choose('units.weight', value)}
-            data-ui="appSettings.units.weight"
           />
         </ul>
       </Card>

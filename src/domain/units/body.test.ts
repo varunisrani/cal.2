@@ -10,7 +10,9 @@ import {
   heightCmShown,
   isHeightDisplayUnit,
   isWeightDisplayUnit,
+  kgFromPounds,
   LB_PER_KG,
+  WEIGHT_DISPLAY_UNITS,
   WEIGHT_WHEEL,
   weightFromDisplay,
   weightFromWheel,
@@ -20,38 +22,47 @@ import {
 } from './body';
 
 describe('body units', () => {
-  it('guards the weight and height unit values', () => {
+  it('guards the weight and height unit values: kg is the only weight unit (D-16.91)', () => {
+    expect(WEIGHT_DISPLAY_UNITS).toEqual(['kg']);
     expect(isWeightDisplayUnit('kg')).toBe(true);
-    expect(isWeightDisplayUnit('lb')).toBe(true);
     expect(isHeightDisplayUnit('cm')).toBe(true);
     expect(isHeightDisplayUnit('ftIn')).toBe(true);
-    for (const value of ['lbs', 'KG', '', null]) expect(isWeightDisplayUnit(value)).toBe(false);
+    for (const value of ['lb', 'lbs', 'KG', '', null])
+      expect(isWeightDisplayUnit(value)).toBe(false);
     for (const value of ['ftin', 'in', 'CM', '', null])
       expect(isHeightDisplayUnit(value)).toBe(false);
   });
 });
 
 describe('weight conversion', () => {
-  it('uses one pound factor in both directions', () => {
-    expect(LB_PER_KG).toBe(2.20462);
-    expect(weightToDisplay(70, 'lb')).toBeCloseTo(154.3234, 10);
+  it('reads kg as itself', () => {
     expect(weightToDisplay(70, 'kg')).toBe(70);
-    for (const kg of [20, 55.5, 70, 72.57, 113.4, 250]) {
-      expect(weightFromDisplay(weightToDisplay(kg, 'lb'), 'lb')).toBeCloseTo(kg, 10);
-    }
+    expect(weightFromDisplay(72.57, 'kg')).toBe(72.57);
   });
 
   it('shows weight rounded to one decimal', () => {
-    expect(weightShown(70, 'lb')).toBe(154.3);
     expect(weightShown(70.06, 'kg')).toBe(70.1);
+    expect(weightShown(69.96, 'kg')).toBe(70);
+  });
+});
+
+describe('kgFromPounds', () => {
+  it('turns an imported pound value into kg with the one pound factor, unrounded', () => {
+    expect(LB_PER_KG).toBe(2.20462);
+    expect(kgFromPounds(160)).toBe(160 / 2.20462);
+    expect(weightShown(kgFromPounds(160), 'kg')).toBe(72.6);
+    expect(weightShown(kgFromPounds(154.3234), 'kg')).toBe(70);
+    for (const kg of [20, 55.5, 70, 72.57, 113.4, 250]) {
+      expect(kgFromPounds(kg * LB_PER_KG)).toBeCloseTo(kg, 10);
+    }
   });
 });
 
 describe('formatWeight', () => {
   it('writes exactly one decimal in the locale', () => {
-    expect(formatWeight(70, 'lb', 'en-US')).toBe('154.3');
     expect(formatWeight(70, 'kg', 'en-US')).toBe('70.0');
-    expect(formatWeight(70, 'lb', 'de-DE')).toBe('154,3');
+    expect(formatWeight(72.46, 'kg', 'en-US')).toBe('72.5');
+    expect(formatWeight(70, 'kg', 'de-DE')).toBe('70,0');
   });
 });
 
@@ -60,39 +71,32 @@ describe('formatPace', () => {
     expect(formatPace(0.25, 'kg')).toBe('0.25');
     expect(formatPace(0.5, 'kg')).toBe('0.5');
     expect(formatPace(1, 'kg')).toBe('1');
-  });
-
-  it('converts to lb before rounding', () => {
-    expect(formatPace(0.25, 'lb')).toBe('0.55');
-    expect(formatPace(0.5, 'lb')).toBe('1.1');
-    expect(formatPace(1, 'lb')).toBe('2.2');
-    expect(formatPace(0.75, 'lb')).toBe('1.65');
+    expect(formatPace(0.755, 'kg')).toBe('0.76');
   });
 });
 
 describe('weightWheel', () => {
-  it('uses 20–250 kg and 50–500 lb for every weight wheel', () => {
-    expect(WEIGHT_WHEEL).toEqual({ kg: { min: 20, max: 250 }, lb: { min: 50, max: 500 } });
+  it('uses 20–250 kg for every weight wheel', () => {
+    expect(WEIGHT_WHEEL).toEqual({ kg: { min: 20, max: 250 } });
   });
 
   it('splits a weight into whole units and tenths', () => {
     expect(weightWheel(72.46, 'kg')).toEqual({ whole: 72, tenth: 5 });
-    expect(weightWheel(70, 'lb')).toEqual({ whole: 154, tenth: 3 });
+    expect(weightWheel(70, 'kg')).toEqual({ whole: 70, tenth: 0 });
   });
 
-  it('shows 160.0 lb after a round trip through kg, not 159.9 (R05.10)', () => {
-    const kg = weightFromWheel({ whole: 160, tenth: 0 }, 'lb');
-    expect(weightWheel(kg, 'lb')).toEqual({ whole: 160, tenth: 0 });
+  it('opens 69.96 kg on 70.0, never 69.9 (R05.10)', () => {
     // A value just below a whole number rounds up into the next whole, never to a tenth of 10.
-    expect(weightWheel(weightFromDisplay(159.96, 'lb'), 'lb')).toEqual({ whole: 160, tenth: 0 });
+    expect(weightWheel(69.96, 'kg')).toEqual({ whole: 70, tenth: 0 });
+    expect(weightWheel(kgFromPounds(160), 'kg')).toEqual({ whole: 72, tenth: 6 });
   });
 
-  it('keeps every tenth of the lb wheel after a round trip through kg (R05.10)', () => {
-    for (let tenths = 500; tenths <= 5_000; tenths += 1) {
+  it('keeps every tenth of the kg wheel through a store and a reopen (R05.10)', () => {
+    for (let tenths = 200; tenths <= 2_500; tenths += 1) {
       const wheel = { whole: Math.floor(tenths / 10), tenth: tenths % 10 };
-      const back = weightWheel(weightFromWheel(wheel, 'lb'), 'lb');
+      const back = weightWheel(weightFromWheel(wheel, 'kg'), 'kg');
       if (back.whole !== wheel.whole || back.tenth !== wheel.tenth) {
-        expect.fail(`${wheel.whole}.${wheel.tenth} lb came back as ${back.whole}.${back.tenth}`);
+        expect.fail(`${wheel.whole}.${wheel.tenth} kg came back as ${back.whole}.${back.tenth}`);
       }
     }
   });
@@ -100,34 +104,18 @@ describe('weightWheel', () => {
   it('holds the opening position to the range', () => {
     expect(weightWheel(19.9, 'kg')).toEqual({ whole: 20, tenth: 0 });
     expect(weightWheel(260, 'kg')).toEqual({ whole: 250, tenth: 0 });
-    expect(weightWheel(weightFromDisplay(40, 'lb'), 'lb')).toEqual({ whole: 50, tenth: 0 });
-    expect(weightWheel(weightFromDisplay(600, 'lb'), 'lb')).toEqual({ whole: 500, tenth: 0 });
-  });
-});
-
-describe('switching the weight unit inside the sheet', () => {
-  it('converts the current pick and holds it to the other wheel', () => {
-    const fromLb = weightWheel(weightFromWheel({ whole: 160, tenth: 0 }, 'lb'), 'kg');
-    expect(fromLb).toEqual({ whole: 72, tenth: 6 });
-    expect(weightWheel(weightFromWheel(fromLb, 'kg'), 'lb')).toEqual({ whole: 160, tenth: 1 });
-    // 20.0 kg is 44.1 lb, below the lb wheel, which starts at 50.0.
-    expect(weightWheel(weightFromWheel({ whole: 20, tenth: 0 }, 'kg'), 'lb')).toEqual({
-      whole: 50,
-      tenth: 0,
-    });
+    expect(weightWheel(kgFromPounds(40), 'kg')).toEqual({ whole: 20, tenth: 0 });
   });
 });
 
 describe('weightFromWheel', () => {
   it('returns kg at full precision', () => {
     expect(weightFromWheel({ whole: 72, tenth: 5 }, 'kg')).toBe(72.5);
-    expect(weightFromWheel({ whole: 160, tenth: 0 }, 'lb')).toBe(160 / LB_PER_KG);
   });
 
   it('holds the stored value to the range', () => {
     expect(weightFromWheel({ whole: 250, tenth: 9 }, 'kg')).toBe(250);
     expect(weightFromWheel({ whole: 19, tenth: 0 }, 'kg')).toBe(20);
-    expect(weightFromWheel({ whole: 500, tenth: 5 }, 'lb')).toBe(500 / LB_PER_KG);
   });
 });
 

@@ -454,7 +454,6 @@ test.describe('accessibility checks on the main screens, in both themes (ACC-L9-
     const logWeight = page.getByRole('dialog', { name: words('progress.logWeight.title') });
     await expect(ui(logWeight, 'progress.logWeight.save')).toBeVisible();
     await checkScreen(page, testInfo, 'the Log weight sheet');
-    await ui(logWeight, 'progress.logWeight.unit.kg').click();
     await ui(logWeight, 'progress.logWeight.wheel.whole').selectOption('72');
     await ui(logWeight, 'progress.logWeight.date').fill(LAST_TUESDAY);
     await ui(logWeight, 'progress.logWeight.save').click();
@@ -606,12 +605,9 @@ test.describe('the keyboard alone', () => {
       await page.keyboard.press('Enter');
     });
 
-    await test.step('kg with the arrow keys, 71 on the whole wheel, Save', async () => {
+    await test.step('71 kg on the whole wheel with the arrow keys, Save', async () => {
       const sheet = page.getByRole('dialog', { name: words('progress.logWeight.title') });
       await expect(sheet).toBeVisible();
-      await keyTo(page, ui(sheet, 'progress.logWeight.unit.lb'));
-      await page.keyboard.press('ArrowLeft');
-      await expect(ui(sheet, 'progress.logWeight.unit.kg')).toHaveAttribute('aria-checked', 'true');
       const whole = ui(sheet, 'progress.logWeight.wheel.whole');
       await expect(whole).toHaveValue('70');
       await keyTo(page, whole);

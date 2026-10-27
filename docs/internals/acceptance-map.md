@@ -86,8 +86,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 ### B3 · Switching metric and imperial in the wizard keeps the value … (P1)
 
-- **ACC-B3-1** 70.0 kg toggled to lb and back still reads 70.0 kg
-  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)
+- **ACC-B3-1** Switching the height unit to ft-in and back keeps the height, and the weight still reads 70.0 kg (kg only, D-16.91)
+  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg and 170 cm through cm → ft and in → cm: weight is kg only (R01.3, ACC-B3-1, D-16.91)
 
 ### B4 · Target weight must be below the current weight to lose and above … (P1)
 
@@ -145,12 +145,13 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 ### B11 · Unit defaults from the browser locale (P1)
 
-- **ACC-B11-1** The unit defaults for an en-US browser are lb and ft-in, and kg and cm for en-GB
-  - Test: src/domain/units/defaults.test.ts > defaultUnits > starts en-US, en-LR and my-MM in lb and feet and inches
+- **ACC-B11-1** The unit defaults for an en-US browser are kg and ft-in, and kg and cm for en-GB (D-16.91)
+  - Test: src/domain/units/defaults.test.ts > defaultUnits > starts en-US, en-LR and my-MM in kg and feet and inches (D-16.91)
   - Test: src/domain/units/defaults.test.ts > defaultUnits > starts every other tag in kg and cm
-  - Test: src/domain/profile/profile.test.ts > firstRunDefaults > seeds lb and feet and inches together for en-US
-- **ACC-B11-2** A fresh wizard in an en-US browser shows weight in lb
-  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows weight in pounds in a fresh wizard in an en-US browser (ACC-B11-2)
+  - Test: src/domain/profile/profile.test.ts > firstRunDefaults > seeds kg and feet and inches for en-US (D-16.91)
+  - Test: src/data/settingsSchema.test.ts > SETTING_SPECS > takes the height unit from the locale, weight always kg and energy always kcal (R01.18, D-16.91)
+- **ACC-B11-2** A fresh wizard in an en-US browser shows weight in kg, with height in ft-in (D-16.91)
+  - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows weight in kg and height in feet and inches in a fresh wizard in an en-US browser (ACC-B11-2, D-16.91)
 
 ### B12 · Personal info in Settings (P1)
 
@@ -685,8 +686,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > logs a weight for last week on that day at the current clock time, keeping the current weight (ACC-G4-1)
   - Test: src/services/progress.test.ts > logWeight > puts an earlier day at the current clock time and keeps the newer profile weight (ACC-G4-1)
   - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
-- **ACC-G4-2** Toggling lb in the log sheet changes the app's weight unit
-  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
+- **ACC-G4-2** The Log weight sheet weighs in kg with no unit toggle, also for a person who chose lb before (D-16.91)
+  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > weighs in kg with no unit toggle, even for a person whose stored unit is lb (ACC-G4-2, R05.11, D-16.91)
   - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 
 ### G5 · Body-fat card and Log body fat (3–60 % in 0.5 steps) (P1)
@@ -916,8 +917,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 ### J3 · Height, weight and energy units as separate settings (P1)
 
-- **ACC-J3-1** Weight in lb and height in cm can be combined
-  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > combines weight in lb with height in cm (ACC-J3-1)
+- **ACC-J3-1** Energy and height are separate unit choices; weight has none and reads kg next to height in ft-in (D-16.91)
+  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > offers no weight unit: weight reads kg next to height in feet and inches, even with lb stored (ACC-J3-1, D-16.91)
 
 ### J4 · Meal times editor (P1)
 

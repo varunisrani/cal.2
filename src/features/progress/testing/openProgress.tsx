@@ -5,7 +5,6 @@
 import type { ReactNode } from 'react';
 import type { DataSources } from '../../../data/DataProvider';
 import type { Profile } from '../../../domain/model';
-import type { WeightDisplayUnit } from '../../../domain/units/body';
 import { ServicesProvider } from '../../../services/context';
 import { createProgressService } from '../../../services/progress';
 import { makeProfile } from '../../../test/factories';
@@ -14,7 +13,11 @@ import { openHarness } from '../../../test/screenHarness';
 export interface ProgressSetup {
   /** The stored profile; null stores none. A lose profile of 64 kg aiming at 60 kg by default. */
   readonly profile?: Profile | null;
-  readonly weight?: WeightDisplayUnit;
+  /**
+   * The stored `units.weight` row as it is put on disk, so an earlier build's `lb` can be stored;
+   * kg is the only weight unit (D-16.91).
+   */
+  readonly weight?: string;
   /** Weigh-ins added through the weight repository, so the profile follows the newest. */
   readonly weighIns?: ReadonlyArray<{ readonly at: number; readonly kg: number }>;
   /** Body-fat readings (fractions) added through their repository. */
@@ -33,7 +36,7 @@ export async function openProgress({
   const h = await openHarness({ hash: '#/progress', sources });
   const { profileRepo, settingsRepo, weightRepo, bodyFatRepo } = h.repos;
   if (profile) await profileRepo.save(profile);
-  await settingsRepo.set('units.weight', weight);
+  await h.db.settings.put({ key: 'units.weight', value: weight });
   for (const reading of weighIns) await weightRepo.addWeighIn(reading);
   for (const reading of bodyFat) await bodyFatRepo.addReading(reading);
   const progress = createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: h.clock });

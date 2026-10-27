@@ -34,7 +34,6 @@ describe('set', () => {
     await h.service.set('display.weekStart', 'sun');
     await h.service.set('units.energy', 'kJ');
     await h.service.set('units.height', 'ftIn');
-    await h.service.set('units.weight', 'lb');
     await h.service.set('product.show', false);
 
     const all = await h.settingsRepo.snapshot();
@@ -45,7 +44,7 @@ describe('set', () => {
       'display.weekStart': 'sun',
       'units.energy': 'kJ',
       'units.height': 'ftIn',
-      'units.weight': 'lb',
+      'units.weight': 'kg',
       'product.show': false,
     });
   });
@@ -56,7 +55,6 @@ describe('set', () => {
     await h.profileRepo.save(profile);
 
     await h.service.set('units.height', 'ftIn');
-    await h.service.set('units.weight', 'lb');
     await h.service.set('units.energy', 'kJ');
 
     const read = await h.profileRepo.get();

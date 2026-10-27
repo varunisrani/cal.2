@@ -17,7 +17,7 @@ import styles from './progress.module.css';
 /** The chart pads at least this many units around the readings and the goal. */
 const WEIGHT_PAD = 2;
 
-/** A value already in the display unit, one decimal and the unit word: "154.3 lb". */
+/** A value already in the display unit, one decimal and the unit word: "70.0 kg". */
 function displayedAmount(value: number, unit: WeightDisplayUnit): string {
   return t(WEIGHT_AMOUNT_KEYS[unit], { value: formatNumber(value, currentLocale(), 1, 1) });
 }

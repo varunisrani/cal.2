@@ -1,9 +1,9 @@
 // The onboarding wizard as a pure state machine: thirteen steps from Welcome to Plan ready
 // (D-16.63), the answers kept in storage units (cm, kg, body fat as a fraction) and converted only
-// where a screen shows them, so switching metric and imperial never changes an entered value
-// (R01.3). Continue and Back follow per-step rules, and every visit to Building plan gets its own
-// run number so a plan that arrives after the person left is dropped (R01.8). Screens dispatch
-// actions; nothing here reads a clock, the browser or storage.
+// where a screen shows them, so switching the height unit never changes an entered value (R01.3).
+// Weight is kg only (D-16.91). Continue and Back follow per-step rules, and every visit to
+// Building plan gets its own run number so a plan that arrives after the person left is dropped
+// (R01.8). Screens dispatch actions; nothing here reads a clock, the browser or storage.
 
 import { isDayKey, type DayKey } from '../../domain/dates/dayKey';
 import { birthDateYearsBefore, profileDefaults } from '../../domain/profile/profile';
@@ -57,23 +57,13 @@ export function stepIndex(step: WizardStep): number {
 
 // ---- Answers --------------------------------------------------------------------------------
 
-/** How a person reads height and weight while the wizard runs; Settings stores both. */
+/**
+ * How a person reads height and weight while the wizard runs; Settings stores both. The Body
+ * step's toggle changes the height unit; weight is always kg (D-16.91).
+ */
 export interface WizardUnits {
   readonly height: HeightDisplayUnit;
   readonly weight: WeightDisplayUnit;
-}
-
-/** The one Metric | Imperial toggle of the Body step, which sets both units together. */
-export type UnitSystem = 'metric' | 'imperial';
-
-const UNITS_OF: Readonly<Record<UnitSystem, WizardUnits>> = {
-  metric: { height: 'cm', weight: 'kg' },
-  imperial: { height: 'ftIn', weight: 'lb' },
-};
-
-/** Metric only when both units are metric; any imperial unit reads as imperial. */
-export function unitSystemOf(units: WizardUnits): UnitSystem {
-  return units.height === 'cm' && units.weight === 'kg' ? 'metric' : 'imperial';
 }
 
 /** Every body-fat wheel, in percent (Proposed D-16.56). */
@@ -202,8 +192,8 @@ export function startWizard(today: DayKey, units: WizardUnits): WizardState {
 /**
  * Why the target cannot be kept, or null. Lose needs a target below the current weight and gain
  * one above it (D-16.11, R01.6); maintain has no check. The two weights are compared as the
- * person reads them (to the tenth, in their unit), so a target that reads the same as the current
- * weight is refused.
+ * person reads them (to the tenth of a kg), so a target that reads the same as the current weight
+ * is refused.
  */
 export function targetProblem(state: WizardState): GoalWeightProblem | null {
   if (state.goal === 'maintain') return null;
@@ -306,7 +296,7 @@ export type WizardAction =
   | { readonly type: 'back' }
   | { readonly type: 'sex'; readonly sex: Sex }
   | { readonly type: 'birthDate'; readonly date: DayKey }
-  | { readonly type: 'units'; readonly system: UnitSystem }
+  | { readonly type: 'heightUnit'; readonly unit: HeightDisplayUnit }
   | { readonly type: 'height'; readonly cm: number }
   | { readonly type: 'weight'; readonly kg: number }
   | { readonly type: 'bodyFatKnown'; readonly known: boolean }
@@ -345,18 +335,13 @@ function goBack(state: WizardState): WizardState {
   return step === undefined ? state : { ...state, step };
 }
 
-function withUnits(state: WizardState, system: UnitSystem): WizardState {
-  const units = UNITS_OF[system];
-  if (units.height === state.units.height && units.weight === state.units.weight) return state;
-  const weightKg = holdWeight(state.weightKg, units.weight);
+/** A new height unit holds the height to its wheel; the weight and the target never move. */
+function withHeightUnit(state: WizardState, unit: HeightDisplayUnit): WizardState {
+  if (unit === state.units.height) return state;
   return {
     ...state,
-    units,
-    heightCm: holdHeight(state.heightCm, units.height),
-    weightKg,
-    targetKg: state.targetMoved
-      ? holdWeight(state.targetKg, units.weight)
-      : seedTarget(state.goal, weightKg, units.weight),
+    units: { ...state.units, height: unit },
+    heightCm: holdHeight(state.heightCm, unit),
   };
 }
 
@@ -396,8 +381,8 @@ export function wizardReducer(state: WizardState, action: WizardAction): WizardS
       return { ...state, sex: action.sex };
     case 'birthDate':
       return withBirthDate(state, action.date);
-    case 'units':
-      return withUnits(state, action.system);
+    case 'heightUnit':
+      return withHeightUnit(state, action.unit);
     case 'height':
       return { ...state, heightCm: holdHeight(action.cm, state.units.height) };
     case 'weight':

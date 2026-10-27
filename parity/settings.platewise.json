@@ -326,20 +326,21 @@
       "timeout_ms": 10000
     },
     {
-      "step_id": "units.kg",
-      "action": "click",
-      "locator": {
-        "kind": "css",
-        "selector": "[data-ui=\"appSettings.units.weight.kg\"]"
-      },
-      "timeout_ms": 10000
-    },
-    {
-      "step_id": "units.kg-on",
+      "step_id": "units.no-weight",
       "action": "wait_for",
       "locator": {
         "kind": "css",
-        "selector": "[data-ui=\"appSettings.units.weight.kg\"][aria-checked=\"true\"]"
+        "selector": "[data-ui=\"appSettings.units\"]:not(:has([data-ui=\"appSettings.units.weight\"]))"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "units.ft-in-on",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"appSettings.units.height.ftIn\"][aria-checked=\"true\"]"
       },
       "state": "visible",
       "timeout_ms": 10000

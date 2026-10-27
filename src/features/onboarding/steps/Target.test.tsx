@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { onboarding } from '../../../i18n/en/onboarding';
-import { IMPERIAL, renderWizard, wizardAt } from '../testing/renderWizard';
+import { FEET_INCHES, renderWizard, wizardAt } from '../testing/renderWizard';
 
 const words = onboarding.onboarding;
 
@@ -47,15 +47,21 @@ describe('Target', () => {
     expect(latest().step).toBe('pace');
   });
 
-  it('refuses a gain target at the current weight, in the person’s unit', () => {
+  it('refuses a gain target that reads the same as the current weight, in kg', () => {
     renderWizard({
-      state: wizardAt('target', { goal: 'gain', units: IMPERIAL, targetKg: 70, targetMoved: true }),
+      state: wizardAt('target', {
+        goal: 'gain',
+        units: FEET_INCHES,
+        weightKg: 70.02,
+        targetKg: 69.98,
+        targetMoved: true,
+      }),
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent(
-      'To gain weight, pick a target above 154.3 lb.',
+      'To gain weight, pick a target above 70.0 kg.',
     );
-    expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeLb })).toHaveValue('154');
+    expect(screen.getByRole('combobox', { name: words.wizard.weight.wholeKg })).toHaveValue('70');
     expect(continueButton()).toBeDisabled();
   });
 

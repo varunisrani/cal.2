@@ -23,7 +23,7 @@ import {
 
 const TODAY = '2026-10-26';
 const METRIC: WizardUnits = { height: 'cm', weight: 'kg' };
-const IMPERIAL: WizardUnits = { height: 'ftIn', weight: 'lb' };
+const FEET_INCHES: WizardUnits = { height: 'ftIn', weight: 'kg' };
 const PLAN = { kcal: 2_100, protein: 120, carbs: 250, fat: 70 };
 
 function run(state: WizardState, ...actions: WizardAction[]): WizardState {
@@ -82,40 +82,40 @@ describe('startWizard', () => {
 });
 
 describe('units', () => {
-  it('keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)', () => {
-    const start = at('body');
-    const imperial = run(start, { type: 'units', system: 'imperial' });
+  it('keeps 70.0 kg and 170 cm through cm → ft and in → cm: weight is kg only (R01.3, ACC-B3-1, D-16.91)', () => {
+    const start = at('body', { heightCm: 170 });
+    const feetInches = run(start, { type: 'heightUnit', unit: 'ftIn' });
 
-    expect(imperial.units).toEqual(IMPERIAL);
-    expect(weightShown(imperial.weightKg, 'lb')).toBe(154.3);
+    expect(feetInches.units).toEqual(FEET_INCHES);
+    expect(feetInches.weightKg).toBe(70);
+    expect(weightShown(feetInches.weightKg, feetInches.units.weight)).toBe(70);
 
-    const metric = run(imperial, { type: 'units', system: 'metric' });
+    const metric = run(feetInches, { type: 'heightUnit', unit: 'cm' });
     expect(metric.units).toEqual(METRIC);
+    expect(metric.heightCm).toBe(170);
     expect(metric.weightKg).toBe(70);
-    expect(weightShown(metric.weightKg, 'kg')).toBe(70);
   });
 
   it('shows 170 cm as 5 ft 7 in and keeps 170 cm through a round trip (R01.3)', () => {
     const start = at('body', { heightCm: 170 });
-    const imperial = run(start, { type: 'units', system: 'imperial' });
+    const feetInches = run(start, { type: 'heightUnit', unit: 'ftIn' });
 
-    expect(ftInWheel(imperial.heightCm)).toEqual({ feet: 5, inches: 7 });
-    expect(run(imperial, { type: 'units', system: 'metric' }).heightCm).toBe(170);
+    expect(ftInWheel(feetInches.heightCm)).toEqual({ feet: 5, inches: 7 });
+    expect(run(feetInches, { type: 'heightUnit', unit: 'cm' }).heightCm).toBe(170);
   });
 
-  it('holds a value the new unit cannot show to that unit wheel', () => {
-    const light = run(at('body'), { type: 'weight', kg: 20 });
-    const imperial = run(light, { type: 'units', system: 'imperial' });
+  it('holds a height the new unit cannot show to that unit wheel, and never moves the weight', () => {
+    const tall = run(at('body', { units: FEET_INCHES }), { type: 'height', cm: 271.78 });
+    expect(run(tall, { type: 'heightUnit', unit: 'cm' }).heightCm).toBe(250);
 
-    // 20 kg is 44.1 lb, under the 50 lb end of the pound wheel.
-    expect(weightShown(imperial.weightKg, 'lb')).toBe(50);
-    const tall = run(at('body', { units: IMPERIAL }), { type: 'height', cm: 271.78 });
-    expect(run(tall, { type: 'units', system: 'metric' }).heightCm).toBe(250);
+    const light = run(at('body'), { type: 'weight', kg: 20 }, { type: 'goal', goal: 'gain' });
+    const moved = run(light, { type: 'heightUnit', unit: 'ftIn' });
+    expect(moved).toMatchObject({ weightKg: 20, targetKg: 25 });
   });
 
-  it('switching to the units already in use changes nothing', () => {
+  it('switching to the height unit already in use changes nothing', () => {
     const start = at('body');
-    expect(run(start, { type: 'units', system: 'metric' })).toBe(start);
+    expect(run(start, { type: 'heightUnit', unit: 'cm' })).toBe(start);
   });
 });
 
@@ -151,19 +151,16 @@ describe('target weight', () => {
     expect(canContinue(state)).toBe(true);
   });
 
-  it('compares the weights as the person reads them', () => {
-    // 70 kg reads 154.3 lb; a target picked as 154.3 lb is 69.989 kg but reads the same.
-    const imperial = run(losing, { type: 'units', system: 'imperial' });
-    const same = run(imperial, {
-      type: 'target',
-      kg: weightFromWheel({ whole: 154, tenth: 3 }, 'lb'),
-    });
+  it('compares the weights as the person reads them, to the tenth of a kg', () => {
+    // 70.02 kg reads 70.0 kg; a target of 69.98 kg is lower but reads the same.
+    const heavier = run(losing, { type: 'weight', kg: 70.02 });
+    const same = run(heavier, { type: 'target', kg: 69.98 });
 
     expect(same.targetKg).toBeLessThan(same.weightKg);
     expect(targetProblem(same)).toBe('notBelowCurrent');
-    const below = run(imperial, {
+    const below = run(heavier, {
       type: 'target',
-      kg: weightFromWheel({ whole: 154, tenth: 2 }, 'lb'),
+      kg: weightFromWheel({ whole: 69, tenth: 9 }, 'kg'),
     });
     expect(targetProblem(below)).toBeNull();
   });

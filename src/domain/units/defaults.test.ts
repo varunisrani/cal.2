@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { defaultUnits } from './defaults';
 
-const IMPERIAL = { energy: 'kcal', height: 'ftIn', weight: 'lb' };
+const FEET_AND_INCHES = { energy: 'kcal', height: 'ftIn', weight: 'kg' };
 const METRIC = { energy: 'kcal', height: 'cm', weight: 'kg' };
 
 describe('defaultUnits', () => {
-  it('starts en-US, en-LR and my-MM in lb and feet and inches', () => {
-    expect(defaultUnits('en-US')).toEqual(IMPERIAL);
-    expect(defaultUnits('en-LR')).toEqual(IMPERIAL);
-    expect(defaultUnits('my-MM')).toEqual(IMPERIAL);
+  it('starts en-US, en-LR and my-MM in kg and feet and inches (D-16.91)', () => {
+    expect(defaultUnits('en-US')).toEqual(FEET_AND_INCHES);
+    expect(defaultUnits('en-LR')).toEqual(FEET_AND_INCHES);
+    expect(defaultUnits('my-MM')).toEqual(FEET_AND_INCHES);
   });
 
   it('starts every other tag in kg and cm', () => {
@@ -19,7 +19,7 @@ describe('defaultUnits', () => {
 
   it('ignores case, scripts, extensions and underscores in the tag', () => {
     for (const tag of ['en-us', 'EN-US', 'en_US', 'en-Latn-US', 'en-US-u-ca-gregory', ' en-US ']) {
-      expect(defaultUnits(tag), tag).toEqual(IMPERIAL);
+      expect(defaultUnits(tag), tag).toEqual(FEET_AND_INCHES);
     }
   });
 
@@ -29,12 +29,11 @@ describe('defaultUnits', () => {
     }
   });
 
-  it('seeds height and weight together from the locale (R01.18)', () => {
-    const tags = ['en-US', 'en-LR', 'my-MM', 'en-GB', 'de-DE', 'en', 'ja-JP', 'my', 'xx'];
-    for (const tag of tags) {
-      const { height, weight } = defaultUnits(tag);
-      expect(height === 'ftIn', tag).toBe(weight === 'lb');
-    }
+  it('seeds height from the locale and weight in kg for every tag (R01.18, D-16.91)', () => {
+    const tags = ['en-US', 'en-LR', 'my-MM', 'en-GB', 'de-DE', 'en', 'ja-JP', 'my', 'xx', ''];
+    for (const tag of tags) expect(defaultUnits(tag).weight, tag).toBe('kg');
+    expect(defaultUnits('en-US').height).toBe('ftIn');
+    expect(defaultUnits('en-GB').height).toBe('cm');
   });
 
   it('always starts energy in kcal', () => {

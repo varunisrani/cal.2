@@ -17,18 +17,15 @@ import styles from '../onboarding.module.css';
 /** Unit words shown after a weight, and the name of the whole-units wheel. */
 export const WEIGHT_UNIT_KEYS: Readonly<Record<WeightDisplayUnit, TKey>> = {
   kg: 'onboarding.wizard.units.kg',
-  lb: 'onboarding.wizard.units.lb',
 };
 
 const WHOLE_WHEEL_KEYS: Readonly<Record<WeightDisplayUnit, TKey>> = {
   kg: 'onboarding.wizard.weight.wholeKg',
-  lb: 'onboarding.wizard.weight.wholeLb',
 };
 
-/** "{value} kg" / "{value} lb": an amount already written as text, with its unit word. */
+/** "{value} kg": an amount already written as text, with its unit word. */
 export const WEIGHT_AMOUNT_KEYS: Readonly<Record<WeightDisplayUnit, TKey>> = {
   kg: 'onboarding.wizard.weight.shownKg',
-  lb: 'onboarding.wizard.weight.shownLb',
 };
 
 /** A stored weight as a screen shows it: one decimal in the person's unit, "70.0 kg". */
@@ -58,7 +55,7 @@ export interface WeightPickerProps {
   readonly 'data-ui': string;
 }
 
-/** A weight as two wheels, whole units and tenths, in the person's unit (D-16.56 ranges). */
+/** A weight as two wheels, whole kilograms and tenths, 20–250 kg (D-16.56, D-16.91). */
 export function WeightPicker({ label, kg, unit, onChange, 'data-ui': ui }: WeightPickerProps) {
   const { min, max } = WEIGHT_WHEEL[unit];
   const wholeOptions = useMemo(() => countingOptions(min, max), [min, max]);

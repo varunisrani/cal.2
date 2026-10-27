@@ -3,7 +3,9 @@
 // keep their change, and hiding one tab never undoes another (R05.13). A stored value the schema
 // cannot use reads as its default and is kept aside in `quarantine`; a write over it copies it
 // aside first, in the same transaction, or is refused (R06.1, R05.6). `loaded` resolves once the
-// first snapshot has been read, so pages never show switches at their defaults (R06.22).
+// first snapshot has been read, so pages never show switches at their defaults (R06.22). Before
+// that first read, a value an earlier build stored and this one reads differently is rewritten
+// as it reads (D-16.91: a stored `lb` weight unit becomes `kg`).
 
 import { systemClock, type Clock } from '../../lib/clock';
 import { appBus, type Bus } from '../bus';
@@ -19,6 +21,7 @@ import {
 import type { KeyValueRow, PlatewiseDb } from '../schema';
 import {
   HIDEABLE_TABS,
+  SETTINGS_REWRITTEN_ON_LOAD,
   defaultSettings,
   isSettingKey,
   readSetting,
@@ -146,10 +149,28 @@ export function createSettingsRepo(
     });
   }
 
-  const loaded = snapshot().then((first) => {
-    bus.post({ type: 'settings-loaded' }, 'this-tab');
-    return first;
-  });
+  // Best effort: a rewrite that fails leaves the old value, which still reads the new way.
+  async function rewriteRetired(): Promise<void> {
+    try {
+      await db.transaction('rw', db.settings, async () => {
+        for (const key of SETTINGS_REWRITTEN_ON_LOAD) {
+          const stored: unknown = await db.settings.get(key);
+          if (!isRow(stored) || stored.key !== key) continue;
+          const value = readSetting(key, stored.value);
+          if (value !== undefined && value !== stored.value) await db.settings.put({ key, value });
+        }
+      });
+    } catch (error) {
+      console.warn('Rewriting older settings failed', error);
+    }
+  }
+
+  const loaded = rewriteRetired()
+    .then(snapshot)
+    .then((first) => {
+      bus.post({ type: 'settings-loaded' }, 'this-tab');
+      return first;
+    });
   // The boot gate awaits this; a failure nobody awaited yet must not surface as unhandled.
   loaded.catch(() => undefined);
 

@@ -30,8 +30,7 @@ export const appSettings = {
       heading: 'Units',
       energy: 'Energy',
       height: 'Height',
-      weight: 'Weight',
-      note: 'Units change only how numbers are shown and typed. Nothing you logged is changed.',
+      note: 'Units change only how numbers are shown and typed. Nothing you logged is changed. Weight is always in kg.',
     },
     pages: {
       heading: 'More',

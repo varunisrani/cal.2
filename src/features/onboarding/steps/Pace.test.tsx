@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { onboarding } from '../../../i18n/en/onboarding';
-import { IMPERIAL, renderWizard, wizardAt } from '../testing/renderWizard';
+import { FEET_INCHES, renderWizard, wizardAt } from '../testing/renderWizard';
 
 const words = onboarding.onboarding.pace;
 
@@ -21,10 +21,11 @@ describe('Pace', () => {
     expect(days()).toHaveTextContent('About 70 days');
   });
 
-  it('reads the weekly amount in pounds for an imperial person: "1.1 lb"', () => {
-    renderWizard({ state: wizardAt('pace', { goal: 'gain', units: IMPERIAL, targetKg: 75 }) });
+  it('reads the weekly amount in kg when height is in feet and inches: "0.5 kg" (D-16.91)', () => {
+    renderWizard({ state: wizardAt('pace', { goal: 'gain', units: FEET_INCHES, targetKg: 75 }) });
 
-    expect(screen.getByText('1.1 lb')).toBeVisible();
+    expect(screen.getByText('0.5 kg')).toBeVisible();
+    expect(screen.queryByText(/\blb\b/)).toBeNull();
     expect(screen.getByText(words.gainSubtitle)).toBeVisible();
     expect(days()).toHaveTextContent('About 70 days');
   });

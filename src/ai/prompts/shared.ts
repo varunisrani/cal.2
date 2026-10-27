@@ -23,7 +23,6 @@ import {
 import {
   feetInches,
   formatPace,
-  weightShown,
   type HeightDisplayUnit,
   type WeightDisplayUnit,
 } from '../../domain/units/body';
@@ -200,18 +199,16 @@ const GOAL_WORDS: Readonly<Record<GoalKind, string>> = {
   gain: 'gain weight',
 };
 
-/** A weight in kg to one decimal, with the person's reading in lb when they use lb. */
-function weightText(kg: number, unit: WeightDisplayUnit): string {
-  const shown = unit === 'lb' ? ` (they read ${oneDecimal(weightShown(kg, 'lb'))} lb)` : '';
-  return `${oneDecimal(kg)} kg${shown}`;
+/** A weight in kg to one decimal; kg is also how the person reads it (D-16.91). */
+function weightText(kg: number): string {
+  return `${oneDecimal(kg)} kg`;
 }
 
-function paceText(profile: Profile, unit: WeightDisplayUnit): string {
+function paceText(profile: Profile): string {
   if (profile.goal === 'maintain') return 'not set (keeping weight)';
   const kg = profile.weeklyKg ?? DEFAULT_WEEKLY_KG;
   const unset = profile.weeklyKg === undefined ? ', the default' : '';
-  const shown = unit === 'lb' ? ` (they read ${formatPace(kg, 'lb')} lb a week)` : '';
-  return `${formatPace(kg, 'kg')} kg a week${shown}${unset}`;
+  return `${formatPace(kg, 'kg')} kg a week${unset}`;
 }
 
 /**
@@ -226,16 +223,16 @@ export function profileFacts(profile: Profile, today: DayKey, units: DisplayUnit
       ? 'not set'
       : `${oneDecimal(profile.bodyFat * 100)} % (fraction ${num(profile.bodyFat, 3)})`;
   const goalWeight =
-    profile.goalWeightKg === undefined ? 'not set' : weightText(profile.goalWeightKg, units.weight);
+    profile.goalWeightKg === undefined ? 'not set' : weightText(profile.goalWeightKg);
   return bullets([
     `Sex: ${profile.sex}`,
     `Age: ${ageOn(profile.birthDate, today)} years`,
     `Height: ${oneDecimal(profile.heightCm)} cm${height}`,
-    `Weight: ${weightText(profile.weightKg, units.weight)}`,
+    `Weight: ${weightText(profile.weightKg)}`,
     `Body fat: ${bodyFat}`,
     `Activity: ${profile.activity} (${ACTIVITY_WORDS[profile.activity]})`,
     `Goal: ${GOAL_WORDS[profile.goal]}`,
-    `Weekly pace: ${paceText(profile, units.weight)}`,
+    `Weekly pace: ${paceText(profile)}`,
     `Goal weight: ${goalWeight}`,
   ]);
 }

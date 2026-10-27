@@ -1,16 +1,17 @@
-// Body weight and height. Storage is kilograms and centimetres; kg/lb and cm/feet-and-inches are
-// two separate reading choices. One pound factor is used in both directions, so a value converted
-// there and back is unchanged, and wheels round to the nearest tenth rather than truncating, so a
-// round trip never shows one tenth less (R05.10).
+// Body weight and height. Storage is kilograms and centimetres. Weight is read in kg only
+// (D-16.91): `units.weight` keeps its key with that one value, so the weight helpers still take
+// the unit a screen reads. Pounds are known only to turn an imported pound value into kg. Height
+// is read in cm or feet and inches. Wheels round to the nearest tenth rather than truncating, so a
+// weight stored from a wheel and opened again never shows one tenth less (R05.10).
 
 import { clamp, formatNumber, plainText } from './numbers';
 
-export const WEIGHT_DISPLAY_UNITS = ['kg', 'lb'] as const;
-/** How a person reads weight (setting `units.weight`). Storage is always kg. */
+export const WEIGHT_DISPLAY_UNITS = ['kg'] as const;
+/** How a person reads weight (setting `units.weight`): kg, the only choice (D-16.91). */
 export type WeightDisplayUnit = (typeof WEIGHT_DISPLAY_UNITS)[number];
 
 export function isWeightDisplayUnit(value: unknown): value is WeightDisplayUnit {
-  return value === 'kg' || value === 'lb';
+  return value === 'kg';
 }
 
 export const HEIGHT_DISPLAY_UNITS = ['cm', 'ftIn'] as const;
@@ -21,20 +22,26 @@ export function isHeightDisplayUnit(value: unknown): value is HeightDisplayUnit 
   return value === 'cm' || value === 'ftIn';
 }
 
+/** Pounds in a kilogram, for a value an import gives in pounds (D-16.91). */
 export const LB_PER_KG = 2.20462;
 export const CM_PER_INCH = 2.54;
 const INCHES_PER_FOOT = 12;
 
 // ---- Weight -------------------------------------------------------------------------------
 
-/** A kg amount in the display unit, unrounded. */
-export function weightToDisplay(kg: number, unit: WeightDisplayUnit): number {
-  return unit === 'lb' ? kg * LB_PER_KG : kg;
+/** An imported weight in pounds as kg, unrounded (store it at full precision). */
+export function kgFromPounds(lb: number): number {
+  return lb / LB_PER_KG;
+}
+
+/** A kg amount in the display unit, unrounded: kg reads as itself. */
+export function weightToDisplay(kg: number, _unit: WeightDisplayUnit): number {
+  return kg;
 }
 
 /** An amount in the display unit as kg, unrounded (store it at full precision). */
-export function weightFromDisplay(value: number, unit: WeightDisplayUnit): number {
-  return unit === 'lb' ? value / LB_PER_KG : value;
+export function weightFromDisplay(value: number, _unit: WeightDisplayUnit): number {
+  return value;
 }
 
 /** The weight a screen shows: the display value rounded to the nearest tenth. */
@@ -42,14 +49,14 @@ export function weightShown(kg: number, unit: WeightDisplayUnit): number {
   return Math.round(weightToDisplay(kg, unit) * 10) / 10;
 }
 
-/** Weight as text with exactly one decimal and no unit word: 70 kg → "70.0", in lb "154.3". */
+/** Weight as text with exactly one decimal and no unit word: 70 kg → "70.0". */
 export function formatWeight(kg: number, unit: WeightDisplayUnit, locale: string): string {
   return formatNumber(weightShown(kg, unit), locale, 1, 1);
 }
 
 /**
  * A weekly pace as a short number with a dot whatever the locale: two decimals at most, trailing
- * zeros dropped (0.25 kg → "0.25", in lb "0.55"; 0.5 → "0.5" / "1.1"; 1 → "1" / "2.2").
+ * zeros dropped (0.25 kg → "0.25", 0.5 → "0.5", 1 → "1").
  */
 export function formatPace(kgPerWeek: number, unit: WeightDisplayUnit): string {
   return plainText(weightToDisplay(kgPerWeek, unit), 2);
@@ -58,7 +65,6 @@ export function formatPace(kgPerWeek: number, unit: WeightDisplayUnit): string {
 /** Every weight wheel's range in its unit (D-16.37, Proposed D-16.56). */
 export const WEIGHT_WHEEL: Readonly<Record<WeightDisplayUnit, { min: number; max: number }>> = {
   kg: { min: 20, max: 250 },
-  lb: { min: 50, max: 500 },
 };
 
 /** A weight wheel's two columns: whole units and tenths (0–9). */
@@ -69,7 +75,8 @@ export interface WeightWheel {
 
 /**
  * The wheel position for a stored weight: the display value rounded to the nearest tenth first,
- * then held to the unit's range, then split. So 159.96 lb opens on 160.0, and 19.9 kg on 20.0.
+ * then held to the unit's range, then split. So 72.46 kg opens on 72.5, 69.96 kg on 70.0 (never
+ * 69.9 or a tenth of 10), and 19.9 kg on 20.0.
  */
 export function weightWheel(kg: number, unit: WeightDisplayUnit): WeightWheel {
   const { min, max } = WEIGHT_WHEEL[unit];

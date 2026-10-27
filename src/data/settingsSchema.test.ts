@@ -110,12 +110,13 @@ describe('SETTING_SPECS', () => {
     expect(readSetting('tuneUp.on', undefined)).toBeUndefined();
   });
 
-  it('takes height and weight units together from the locale, energy always kcal (R01.18)', () => {
+  it('takes the height unit from the locale, weight always kg and energy always kcal (R01.18, D-16.91)', () => {
     const pick = (locale: string) => {
       const settings = defaultSettings({ locale });
       return [settings['units.energy'], settings['units.height'], settings['units.weight']];
     };
-    expect(pick('en-US')).toEqual(['kcal', 'ftIn', 'lb']);
+    expect(pick('en-US')).toEqual(['kcal', 'ftIn', 'kg']);
+    expect(pick('my-MM')).toEqual(['kcal', 'ftIn', 'kg']);
     expect(pick('de-DE')).toEqual(['kcal', 'cm', 'kg']);
     expect(pick('')).toEqual(['kcal', 'cm', 'kg']);
   });
@@ -197,9 +198,14 @@ describe('readSetting', () => {
     expect(readSetting('units.energy', 'kJ')).toBe('kJ');
     expect(readSetting('units.energy', 'kj')).toBeUndefined();
     expect(readSetting('units.height', 'ftIn')).toBe('ftIn');
-    expect(readSetting('units.weight', 'lbs')).toBeUndefined();
     expect(readSetting('water.unit', 'flOz')).toBe('flOz');
     expect(readSetting('water.unit', 'oz')).toBeUndefined();
+  });
+
+  it('reads every stored weight unit as kg, the only one (D-16.91)', () => {
+    for (const stored of ['kg', 'lb', 'lbs', 42, null, undefined]) {
+      expect(readSetting('units.weight', stored), String(stored)).toBe('kg');
+    }
   });
 
   it('reads switches only from booleans', () => {

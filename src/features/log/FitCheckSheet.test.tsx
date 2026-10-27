@@ -222,7 +222,7 @@ describe('FitCheckSheet: the suggestion', () => {
     const { input } = calls[0] ?? {};
     expect(input).toMatchObject({
       today: '2026-10-26',
-      units: { energy: 'kcal', weight: 'lb', height: 'ftIn' },
+      units: { energy: 'kcal', weight: 'kg', height: 'ftIn' },
       targets: GOALS,
       eaten: { kcal: 1_500, protein: 70, carbs: 180, fat: 50 },
       meal: { name: 'Pasta bake', kcal: 700, protein: 50, carbs: 80, fat: 28 },

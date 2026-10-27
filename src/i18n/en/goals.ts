@@ -17,7 +17,6 @@ export const goals = {
       dismiss: 'Dismiss',
       weight: {
         kg: '{amount} kg',
-        lb: '{amount} lb',
       },
     },
     page: {

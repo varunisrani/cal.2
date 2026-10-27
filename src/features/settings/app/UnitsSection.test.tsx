@@ -36,22 +36,21 @@ async function storedProfile(h: AppSettingsHarness): Promise<Profile> {
 }
 
 describe('UnitsSection', () => {
-  it('shows energy, height and weight as three settings with the stored units and the note', async () => {
+  it('shows energy and height as two settings with the stored units, and the note that weight is kg', async () => {
     const h = await openAppSettings();
     await h.repos.settingsRepo.set('units.energy', 'kJ');
     await h.repos.settingsRepo.set('units.height', 'ftIn');
-    await h.repos.settingsRepo.set('units.weight', 'kg');
     h.mount(<UnitsSection />);
     await untilShown(CARD);
 
     expect(screen.getByRole('heading', { level: 2, name: words.units.heading })).toBeVisible();
     expect(
       screen.getAllByRole('radiogroup').map((choices) => choices.getAttribute('aria-label')),
-    ).toEqual([words.units.energy, words.units.height, words.units.weight]);
+    ).toEqual([words.units.energy, words.units.height]);
     expect(checkedIn(words.units.energy)).toEqual([home.home.unit.kJ]);
     expect(checkedIn(words.units.height)).toEqual([units.ftIn]);
-    expect(checkedIn(words.units.weight)).toEqual([units.kg]);
     expect(screen.getByText(words.units.note)).toBeVisible();
+    expect(words.units.note).toContain('Weight is always in kg.');
   });
 
   it('shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)', async () => {
@@ -102,11 +101,12 @@ describe('UnitsSection', () => {
     expect((await storedProfile(h)).heightCm).toBe(175);
   });
 
-  it('combines weight in lb with height in cm (ACC-J3-1)', async () => {
+  it('offers no weight unit: weight reads kg next to height in feet and inches, even with lb stored (ACC-J3-1, D-16.91)', async () => {
     const h = await openAppSettings({ hash: '#/settings/profile' });
     await h.repos.profileRepo.save(makeProfile({ heightCm: 168, weightKg: 64 }));
     await h.repos.settingsRepo.set('units.height', 'cm');
-    await h.repos.settingsRepo.set('units.weight', 'kg');
+    // As an earlier build stored it.
+    await h.db.settings.put({ key: 'units.weight', value: 'lb' });
     h.mount(
       <>
         <ProfilePage />
@@ -115,33 +115,34 @@ describe('UnitsSection', () => {
     );
     await untilShown(CARD);
     await until(() => textOf('profile.weight').includes('64.0 kg'));
+    expect(screen.queryByRole('radiogroup', { name: /weight/i })).toBeNull();
+    expect(screen.queryByRole('radio', { name: /^(kg|lb)$/ })).toBeNull();
 
-    choose(words.units.weight, units.lb);
+    choose(words.units.height, units.ftIn);
 
-    await until(() => textOf('profile.weight').includes('141.1 lb'));
-    expect(textOf('profile.height')).toContain('168 cm');
-    expect(checkedIn(words.units.height)).toEqual([units.cm]);
-    expect(await h.repos.settingsRepo.get('units.weight')).toBe('lb');
-    expect(await h.repos.settingsRepo.get('units.height')).toBe('cm');
+    await until(() => textOf('profile.height').includes('5 ft 6 in'));
+    expect(textOf('profile.weight')).toContain('64.0 kg');
+    expect(await h.repos.settingsRepo.get('units.height')).toBe('ftIn');
+    expect(await h.repos.settingsRepo.get('units.weight')).toBe('kg');
     expect(await storedProfile(h)).toMatchObject({ heightCm: 168, weightKg: 64 });
   });
 
   it('goes back to the stored unit and says so when the change cannot be saved', async () => {
     const save = deferred<void>();
     const h = await openAppSettings({ wrap: (real) => ({ ...real, set: () => save.promise }) });
-    await h.repos.settingsRepo.set('units.weight', 'kg');
+    await h.repos.settingsRepo.set('units.height', 'cm');
     h.mount(<UnitsSection />);
     await untilShown(CARD);
 
     const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    choose(words.units.weight, units.lb);
-    expect(checkedIn(words.units.weight)).toEqual([units.lb]);
+    choose(words.units.height, units.ftIn);
+    expect(checkedIn(words.units.height)).toEqual([units.ftIn]);
 
     save.reject(new Error('disk full'));
     await settle(() => document.querySelector('[data-ui="toast.message"]') !== null);
     expect(screen.getByText(words.saveFailed)).toBeVisible();
     expect(logged).toHaveBeenCalledOnce();
-    expect(checkedIn(words.units.weight)).toEqual([units.kg]);
-    expect(await h.repos.settingsRepo.get('units.weight')).toBe('kg');
+    expect(checkedIn(words.units.height)).toEqual([units.cm]);
+    expect(await h.repos.settingsRepo.get('units.height')).toBe('cm');
   });
 });

@@ -1,6 +1,6 @@
 // The Progress tab's writes (P07-09, P07-12..14): a weigh-in for a chosen day, a body-fat reading
-// stamped now, deletes from the two histories, the weight unit the Log weight sheet's toggle
-// changes for the whole app (R05.11), and the Count today switch. Readings go straight to their
+// stamped now, deletes from the two histories, and the Count today switch. Weight is kg only
+// (D-16.91), so the Log weight sheet stores no unit (R05.11). Readings go straight to their
 // repositories, which keep the profile weight and body fat on the newest reading by date in the
 // same transaction (R05.8) and post goal-reached themselves (R05.7), so a back-dated weight changes
 // neither. Unlike the Settings weight save, a weigh-in never drops a goal weight.
@@ -8,7 +8,6 @@
 import { dayKeyOf, isDayKey, type DayKey } from '../domain/dates/dayKey';
 import { stampForDay } from '../domain/dates/ranges';
 import type { BodyFatReading } from '../domain/model';
-import type { WeightDisplayUnit } from '../domain/units/body';
 import type { BodyFatRepo } from '../data/repos/bodyFatRepo';
 import type { AddedWeighIn, WeightRepo } from '../data/repos/weightRepo';
 import type { SettingsRepo } from '../data/repos/settingsRepo';
@@ -26,8 +25,6 @@ export interface ProgressService {
   deleteWeighIn(id: string): Promise<void>;
   /** Deletes a body-fat reading; the profile follows the newest one left, or keeps its value. */
   deleteBodyFatReading(id: string): Promise<void>;
-  /** The weight unit every screen shows (setting `units.weight`). */
-  setWeightUnit(unit: WeightDisplayUnit): Promise<void>;
   /** Whether the calorie chart and the averages count today (setting `progress.countToday`). */
   setCountToday(on: boolean): Promise<void>;
 }
@@ -66,10 +63,6 @@ export function createProgressService({
 
     async deleteBodyFatReading(id) {
       await bodyFatRepo.deleteReading(id);
-    },
-
-    async setWeightUnit(unit) {
-      await settingsRepo.set('units.weight', unit);
     },
 
     async setCountToday(on) {

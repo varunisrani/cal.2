@@ -3,6 +3,7 @@ import {
   cmFromFeetInches,
   cmWheel,
   ftInWheel,
+  HEIGHT_DISPLAY_UNITS,
   HEIGHT_WHEEL,
   type HeightDisplayUnit,
 } from '../../../domain/units/body';
@@ -11,7 +12,7 @@ import { cx } from '../../../ui/classes';
 import { Segmented } from '../../../ui/Segmented';
 import { Wheel } from '../../../ui/Wheel';
 import styles from '../onboarding.module.css';
-import { unitSystemOf, type UnitSystem, type WizardAction } from '../wizard';
+import type { WizardAction } from '../wizard';
 import { StepHeader } from './StepHeader';
 import type { StepProps } from './stepProps';
 import { countingOptions, WeightPicker } from './WeightPicker';
@@ -78,24 +79,24 @@ function HeightPicker({ cm, unit, dispatch }: HeightPickerProps) {
 }
 
 /**
- * Step 3: one Metric | Imperial toggle that sets the height and the weight unit together, then
- * the height and weight wheels in those units. The stored values are cm and kg, so switching
- * back and forth shows the same height and weight (R01.3).
+ * Step 3: a cm | ft and in toggle for the height unit, then the height wheels in that unit and the
+ * weight wheels in kg, the only weight unit (D-16.91). The stored height is cm, so switching back
+ * and forth shows the same height, and the weight never moves (R01.3).
  */
 export function Body({ state, dispatch }: StepProps) {
-  const systems: readonly { value: UnitSystem; label: string }[] = [
-    { value: 'metric', label: t('onboarding.body.metric') },
-    { value: 'imperial', label: t('onboarding.body.imperial') },
-  ];
+  const heightUnits = HEIGHT_DISPLAY_UNITS.map((value) => ({
+    value,
+    label: t(`onboarding.body.${value}`),
+  }));
   return (
     <>
       <StepHeader title={t('onboarding.body.title')} subtitle={t('onboarding.body.subtitle')} />
       <Segmented
-        label={t('onboarding.body.units')}
-        options={systems}
-        value={unitSystemOf(state.units)}
-        onChange={(system) => dispatch({ type: 'units', system })}
-        data-ui="wizard.body.units"
+        label={t('onboarding.body.heightUnit')}
+        options={heightUnits}
+        value={state.units.height}
+        onChange={(unit) => dispatch({ type: 'heightUnit', unit })}
+        data-ui="wizard.body.heightUnit"
       />
       <div className={styles.pickers}>
         <div className={styles.picker}>

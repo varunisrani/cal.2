@@ -117,7 +117,7 @@ describe('fitCheckPrompt: how to answer', () => {
   });
 
   it('adds the kJ line only for kJ readers', () => {
-    const kj = fitCheckPrompt(inputWith({ units: { energy: 'kJ', weight: 'lb', height: 'ftIn' } }));
+    const kj = fitCheckPrompt(inputWith({ units: { energy: 'kJ', weight: 'kg', height: 'ftIn' } }));
     expect(kj.prompt).toContain('The person reads energy in kilojoules');
     expect(kj.prompt).toContain('4.184');
     expect(kj.prompt).not.toContain('Number fields');

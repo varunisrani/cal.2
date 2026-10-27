@@ -1,6 +1,6 @@
 # P13 · kg only, Coach with Health Connect, reminders as notifications
 
-**Weeks:** 1 · **Tracks:** domain/units; Coach; reminders and native notifications; Coach chat UI · **Depends on:** P00–P12 · **Status:** 🔨 in progress: S2 Coach × Health Connect landed (2026-10-28)
+**Weeks:** 1 · **Tracks:** domain/units; Coach; reminders and native notifications; Coach chat UI · **Depends on:** P00–P12 · **Status:** 🔨 in progress: S1 kg only and S2 Coach × Health Connect landed (2026-10-28)
 
 ## Goal
 

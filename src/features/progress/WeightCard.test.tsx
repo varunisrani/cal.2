@@ -85,17 +85,17 @@ describe('WeightCard', () => {
     expect(badge('average')).toBe('70.1 kg');
   });
 
-  it('writes every figure in pounds when the unit is lb', () => {
-    renderCard({ readings: mornings(70, 71), goalKg: 65, unit: 'lb' });
-    expect(badge('current')).toBe('156.5 lb');
-    expect(badge('goal')).toBe('143.3 lb');
-    expect(badge('change')).toBe('+2.2 lb');
-    expect(badge('average')).toBe('155.4 lb');
+  it('writes every figure in kg with one decimal, the only weight unit (D-16.91)', () => {
+    renderCard({ readings: mornings(70, 71.04), goalKg: 65 });
+    expect(badge('current')).toBe('71.0 kg');
+    expect(badge('goal')).toBe('65.0 kg');
+    expect(badge('change')).toBe('+1.0 kg');
+    expect(badge('average')).toBe('70.5 kg');
   });
 
-  it('applies the 0.05 rule to the pound value: 0.04 kg is 0.1 lb', () => {
-    renderCard({ readings: mornings(70, 70.04), unit: 'lb' });
-    expect(badge('change')).toBe('+0.1 lb');
+  it('applies the 0.05 rule to kg: a 0.06 kg gain reads +0.1 kg', () => {
+    renderCard({ readings: mornings(70, 70.06) });
+    expect(badge('change')).toBe('+0.1 kg');
   });
 
   it('shows a prompt instead of badges and a chart when the window has no weigh-ins', async () => {

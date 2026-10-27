@@ -2,7 +2,6 @@ import { useState } from 'react';
 import type { Profile } from '../../../domain/model';
 import type { GoalWeightProblem } from '../../../domain/profile/editRules';
 import {
-  WEIGHT_DISPLAY_UNITS,
   WEIGHT_WHEEL,
   weightFromWheel,
   weightShown,
@@ -11,7 +10,6 @@ import {
 } from '../../../domain/units/body';
 import { t, type TKey } from '../../../i18n/t';
 import { Button } from '../../../ui/Button';
-import { Segmented } from '../../../ui/Segmented';
 import { Sheet } from '../../../ui/Sheet';
 import { WeightPicker } from '../../onboarding/steps/WeightPicker';
 import styles from './profile.module.css';
@@ -25,7 +23,7 @@ export interface WeightSheetProps {
   readonly open: boolean;
   readonly kind: WeightSheetKind;
   readonly profile: Profile;
-  /** The stored weight unit; the toggle stores a new one at once. */
+  /** The stored weight unit: kg, the only one (D-16.91). */
   readonly unit: WeightDisplayUnit;
   readonly onClose: () => void;
 }
@@ -45,14 +43,9 @@ const PROBLEM_KEYS: Readonly<Record<GoalWeightProblem, TKey>> = {
   notAboveCurrent: 'profile.weight.notAboveCurrent',
 };
 
-const UNIT_LABELS: Readonly<Record<WeightDisplayUnit, TKey>> = {
-  kg: 'profile.units.kg',
-  lb: 'profile.units.lb',
-};
-
 /**
  * `kg` as the wheel in `unit` can hold it: unchanged when the wheel shows it, else the wheel's
- * nearest end (the wizard's rule, D-16.80), so a unit switch never changes a value it can show.
+ * nearest end (the wizard's rule, D-16.80), so what the wheel shows is what Save stores.
  */
 export function heldOnWheel(kg: number, unit: WeightDisplayUnit): number {
   const { min, max } = WEIGHT_WHEEL[unit];
@@ -61,21 +54,20 @@ export function heldOnWheel(kg: number, unit: WeightDisplayUnit): number {
 }
 
 /**
- * A weight in a sheet: whole + tenths wheels (20–250 kg or 50–500 lb) and a kg | lb toggle that
- * stores the weight unit and keeps the value. For the current weight, Save adds one weigh-in for
- * now. For the goal weight, Save is refused with the reason, and nothing stored, when the goal is
- * on the wrong side of the current weight. A wheel nobody moved saves the exact stored weight.
- * Renders nothing while closed, so every opening starts from the stored values.
+ * A weight in a sheet: whole + tenths wheels in kg (20–250 kg; kg is the only weight unit,
+ * D-16.91). For the current weight, Save adds one weigh-in for now. For the goal weight, Save is
+ * refused with the reason, and nothing stored, when the goal is on the wrong side of the current
+ * weight. A wheel nobody moved saves the exact stored weight. Renders nothing while closed, so
+ * every opening starts from the stored values.
  */
 export function WeightSheet(props: WeightSheetProps) {
   return props.open ? <OpenWeightSheet {...props} /> : null;
 }
 
-function OpenWeightSheet({ kind, profile, unit: storedUnit, onClose }: WeightSheetProps) {
+function OpenWeightSheet({ kind, profile, unit, onClose }: WeightSheetProps) {
   const edits = useProfileEdits();
   const saveFailed = useSaveFailed();
   const ui = UI[kind];
-  const [unit, setUnit] = useState(storedUnit);
   const [kg, setKg] = useState(() =>
     heldOnWheel(
       kind === 'goal' ? (profile.goalWeightKg ?? profile.weightKg) : profile.weightKg,
@@ -83,13 +75,6 @@ function OpenWeightSheet({ kind, profile, unit: storedUnit, onClose }: WeightShe
     ),
   );
   const [problem, setProblem] = useState<GoalWeightProblem | null>(null);
-
-  const switchUnit = (next: WeightDisplayUnit): void => {
-    setUnit(next);
-    setKg((current) => heldOnWheel(current, next));
-    setProblem(null);
-    edits.setWeightUnit(next).catch(saveFailed);
-  };
 
   const pick = (next: number): void => {
     setKg(next);
@@ -132,13 +117,6 @@ function OpenWeightSheet({ kind, profile, unit: storedUnit, onClose }: WeightShe
       }
     >
       <div className={styles.editor}>
-        <Segmented
-          label={t('profile.units.weight')}
-          options={WEIGHT_DISPLAY_UNITS.map((value) => ({ value, label: t(UNIT_LABELS[value]) }))}
-          value={unit}
-          onChange={switchUnit}
-          data-ui={`${ui}.unit`}
-        />
         <WeightPicker label={title} kg={kg} unit={unit} onChange={pick} data-ui={`${ui}.wheel`} />
         {kind === 'current' ? (
           <p className={styles.note}>{t('profile.weight.addsWeighIn')}</p>

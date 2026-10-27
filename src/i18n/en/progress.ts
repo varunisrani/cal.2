@@ -105,11 +105,7 @@ export const progress = {
     },
     logWeight: {
       title: 'Log weight',
-      unit: 'Weight unit',
-      kg: 'kg',
-      lb: 'lb',
       saveFailed: "That weight wasn't saved. Please try again.",
-      unitFailed: "The weight unit wasn't changed. Please try again.",
     },
     bodyFat: {
       title: 'Body fat',

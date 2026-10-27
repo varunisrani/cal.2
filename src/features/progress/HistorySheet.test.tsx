@@ -108,12 +108,12 @@ describe('HistorySheet', () => {
     expect(s.sheet.getAllByRole('button', { name: /^Delete / })).toHaveLength(3);
   });
 
-  it('writes weigh-ins in pounds when that is the weight unit', async () => {
+  it('writes weigh-ins in kg for a person whose stored weight unit is lb (D-16.91)', async () => {
     await openHistory({ weight: 'lb', weighIns: WEIGH_INS });
     expect(rows()).toEqual([
-      '140.7 lb · Oct 26, 2026',
-      '142.0 lb · Oct 25, 2026',
-      '145.9 lb · Oct 6, 2026',
+      '63.8 kg · Oct 26, 2026',
+      '64.4 kg · Oct 25, 2026',
+      '66.2 kg · Oct 6, 2026',
     ]);
   });
 

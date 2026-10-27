@@ -38,7 +38,6 @@ describe('takeSnapshot (R04.22)', () => {
     await s.waterRepo.add({ at: at('2026-10-25', '18:00'), ml: 900 });
     await s.waterRepo.add({ at: at('2026-10-26', '09:00'), ml: 500 });
     await s.settingsRepo.set('units.energy', 'kJ');
-    await s.settingsRepo.set('units.weight', 'lb');
     await s.settingsRepo.set('units.height', 'ftIn');
     await s.settingsRepo.set('water.on', true);
     await s.settingsRepo.set('water.goalMl', 2_500);

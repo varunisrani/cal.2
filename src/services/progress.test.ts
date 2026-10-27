@@ -160,10 +160,10 @@ describe('history deletes', () => {
 });
 
 describe('settings', () => {
-  it('stores the weight unit for the whole app (R05.11)', async () => {
+  it('has no weight unit to store: weight is kg for the whole app (R05.11, D-16.91)', async () => {
     const h = await setUp();
-    await h.service.setWeightUnit('lb');
-    expect(await h.settingsRepo.get('units.weight')).toBe('lb');
+    expect('setWeightUnit' in h.service).toBe(false);
+    expect(await h.settingsRepo.get('units.weight')).toBe('kg');
   });
 
   it('stores whether today counts', async () => {

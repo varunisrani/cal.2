@@ -16,7 +16,8 @@ import {
 
 export const TEST_TODAY = '2026-10-26';
 export const METRIC: WizardUnits = { height: 'cm', weight: 'kg' };
-export const IMPERIAL: WizardUnits = { height: 'ftIn', weight: 'lb' };
+/** Height in feet and inches; weight is kg for everyone (D-16.91). */
+export const FEET_INCHES: WizardUnits = { height: 'ftIn', weight: 'kg' };
 
 /** The heading a stand-in late step shows. */
 export function standInTitle(id: LateStepId): string {

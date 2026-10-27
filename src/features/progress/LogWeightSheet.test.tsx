@@ -1,7 +1,6 @@
 import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
-import { LB_PER_KG } from '../../domain/units/body';
 import { common } from '../../i18n/en/common';
 import { onboarding } from '../../i18n/en/onboarding';
 import { progress } from '../../i18n/en/progress';
@@ -31,8 +30,7 @@ async function openSheet(setup: ProgressSetup) {
   await untilShown('[data-ui="progress.weight.log"]');
   await user.click(screen.getByRole('button', { name: words.weight.log }));
   const sheet = within(screen.getByRole('dialog', { name: words.logWeight.title }));
-  const wheel = (unit: 'kg' | 'lb') =>
-    sheet.getByRole('combobox', { name: unit === 'kg' ? wheelWords.wholeKg : wheelWords.wholeLb });
+  const wheel = () => sheet.getByRole('combobox', { name: wheelWords.wholeKg });
   const tenths = () => sheet.getByRole('combobox', { name: wheelWords.tenths });
   const date = () => sheet.getByLabelText(common.common.date);
   const save = () => user.click(sheet.getByRole('button', { name: common.common.save }));
@@ -47,14 +45,14 @@ describe('LogWeightSheet', () => {
         { at: FACTORY_NOW - 48 * HOUR, kg: 72.8 },
       ],
     });
-    expect(s.wheel('kg')).toHaveValue('71');
+    expect(s.wheel()).toHaveValue('71');
     expect(s.tenths()).toHaveValue('3');
     expect(s.date()).toHaveValue('2026-10-26');
   });
 
   it('opens on the profile weight without weigh-ins, and on 70 kg without either', async () => {
     const s = await openSheet({ profile: makeProfile({ weightKg: 64 }) });
-    expect(s.wheel('kg')).toHaveValue('64');
+    expect(s.wheel()).toHaveValue('64');
     expect(s.tenths()).toHaveValue('0');
 
     expect(seedWeightKg(undefined, undefined)).toBe(FALLBACK_LOG_KG);
@@ -62,40 +60,37 @@ describe('LogWeightSheet', () => {
     expect(seedWeightKg(71.3, 64)).toBe(71.3);
   });
 
-  it('converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)', async () => {
+  it('weighs in kg with no unit toggle, even for a person whose stored unit is lb (ACC-G4-2, R05.11, D-16.91)', async () => {
     const s = await openSheet({
-      profile: makeProfile({ goal: 'maintain', goalWeightKg: undefined, weightKg: 70 }),
-      weighIns: [{ at: FACTORY_NOW - 2 * HOUR, kg: 70 }],
+      profile: makeProfile({ goal: 'maintain', goalWeightKg: undefined, weightKg: 70.04 }),
+      weighIns: [{ at: FACTORY_NOW - 2 * HOUR, kg: 70.04 }],
+      weight: 'lb',
     });
     expect(badge('current')).toBe('70.0 kg');
 
-    await s.user.click(s.sheet.getByRole('radio', { name: words.logWeight.lb }));
-
-    expect(s.wheel('lb')).toHaveValue('154');
-    expect(s.tenths()).toHaveValue('3');
-    // The card behind the sheet follows the app-wide unit.
-    await until(() => badge('current') === '154.3 lb');
-    expect(await s.repos.settingsRepo.get('units.weight')).toBe('lb');
+    expect(s.sheet.queryByRole('radiogroup')).toBeNull();
+    expect(s.wheel()).toHaveValue('70');
+    expect(s.tenths()).toHaveValue('0');
+    expect(document.body.textContent).not.toMatch(/\blb\b/);
 
     // An unmoved wheel stores the exact weight it opened on.
     await s.save();
     await untilGone(SHEET);
     const [newest] = await s.repos.weightRepo.history();
-    expect(newest?.kg).toBe(70);
+    expect(newest?.kg).toBe(70.04);
+    expect(badge('current')).toBe('70.0 kg');
   });
 
-  it('holds a weight the pound wheels cannot show at their 50 lb end, and stores that', async () => {
-    const s = await openSheet({ profile: makeProfile({ weightKg: 21 }) });
+  it('holds a weight the wheels cannot show at their 20 kg end, and stores that', async () => {
+    const s = await openSheet({ profile: makeProfile({ weightKg: 19.5 }) });
 
-    // 21 kg is 46.3 lb.
-    await s.user.click(s.sheet.getByRole('radio', { name: words.logWeight.lb }));
-    expect(s.wheel('lb')).toHaveValue('50');
+    expect(s.wheel()).toHaveValue('20');
     expect(s.tenths()).toHaveValue('0');
 
     await s.save();
     await untilGone(SHEET);
     const [newest] = await s.repos.weightRepo.history();
-    expect(newest?.kg).toBeCloseTo(50 / LB_PER_KG, 9);
+    expect(newest?.kg).toBe(20);
   });
 
   it('offers no day after today and holds a later typed date at today', async () => {
@@ -113,7 +108,7 @@ describe('LogWeightSheet', () => {
       weighIns: [{ at: FACTORY_NOW - 2 * HOUR, kg: 64 }],
     });
 
-    await s.user.selectOptions(s.wheel('kg'), '66');
+    await s.user.selectOptions(s.wheel(), '66');
     await s.user.selectOptions(s.tenths(), '5');
     fireEvent.change(s.date(), { target: { value: '2026-10-21' } });
     await s.save();
@@ -131,7 +126,7 @@ describe('LogWeightSheet', () => {
   it("stamps today's weight now and moves the current weight to it", async () => {
     const s = await openSheet({ profile: makeProfile({ weightKg: 64 }) });
 
-    await s.user.selectOptions(s.wheel('kg'), '63');
+    await s.user.selectOptions(s.wheel(), '63');
     await s.user.selectOptions(s.tenths(), '2');
     await s.save();
 
@@ -145,7 +140,7 @@ describe('LogWeightSheet', () => {
 
   it('closes on Cancel without storing anything', async () => {
     const s = await openSheet({});
-    await s.user.selectOptions(s.wheel('kg'), '80');
+    await s.user.selectOptions(s.wheel(), '80');
 
     await s.user.click(s.sheet.getByRole('button', { name: common.common.cancel }));
 

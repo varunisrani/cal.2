@@ -14,10 +14,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses macros whose energy is too far from kcal (step 3, R01.2)
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: refused replies > refuses protein 300 for the default profile, which allows 78–146 (step 6, R01.2)
   - Test: src/domain/goals/planValidator.test.ts > checkPlan: exact energy > gives whole values that sum exactly to kcal for every accepted reply (R01.2)
-- **R01.3** Switching units in the wizard keeps the value: state stays in cm and kg, inches rounded
-  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)
+- **R01.3** Switching the height unit in the wizard keeps the value: state stays in cm and kg, inches rounded; weight is kg only (D-16.91)
+  - Test: src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg and 170 cm through cm → ft and in → cm: weight is kg only (R01.3, ACC-B3-1, D-16.91)
   - Test: src/features/onboarding/wizard.test.ts > units > shows 170 cm as 5 ft 7 in and keeps 170 cm through a round trip (R01.3)
-  - Test: src/features/onboarding/steps/Body.test.tsx > Body > reads 70.0 kg again after kg → lb → kg (R01.3)
+  - Test: src/features/onboarding/steps/Body.test.tsx > Body > reads 170 cm and 70.0 kg again after cm → ft and in → cm (R01.3)
 - **R01.4** A rebuild or tune-up result is dropped when any profile field or switch changed while the call ran
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when %s changed during the call (R01.4)
   - Test: src/domain/adaptive/cadence.test.ts > settle > drops a success when the profile is gone (R01.4)
@@ -100,8 +100,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/profileRepo.test.ts > get > calls an unreadable profile corrupt, never missing, and keeps it aside (R01.17)
   - Test: src/data/repos/profileRepo.test.ts > save > refuses to save over an unreadable profile that cannot be kept aside (R01.17)
   - Test: src/data/repos/profileRepo.test.ts > update > refuses to run on an unreadable profile, leaving it as it was and kept aside (R01.17)
-- **R01.18** Height and weight units default together from the browser locale (D-16.10)
-  - Test: src/domain/units/defaults.test.ts > defaultUnits > seeds height and weight together from the locale (R01.18)
+- **R01.18** The height unit defaults from the browser locale; weight is kg for every locale (D-16.10, D-16.91)
+  - Test: src/domain/units/defaults.test.ts > defaultUnits > seeds height from the locale and weight in kg for every tag (R01.18, D-16.91)
+  - Test: src/data/settingsSchema.test.ts > SETTING_SPECS > takes the height unit from the locale, weight always kg and energy always kcal (R01.18, D-16.91)
 
 ## R02 · Food logging (`research/02-*.md` §6)
 
@@ -486,14 +487,14 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
   - Test: src/domain/units/water.test.ts > quickAddFromFields > keeps the exact ml of a field left untouched in fl oz (R05.10)
   - Test: src/domain/units/water.test.ts > amountToMl > caps a custom amount at 5 000 ml (R05.10, D-16.39)
-  - Test: src/domain/units/body.test.ts > weightWheel > shows 160.0 lb after a round trip through kg, not 159.9 (R05.10)
-  - Test: src/domain/units/body.test.ts > weightWheel > keeps every tenth of the lb wheel after a round trip through kg (R05.10)
+  - Test: src/domain/units/body.test.ts > weightWheel > opens 69.96 kg on 70.0, never 69.9 (R05.10)
+  - Test: src/domain/units/body.test.ts > weightWheel > keeps every tenth of the kg wheel through a store and a reopen (R05.10)
   - Test: src/features/water/PresetsEditor.test.tsx > PresetsEditor > keeps 250 ml exactly through a save in fl oz when no field is touched (R05.10, ACC-H2-1)
   - Test: src/features/water/CustomWaterSheet.test.tsx > CustomWaterSheet > refuses 6 000 ml with a message naming 5,000 ml and stores nothing (ACC-H3-1, R05.10, D-16.39)
   - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > opens the goal wheel in fl oz on 68, keeps 2 000 ml unmoved, and stores 70 fl oz as 2 070 ml (R05.10)
-- **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
-  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
-  - Test: src/services/progress.test.ts > settings > stores the weight unit for the whole app (R05.11)
+- **R05.11** The Log weight sheet has no unit toggle: weight is kg app-wide (D-16.91)
+  - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > weighs in kg with no unit toggle, even for a person whose stored unit is lb (ACC-G4-2, R05.11, D-16.91)
+  - Test: src/services/progress.test.ts > settings > has no weight unit to store: weight is kg for the whole app (R05.11, D-16.91)
   - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **R05.12** No fallback goals flash before the profile is read
   - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves

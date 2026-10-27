@@ -66,7 +66,7 @@ describe('ProfilePage', () => {
     expect(screen.getByRole('button', { name: 'Weight: 64.0 kg' })).toBe(row('weight'));
   });
 
-  it('shows feet and inches, pounds, body fat and its goal, and the allergen list', async () => {
+  it('shows feet and inches, kg for a stored lb, body fat and its goal, and the allergen list (D-16.91)', async () => {
     await openPage({
       profile: makeProfile({
         ...PLANNED,
@@ -82,9 +82,10 @@ describe('ProfilePage', () => {
     });
 
     expect(rowValue('height')).toContain('5 ft 7 in');
-    expect(rowValue('weight')).toContain('154.3 lb');
-    expect(rowValue('pace')).toContain('1.1 lb a week');
-    expect(rowValue('goalWeight')).toContain('143.3 lb');
+    expect(rowValue('weight')).toContain('70.0 kg');
+    expect(rowValue('pace')).toContain('0.5 kg a week');
+    expect(rowValue('goalWeight')).toContain('65.0 kg');
+    expect(document.body.textContent).not.toMatch(/\blb\b/);
     expect(rowValue('bodyFat')).toContain('18.3 %');
     expect(rowValue('goalBodyFat')).toContain('15 %');
     expect(rowValue('allergens')).toContain('Peanut, Sesame');

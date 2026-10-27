@@ -18,7 +18,7 @@ import {
 } from './shared';
 
 const METRIC: DisplayUnits = { energy: 'kcal', weight: 'kg', height: 'cm' };
-const IMPERIAL: DisplayUnits = { energy: 'kJ', weight: 'lb', height: 'ftIn' };
+const FEET_INCHES: DisplayUnits = { energy: 'kJ', weight: 'kg', height: 'ftIn' };
 
 /** The words of a unit-list line after its label: "- grams (g): a, b" → ["a", "b"]. */
 function keysOnLine(unitLabel: string): string[] {
@@ -122,18 +122,19 @@ describe('profileFacts', () => {
     expect(facts).not.toContain('they read');
   });
 
-  it("adds the person's own units for an imperial reader", () => {
+  it('adds feet and inches for a person who reads height that way; weight stays kg (D-16.91)', () => {
     const profile = profileWith({ goal: 'lose', weeklyKg: 0.25, goalWeightKg: 65 });
-    const facts = profileFacts(profile, FIXTURE_TODAY, IMPERIAL);
+    const facts = profileFacts(profile, FIXTURE_TODAY, FEET_INCHES);
     expect(facts).toContain('Height: 175.0 cm (they read 5 ft 9 in)');
-    expect(facts).toContain('Weight: 70.0 kg (they read 154.3 lb)');
-    expect(facts).toContain('Weekly pace: 0.25 kg a week (they read 0.55 lb a week)');
-    expect(facts).toContain('Goal weight: 65.0 kg (they read 143.3 lb)');
+    expect(facts).toContain('- Weight: 70.0 kg\n');
+    expect(facts).toContain('- Weekly pace: 0.25 kg a week\n');
+    expect(facts).toContain('- Goal weight: 65.0 kg');
     expect(facts).toContain('Goal: lose weight');
+    expect(facts).not.toMatch(/\blb\b|pound/);
   });
 
   it('rounds the height to the nearest inch: 170 cm reads 5 ft 7 in', () => {
-    const facts = profileFacts(profileWith({ heightCm: 170 }), FIXTURE_TODAY, IMPERIAL);
+    const facts = profileFacts(profileWith({ heightCm: 170 }), FIXTURE_TODAY, FEET_INCHES);
     expect(facts).toContain('(they read 5 ft 7 in)');
   });
 

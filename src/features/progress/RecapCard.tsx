@@ -52,7 +52,7 @@ const SIGNED_TENTH: Intl.NumberFormatOptions = {
   signDisplay: 'exceptZero',
 };
 
-/** A weight change in the display unit as the weight card writes it: "-0.6 kg", "0.0 lb". */
+/** A weight change in the display unit as the weight card writes it: "-0.6 kg", "0.0 kg". */
 function signedWeight(changeKg: number, unit: WeightDisplayUnit): string {
   const tenth = changeToTenth(weightToDisplay(changeKg, unit));
   return t(WEIGHT_AMOUNT_KEYS[unit], {

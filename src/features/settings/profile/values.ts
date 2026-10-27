@@ -66,15 +66,13 @@ export const ACTIVITY_KEYS: Readonly<
 
 const WEIGHT_KEYS: Readonly<Record<WeightDisplayUnit, TKey>> = {
   kg: 'profile.value.kg',
-  lb: 'profile.value.lb',
 };
 
 const PACE_AMOUNT_KEYS: Readonly<Record<WeightDisplayUnit, TKey>> = {
   kg: 'profile.value.paceKg',
-  lb: 'profile.value.paceLb',
 };
 
-/** "70.0 kg" / "154.3 lb": one decimal in the person's unit. */
+/** "70.0 kg": one decimal in the person's unit, kg (D-16.91). */
 export function weightText(kg: number, unit: WeightDisplayUnit): string {
   return t(WEIGHT_KEYS[unit], { value: formatWeight(kg, unit, currentLocale()) });
 }
@@ -91,7 +89,7 @@ export function percentText(fraction: number): string {
   return t('profile.value.percent', { value: formatDecimal(fraction * 100, 1) });
 }
 
-/** "0.5 kg a week" / "1.1 lb a week". */
+/** "0.5 kg a week". */
 export function paceText(kgPerWeek: number, unit: WeightDisplayUnit): string {
   return t(PACE_AMOUNT_KEYS[unit], { amount: formatPace(kgPerWeek, unit) });
 }

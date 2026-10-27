@@ -49,9 +49,9 @@
     {
       "id": "PC-ACC-B11-2",
       "acc": "ACC-B11-2",
-      "claim": "In an en-US browser the height-and-weight question opens in pounds, 70 kg showing as 154.3 lb.",
+      "claim": "In an en-US browser the height-and-weight question opens with height in feet and inches and weight in kg, 70 kg showing as 70.",
       "flow": "onboarding",
-      "steps": ["body.starts-in-lb", "body.starts-154-lb"],
+      "steps": ["body.starts-ft-in", "body.starts-70-kg"],
       "spec": "01 §3.2; 06 §3.3",
       "status": "verified",
       "divergences": [
@@ -59,26 +59,40 @@
           "kind": "intended",
           "ref": "D-16.10",
           "what": "Unit defaults follow the browser locale; the reference fixes them per platform."
+        },
+        {
+          "kind": "intended",
+          "ref": "D-16.91",
+          "what": "Weight is kg in every locale; the reference offers pounds and starts iOS in pounds."
         }
       ]
     },
     {
       "id": "PC-ACC-B3-1",
       "acc": "ACC-B3-1",
-      "claim": "Switching metric to imperial and back keeps the weight at 70.0 kg.",
+      "claim": "Switching the height unit to feet and inches and back keeps 175 cm, and the weight stays 70.0 kg throughout.",
       "flow": "onboarding",
       "steps": [
-        "body.metric",
-        "body.metric.70-kg",
-        "body.imperial",
-        "body.imperial.154-lb",
-        "body.metric-again",
-        "body.metric-again.70-kg",
-        "body.metric-again.tenth-0"
+        "body.cm",
+        "body.cm.175",
+        "body.cm.70-kg",
+        "body.ft-in",
+        "body.ft-in.9-in",
+        "body.ft-in.70-kg",
+        "body.cm-again",
+        "body.cm-again.175",
+        "body.cm-again.70-kg",
+        "body.cm-again.tenth-0"
       ],
       "spec": "01 §3.2, §3.4",
       "status": "verified",
-      "divergences": []
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.91",
+          "what": "The toggle switches the height unit only; the reference's one toggle switches weight to pounds as well."
+        }
+      ]
     },
     {
       "id": "PC-ACC-B4-1",
@@ -830,19 +844,24 @@
     {
       "id": "PC-ACC-G4-2",
       "acc": "ACC-G4-2",
-      "claim": "Choosing kg in the Log weight sheet switches the whole app to kg.",
+      "claim": "The Log weight sheet opens in kg with no unit toggle, and the whole app stays in kg.",
       "flow": "progress",
       "steps": [
         "weight.log",
         "weight.sheet",
-        "weight.kg",
-        "weight.kg-on",
+        "weight.no-unit-toggle",
         "weight.wheel-70",
         "weight.current-stays"
       ],
       "spec": "05 §3.5",
       "status": "verified",
-      "divergences": []
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.91",
+          "what": "No kg | lb toggle: weight is kg only; the reference's toggle changes the app-wide unit."
+        }
+      ]
     },
     {
       "id": "PC-ACC-G4-1",
@@ -1098,12 +1117,18 @@
     {
       "id": "PC-ACC-J3-1",
       "acc": "ACC-J3-1",
-      "claim": "Weight in kg can be chosen while height stays in feet and inches.",
+      "claim": "The Units card offers energy and height but no weight unit, with height still in feet and inches.",
       "flow": "settings",
-      "steps": ["units.kg", "units.kg-on"],
+      "steps": ["units.no-weight", "units.ft-in-on"],
       "spec": "06 §3.3",
       "status": "verified",
-      "divergences": []
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.91",
+          "what": "Weight is kg only, so it has no unit choice; the reference offers kg or lb."
+        }
+      ]
     },
     {
       "id": "PC-ACC-A9-1",
