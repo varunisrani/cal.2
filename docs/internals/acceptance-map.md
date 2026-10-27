@@ -258,7 +258,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D3-1** The + menu offers Enter manually
   - Test: src/features/home/HomePage.test.tsx > HomePage > offers Enter manually in the + menu, which opens the manual sheet over Home (ACC-D3-1)
 - **ACC-D3-2** The default menu shows the three groups and their methods
-  - Review: P06-01
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu > draws the default menu's three groups as pages with their methods and Back (ACC-D3-2)
 
 ### D4 · Photo capture (P1)
 

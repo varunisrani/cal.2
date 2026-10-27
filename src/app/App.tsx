@@ -1,4 +1,5 @@
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
+import { AnalysisOverlay } from '../features/log/AnalysisOverlay';
 import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
 import { systemClock, type Clock } from '../lib/clock';
 import type { TuneUpRunner } from '../services/goals/tuneUp';
@@ -35,11 +36,13 @@ function TuneUp({ runner }: { readonly runner: TuneUpRunner }) {
 
 /**
  * The screen for the route: the onboarding wizard alone, or a tab screen over the tab bar with
- * the goal-reached dialog, which every weigh-in path raises (R01.11), and the weekly tune-up.
+ * the goal-reached dialog, which every weigh-in path raises (R01.11), the weekly tune-up, and the
+ * one food-analysis overlay, whichever tab started it.
  */
 function Shell() {
   const route = useRoute();
-  const tuneUp = useOptionalServices()?.tuneUp;
+  const services = useOptionalServices();
+  const tuneUp = services?.tuneUp;
   if (route.kind === 'onboarding') return <OnboardingRoute />;
   return (
     <div className={styles.shell}>
@@ -49,6 +52,7 @@ function Shell() {
       <TabBar />
       <GoalReachedDialog />
       {tuneUp ? <TuneUp runner={tuneUp} /> : null}
+      {services?.analysis ? <AnalysisOverlay /> : null}
     </div>
   );
 }

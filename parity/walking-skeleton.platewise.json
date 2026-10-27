@@ -225,6 +225,12 @@
       "timeout_ms": 10000
     },
     {
+      "step_id": "add.open-describe-group",
+      "action": "click",
+      "locator": { "kind": "css", "selector": "[data-ui=\"home.add.group.describe\"]" },
+      "timeout_ms": 10000
+    },
+    {
       "step_id": "add.enter-manually",
       "action": "click",
       "locator": { "kind": "css", "selector": "[data-ui=\"home.add.manual\"]" },

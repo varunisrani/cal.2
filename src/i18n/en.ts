@@ -10,6 +10,7 @@ import { display } from './en/display';
 import { goals } from './en/goals';
 import { home } from './en/home';
 import { log } from './en/log';
+import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
 import { settings } from './en/settings';
 import { shell } from './en/shell';
@@ -27,6 +28,7 @@ export const enPartitions = {
   onboarding,
   home,
   log,
+  menu,
   capture,
   settings,
   charts,

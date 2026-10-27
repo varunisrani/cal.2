@@ -1,13 +1,15 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Dexie } from 'dexie';
 import { describe, expect, it, vi } from 'vitest';
 import { createBus } from '../data/bus';
 import { DataProvider, type DataSources } from '../data/DataProvider';
+import { capture } from '../i18n/en/capture';
 import { common } from '../i18n/en/common';
 import { goals } from '../i18n/en/goals';
 import { onboarding } from '../i18n/en/onboarding';
 import { shell } from '../i18n/en/shell';
 import { fixedClock } from '../lib/clock';
+import type { AnalysisService, AnalysisState } from '../services/analysis';
 import { ServicesProvider, type Services } from '../services/context';
 import { App } from './App';
 import { createAppState } from './appState';
@@ -143,6 +145,33 @@ describe('App', () => {
     renderApp({ boot: readyBoot, settings }, '#/home', { ...services, tuneUp });
     expect(check).toHaveBeenCalledTimes(1);
     expect(check).toHaveBeenCalledWith('open');
+  });
+
+  it('shows the analysis overlay once over a tab screen, and never on onboarding (P06-01)', () => {
+    const state: AnalysisState = { phase: 'analysing', kind: 'text', photoIds: [] };
+    const analysis: AnalysisService = {
+      getSnapshot: () => state,
+      subscribe: () => () => undefined,
+      start: vi.fn(),
+      cancel: vi.fn(() => Promise.resolve()),
+      retry: vi.fn(),
+      closeReview: vi.fn(),
+      restore: vi.fn(),
+    };
+    const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
+    const onboardingBoot = controlledStore<BootState>({ status: 'needsOnboarding' });
+    const first = renderApp({ boot: onboardingBoot, settings }, '', { ...services, analysis });
+    expect(document.querySelector('[data-ui="analysis"]')).toBeNull();
+    first.unmount();
+
+    const readyBoot = controlledStore<BootState>({ status: 'ready' });
+    renderApp({ boot: readyBoot, settings }, '#/progress', { ...services, analysis });
+    expect(document.querySelectorAll('[data-ui="analysis"]')).toHaveLength(1);
+    expect(
+      screen.getByRole('dialog', { name: capture.capture.analysing.textStatus }),
+    ).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
+    expect(analysis.cancel).toHaveBeenCalledTimes(1);
   });
 
   it('puts every screen inside the toast provider', () => {

@@ -51,7 +51,6 @@ export const home = {
     },
     add: {
       label: 'Add food',
-      manual: 'Enter manually',
     },
   },
 } as const satisfies MessageTree;

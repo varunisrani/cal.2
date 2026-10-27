@@ -166,14 +166,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > writes a 320 px JPEG thumbnail at 0.76 from the upright picture
   - Test: src/services/photos.test.ts > stored photos are never rewritten (R02.19) > makes a missing thumbnail for a restored 4 000 px photo and leaves its bytes as they were
 - **R02.20** The capture note is stored on the entry; the label-scan barcode is armed once and cleared on every other exit
-  - Review: owned by P06-17
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu > clears an armed label scan before every method it hands on (R02.20)
+  - Review: owned by P06-17 (the arming and the analysis hand-off)
 - **R02.21** Saving an untouched entry keeps its exact timestamp
   - Review: owned by P06-11
 - **R02.22** Amount expressions: a trailing operator, letters or division by about zero are invalid; operator keys replace a trailing operator
   - Test: src/domain/servings/expression.test.ts > evalAmount > rejects a trailing operator, letters and division by about zero (R02.22)
   - Test: src/domain/servings/expression.test.ts > pushOperator > replaces a trailing operator instead of stacking one (R02.22)
 - **R02.23** Add-menu decoding drops unknown methods; a menu emptied only by unknown ids falls back to the default; a deliberately empty menu stays empty
-  - Review: owned by P06-01
+  - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > gives the default when a stored menu is empty only because its ids are unknown
+  - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > keeps a menu that was emptied on purpose empty, with or without empty groups
+  - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > drops unknown ids and keeps the known ones in their order
+  - Test: src/domain/food/addMenu.test.ts > decodeLayout (R02.23) > gives the default for anything it cannot read
 - **R02.24** Every diary change is one transaction; a decode failure never replaces stored entries
   - Test: src/data/repos/diaryRepo.test.ts > add > never replaces a stored row, readable or not, with a new one under the same id (R02.24)
   - Test: src/data/repos/diaryRepo.test.ts > combine > deletes the originals and adds one entry in one transaction (R02.24)

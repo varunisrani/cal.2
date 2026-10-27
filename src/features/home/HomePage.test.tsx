@@ -1,15 +1,29 @@
 import { act, fireEvent, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { capture } from '../../i18n/en/capture';
 import { common } from '../../i18n/en/common';
 import { home } from '../../i18n/en/home';
 import { log } from '../../i18n/en/log';
+import { menu } from '../../i18n/en/menu';
+import type { AnalysisService, AnalysisState } from '../../services/analysis';
+import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
+import { ServicesProvider, type Services } from '../../services/context';
+import type { PhotoService } from '../../services/photos';
 import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
-import { HomePage, MANUAL_SHEET } from './HomePage';
-import { closeHarnesses, openHarness, untilGone, untilShown } from '../../test/screenHarness';
+import { CAPTURE_SHEET, DESCRIBE_SHEET, HomePage, MANUAL_SHEET } from './HomePage';
+import {
+  closeHarnesses,
+  openHarness,
+  until,
+  untilGone,
+  untilShown,
+  type Harness,
+} from '../../test/screenHarness';
 
 afterEach(closeHarnesses);
 
 const words = home.home;
+const menuWords = menu.menu;
 const HOUR = 60 * 60 * 1000;
 
 /** The text of the element `data-ui` names, or '' when there is none. */
@@ -99,11 +113,16 @@ describe('HomePage', () => {
     const add = screen.getByRole('button', { name: words.add.label });
     expect(add).toHaveAttribute('data-ui', 'home.add');
     fireEvent.click(add);
-    const items = screen.getAllByRole('menuitem');
-    expect(items.map((item) => item.textContent)).toEqual([words.add.manual]);
-    expect(items[0]).toHaveAttribute('data-ui', 'home.add.manual');
+    const groups = screen.getAllByRole('menuitem');
+    expect(groups.map((item) => item.textContent)).toEqual([
+      menuWords.group.snapScan,
+      menuWords.group.describe,
+    ]);
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.group.describe }));
+    const manualRow = screen.getByRole('menuitem', { name: menuWords.method.manual });
+    expect(manualRow).toHaveAttribute('data-ui', 'home.add.manual');
 
-    fireEvent.click(items[0] as HTMLElement);
+    fireEvent.click(manualRow);
     await untilShown('[data-ui="manual.name"]');
     expect(screen.getByRole('dialog', { name: log.log.manual.title })).toBeVisible();
     expect(h.router.current().sheets).toEqual([MANUAL_SHEET]);
@@ -115,7 +134,8 @@ describe('HomePage', () => {
     h.mount(<HomePage />);
     await untilShown('[data-ui="home.add"]');
     fireEvent.click(screen.getByRole('button', { name: words.add.label }));
-    fireEvent.click(screen.getByRole('menuitem', { name: words.add.manual }));
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.group.describe }));
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.method.manual }));
     await untilShown('[data-ui="manual.name"]');
 
     const sheet = within(screen.getByRole('dialog', { name: log.log.manual.title }));
@@ -166,5 +186,174 @@ describe('HomePage', () => {
 
     expect(textOf('home.error')).toBe(words.loadFailed);
     expect(document.querySelector('[data-ui="home.gauge"]')).toBeNull();
+  });
+});
+
+// ---- The add menu's sheets (P06-01) ------------------------------------------------------------
+
+const NO_DRAFT: CaptureDraft = { photoIds: [], note: '', progressive: false };
+
+/** A capture draft service that holds `draft` and records the rest. */
+function captureStandIn(draft: CaptureDraft = NO_DRAFT) {
+  return {
+    load: vi.fn(() => Promise.resolve(draft)),
+    add: vi.fn(),
+    remove: vi.fn(),
+    update: vi.fn(() => Promise.resolve()),
+    clear: vi.fn(() => Promise.resolve()),
+  } satisfies CaptureDraftService;
+}
+
+/** An analysis service stuck in `state`, recording what it is asked. */
+function analysisStandIn(state: AnalysisState = { phase: 'idle' }) {
+  return {
+    getSnapshot: () => state,
+    subscribe: () => () => undefined,
+    start: vi.fn(() => Promise.resolve()),
+    cancel: vi.fn(() => Promise.resolve()),
+    retry: vi.fn(() => Promise.resolve()),
+    closeReview: vi.fn(() => Promise.resolve()),
+    restore: vi.fn(() => Promise.resolve()),
+  } satisfies AnalysisService;
+}
+
+/** Photos that never show (their cards keep an empty frame). */
+const photos: PhotoService = {
+  store: vi.fn(),
+  thumbnail: () => Promise.resolve(null),
+  preview: () => Promise.resolve(null),
+  viewer: () => Promise.resolve(null),
+};
+
+/** Home over the harness, with the logging services the add menu's sheets use. */
+async function openHome(
+  draft: CaptureDraft = NO_DRAFT,
+  state?: AnalysisState,
+): Promise<{
+  h: Harness;
+  captureDrafts: ReturnType<typeof captureStandIn>;
+  analysis: ReturnType<typeof analysisStandIn>;
+}> {
+  const h = await openHarness();
+  await h.repos.profileRepo.save(makeProfile());
+  const captureDrafts = captureStandIn(draft);
+  const analysis = analysisStandIn(state);
+  const services: Services = { ...h.services, photos, captureDrafts, analysis };
+  h.mount(
+    <ServicesProvider services={services}>
+      <HomePage />
+    </ServicesProvider>,
+  );
+  await untilShown('[data-ui="home.add"]');
+  return { h, captureDrafts, analysis };
+}
+
+/** Opens "+", then the group, then the method. */
+function chooseFromMenu(group: keyof typeof menuWords.group, method: string) {
+  fireEvent.click(screen.getByRole('button', { name: words.add.label }));
+  fireEvent.click(screen.getByRole('menuitem', { name: menuWords.group[group] }));
+  fireEvent.click(screen.getByRole('menuitem', { name: method }));
+}
+
+const captureSheet = () => screen.getByRole('dialog', { name: capture.capture.title });
+
+describe('HomePage: the add menu opens its sheets (P06-01)', () => {
+  it('opens the meal-photos sheet from Camera, its Add photo taking one photo with the camera', async () => {
+    const { h } = await openHome();
+    chooseFromMenu('snapScan', menuWords.method.camera);
+    await untilShown('[data-ui="capture.add"]');
+
+    expect(captureSheet()).toBeVisible();
+    expect(h.router.current().sheets).toEqual([CAPTURE_SHEET]);
+    expect(
+      within(captureSheet()).getByRole('button', { name: capture.capture.addPhoto }),
+    ).toBeVisible();
+  });
+
+  it('opens the meal-photos sheet from Photo library, its Add photos picking several', async () => {
+    const { h } = await openHome();
+    chooseFromMenu('snapScan', menuWords.method.library);
+    await untilShown('[data-ui="capture.add"]');
+
+    expect(h.router.current().sheets).toEqual([CAPTURE_SHEET]);
+    expect(
+      within(captureSheet()).getByRole('button', { name: capture.capture.addPhotos }),
+    ).toBeVisible();
+  });
+
+  it('opens the describe sheet from Describe', async () => {
+    const { h } = await openHome();
+    chooseFromMenu('describe', menuWords.method.describe);
+    await untilShown('[data-ui="describe.text"]');
+
+    expect(screen.getByRole('dialog', { name: capture.capture.describe.title })).toBeVisible();
+    expect(h.router.current().sheets).toEqual([DESCRIBE_SHEET]);
+  });
+
+  it('brings the meal-photos sheet back when Home opens with photos in the capture draft (D-16.46)', async () => {
+    const draft = { photoIds: ['p1', 'p2', 'p3'], note: 'no butter', progressive: false };
+    const { h } = await openHome(draft);
+    await until(() => document.querySelectorAll('[data-ui="capture.card"]').length === 3);
+
+    expect(textOf('capture.count')).toBe('3 of 10 photos');
+    expect(h.router.current().sheets).toEqual([CAPTURE_SHEET]);
+  });
+
+  it('leaves the sheet closed when the capture draft holds no photo', async () => {
+    const { h, captureDrafts } = await openHome({ ...NO_DRAFT, note: 'a note only' });
+    await act(async () => {
+      await captureDrafts.load.mock.results[0]?.value;
+    });
+    expect(captureDrafts.load).toHaveBeenCalledTimes(1);
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it('leaves the sheet closed when an analysis has already taken over', async () => {
+    const analysing: AnalysisState = { phase: 'analysing', kind: 'photo', photoIds: ['p1'] };
+    const { h, captureDrafts } = await openHome({ ...NO_DRAFT, photoIds: ['p1'] }, analysing);
+    await act(async () => {
+      await captureDrafts.load.mock.results[0]?.value;
+    });
+    expect(captureDrafts.load).toHaveBeenCalledTimes(1);
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it('starts a photo analysis with the photos, the note and the switch on Analyse, and closes the sheet', async () => {
+    const draft = { photoIds: ['p1', 'p2'], note: 'no butter', progressive: true };
+    const { h, analysis } = await openHome(draft);
+    await until(() => document.querySelectorAll('[data-ui="capture.card"]').length === 2);
+    const analyse = within(captureSheet()).getByRole('button', { name: capture.capture.analyse });
+    await until(() => !(analyse as HTMLButtonElement).disabled);
+
+    fireEvent.click(analyse);
+    expect(analysis.start).toHaveBeenCalledTimes(1);
+    expect(analysis.start).toHaveBeenCalledWith('photo', {
+      photoIds: ['p1', 'p2'],
+      note: 'no butter',
+      progressive: true,
+    });
+    await untilGone('[data-ui="capture"]');
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it('draws the stored layout', async () => {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile());
+    await h.repos.settingsRepo.set('menu.layout', {
+      version: 1,
+      groups: [],
+      loose: ['manual', 'camera'],
+    });
+    h.mount(<HomePage />);
+    await untilShown('[data-ui="home.add"]');
+
+    fireEvent.click(screen.getByRole('button', { name: words.add.label }));
+    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+      menuWords.method.manual,
+      menuWords.method.camera,
+    ]);
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.method.manual }));
+    await untilShown('[data-ui="manual.name"]');
+    expect(h.router.current().sheets).toEqual([MANUAL_SHEET]);
   });
 });

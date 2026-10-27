@@ -135,11 +135,15 @@ test.describe('walking skeleton (Demo 1)', () => {
       await expect(entry).toHaveCount(0);
     });
 
-    await test.step('"+" → Enter manually → Toast, 250 kcal → Save', async () => {
+    await test.step('"+" → Describe → Enter manually → Toast, 250 kcal → Save', async () => {
       const add = ui(page, 'home.add');
       await expect(add).toHaveAccessibleName(words('home.add.label'));
       await add.click();
-      const manualItem = page.getByRole('menuitem', { name: words('home.add.manual') });
+      // Enter manually sits on the menu's Describe page (P06-01).
+      const describeGroup = page.getByRole('menuitem', { name: words('menu.group.describe') });
+      await expect(describeGroup).toHaveAttribute('data-ui', 'home.add.group.describe');
+      await describeGroup.click();
+      const manualItem = page.getByRole('menuitem', { name: words('menu.method.manual') });
       await expect(manualItem).toHaveAttribute('data-ui', 'home.add.manual');
       await manualItem.click();
 
