@@ -9,6 +9,7 @@ import type { RebuildService } from './goals/rebuild';
 import type { TuneUpRunner } from './goals/tuneUp';
 import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
+import type { ProfileEditsService } from './profileEdits';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
 export interface Services {
@@ -32,6 +33,8 @@ export interface Services {
   readonly tuneUp?: TuneUpRunner;
   /** The food analysis and its draft (P06-04); optional for the same reason. */
   readonly analysis?: AnalysisService;
+  /** Settings › Personal info edits (P05-10); optional for the same reason. */
+  readonly profileEdits?: ProfileEditsService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

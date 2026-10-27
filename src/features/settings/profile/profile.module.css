@@ -1,0 +1,146 @@
+/*
+ * Settings › Personal info (P05-10): the cards of rows and the editors they open. Every value
+ * comes from tokens.css; logical properties throughout.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* ---- Cards of rows ----------------------------------------------------------------------- */
+
+.group {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.group > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.rowLabel {
+  flex: none;
+  font-weight: var(--weight-medium);
+}
+
+.rowValue {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  text-align: end;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.chevron:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* ---- Editors ----------------------------------------------------------------------------- */
+
+.editor {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.wheels {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.wheelUnit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-body);
+}
+
+/* ---- Allergens --------------------------------------------------------------------------- */
+
+.names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: var(--type-body);
+}
+
+.addRow {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.addRow > :first-child {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}

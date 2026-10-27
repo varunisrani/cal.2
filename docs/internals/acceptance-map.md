@@ -146,9 +146,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B12 · Personal info in Settings (P1)
 
 - **ACC-B12-1** Saving a weight in Settings adds a weigh-in and updates the profile
-  - Review: P05-10
+  - Test: src/features/settings/profile/WeightSheet.test.tsx > WeightSheet: the current weight > adds one weigh-in for now and changes the profile weight (ACC-B12-1)
+  - Test: src/services/profileEdits.test.ts > saveWeight > adds one weigh-in stamped now and moves the profile weight to it (ACC-B12-1)
 - **ACC-B12-2** A goal weight on the wrong side is refused with a reason
-  - Review: P05-10
+  - Test: src/features/settings/profile/WeightSheet.test.tsx > WeightSheet: the goal weight (D-16.11) > shows why a lose goal above the current weight is refused and saves nothing (ACC-B12-2)
+  - Test: src/services/profileEdits.test.ts > setGoalWeight (D-16.11, D-16.80) > refuses a lose target that is not below the current weight and stores nothing (ACC-B12-2)
 
 ### B13 · Calculation methods page in our words with sources and a … (P1)
 

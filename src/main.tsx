@@ -37,6 +37,7 @@ import type { PlanServiceDeps } from './services/goals/planRequest';
 import { createPlanBuilder, storedAiAccess } from './services/goals/planBuilder';
 import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
+import { createProfileEditsService } from './services/profileEdits';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 
 // The composition root: the one place that opens the database, creates each repository once and
@@ -139,6 +140,12 @@ async function start(): Promise<void> {
       fetch: browserFetch,
     }),
     analysis,
+    profileEdits: createProfileEditsService({
+      profileRepo,
+      settingsRepo,
+      weightRepo,
+      clock: systemClock,
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

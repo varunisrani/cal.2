@@ -6,6 +6,7 @@ import type { ComponentType } from 'react';
 import { tabRoute, type TabRoute } from '../../app/router';
 import type { IconName } from '../../ui/icons';
 import { MethodsPage } from '../about/MethodsPage';
+import { ProfilePage } from './profile/ProfilePage';
 import type { TxKey } from '../home/text';
 
 /** The hub's two cards: the person's preferences, then information about the app. */
@@ -45,6 +46,14 @@ export function defineCategories(specs: readonly CategorySpec[]): readonly Setti
 
 /** Every category, in hub order. */
 export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories([
+  // Body data, the goal and allergens (P05-10); the goal-reached dialog links here.
+  {
+    id: 'profile',
+    titleKey: 'profile.title',
+    icon: 'heart',
+    group: 'prefs',
+    page: ProfilePage,
+  },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
     id: 'methods',

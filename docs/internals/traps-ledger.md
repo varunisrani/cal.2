@@ -66,11 +66,15 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > keeps the profile weight and raises nothing for a back-dated weigh-in below the target (ACC-C11-2, R01.11)
   - Test: src/features/goals/GoalReachedDialog.test.tsx > GoalReachedDialog > shows the dialog once when 79.4 kg crosses a 79.5 kg lose target (ACC-C11-1, R01.11)
   - Test: src/data/hooks.test.tsx > useGoalReached > hears the weight repository when a new weigh-in reaches the goal, once (R01.11)
+  - Test: src/services/profileEdits.test.ts > saveWeight > posts goal-reached through the weight repository when the weigh-in crosses the goal (R01.11)
 - **R01.12** Profile edits in Settings never recompute targets; only the rebuild nudge appears
   - Test: src/domain/profile/signature.test.ts > needsRebuild > shows no nudge on first open when no baseline is stored (R01.12)
   - Test: src/domain/profile/signature.test.ts > baselineToSeed > seeds a missing baseline silently with the current key (R01.12)
   - Test: src/domain/profile/editRules.test.ts > edits and the plan > leave the saved targets and locks as they were for every field edit (R01.12)
-  - Review: Settings wiring owned by P05-10
+  - Test: src/features/settings/profile/ProfilePage.test.tsx > ProfilePage > leaves the targets unchanged and raises the rebuild nudge when activity is edited (R01.12)
+  - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > leaves the saved targets and locks as they were for every field edit
+  - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > raises the rebuild nudge after an activity edit against a stored baseline
+  - Test: src/services/profileEdits.test.ts > edits and the plan (R01.12) > seeds a missing baseline from the profile before the edit, so the edit still raises the nudge
 - **R01.13** Lock edits write all three macros first, allow two macro locks at most and refuse an edit nothing can absorb
   - Test: src/domain/goals/locks.test.ts > setMacro > pins all three macros from the state before the edit (R01.13)
   - Test: src/domain/goals/locks.test.ts > setMacro > refuses an edit nothing can absorb and changes nothing (R01.13)
