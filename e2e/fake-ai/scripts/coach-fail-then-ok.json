@@ -1,0 +1,39 @@
+{
+  "description": "A Coach turn that fails (500 with a provider message), then a text answer for the Retry.",
+  "replies": [
+    {
+      "status": 500,
+      "body": {
+        "error": {
+          "message": "The fake provider stumbled on this question. Nothing was answered.",
+          "type": "server_error",
+          "code": "fake_failure"
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-retry",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Your intake this week sits close to your maintenance number, so your weight should hold steady. Keep breakfast as it is and add a portion of vegetables to dinner."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2190,
+          "completion_tokens": 44,
+          "total_tokens": 2234
+        }
+      }
+    }
+  ]
+}

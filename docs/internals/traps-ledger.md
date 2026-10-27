@@ -347,15 +347,18 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.4** A failed turn keeps the question and offers Retry without duplicating it (D-16.31)
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
   - Test: src/features/coach/CoachPage.test.tsx > CoachPage: error banner (D-16.31, R04.4) > shows our message for the newest failed question, its Details, and Retry asks again
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > shows a failed turn with Details, and Retry answers it without asking twice (D-16.31, R04.4)
 - **R04.5** Pending is set before the first await, so double taps start one turn
   - Test: src/services/coach/session.test.ts > createCoachSession: send (04 §3.6) > starts one turn for two sends in the same tick (R04.5)
 - **R04.6** Reset aborts the request and drops any late reply by generation (D-16.34)
   - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)
   - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > drops a reply that comes back after a Reset in another tab
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)
 - **R04.7** An unreadable stored message is kept aside, never overwritten
   - Test: src/data/repos/coachRepo.test.ts > unreadable messages (R04.7) > keeps a corrupt message aside and still lists the rest
 - **R04.8** Chat storage is bounded: one record per message, newest 200, small thumbnails (D-16.29)
   - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > keeps the newest 200 of 205 messages, removing the oldest with their thumbnails (ACC-I10-1, R04.8, D-16.29)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > keeps the newest 200 messages after 101 exchanges, also after a reload (D-16.29, R04.8)
 - **R04.9** The 60 000-character tool-result cap applies on every provider (D-16.32)
   - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > fits 2 000 rows under 60 000, keeping count and the newest rows, with the markers
   - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > keeps as many rows as fit: one more would go over the cap
@@ -377,6 +380,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/chat/geminiChat.test.ts > geminiChat.continueWith (R04.13) > keeps a result that is not a JSON object inside an object response
 - **R04.14** A chip sends with the attached photo and clears it (D-16.33)
   - Test: src/features/coach/ChipRow.test.tsx > ChipRow: sending (D-16.33, R04.14) > sends the attached photo with the chip and clears it (ACC-I3-2, R04.14)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > sends a card at once, then a chip with the attached photo, keeping the typed words (D-16.33, D-16.85, R04.14)
 - **R04.15** Cut-off replies are detected on every format and the cap is sent to Gemini too
   - Test: src/ai/chat/anthropicChat.test.ts > anthropicChat.read > reads a max_tokens stop as cut off, with text or with a tool_use (R04.15)
   - Test: src/ai/chat/anthropicChat.test.ts > askRound on the Anthropic wire (R04.15) > asks again once with the same body after a max_tokens stop

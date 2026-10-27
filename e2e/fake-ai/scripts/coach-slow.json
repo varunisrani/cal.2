@@ -1,0 +1,54 @@
+{
+  "description": "A Coach answer held for 60 s (the Reset case), then a prompt text answer.",
+  "replies": [
+    {
+      "status": 200,
+      "delayMs": 60000,
+      "body": {
+        "id": "chatcmpl-fake-coach-slow",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "This late answer belongs to a chat that was cleared, so it must never show."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2150,
+          "completion_tokens": 19,
+          "total_tokens": 2169
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-after-reset",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "Your weight has moved less than half a kilogram over the last two weeks, which counts as stable."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2140,
+          "completion_tokens": 23,
+          "total_tokens": 2163
+        }
+      }
+    }
+  ]
+}

@@ -799,6 +799,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/coach/ChipRow.test.tsx > useCoachChips: chips follow the goal live > switches from the lose chips to the gain chips when the goal changes (ACC-I3-1)
 - **ACC-I3-2** A chip sends together with the attached photo
   - Test: src/features/coach/ChipRow.test.tsx > ChipRow: sending (D-16.33, R04.14) > sends the attached photo with the chip and clears it (ACC-I3-2, R04.14)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > sends a card at once, then a chip with the attached photo, keeping the typed words (D-16.33, D-16.85, R04.14)
 
 ### I4 · Replies rendered as simple Markdown with safe links (P1)
 
@@ -806,11 +807,13 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/coach/markdown.test.tsx > MarkdownReply: blocks > draws a list as a list and opens an https link in a new tab (ACC-I4-1)
 - **ACC-I4-2** Copy puts the reply text on the clipboard
   - Test: src/features/coach/CopyButton.test.tsx > CopyButton > puts the raw reply text on the clipboard and confirms it briefly (ACC-I4-2)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > answers "What did I eat yesterday?" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)
 
 ### I5 · Reset with confirmation (P1)
 
 - **ACC-I5-1** Reset during a pending reply leaves the chat empty
   - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)
 
 ### I6 · Fresh context each turn (P1)
 
@@ -820,7 +823,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I7 · Six read-only nutrition tools (P1)
 
 - **ACC-I7-1** Asking about yesterday's meals uses the food log tool and answers from it
-  - Review: P08-14
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > answers "What did I eat yesterday?" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)
 - **ACC-I7-2** Daily totals leave out days without entries
   - Test: src/services/coach/tools.test.ts > runCoachTool: daily_energy_totals (R04.16) > leaves days without entries out instead of giving them 0 kcal (ACC-I7-2)
 
@@ -840,14 +843,16 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-I10-1** After 205 messages the oldest 5 are gone
   - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > keeps the newest 200 of 205 messages, removing the oldest with their thumbnails (ACC-I10-1, R04.8, D-16.29)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > keeps the newest 200 messages after 101 exchanges, also after a reload (D-16.29, R04.8)
 - **ACC-I10-2** The chat survives a reload
-  - Review: P08-14
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > answers "What did I eat yesterday?" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)
 
 ### I11 · Friendly errors with Details and Retry on the failed turn (D-16.31) (P1)
 
 - **ACC-I11-1** A failed turn shows a friendly message, Details and Retry; Retry does not repeat the question
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > marks a failed question with its kind and the provider’s message, keys cut out (ACC-I11-1)
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
+  - Test: e2e/coach.spec.ts > coach chat (Demo 5) > shows a failed turn with Details, and Retry answers it without asking twice (D-16.31, R04.4)
 
 ### I12 · The standby provider re-runs the whole turn when the primary fails (P1)
 

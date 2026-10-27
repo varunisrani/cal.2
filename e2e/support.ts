@@ -358,3 +358,116 @@ export function hooksSeen(page: Page): Promise<string[]> {
     SEEN_KEY,
   );
 }
+
+// ---- The Coach (P08-14): text answers, what the Coach sent, texts seen ------------------------
+
+/** A 200 chat completion whose message is `text`, in the OpenAI-compatible shape the fake speaks. */
+export function textReply(text: string): ScriptReply {
+  return {
+    status: 200,
+    body: {
+      id: 'chatcmpl-e2e-text',
+      object: 'chat.completion',
+      created: 1793000000,
+      model: 'fake-model',
+      choices: [{ index: 0, message: { role: 'assistant', content: text }, finish_reason: 'stop' }],
+      usage: { prompt_tokens: 2100, completion_tokens: 20, total_tokens: 2120 },
+    },
+  };
+}
+
+/** An inline script answering one chat request per text, in order (`fakeAi.useReplies`). */
+export function textScript(...texts: readonly string[]): Script {
+  return {
+    description: `${texts.length} text answers for the Coach e2e.`,
+    replies: texts.map(textReply),
+  };
+}
+
+/** The message text of a 200 chat completion in a script; throws for any other reply. */
+export function answerOf(reply: ScriptReply | undefined): string {
+  const body = reply?.body;
+  const choices = isObject(body) ? body.choices : undefined;
+  const first: unknown = Array.isArray(choices) ? choices[0] : undefined;
+  const message = isObject(first) ? first.message : undefined;
+  const content = isObject(message) ? message.content : undefined;
+  if (typeof content !== 'string') throw new Error('The script reply carries no answer text');
+  return content;
+}
+
+/** A chat message as a recorded request carried it. */
+export type SentMessage = Record<string, unknown>;
+
+/** A recorded request's chat messages, oldest first; none when its body has no `messages`. */
+export function messagesSent(request: RecordedRequest): SentMessage[] {
+  const messages = isObject(request.body) ? request.body.messages : undefined;
+  return Array.isArray(messages) ? messages.filter(isObject) : [];
+}
+
+/** The names of the tools a recorded request offered (OpenAI-compatible `tools`). */
+export function toolsOffered(request: RecordedRequest): string[] {
+  const tools = isObject(request.body) ? request.body.tools : undefined;
+  if (!Array.isArray(tools)) return [];
+  return tools.flatMap((tool: unknown) => {
+    const name = isObject(tool) && isObject(tool.function) ? tool.function.name : undefined;
+    return typeof name === 'string' ? [name] : [];
+  });
+}
+
+/** The tool results a recorded request sent back: its messages of role `tool`. */
+export function toolResultsSent(request: RecordedRequest): SentMessage[] {
+  return messagesSent(request).filter((message) => message.role === 'tool');
+}
+
+/** The words of each person (`user`) message of a recorded request: a string, or its text parts. */
+export function questionsSent(request: RecordedRequest): string[] {
+  return messagesSent(request)
+    .filter((message) => message.role === 'user')
+    .map((message) => {
+      const { content } = message;
+      if (typeof content === 'string') return content;
+      if (!Array.isArray(content)) return '';
+      return content
+        .flatMap((part: unknown) =>
+          isObject(part) && part.type === 'text' && typeof part.text === 'string'
+            ? [part.text]
+            : [],
+        )
+        .join('\n');
+    });
+}
+
+/** Where the init script below keeps the texts it saw. */
+const TEXTS_SEEN_KEY = '__platewiseTextsSeen';
+
+/**
+ * Records, from each document's start, every text of `texts` that appears in the page, even for
+ * a moment (a reply that shows and goes). Read it with `textsSeen`; a reload starts over.
+ */
+export async function recordTexts(page: Page, texts: readonly string[]): Promise<void> {
+  await page.addInitScript(
+    ({ watched, key }) => {
+      const seen: string[] = [];
+      Object.defineProperty(window, key, { value: seen });
+      const look = (): void => {
+        const shown = document.documentElement.textContent ?? '';
+        for (const text of watched)
+          if (!seen.includes(text) && shown.includes(text)) seen.push(text);
+      };
+      new MutationObserver(look).observe(document, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    },
+    { watched: [...texts], key: TEXTS_SEEN_KEY },
+  );
+}
+
+/** The texts of `recordTexts` that have appeared since the page was loaded, in order. */
+export function textsSeen(page: Page): Promise<string[]> {
+  return page.evaluate(
+    (key) => [...((window as unknown as Record<string, string[] | undefined>)[key] ?? [])],
+    TEXTS_SEEN_KEY,
+  );
+}
