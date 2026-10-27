@@ -182,6 +182,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > sends nothing to FoodData Central without a key or with a blank one, and keeps Open Food Facts’ not-found
   - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > turns an Open Food Facts product into one part of one serving, keeping its photo
   - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > takes a label saved for the code before FoodData Central, as one part without a photo
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > reads our fixture per serving, preferring per-serving values to scaled per-100 g ones
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > scales per-100 g values by 0.3 for a 30 g serving
@@ -215,6 +216,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > drops the held code when the photos sheet closes without Analyse, by Cancel or Back (R02.20)
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > drops a held code when another method is chosen from the menu (R02.20)
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)
 - **R02.21** Saving an untouched entry keeps its exact timestamp
   - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps loggedAt to the millisecond and every value when an untouched entry is saved (ACC-D12-1, R02.21)
   - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps the instant when the time is changed and changed back (R02.21)
@@ -258,6 +260,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > reports Cancel during the body read as cancelled, not offline
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > stops one attempt at its 75 s cap, not before, as timeout
   - Test: src/ai/deadline.test.ts > one time limit for the whole action (D-16.23, R03.6, ACC-E4-2) > ends a four-attempt ladder early, at 180 s exactly
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > shows no error when the provider is busy once and then answers (R03.6, D-16.23)
 - **R03.7** Gemini replies can hold several parts and thought parts: join every non-thought part; MAX_TOKENS means cut off
   - Test: src/ai/adapters/gemini.test.ts > readGemini (R03.7) > joins every text part and skips the thought part
 - **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none

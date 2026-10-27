@@ -1,0 +1,36 @@
+{
+  "code": "2001234567893",
+  "status": 1,
+  "status_verbose": "product found",
+  "product": {
+    "product_name": "Spelt Crackers with Rosemary",
+    "generic_name": "Baked spelt crackers",
+    "brands": "Millbrook Bakery",
+    "quantity": "200 g",
+    "product_quantity": 200,
+    "product_quantity_unit": "g",
+    "serving_size": "25 g (5 crackers)",
+    "serving_quantity": 25,
+    "nutriments": {
+      "energy-kcal_100g": 420,
+      "energy_100g": 1757,
+      "proteins_100g": 12,
+      "carbohydrates_100g": 64,
+      "sugars_100g": 2.4,
+      "fat_100g": 12,
+      "saturated-fat_100g": 1.6,
+      "fiber_100g": 6.8,
+      "sodium_100g": 0.48
+    },
+    "ingredients_text": "Spelt flour, rapeseed oil, rosemary, sea salt, yeast",
+    "ingredients_text_with_allergens": "<span class=\"allergen\">Spelt</span> flour, rapeseed oil, rosemary, sea salt, yeast",
+    "allergens_tags": ["en:gluten"],
+    "traces_tags": ["en:sesame-seeds"],
+    "labels_tags": ["en:vegan"],
+    "categories_tags": ["en:snacks", "en:crackers"],
+    "nutriscore_grade": "b",
+    "ecoscore_grade": "unknown",
+    "nova_group": 3,
+    "image_front_url": "https://images.openfoodfacts.org/images/products/200/123/456/7893/front_en.1.400.jpg"
+  }
+}

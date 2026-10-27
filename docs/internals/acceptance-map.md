@@ -296,7 +296,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D6 · Typed meal description with rotating examples (P1)
 
 - **ACC-D6-1** Describing "two eggs and toast" opens the review with the AI's estimate
-  - Review: P06-20
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > describes "two eggs and toast", reviews the estimate from the AI and logs it (ACC-D6-1)
 
 ### D7 · Review before logging (P1)
 
@@ -337,6 +337,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > keeps loggedAt to the millisecond and every value when an untouched entry is saved (ACC-D12-1, R02.21)
 - **ACC-D12-2** Editing calories of a logged entry saves the new value
   - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Save > saves calories edited through the unlock (ACC-D12-2, D-16.19), at the amount shown
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > edits an entry's calories from its row through the nutrition lock (ACC-D12-2, D-16.19)
 - **ACC-D12-3** Delete asks before removing the entry
   - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: Saved and Delete > asks before deleting, and deletes on Delete (ACC-D12-3)
 
@@ -371,6 +372,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: search > finds "Café latte" for "cafe", ignoring case, accents and the spaces around (ACC-D16-1)
 - **ACC-D16-2** Tapping a recent item opens the review instead of logging at once
   - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Recent > opens the review with the entry's grams, units, photos and source, and logs nothing (ACC-D16-2)
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > logs yesterday's food again from Recent, on today, leaving yesterday as it was (ACC-D16-2)
 
 ### D17 · Saved meals with their own ids, toggled from the editor and Home … (P1)
 
@@ -389,7 +391,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D19 · Barcode scanning by camera, plus typing the digits (D-16.18) (P1)
 
 - **ACC-D19-1** Typing a barcode looks up the product
-  - Review: P06-20
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > looks up typed barcode digits in Open Food Facts and logs the product (ACC-D19-1, ACC-D20-1)
 - **ACC-D19-2** Without native barcode support the scanner still works
   - Test: src/services/barcode/decoder.test.ts > watch: the WASM reader (ACC-D19-2) > loads the WASM reader only when the first frame needs it, and once
 
@@ -398,14 +400,17 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-D20-1** A product found by Open Food Facts opens its review
   - Test: src/services/barcode/lookup.test.ts > createBarcodeService > stores an Open Food Facts product with its photo as the analysis draft, then opens its review (ACC-D20-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > closes the scanner on typed digits, and a product found opens its review (ACC-D20-1)
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > looks up typed barcode digits in Open Food Facts and logs the product (ACC-D19-1, ACC-D20-1)
 - **ACC-D20-2** A product missing everywhere offers Scan label
   - Test: src/services/barcode/lookup.test.ts > createBarcodeService > offers Scan label after a miss everywhere and holds the code for one analysis (ACC-D20-2, R02.20)
   - Test: src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)
 
 ### D21 · Saved-label memory (P1)
 
 - **ACC-D21-1** Scanning the same unknown barcode again reopens the saved label with a notice
   - Test: src/services/barcode/lookup.test.ts > createBarcodeService > opens a saved label as a label draft marked as such, with its own photo (ACC-D21-1)
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)
 
 ### D22 · Product information block (barcode, source, package, Nutri-Score, … (P1)
 
@@ -427,7 +432,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D25 · Analysis drafts survive a reload and reopen the review (D-16.46) (P1)
 
 - **ACC-D25-1** Reloading during the review reopens it with the same values
-  - Review: P06-20
+  - Test: e2e/logging.spec.ts > logging flows (Demo 3) > reopens the review with the same values after a reload, and only until it is logged (ACC-D25-1, D-16.46)
 
 ### D26 · One tap logs exactly one entry (P0)
 
