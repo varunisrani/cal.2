@@ -14,7 +14,7 @@ import { documentVisibility } from './app/useTuneUp';
 import { appBus } from './data/bus';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
-import { hasUnreadableData } from './data/guard';
+import { clearUnreadableFlag, hasUnreadableData } from './data/guard';
 import { createBackupRepo } from './data/repos/backupRepo';
 import { createBodyFatRepo } from './data/repos/bodyFatRepo';
 import { createCoachRepo } from './data/repos/coachRepo';
@@ -43,6 +43,7 @@ import { createCaptureDraftService } from './services/captureDrafts';
 import { createCoachSession } from './services/coach/session';
 import { createCombineService } from './services/combine';
 import { createCopyDayService } from './services/copyDay';
+import { createDamagedDataService } from './services/damagedData';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
@@ -327,6 +328,8 @@ async function start(): Promise<void> {
       erase: () => eraseEverything({ db }),
     }),
     storageNudge,
+    // The "some saved data could not be read" notice's Dismiss (K9).
+    damagedData: createDamagedDataService({ clearFlag: () => clearUnreadableFlag(db) }),
     clock: systemClock,
   };
   const data: DataSources = {

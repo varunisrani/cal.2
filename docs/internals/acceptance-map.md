@@ -1033,6 +1033,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-K9-1** A damaged entry is skipped, kept aside, and the other entries still show
   - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
+- **ACC-K9-2** A notice above the screen says some saved data could not be read and was kept aside; Dismiss takes it away for good
+  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > draws nothing while no stored data has been set aside, and shows the notice once some has (R06.1, ACC-K9-2)
+  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > clears the flag on Dismiss, and stays gone after the live state is read again (R06.1, ACC-K9-2)
 
 ## L · Platform
 
@@ -1105,5 +1108,4 @@ Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and re
 - **Key passphrase lock (N-6).** Keys are wrapped by a device key and the Settings page states the browser's limits (E14, D-16.7).
 - **Body measurements, amino acids (N-7).** Not recorded; the Coach context has no measurement block.
 - **Hosted AI, weekly challenge, short share links (N-8).** Not planned; every server-side trap (R07.14, R07.15, R07.18, R07.19) is recorded as not planned in the traps ledger.
-- **Damaged-data banner (part of K9, P1; proposed N-9, found in P10-05).** Unreadable records are skipped and kept aside (ACC-K9-1), and the guard sets the flag the banner would read (`useUnreadableFlag`), but no screen shows a notice that some data could not be read, and no task owns one (R06.1). Unlike the entries above, this one is not decided yet: the lead records N-9 in `docs/plan/16-what-we-change.md` §2.8 or schedules the banner.
 - **What's New dialog (D-16.43), streaming Coach replies (D-16.47), on-device models (D-16.6), watch, widgets and Siri (D-16.3).** Not in v1.

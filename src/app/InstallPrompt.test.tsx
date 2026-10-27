@@ -265,16 +265,13 @@ describe('index.html', () => {
       'script-src': ["'self'", "'wasm-unsafe-eval'"],
       'style-src': ["'self'"],
       'img-src': ["'self'", 'blob:', 'data:', 'https://images.openfoodfacts.org'],
-      'connect-src': [
-        "'self'",
-        'https:',
-        'http://localhost:*',
-        'http://127.0.0.1:*',
-        'http://[::1]:*',
-      ],
+      // No IPv6 loopback: a CSP source cannot name one (S-3).
+      'connect-src': ["'self'", 'https:', 'http://localhost:*', 'http://127.0.0.1:*'],
       'worker-src': ["'self'"],
       'object-src': ["'none'"],
       'base-uri': ["'none'"],
+      // Every form is handled in script; none may post anywhere (S-5).
+      'form-action': ["'none'"],
     });
     // Only the charset comes before it, so the policy covers every link and script.
     expect(meta.previousElementSibling?.getAttribute('charset')).toBe('UTF-8');

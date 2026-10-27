@@ -45,6 +45,9 @@ export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
 /** The only major version this build reads. */
 const READABLE_MAJOR = 1;
 
+/** The most characters of file text a refusal repeats, ellipsis included (S-8). */
+export const MAX_DETAIL_CHARS = 40;
+
 /** Why a file was refused; `detail` names the place in the file where it can. */
 export type ImportProblem =
   | { readonly kind: 'tooLarge' | 'unreadable' | 'notDiary' | 'version' | 'empty' }
@@ -127,8 +130,15 @@ class Refused extends Error {
   }
 }
 
+/** `text` cut to `room` characters (code points, so an emoji stays whole), ending in "…". */
+function clip(text: string, room = MAX_DETAIL_CHARS): string {
+  const characters = Array.from(text);
+  return characters.length <= room ? text : `${characters.slice(0, room - 1).join('')}…`;
+}
+
+/** Throws the refusal; a crafted file cannot make its message long (S-8). */
 function refuse(problem: ImportProblem): never {
-  throw new Refused(problem);
+  throw new Refused('detail' in problem ? { ...problem, detail: clip(problem.detail) } : problem);
 }
 
 type Fields = Readonly<Record<string, unknown>>;
@@ -218,7 +228,8 @@ function lineOf(raw: unknown, where: string): ImportLine {
 function foodOf(raw: unknown, date: DayKey, meal: MealKind): ImportFood {
   const fields = fieldsOf(raw);
   const name = typeof fields?.name === 'string' ? fields.name.trim() : '';
-  const where = name === '' ? date : `${name}, ${date}`;
+  // The name is cut first, so the date that locates the food stays in the refusal.
+  const where = name === '' ? date : `${clip(name, MAX_DETAIL_CHARS - date.length - 2)}, ${date}`;
   if (!fields || name === '') refuse({ kind: 'food', detail: where });
   const { kcal, protein, carbs, fat, grams, id, note } = fields;
   if (!isAmount(kcal) || !isAmount(protein) || !isAmount(carbs) || !isAmount(fat)) {

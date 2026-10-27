@@ -6,6 +6,7 @@ import { decodeEntry, decodeProfile } from './codecs';
 import {
   UNREADABLE_FLAG,
   WriteBlockedError,
+  clearUnreadableFlag,
   decodeRows,
   fingerprint,
   hasUnreadableData,
@@ -269,6 +270,44 @@ describe('keepAside', () => {
 
     await keepAside(db, 'profile', PROFILE_KEY, { id: PROFILE_KEY, junk: true });
     expect(await db.quarantine.count()).toBe(1);
+    db.close();
+  });
+});
+
+describe('clearUnreadableFlag', () => {
+  it('lowers the flag, keeps the copies aside, and stays down until something new is set aside (R06.1)', async () => {
+    const { db } = await openTestDb();
+    const broken = { id: 'b', kcal: 'many' };
+    await plant(db, 'entries', [makeEntry({ id: 'a' }), broken]);
+    await readAll(db, 'entries', decodeEntry);
+    await settleQuarantine(db);
+    expect(await hasUnreadableData(db)).toBe(true);
+
+    await clearUnreadableFlag(db);
+    expect(await hasUnreadableData(db)).toBe(false);
+    expect(await db.meta.get(UNREADABLE_FLAG)).toBeUndefined();
+    expect(await db.quarantine.count()).toBe(1);
+    expect(await db.entries.get('b')).toEqual(broken);
+
+    // The same damaged row, read again: its copy is already aside, so the flag stays down.
+    await readAll(db, 'entries', decodeEntry);
+    await readOne(db, 'entries', 'b', decodeEntry);
+    await settleQuarantine(db);
+    expect(await hasUnreadableData(db)).toBe(false);
+
+    // Something newly damaged raises it again.
+    await plant(db, 'entries', [{ id: 'c', name: 'half' }]);
+    await readAll(db, 'entries', decodeEntry);
+    await settleQuarantine(db);
+    expect(await hasUnreadableData(db)).toBe(true);
+    expect(await db.quarantine.count()).toBe(2);
+    db.close();
+  });
+
+  it('does nothing when the flag is not set', async () => {
+    const { db } = await openTestDb();
+    await clearUnreadableFlag(db);
+    expect(await hasUnreadableData(db)).toBe(false);
     db.close();
   });
 });

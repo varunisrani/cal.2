@@ -15,6 +15,12 @@ export const PAYLOAD_ENTRY = 'payload.json';
 export const PHOTO_FOLDER = 'photos/';
 export const MAX_PHOTO_NAME = 128;
 
+/**
+ * The largest `payload.json` a restore reads into memory: 256 MiB, far above any real backup
+ * (photos travel as entries of their own). A larger one is refused by its declared size (S-9).
+ */
+export const MAX_PAYLOAD_BYTES = 256 * 1024 * 1024;
+
 /** Photo extensions a backup carries, with the type a restored photo gets. */
 const PHOTO_TYPES: Readonly<Record<string, string>> = {
   jpg: 'image/jpeg',
@@ -34,13 +40,16 @@ export type BackupArchiveProblem =
   /** Reading: the file has no `payload.json`. */
   | 'noPayload'
   /** Reading: `payload.json` is not UTF-8 JSON. */
-  | 'badPayload';
+  | 'badPayload'
+  /** Reading: `payload.json` is larger than `MAX_PAYLOAD_BYTES`. */
+  | 'payloadTooLarge';
 
 const PROBLEM_TEXT: Readonly<Record<BackupArchiveProblem, string>> = {
   unsafeName: 'not a plain photo name',
   duplicateName: 'two entries share a name',
   noPayload: 'the file has no backup document',
   badPayload: 'the backup document is not JSON',
+  payloadTooLarge: 'the backup document is too large to read',
 };
 
 export class BackupArchiveError extends Error {
@@ -160,8 +169,9 @@ async function readDocument(entry: ZipEntry): Promise<unknown> {
 /**
  * Reads a backup file: every entry is read to the end and CRC checked first (`readZip`), so a
  * damaged file fails before anything is used. Throws `ZipError` for a file that is not a readable
- * stored ZIP and `BackupArchiveError` when the payload is missing or not JSON, or when the payload
- * or a plain photo name appears twice. Other entries are skipped and listed.
+ * stored ZIP and `BackupArchiveError` when the payload is missing, larger than
+ * `MAX_PAYLOAD_BYTES` or not JSON, or when the payload or a plain photo name appears twice. Other
+ * entries are skipped and listed.
  */
 export async function unpackBackup(file: Blob): Promise<UnpackedBackup> {
   const entries = await readZip(file);
@@ -192,6 +202,10 @@ export async function unpackBackup(file: Blob): Promise<UnpackedBackup> {
   }
 
   if (payload === null) throw new BackupArchiveError('noPayload');
+  // By its declared size, before a byte of it is held in memory.
+  if (payload.size > MAX_PAYLOAD_BYTES) {
+    throw new BackupArchiveError('payloadTooLarge', PAYLOAD_ENTRY);
+  }
   return {
     document: await readDocument(payload),
     documentBytes: payload.size,

@@ -9,6 +9,7 @@ import type { CaptureDraftService } from './captureDrafts';
 import type { CoachSession } from './coach/session';
 import type { CombineService } from './combine';
 import type { CopyDayService } from './copyDay';
+import type { DamagedDataService } from './damagedData';
 import type { DiaryService } from './diary';
 import type { FastingService } from './fasting';
 import type { FitCheckService } from './fitCheck';
@@ -101,6 +102,8 @@ export interface Services {
   readonly yourData?: YourDataService;
   /** The persistent-storage request and Home's storage cards (P09-15); optional likewise. */
   readonly storageNudge?: StorageNudge;
+  /** Dismiss on the "some saved data could not be read" notice (K9); optional likewise. */
+  readonly damagedData?: DamagedDataService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

@@ -9,6 +9,7 @@ import { openTestDb } from '../../test/db';
 import { makeEntry, makeLine, makeProduct, makeWater } from '../../test/factories';
 import { buildDocument, toJson } from './exportDiary';
 import {
+  MAX_DETAIL_CHARS,
   MAX_IMPORT_BYTES,
   planImport,
   previewOf,
@@ -282,6 +283,35 @@ describe('readDiaryFile', () => {
     expect(read(doc(food({ time: '03:30' }))).foods[0]?.loggedAt).toBe(
       Date.parse('2026-03-08T03:30:00-04:00'),
     );
+  });
+
+  it('repeats at most 40 characters of the file in a refusal, cut with an ellipsis (S-8)', () => {
+    const long = 'x'.repeat(5_000);
+    const name = `Chicken ${'and rice '.repeat(400)}`;
+    const cut = (text: string) =>
+      `${Array.from(text)
+        .slice(0, MAX_DETAIL_CHARS - 1)
+        .join('')}…`;
+
+    expect(problemOf(file([{ date: MON, meals: [{ meal: long, items: [food()] }] }]))).toEqual({
+      kind: 'meal',
+      detail: cut(long),
+    });
+    expect(problemOf(file([{ date: long, meals: [] }]))).toEqual({
+      kind: 'date',
+      detail: cut(long),
+    });
+    expect(problemOf(file(day(food({ time: long }))))).toEqual({
+      kind: 'time',
+      detail: cut(`${MON} ${long}`),
+    });
+    // A food's name is cut first, so the date that says where it is stays.
+    const named = problemOf(file(day(food({ name, kcal: -1 }))));
+    expect(named).toEqual({ kind: 'food', detail: `${name.slice(0, 27)}…, ${MON}` });
+    expect(named && 'detail' in named && named.detail.length).toBe(MAX_DETAIL_CHARS);
+    // An emoji is never split in two.
+    const emoji = problemOf(file([{ date: MON, meals: [{ meal: '🍲'.repeat(50), items: [] }] }]));
+    expect(emoji).toEqual({ kind: 'meal', detail: `${'🍲'.repeat(39)}…` });
   });
 });
 

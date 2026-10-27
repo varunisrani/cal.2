@@ -9,6 +9,7 @@ import { useOptionalServices } from '../services/context';
 import { ToastProvider } from '../ui/Toast';
 import { appState as sharedAppState, AppStateContext, type AppStateStore } from './appState';
 import { Boot } from './Boot';
+import { DamagedDataNotice } from './DamagedDataNotice';
 import { ErrorBoundary } from './ErrorBoundary';
 import { InstallPrompt } from './InstallPrompt';
 import { onDemand } from './onDemand';
@@ -78,6 +79,8 @@ function Shell() {
   return (
     <div className={styles.shell}>
       <main className={styles.content} data-ui="shell.content">
+        {/* Some saved data could not be read and was kept aside (K9), above the screen. */}
+        <DamagedDataNotice />
         {/* A waiting update (P09-17) and the install card (P09-18), above the screen. */}
         <UpdateBanner />
         <InstallPrompt />

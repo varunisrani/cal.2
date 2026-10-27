@@ -2,7 +2,8 @@
 // never overwritten or deleted while it is the only copy. Reads drop unreadable rows from their
 // results but leave them in their table and copy them into `quarantine`; a write or delete over an
 // unreadable record copies it first, in the same transaction, and is refused when that copy fails.
-// Whenever anything is dropped or kept aside, `meta.unreadableData` is set for the banner (K9).
+// Whenever a raw value is newly kept aside, `meta.unreadableData` is set for the notice (K9); the
+// notice's Dismiss clears it, and reading the same damaged row again does not set it again.
 
 import { systemClock, type Clock } from '../lib/clock';
 import { isBlobLike, type Codec } from './codecs';
@@ -161,13 +162,15 @@ async function copyAside(
     .equals(table)
     .filter((row) => row.key === key && row.hash === hash)
     .count();
-  if (copies === 0) await db.quarantine.add({ table, key, at, raw, hash });
+  if (copies > 0) return;
+  await db.quarantine.add({ table, key, at, raw, hash });
   await raiseFlag(db);
 }
 
 /**
- * Copies an unreadable raw value into `quarantine` (once per value) and sets the flag. Joins the
- * caller's read-write transaction when there is one; it must include `GUARD_TABLES`.
+ * Copies an unreadable raw value into `quarantine` once per value, setting the flag when the copy
+ * is new. Joins the caller's read-write transaction when there is one; it must include
+ * `GUARD_TABLES`.
  */
 export function keepAside(
   db: PlatewiseDb,
@@ -332,8 +335,16 @@ export async function removeRows<T>(
   });
 }
 
-/** True once anything has been dropped or kept aside. */
+/** True once anything has been kept aside, until `clearUnreadableFlag`. */
 export async function hasUnreadableData(db: PlatewiseDb): Promise<boolean> {
   const row = await db.meta.get(UNREADABLE_FLAG);
   return row?.value === true;
+}
+
+/**
+ * Lowers the flag once the person has seen the notice. The damaged rows stay in their tables and
+ * their copies in `quarantine`; only a value not kept aside before raises the flag again.
+ */
+export async function clearUnreadableFlag(db: PlatewiseDb): Promise<void> {
+  await db.meta.delete(UNREADABLE_FLAG);
 }

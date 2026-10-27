@@ -34,6 +34,8 @@ export const aiSetup = {
         scheme: 'Use an address that starts with https:// (http:// only for this device).',
         plainHttp:
           'Plain http only works for this device (localhost). For a server on another machine, use its https address: over http your key would travel unencrypted.',
+        ipv6Loopback:
+          'For this device, type localhost or 127.0.0.1 instead of [::1]: the browser does not let Platewise reach [::1].',
       },
     },
     key: {

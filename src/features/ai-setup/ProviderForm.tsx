@@ -16,6 +16,7 @@ const URL_PROBLEM_KEYS: Readonly<Record<Exclude<UrlProblem, 'empty'>, TKey>> = {
   credentials: 'aiSetup.server.problem.credentials',
   scheme: 'aiSetup.server.problem.scheme',
   plainHttp: 'aiSetup.server.problem.plainHttp',
+  ipv6Loopback: 'aiSetup.server.problem.ipv6Loopback',
 };
 
 const SERVER_HELP_KEYS: Readonly<Partial<Record<ProviderId, TKey>>> = {

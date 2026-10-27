@@ -8,15 +8,17 @@
 //
 // The document: `{format, version, exportedAt, appVersion, contentHash, payload: {tables}}`, with
 // `tables` holding one list of rows per table the backup carries. Blobs inside rows (a Coach
-// message's thumbnail) are written as `{"@blob": <type>, "data": <base64>}`. The `photos` list
-// holds each photo's id, its file in the archive and its size in pixels; the bytes are the file.
+// message's thumbnail) are written as `{"@blob": <type>, "data": <base64>}`; a thumbnail is kept
+// only as a JPEG, PNG or WebP image, so a crafted file cannot store a page (`text/html`) or an SVG
+// on our origin (S-6). The `photos` list holds each photo's id, its file in the archive and its
+// size in pixels; the bytes are the file.
 
 import { barcodeKey } from '../../data/barcodeKey';
 import { isBlobLike } from '../../data/codecs';
 import { BACKUP_CODECS, type BackupTable } from '../../data/repos/backupRepo';
 import { PROFILE_KEY, TABLE_NAMES } from '../../data/schema';
 import { isSettingKey, readSetting } from '../../data/settingsSchema';
-import type { DiaryEntry } from '../../domain/model';
+import type { CoachMessage, DiaryEntry } from '../../domain/model';
 import { isLocalSetting, isLocalTable } from './hash';
 
 /** The format id a backup document carries. */
@@ -114,9 +116,15 @@ function shapeEntry(raw: unknown): Shaped {
   return { kind: 'row', row: key === undefined ? entry : { ...entry, barcodeKey: key } };
 }
 
+/** The only types a Blob inside a row may carry into the store: the app's own thumbnails. */
+const IMAGE_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp']);
+
+/** A Coach message; a thumbnail of any other type is left behind and the message kept. */
 function shapeMessage(raw: unknown): Shaped {
-  const message = BACKUP_CODECS.coachMessages(raw);
-  if (!message) return BAD;
+  const read = BACKUP_CODECS.coachMessages(raw) as CoachMessage | null;
+  if (!read) return BAD;
+  const { thumb, ...rest } = read;
+  const message = thumb === undefined || IMAGE_TYPES.has(thumb.type) ? read : rest;
   const seq = fieldsOf(raw)?.seq;
   return { kind: 'row', row: isFiniteNumber(seq) ? { ...message, seq } : message };
 }

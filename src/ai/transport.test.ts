@@ -97,6 +97,21 @@ describe('send: any 2xx is a success (R03.26)', () => {
   });
 });
 
+describe('send: no Referer (S-12)', () => {
+  it('asks the browser to send no Referer, whatever the caller passed', async () => {
+    useFakeTime(START);
+    const { fake, deadline } = setup([{ json: {} }, { json: {} }]);
+    const fetch = vi.fn(fake.fetch);
+
+    await send(CHAT, REQUEST, deadline, 75_000, { fetch });
+    await send(CHAT, { ...REQUEST, referrerPolicy: 'unsafe-url' }, deadline, 75_000, { fetch });
+
+    const policies = fetch.mock.calls.map(([, init]) => init?.referrerPolicy);
+    expect(policies).toEqual(['no-referrer', 'no-referrer']);
+    expect(fake.requests).toHaveLength(2);
+  });
+});
+
 describe('send: Cancel and the time limits (R03.6)', () => {
   it('reports Cancel during the body read as cancelled, not offline', async () => {
     useFakeTime(START);

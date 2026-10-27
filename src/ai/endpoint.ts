@@ -31,15 +31,24 @@ function canonical(text: string): string {
   }
 }
 
-/** The hosts plain http may reach: this device only, as the URL parser writes them. */
-const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1', '[::1]']);
+/**
+ * The hosts plain http may reach: this device only, as the URL parser writes them. Not `[::1]`:
+ * a CSP source cannot name an IPv6 address, so the page's `connect-src` could never let a request
+ * to it through (S-3).
+ */
+const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1']);
+
+/** This device as an IPv6 address, as the URL parser writes it. */
+const IPV6_LOOPBACK = '[::1]';
 
 /**
  * Why an address cannot be saved: nothing typed; not an address (or one carrying a query or
  * fragment, which the appended path would break); a user name or password inside it (`fetch`
- * refuses those); a scheme other than http and https; plain http to another machine.
+ * refuses those); a scheme other than http and https; plain http to another machine; plain http
+ * to this device written as `[::1]` (type `localhost` or `127.0.0.1` instead).
  */
-export type UrlProblem = 'empty' | 'malformed' | 'credentials' | 'scheme' | 'plainHttp';
+export type UrlProblem =
+  'empty' | 'malformed' | 'credentials' | 'scheme' | 'plainHttp' | 'ipv6Loopback';
 
 /** Advice that does not block saving: Ollama's OpenAI-compatible API lives under `/v1`. */
 export type UrlHint = 'addV1';
@@ -52,8 +61,8 @@ export interface CheckedUrl {
 
 /**
  * Checks a server address before it is saved: https to any host, plain http only to
- * `localhost`, `127.0.0.1` or `[::1]`. For Ollama, an address whose path does not end in `/v1`
- * is accepted with the `addV1` hint.
+ * `localhost` or `127.0.0.1`. For Ollama, an address whose path does not end in `/v1` is accepted
+ * with the `addV1` hint.
  */
 export function checkServerUrl(
   text: string,
@@ -72,6 +81,7 @@ export function checkServerUrl(
   }
   if (parsed.username !== '' || parsed.password !== '') return err('credentials');
   if (parsed.protocol === 'http:') {
+    if (parsed.hostname === IPV6_LOOPBACK) return err('ipv6Loopback');
     if (!LOOPBACK_HOSTS.has(parsed.hostname)) return err('plainHttp');
   } else if (parsed.protocol !== 'https:') {
     return err('scheme');

@@ -22,21 +22,31 @@ describe('checkServerUrl: which addresses can be saved (D-16.26, R03.3)', () => 
     expect(checkServerUrl(' https://gpu-box.example.org/openai/v1 ').ok).toBe(true);
   });
 
-  it('accepts plain http to this device: localhost, 127.0.0.1 and [::1]', () => {
+  it('accepts plain http to this device: localhost and 127.0.0.1', () => {
     expect(checkServerUrl('http://localhost:11434/v1/')).toEqual({
       ok: true,
       value: { url: 'http://localhost:11434/v1' },
     });
     for (const url of [
       'http://127.0.0.1:8080/v1',
-      'http://[::1]:11434/v1',
       'HTTP://LOCALHOST:11434/v1',
-      // The URL parser writes these as 127.0.0.1 and [::1].
+      // The URL parser writes this as 127.0.0.1.
       'http://127.1:11434/v1',
-      'http://[0:0:0:0:0:0:0:1]/v1',
     ]) {
       expect(checkServerUrl(url).ok, url).toBe(true);
     }
+  });
+
+  it('refuses [::1], which the CSP cannot allow, with a hint to use localhost or 127.0.0.1', () => {
+    for (const url of [
+      'http://[::1]:11434/v1',
+      // The URL parser writes this as [::1].
+      'http://[0:0:0:0:0:0:0:1]/v1',
+    ]) {
+      expect(checkServerUrl(url), url).toEqual({ ok: false, error: 'ipv6Loopback' });
+    }
+    // Over https it is an address like any other.
+    expect(checkServerUrl('https://[::1]:11434/v1').ok).toBe(true);
   });
 
   it('refuses plain http to the local network or the internet, with the reason', () => {

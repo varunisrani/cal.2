@@ -51,7 +51,12 @@ export async function fetchWithin<T>(
   );
 
   try {
-    const response = await deps.fetch(url, { ...setup, signal: controller.signal });
+    // No Referer: the database has no need to learn which page sent the request (S-12).
+    const response = await deps.fetch(url, {
+      ...setup,
+      referrerPolicy: 'no-referrer',
+      signal: controller.signal,
+    });
     return ok(await read(response));
   } catch (error) {
     return err(failureOf(error, stoppedBy));

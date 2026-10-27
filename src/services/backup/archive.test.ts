@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { bytesOf, storableBlob } from '../../test/blobs';
 import {
   BackupArchiveError,
+  MAX_PAYLOAD_BYTES,
   MAX_PHOTO_NAME,
   PAYLOAD_ENTRY,
   isSafePhotoName,
@@ -10,7 +11,13 @@ import {
   unpackBackup,
   type BackupArchiveProblem,
 } from './archive';
-import { ZipError, readZip, writeZip, type ZipInput } from './zip';
+import { ZipError, readZip, writeZip, type ZipEntry, type ZipInput } from './zip';
+
+// The real reader, which a test can stand in for once (S-9: an entry size no test file could have).
+vi.mock('./zip', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./zip')>();
+  return { ...real, readZip: vi.fn(real.readZip) };
+});
 
 const MADE_AT = Date.UTC(2026, 9, 27, 9, 30);
 const encode = (text: string) => new TextEncoder().encode(text);
@@ -261,6 +268,33 @@ describe('packBackup and unpackBackup', () => {
         entry: PAYLOAD_ENTRY,
       });
     }
+  });
+
+  it('refuses a payload.json declared over 256 MiB before reading it (S-9)', async () => {
+    const read = vi.fn(() => Promise.resolve(new ArrayBuffer(0)));
+    const declared = (size: number, data: Blob): ZipEntry => ({
+      name: PAYLOAD_ENTRY,
+      size,
+      crc32: 0,
+      data,
+    });
+    const huge = { size: MAX_PAYLOAD_BYTES + 1, type: '', arrayBuffer: read } as unknown as Blob;
+    vi.mocked(readZip).mockResolvedValueOnce([declared(MAX_PAYLOAD_BYTES + 1, huge)]);
+
+    expect(await problemOf(unpackBackup(new Blob()))).toEqual({
+      problem: 'payloadTooLarge',
+      entry: PAYLOAD_ENTRY,
+    });
+    expect(read).not.toHaveBeenCalled();
+    expect(MAX_PAYLOAD_BYTES).toBe(256 * 1024 * 1024);
+
+    // At the limit the document is read as usual.
+    const text = new Blob([encode(JSON.stringify(DOCUMENT))]);
+    vi.mocked(readZip).mockResolvedValueOnce([declared(MAX_PAYLOAD_BYTES, text)]);
+    await expect(unpackBackup(new Blob())).resolves.toMatchObject({
+      document: DOCUMENT,
+      documentBytes: MAX_PAYLOAD_BYTES,
+    });
   });
 
   it('fails the CRC of a file with one flipped byte before handing out anything', async () => {

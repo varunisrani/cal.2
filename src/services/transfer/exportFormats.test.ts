@@ -148,6 +148,22 @@ describe('markdownCell', () => {
     expect(markdownCell('a\\b')).toBe('a\\\\b');
     expect(markdownCell('two\n  lines')).toBe('two lines');
   });
+
+  it('escapes what a viewer would draw as HTML, an image, a link or emphasis (S-7)', () => {
+    expect(markdownCell('<img src=https://pixel.example.net/t.gif>')).toBe(
+      '\\<img src=https://pixel.example.net/t.gif\\>',
+    );
+    expect(markdownCell('Soup ![](https://pixel.example.net/t.gif)')).toBe(
+      'Soup \\!\\[\\](https://pixel.example.net/t.gif)',
+    );
+    expect(markdownCell('[Soup](https://elsewhere.example.org)')).toBe(
+      '\\[Soup\\](https://elsewhere.example.org)',
+    );
+    expect(markdownCell('*rich* _oat_ `bar`')).toBe('\\*rich\\* \\_oat\\_ \\`bar\\`');
+    // Each character is escaped once, the backslash included.
+    expect(markdownCell('a\\<b>|c')).toBe('a\\\\\\<b\\>\\|c');
+    expect(markdownCell('Pear, ripe (2)')).toBe('Pear, ripe (2)');
+  });
 });
 
 describe('toMarkdown', () => {

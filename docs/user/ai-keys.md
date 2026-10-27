@@ -124,9 +124,9 @@ Ways to keep costs low:
 
 Ollama runs open models on your own computer, so nothing goes to a cloud provider and there is no
 key. Platewise accepts a plain `http://` address only when it points at the device you are using:
-`localhost`, `127.0.0.1` or `[::1]`. Any other address must start with `https://`. Over plain http
-your requests would travel unencrypted, and an https page cannot reach plain-http addresses on your
-network anyway. So run Ollama **on the same device** as your browser, or **behind https**.
+`localhost` or `127.0.0.1` (not `[::1]`, which the browser does not let Platewise reach). Any other
+address must start with `https://`. Over plain http your requests would travel unencrypted, and an
+https page cannot reach plain-http addresses on your network anyway. So run Ollama **on the same device** as your browser, or **behind https**.
 
 Both ways need two things:
 

@@ -152,11 +152,14 @@ export function toCsv(document: DiaryDocument): string {
 
 // ---- Markdown ------------------------------------------------------------------------------
 
-/** A table cell: escapes what would end the cell or the row. */
+/**
+ * A table cell: escapes what would end the cell or the row, and what a Markdown viewer would draw
+ * as HTML, an image, a link or emphasis (S-7), so a name from an AI reply or a food database shows
+ * as the text it is and never makes the viewer fetch an address.
+ */
 export function markdownCell(value: string): string {
   return value
-    .replace(/\\/g, '\\\\')
-    .replace(/\|/g, '\\|')
+    .replace(/[\\|<>[\]!`*_]/g, (character) => `\\${character}`)
     .replace(/\s*[\r\n]+\s*/g, ' ');
 }
 

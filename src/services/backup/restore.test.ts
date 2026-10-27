@@ -413,6 +413,34 @@ describe('inspectBackup and applyBackup', () => {
     expect(side?.thumb).toBeUndefined();
   });
 
+  it('drops a Coach thumbnail that is not a JPEG, PNG or WebP image, and keeps its message (S-6)', async () => {
+    const source = await seededBackup();
+    const target = await otherStore();
+    const page = '<h1>Hello</h1><script>alert(1)</script>';
+    let askedId = '';
+    const crafted = await rewrite(source.file, (doc) => {
+      const [asked, ...rest] = doc.payload.tables.coachMessages as Record<string, unknown>[];
+      askedId = String(asked!.id);
+      doc.payload.tables.coachMessages = [
+        { ...asked, thumb: { '@blob': 'text/html', data: btoa(page) } },
+        { ...asked, id: 'message-svg', thumb: { '@blob': 'image/svg+xml', data: btoa('<svg/>') } },
+        { ...asked, id: 'message-webp', thumb: { '@blob': 'image/webp', data: 'AAEC' } },
+        ...rest,
+      ];
+    });
+
+    const result = await applyBackup(await checked(crafted), applyDeps(target.db));
+    expect(result.ok && result.value.messages).toBe(4);
+
+    const stored = new Map((await target.db.coachMessages.toArray()).map((row) => [row.id, row]));
+    expect(stored.size).toBe(4);
+    expect(stored.get(askedId)?.text).toBe('Was this lunch balanced?');
+    expect(stored.get(askedId)).not.toHaveProperty('thumb');
+    expect(stored.get('message-svg')).not.toHaveProperty('thumb');
+    expect(stored.get('message-webp')?.thumb?.type).toBe('image/webp');
+    expect(await bytesOf(stored.get('message-webp')!.thumb!)).toEqual([0, 1, 2]);
+  });
+
   it('refuses on a page without WebCrypto, changing nothing', async () => {
     const source = await seededBackup();
 

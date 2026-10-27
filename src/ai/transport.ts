@@ -2,8 +2,8 @@
  * The one place that calls `fetch` for AI (the P00-07 lint allows only this file). A request
  * runs under the action's deadline plus its own attempt cap (D-16.60), any 2xx is a success
  * (R03.26), the body is read as text for the adapters and the classifier, and a request that got
- * no reply becomes one failure kind (R03.2, R03.6). Headers and bodies are never logged: they
- * carry keys and the person's food.
+ * no reply becomes one failure kind (R03.2, R03.6). Requests carry no Referer (S-12). Headers and
+ * bodies are never logged: they carry keys and the person's food.
  */
 import { timeoutError, type Deadline, type StopCause } from './deadline';
 import { fromNetwork, type SingleFailure } from './errors';
@@ -71,7 +71,12 @@ export async function send(
       : undefined;
 
   try {
-    const response = await fetchImpl(url, { ...init, signal: attempt.signal });
+    // No Referer: a provider has no need to learn which page sent the request (S-12).
+    const response = await fetchImpl(url, {
+      ...init,
+      referrerPolicy: 'no-referrer',
+      signal: attempt.signal,
+    });
     const body = await response.text();
     return ok({ status: response.status, ok: isSuccess(response.status), body });
   } catch (error) {

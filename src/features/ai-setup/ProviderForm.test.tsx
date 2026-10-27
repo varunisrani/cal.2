@@ -118,6 +118,21 @@ describe('ProviderForm', () => {
     expect(field).not.toBeInvalid();
   });
 
+  it('refuses http://[::1]:11434/v1 and suggests localhost or 127.0.0.1 (S-3, D-16.26)', async () => {
+    const user = userEvent.setup();
+    render(<Harness start={withProvider('ollama', 'image')} />);
+
+    const field = serverField()!;
+    await user.clear(field);
+    await user.paste('http://[::1]:11434/v1');
+
+    expect(field).toBeInvalid();
+    expect(field).toHaveAccessibleDescription(
+      expect.stringContaining(words.server.problem.ipv6Loopback),
+    );
+    expect(screen.getByText(words.server.problem.ipv6Loopback)).toBeVisible();
+  });
+
   it('accepts an Ollama address without /v1 with a hint to add it (R03.22)', async () => {
     const user = userEvent.setup();
     render(<Harness start={withProvider('ollama', 'image')} />);

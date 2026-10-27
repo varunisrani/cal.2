@@ -568,7 +568,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
   - Test: src/data/guard.test.ts > writeOne > keeps a corrupt profile aside before saving over it (R06.1)
   - Test: src/data/guard.test.ts > writeOne > refuses the save and leaves the record untouched when the copy fails (R06.1)
-  - Review: the banner is missing from v1: the flag is set and `useUnreadableFlag` reads it, but no screen shows it and no task owns it (K9; acceptance map Known gaps, proposed N-9)
+  - Test: src/data/guard.test.ts > clearUnreadableFlag > lowers the flag, keeps the copies aside, and stays down until something new is set aside (R06.1)
+  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > draws nothing while no stored data has been set aside, and shows the notice once some has (R06.1, ACC-K9-2)
+  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > clears the flag on Dismiss, and stays gone after the live state is read again (R06.1, ACC-K9-2)
 - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
   - Test: src/data/repos/diaryRepo.test.ts > update > keeps both of two edits made at the same time to different entries (R06.2)
   - Test: src/data/repos/settingsRepo.test.ts > update > keeps both changes when two updates run at once (R06.2)
