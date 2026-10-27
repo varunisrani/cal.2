@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 16:39 IST (Agent 1, session 3). 159/176 tasks; P00–P08 complete; the app runs on the
-real database. Window reset 15:20 IST (next reset 20:20 IST); wave 14 landed but P09-15 (in its loop); P10 started.
+Updated: 2026-10-27 17:11 IST (Agent 1, session 3). 160/176 tasks; P00–P08 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); P09-19 and P10 builders running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -137,14 +137,14 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 14 | P09-01 (Settings hub and load gate; sub-pages nested; update dot) | d60ebb6 |
 | Wave 14 | P09-14 (restore from a backup file on Welcome) | 9055c15 |
 | Wave 14 | P07-17 (Home and Progress e2e, Demo 4). P07 done | e370445 |
+| Wave 14 | P09-15 (Your data page, storage card, persistence nudges; `photoRepo.clearThumbs`) | 465e353 |
 
 ## In progress
 
 Landed at 16:45 IST: ec065f0 … e370445 (seven commits; full loop: unit 4967 passed + 2 expected-fail, check 6/6,
 bundle 232.64 kB, e2e 30/30).
-Landing (16:39 IST): P09-15 Your data on `/root/wt/verify` over e370445 (msg `w14-07`; push with
-`/root/wt/commit-landing.sh /root/wt/msgs/w14-07.txt` when ci=0). Then start `w15-p09s19` (settings, data and
-offline e2e) at the new head.
+P09-15 landed at 17:11 IST as 465e353 (full loop: unit 5025 passed + 2 expected-fail, bundle 235.46 kB, e2e 30/30).
+Builder running at 465e353: P09-19 settings, data and offline e2e (`/root/wt/wt-p09s19`).
 Builders running at e370445 (prompts in `docs/handoff/wave15/`): P10-01..04 parity (`/root/wt/wt-p10s1`), P10-07/08/11
 accessibility, ship inventory and browser matrix (`/root/wt/wt-p10s3`; adds `@axe-core/playwright` 4.14.0 exactly),
 P10-09/10/12 security review, similarity report, gated live check (`/root/wt/wt-p10s4`).
@@ -155,7 +155,7 @@ handler; onboarding still has its own notification ask; `diaryRepo.clear()` coul
 rewrite; nothing listens to `db.ts`'s reload-needed message for schema upgrades from another tab; zxing-wasm's
 bundled zxing-cpp (Apache-2.0) and zint (BSD-3) notices are not in Credits; a small stored photo keeps its own bytes
 (and any location data) in backups.
-**Progress: 159/176 tasks** (P00–P08 complete, P09 17/19, P10 1/14); P09-15 brings it to 160.
+**Progress: 160/176 tasks** (P00–P08 complete, P09 18/19, P10 1/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
