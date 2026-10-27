@@ -6,7 +6,7 @@ import { browserFetch } from './ai/transport';
 import { App } from './app/App';
 import { appState } from './app/appState';
 import type { ShellPorts } from './app/ports';
-import { createRouter, windowHost } from './app/router';
+import { HOME_ROUTE, createRouter, windowHost } from './app/router';
 import { installOffer } from './app/installOffer';
 import { appUpdates, registerServiceWorker } from './app/swRegistration';
 import { APP_VERSION } from './config/build';
@@ -63,12 +63,15 @@ import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
 import { createProgressService } from './services/progress';
+import { createCustomRemindersService } from './services/reminders/customReminders';
 import { createReminderEngine } from './services/reminders/engine';
-import { browserNotifications, createNotifier } from './services/reminders/notifier';
+import { loadNativeReminders } from './services/reminders/load';
+import { browserNotifications, createNotifier, writeMessage } from './services/reminders/notifier';
 import {
   browserTimers,
   localReminderMemory,
   storedReminderSources,
+  storedSummaryWatch,
 } from './services/reminders/ports';
 import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
@@ -185,22 +188,49 @@ async function start(): Promise<void> {
   // P09-08: reminders are worked out in the page (D-16.5). P09-09: they need the browser's
   // notification permission; the notifier shows one due while the page runs as a system
   // notification, and one missed while the app was closed as a banner in the app. The notifier
-  // also sends the goal-weight alert that weigh-ins post on the bus (P05-14).
-  const notifications = browserNotifications();
+  // also sends the goal-weight alert that weigh-ins post on the bus (P05-14). P13: in the Android
+  // app Android shows them instead, scheduled ahead (D-16.92); the web build fetches none of that.
+  const reminderSources = storedReminderSources({ settingsRepo, fastRepo, diaryRepo, profileRepo });
+  const summaryWatch = storedSummaryWatch({ diaryRepo, profileRepo }, systemClock);
+  const native = await loadNativeReminders({
+    ...reminderSources,
+    watch(onChange) {
+      const stops = [reminderSources.watch(onChange), summaryWatch(onChange)];
+      return () => stops.forEach((stop) => stop());
+    },
+    clock: systemClock,
+    visibility: documentVisibility,
+    write: writeMessage,
+    channel: {
+      name: t('reminders.channel.name'),
+      description: t('reminders.channel.description'),
+    },
+    // A tapped notification opens Home on today, where its meal, water, summary or fast is.
+    onOpen() {
+      appState.selectDay(null);
+      router.navigate(HOME_ROUTE);
+    },
+  }).catch((error: unknown) => {
+    console.error('Platewise: Android notifications could not be set up', error);
+    return undefined;
+  });
+  const notifications = native?.access ?? browserNotifications();
   const notifier = createNotifier({
     access: notifications,
     alertSettings: () => settingsRepo.snapshot(),
   });
   notifier.listen(appBus());
-  const reminders = createReminderEngine({
-    ...storedReminderSources({ settingsRepo, fastRepo, diaryRepo, profileRepo }),
-    clock: systemClock,
-    timers: browserTimers,
-    visibility: documentVisibility,
-    memory: localReminderMemory(),
-    permitted: () => notifications.state() === 'granted',
-    show: (notice) => void notifier.show(notice),
-  });
+  const reminders =
+    native?.engine ??
+    createReminderEngine({
+      ...reminderSources,
+      clock: systemClock,
+      timers: browserTimers,
+      visibility: documentVisibility,
+      memory: localReminderMemory(),
+      permitted: () => notifications.state() === 'granted',
+      show: (notice) => void notifier.show(notice),
+    });
 
   // P11-03: Health Connect on the Android app only; the web build fetches none of its code.
   const health = await loadHealth({
@@ -295,6 +325,8 @@ async function start(): Promise<void> {
     reminders,
     notifier,
     trackingSettings: createTrackingSettingsService({ settingsRepo, notifications, reminders }),
+    // P13: the reminders the person writes; also the Coach's way to add one (D-16.93).
+    customReminders: createCustomRemindersService({ settingsRepo, clock: systemClock }),
     coachSession: createCoachSession({
       coachRepo,
       data: {

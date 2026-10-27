@@ -55,6 +55,7 @@ describe('SETTING_SPECS', () => {
         'product.show',
         'progress.countToday',
         'remind.breakfast',
+        'remind.custom',
         'remind.dinner',
         'remind.fastGoal',
         'remind.lunch',
@@ -93,6 +94,7 @@ describe('SETTING_SPECS', () => {
     ]);
     expect(settings['remind.fastGoal']).toBe(false);
     expect(settings['alerts.goalReached']).toBe(false);
+    expect(settings['remind.custom']).toEqual([]);
   });
 
   it('starts Health Connect disconnected, counting active calories and importing weigh-ins, not writing back (P11-03)', () => {

@@ -3,7 +3,7 @@ import { createSettingsRepo, InvalidSettingError } from '../data/repos/settingsR
 import { DEFAULT_MEAL_TIMES } from '../domain/meals/times';
 import { openTestDb } from '../test/db';
 import { fakeNotifications } from '../test/notifications';
-import type { NotificationState } from './reminders/notifier';
+import type { NotificationState, NotificationSystem } from './reminders/notifier';
 import { createTrackingSettingsService } from './trackingSettings';
 
 const closers: Array<() => void> = [];
@@ -11,11 +11,11 @@ afterEach(() => {
   for (const close of closers.splice(0)) close();
 });
 
-async function setUp(state: NotificationState = 'default') {
+async function setUp(state: NotificationState = 'default', system: NotificationSystem = 'browser') {
   const { db, bus } = await openTestDb();
   closers.push(() => db.close());
   const settingsRepo = createSettingsRepo(db, { locale: 'en-US', bus });
-  const notifications = fakeNotifications(state);
+  const notifications = fakeNotifications(state, system);
   const reminders = { refresh: vi.fn(async () => undefined) };
   const service = createTrackingSettingsService({ settingsRepo, notifications, reminders });
   return { settingsRepo, notifications, reminders, service };
@@ -95,17 +95,62 @@ describe('the notifications switch (R06.13)', () => {
   it('reads the permission again, and lets the engine check only when it changed (R06.10)', async () => {
     const h = await setUp('granted');
 
-    expect(h.service.recheck()).toBe('granted');
+    await expect(h.service.recheck()).resolves.toBe('granted');
     expect(h.reminders.refresh).not.toHaveBeenCalled();
 
     h.notifications.setState('denied');
     expect(h.service.permission()).toBe('granted');
-    expect(h.service.recheck()).toBe('denied');
+    await expect(h.service.recheck()).resolves.toBe('denied');
     expect(h.service.permission()).toBe('denied');
     expect(h.reminders.refresh).toHaveBeenCalledOnce();
 
-    expect(h.service.recheck()).toBe('denied');
+    await expect(h.service.recheck()).resolves.toBe('denied');
     expect(h.reminders.refresh).toHaveBeenCalledOnce();
+  });
+
+  it('tells its listeners when the permission as read changes, and only then', async () => {
+    const h = await setUp('default');
+    const heard = vi.fn();
+    const stop = h.service.subscribe(heard);
+
+    await h.service.turnRemindersOn();
+    expect(heard).toHaveBeenCalledOnce();
+    await h.service.recheck();
+    expect(heard).toHaveBeenCalledOnce();
+
+    stop();
+    h.notifications.setState('denied');
+    await h.service.recheck();
+    expect(heard).toHaveBeenCalledOnce();
+  });
+
+  it('asks for the permission without storing anything (onboarding stores its answer itself)', async () => {
+    const h = await setUp('default');
+
+    await expect(h.service.requestPermission()).resolves.toBe('granted');
+
+    expect(h.notifications.request).toHaveBeenCalledOnce();
+    expect(h.service.permission()).toBe('granted');
+    expect(await h.settingsRepo.get('remind.master')).toBe(false);
+  });
+});
+
+describe('in the Android app (P13)', () => {
+  it("says the notifications are Android's, and reads the permission again through it", async () => {
+    const h = await setUp('granted', 'android');
+    const refresh = vi.spyOn(h.notifications, 'refresh');
+    expect(h.service.system).toBe('android');
+
+    h.notifications.setState('denied');
+    await expect(h.service.recheck()).resolves.toBe('denied');
+
+    expect(refresh).toHaveBeenCalledOnce();
+    expect(h.reminders.refresh).toHaveBeenCalledOnce();
+  });
+
+  it('is the browser elsewhere', async () => {
+    const h = await setUp('granted');
+    expect(h.service.system).toBe('browser');
   });
 });
 

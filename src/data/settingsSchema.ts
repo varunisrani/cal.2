@@ -20,6 +20,7 @@ import {
   type GoalValues,
 } from '../domain/nutrients/goalDefaults';
 import { DEFAULT_PILLARS, decodePillars } from '../domain/nutrients/pillars';
+import { readCustomReminders, type CustomReminder } from '../domain/reminders/custom';
 import { DEFAULT_FAST_GOAL_MINUTES, decodeFastGoal } from '../domain/trackers/fasting';
 import {
   isHeightDisplayUnit,
@@ -296,6 +297,8 @@ export const SETTING_SPECS = {
   'remind.summary': reminder('20:00'),
   'remind.water': reminder('14:00'),
   'remind.fastGoal': setting(off, readFlag),
+  /** The reminders the person writes (P13, D-16.93), at most 20; their rules live in the domain. */
+  'remind.custom': setting<readonly CustomReminder[]>(() => [], readCustomReminders),
   'alerts.goalReached': setting(off, readFlag),
 
   // Goals and the weekly tune-up

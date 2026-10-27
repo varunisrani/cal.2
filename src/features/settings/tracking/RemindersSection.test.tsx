@@ -1,6 +1,6 @@
 import { act, fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { reminders } from '../../../i18n/en/reminders';
 import { closeHarnesses, openHarness, until, untilShown } from '../../../test/screenHarness';
 import { settle } from '../../water/testing/openWater';
@@ -10,9 +10,6 @@ import { openTracking, type TrackingSetup } from './testing/openTracking';
 import { TrackingPage } from './TrackingPage';
 
 afterEach(closeHarnesses);
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 const words = reminders.reminders.settings;
 const CARD = '[data-ui="reminders.settings"]';
@@ -51,16 +48,17 @@ async function openCard({ stored, water, fasting, ...setup }: Setup = {}) {
 }
 
 describe('RemindersSection', () => {
-  it('is the last card of the Tracking page', async () => {
+  it('follows the trackers on the Tracking page, before your own reminders (P13)', async () => {
     const h = await openTracking();
     h.mount(<TrackingPage />);
     await untilShown(CARD);
     await untilShown('[data-ui="fasting.settings"]');
+    await untilShown('[data-ui="reminders.yours"]');
 
     const cards = Array.from(document.querySelectorAll('[data-ui="tracking"] > *')).map((card) =>
       card.getAttribute('data-ui'),
     );
-    expect(cards.at(-1)).toBe('reminders.settings');
+    expect(cards.slice(-3)).toEqual(['fasting.settings', 'reminders.settings', 'reminders.yours']);
     expect(screen.getByRole('region', { name: words.heading })).toBeVisible();
   });
 
@@ -242,18 +240,43 @@ describe('RemindersSection', () => {
 
     expect(s.master()).toBeDisabled();
     expect(screen.getByText(words.unsupported)).toBeVisible();
-    expect(screen.queryByText(words.unsupportedAndroid)).toBeNull();
+    expect(screen.getByText(words.openNote)).toBeVisible();
   });
 
-  it('says reminders are not available in the Android app, where the home screen cannot help (P11)', async () => {
-    vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
-    const s = await openCard({ permission: 'unsupported' });
-
-    expect(s.master()).toBeDisabled();
-    expect(screen.getByText(words.unsupportedAndroid)).toBeVisible();
-    expect(screen.queryByText(words.unsupported)).toBeNull();
-    // Nor when reminders would show: they cannot, there.
+  it("asks Android in the Android app, and points to Android's settings when it says no (P13, D-16.92)", async () => {
+    const s = await openCard({ system: 'android' });
+    expect(s.master()).toBeEnabled();
+    expect(s.master()).toHaveAccessibleDescription(words.masterHintAndroid);
+    expect(screen.getByText(words.openNoteAndroid)).toBeVisible();
     expect(screen.queryByText(words.openNote)).toBeNull();
+    s.notifications.answerWith('denied');
+
+    await s.user.click(s.master());
+
+    await untilShown('[data-ui="reminders.blocked"]');
+    expect(s.notifications.request).toHaveBeenCalledOnce();
+    expect(screen.getByText(words.blockedAndroid)).toHaveAttribute('role', 'status');
+    expect(screen.queryByText(words.blocked)).toBeNull();
+    expect(s.master()).toHaveAttribute('aria-checked', 'false');
+    expect(await s.repos.settingsRepo.get('remind.master')).toBe(false);
+  });
+
+  it('turns on in the Android app after a grant, and reads the permission again on return (P13)', async () => {
+    const s = await openCard({ system: 'android' });
+
+    await s.user.click(s.master());
+
+    await until(() => s.master().getAttribute('aria-checked') === 'true');
+    expect(await s.repos.settingsRepo.get('remind.master')).toBe(true);
+    expect(switches()).toContain('reminders.breakfast');
+
+    // Taken away in Android's settings while the app was in the background.
+    s.notifications.setState('denied');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await until(() => s.master().getAttribute('aria-checked') === 'false');
+    expect(screen.getByText(words.blockedAndroid)).toBeVisible();
   });
 
   it('puts a switch back with a message when its change is not saved', async () => {

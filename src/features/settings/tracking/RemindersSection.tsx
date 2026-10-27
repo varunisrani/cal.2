@@ -1,10 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useSettings } from '../../../data/hooks';
 import type { ReminderSetting } from '../../../data/settingsSchema';
 import { t } from '../../../i18n/t';
 import { useOptionalServices } from '../../../services/context';
-import { isHealthAvailable } from '../../../services/health/platform';
-import type { NotificationState } from '../../../services/reminders/notifier';
 import type { DailyReminder } from '../../../services/reminders/schedule';
 import type { TrackingSettingsService } from '../../../services/trackingSettings';
 import { Card } from '../../../ui/Card';
@@ -12,6 +10,7 @@ import { DateTimeField } from '../../../ui/DateTimeField';
 import { Switch } from '../../../ui/Switch';
 import { useToast } from '../../../ui/Toast';
 import styles from './tracking.module.css';
+import { usePermission } from './usePermission';
 
 const SETTINGS = [
   'remind.master',
@@ -39,42 +38,20 @@ type SwitchId = 'master' | DailyReminder | 'fastGoal' | 'goalReached';
  * says where to allow them. The permission is read again whenever the page comes back into focus.
  * While on: breakfast, lunch, dinner and the daily summary, each a switch with its time; water
  * (switch and time) only while water is tracked; the fasting goal only while fasting is tracked;
- * the goal-weight alert. A last line says when reminders can show. Inside the Android app, whose
- * page has no notifications, one line says reminders are not available there yet, in place of
- * the browser's line and the last line. Nothing is drawn until the settings are read (R06.22),
- * nor without the service (screens tested without one).
+ * the goal-weight alert. A last line says when reminders can show. Inside the Android app (P13,
+ * D-16.92) the permission is Android's: the hint, the pointer and the last line say so. Nothing is
+ * drawn until the settings are read (R06.22), nor without the service (screens tested without
+ * one).
  */
 export function RemindersSection() {
   const service = useOptionalServices()?.trackingSettings;
   return service ? <RemindersCard service={service} /> : null;
 }
 
-/** The browser's permission, read again on every return of focus to the page. */
-function usePermission(
-  service: TrackingSettingsService,
-): [NotificationState, (state: NotificationState) => void] {
-  const [state, setState] = useState(() => service.permission());
-  useEffect(() => {
-    const reread = (): void => setState(service.recheck());
-    const onVisibility = (): void => {
-      if (document.visibilityState === 'visible') reread();
-    };
-    // Also once on opening: it may have changed since it was last read.
-    reread();
-    window.addEventListener('focus', reread);
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => {
-      window.removeEventListener('focus', reread);
-      document.removeEventListener('visibilitychange', onVisibility);
-    };
-  }, [service]);
-  return [state, setState];
-}
-
 function RemindersCard({ service }: { readonly service: TrackingSettingsService }) {
   const settings = useSettings(SETTINGS);
   const toast = useToast();
-  const [permission, setPermission] = usePermission(service);
+  const permission = usePermission(service);
   const [writing, setWriting] = useState<ReadonlySet<SwitchId>>(() => new Set());
 
   if (settings.status === 'loading') return null;
@@ -88,8 +65,8 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
 
   const stored = settings.value;
   const unsupported = permission === 'unsupported';
-  // The Android app's page has no notifications at all: the browser's advice cannot help there.
-  const androidApp = unsupported && isHealthAvailable();
+  // In the Android app the permission is Android's, so the browser's advice cannot help there.
+  const androidApp = service.system === 'android';
   // The switch never claims more than the browser allows (R06.13).
   const on = stored['remind.master'] && permission === 'granted';
 
@@ -112,7 +89,7 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
 
   const switchMaster = (next: boolean): void => {
     // The request starts inside this press: browsers only prompt from one.
-    const write = next ? service.turnRemindersOn().then(setPermission) : service.turnRemindersOff();
+    const write = next ? service.turnRemindersOn() : service.turnRemindersOff();
     void run('master', () => write);
   };
 
@@ -132,7 +109,9 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
         <li className={`${styles.rowItem} ${styles.switchItem}`}>
           <Switch
             label={t('reminders.settings.master')}
-            description={t('reminders.settings.masterHint')}
+            description={t(
+              androidApp ? 'reminders.settings.masterHintAndroid' : 'reminders.settings.masterHint',
+            )}
             checked={on}
             disabled={unsupported || writing.has('master')}
             onChange={switchMaster}
@@ -185,14 +164,12 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
           role="status"
           data-ui="reminders.blocked"
         >
-          {t('reminders.settings.blocked')}
+          {t(androidApp ? 'reminders.settings.blockedAndroid' : 'reminders.settings.blocked')}
         </p>
       ) : null}
       {unsupported ? (
         <p className={`${styles.note} ${styles.cardNote}`} data-ui="reminders.unsupported">
-          {t(
-            androidApp ? 'reminders.settings.unsupportedAndroid' : 'reminders.settings.unsupported',
-          )}
+          {t('reminders.settings.unsupported')}
         </p>
       ) : null}
       {on && !anyOn ? (
@@ -200,11 +177,9 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
           {t('reminders.settings.noneOn')}
         </p>
       ) : null}
-      {androidApp ? null : (
-        <p className={`${styles.note} ${styles.cardNote}`} data-ui="reminders.openNote">
-          {t('reminders.settings.openNote')}
-        </p>
-      )}
+      <p className={`${styles.note} ${styles.cardNote}`} data-ui="reminders.openNote">
+        {t(androidApp ? 'reminders.settings.openNoteAndroid' : 'reminders.settings.openNote')}
+      </p>
     </Card>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { defaultSettings, type ReminderSetting } from '../../data/settingsSchema';
 import type { Fast } from '../../domain/model';
+import type { CustomReminder } from '../../domain/reminders/custom';
 import { t, type TKey } from '../../i18n/t';
 import type { MessageParams } from '../../i18n/message';
 import { systemClock } from '../../lib/clock';
@@ -612,5 +613,93 @@ describe('createReminderEngine: checks', () => {
     await startAndSettle(r.engine);
     await pass(r.engine, HOUR);
     expect(ids(r.shown)).toEqual(['lunch']);
+  });
+});
+
+describe('createReminderEngine: the reminders the person wrote (P13, D-16.93)', () => {
+  const gym: CustomReminder = {
+    id: 'gym',
+    text: 'Gym bag',
+    time: '07:00',
+    days: ['mon', 'wed'],
+    on: true,
+  };
+
+  function withCustom(settings: ReminderSettings, list: CustomReminder[]): ReminderSettings {
+    return { ...settings, 'remind.master': true, 'remind.custom': list };
+  }
+
+  it('shows one at its time on its days while the app is open, with its own words', async () => {
+    // Monday 26 October 2026.
+    useFakeClock('2026-10-26T06:00:00');
+    const r = rig();
+    r.settings = withCustom(r.settings, [gym]);
+    await startAndSettle(r.engine);
+
+    await pass(r.engine, HOUR);
+    expect(r.shown).toEqual([
+      {
+        id: 'custom-gym',
+        dueAt: local('2026-10-26T07:00:00'),
+        missed: false,
+        title: 'reminders.custom.title',
+        body: 'reminders.custom.body',
+        params: { text: 'Gym bag' },
+      },
+    ]);
+    expect(render(r.shown[0]!.body, r.shown[0]!.params)).toBe('Gym bag');
+
+    // Not on Tuesday; again on Wednesday.
+    await pass(r.engine, 24 * HOUR);
+    expect(r.shown).toHaveLength(1);
+    await pass(r.engine, 24 * HOUR);
+    expect(ids(r.shown)).toEqual(['custom-gym', 'custom-gym']);
+  });
+
+  it('shows a once reminder once, on its date', async () => {
+    useFakeClock('2026-10-26T06:00:00');
+    const r = rig();
+    r.settings = withCustom(r.settings, [
+      { id: 'dentist', text: 'Dentist', time: '10:15', date: '2026-10-27', on: true },
+    ]);
+    await startAndSettle(r.engine);
+
+    await pass(r.engine, 3 * 24 * HOUR);
+    expect(ids(r.shown)).toEqual(['custom-dentist']);
+    expect(r.shown[0]!.dueAt).toBe(local('2026-10-27T10:15:00'));
+  });
+
+  it('keeps one quiet while it is off, the master switch is off, or the permission is gone', async () => {
+    useFakeClock('2026-10-26T06:00:00');
+    const r = rig();
+    r.settings = withCustom(r.settings, [{ ...gym, on: false }]);
+    await startAndSettle(r.engine);
+    expect(vi.getTimerCount()).toBe(0);
+
+    r.settings = { ...withCustom(r.settings, [gym]), 'remind.master': false };
+    r.changed();
+    await r.engine.settled();
+    expect(vi.getTimerCount()).toBe(0);
+
+    r.settings = withCustom(r.settings, [gym]);
+    r.permitted = false;
+    r.changed();
+    await pass(r.engine, 2 * 24 * HOUR);
+    expect(r.shown).toEqual([]);
+  });
+
+  it('shows one missed while the app was closed as missed, the same day only', async () => {
+    useFakeClock('2026-10-26T06:00:00');
+    const memory = localReminderMemory(() => null);
+    const first = rig({ memory });
+    first.settings = withCustom(first.settings, [gym]);
+    await startAndSettle(first.engine);
+    first.engine.stop();
+
+    // Opened again at 09:00 the same Monday.
+    vi.setSystemTime(local('2026-10-26T09:00:00'));
+    const second = rig({ memory, settings: first.settings });
+    await startAndSettle(second.engine);
+    expect(second.shown).toMatchObject([{ id: 'custom-gym', missed: true }]);
   });
 });

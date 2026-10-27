@@ -171,7 +171,9 @@ export const onboarding = {
       dismissed: 'Reminders stay off for now. You can switch them on later in Settings.',
       unsupported:
         'This browser cannot show notifications, so reminders stay off. Adding Platewise to your home screen may help.',
-      unsupportedAndroid: 'Reminders are not available in the Android app yet, so they stay off.',
+      // Inside the Android app (P13): Android's settings, not a browser's, hold the permission.
+      deniedAndroid:
+        "Android is blocking notifications for Platewise. To get reminders later, allow them for Platewise in Android's settings, then switch reminders on in Settings.",
       skip: 'Not now? Continue, and nothing is switched on.',
     },
     building: {

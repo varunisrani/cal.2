@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 import type {
   NotificationAccess,
   NotificationState,
+  NotificationSystem,
   NotificationWorker,
 } from '../services/reminders/notifier';
 
@@ -23,8 +24,13 @@ export interface FakeNotifications extends NotificationAccess {
 /**
  * Notifications that start at `state` ('default' unless said otherwise). A request answers what
  * `answerWith` set, else 'granted' from 'default' and the permission as it stands otherwise.
+ * `system: 'android'` stands in for the Android app's (P13), which is read again through
+ * `refresh`.
  */
-export function fakeNotifications(state: NotificationState = 'default'): FakeNotifications {
+export function fakeNotifications(
+  state: NotificationState = 'default',
+  system: NotificationSystem = 'browser',
+): FakeNotifications {
   let current = state;
   let answer: NotificationState | null = null;
   const shown = vi.fn<NotificationWorker['showNotification']>(async () => undefined);
@@ -37,7 +43,9 @@ export function fakeNotifications(state: NotificationState = 'default'): FakeNot
     return next;
   });
   return {
+    system,
     state: () => current,
+    ...(system === 'android' ? { refresh: async () => current } : {}),
     setState(next) {
       current = next;
     },

@@ -16,6 +16,10 @@ background colour of public/manifest.webmanifest. Writes into android/app/src/ma
                                    corner colour, so the two layers meet without a seam
 - drawable*/splash.png             the rounded tile in the middle of the manifest background
 - values/splash_background.xml     that background, for the launch and app themes
+- drawable-*/ic_stat_platewise.png the notifications' status-bar icon: the mark's plate rim and
+                                   leaf in white on transparent, as Android draws such icons in
+                                   one colour (the leaf's vein left open), from the geometry of
+                                   public/icons/mark.svg
 
 Needs Pillow. Running it twice writes the same pixels.
 """
@@ -23,6 +27,7 @@ Needs Pillow. Running it twice writes the same pixels.
 from __future__ import annotations
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -55,6 +60,26 @@ SPLASH_FALLBACK = (480, 320)
 SPLASH_ICON_SHARE = 0.36
 
 GENERATED = "Written by scripts/android/icons.py from public/icons; run it again instead of editing."
+
+# The status-bar icon: 24 dp, the plate's rim 22 dp across (Android keeps 1 dp clear around it).
+STATUS_DP = 24
+STATUS_PLATE_DP = 22
+STATUS_NAME = "ic_stat_platewise"
+# The mark's geometry in its 512-unit drawing (public/icons/mark.svg): the plate and its well,
+# and the leaf (two cubic curves), its stem and its vein, drawn turned about the leaf's anchor.
+MARK_CENTRE = 256.0
+MARK_RIM = 172.0
+MARK_WELL = 128.0
+LEAF_ANCHOR = (262.0, 250.0)
+LEAF_TURN_DEG = -38.0
+LEAF_CURVES = (
+    ((-72, 0), (-44, -44), (22, -54), (76, 0)),
+    ((76, 0), (22, 54), (-44, 44), (-72, 0)),
+)
+STEM = ((-72, 0), (-86, 6), (-96, 18))
+STEM_WIDTH = 9.0
+VEIN = ((-58, 0), (54, 0))
+VEIN_WIDTH = 7.0
 
 
 def scaled(image: Image.Image, size: int) -> Image.Image:
@@ -118,6 +143,75 @@ def launcher_icons(tile: Image.Image, full: Image.Image) -> None:
         save(layer, folder / "ic_launcher_foreground.png")
 
 
+def leaf_point(x: float, y: float) -> tuple[float, float]:
+    """A point of the leaf's own drawing, turned and moved to its place on the mark."""
+    turn = math.radians(LEAF_TURN_DEG)
+    return (
+        LEAF_ANCHOR[0] + x * math.cos(turn) - y * math.sin(turn),
+        LEAF_ANCHOR[1] + x * math.sin(turn) + y * math.cos(turn),
+    )
+
+
+def cubic(points: tuple[tuple[float, float], ...], steps: int = 48) -> list[tuple[float, float]]:
+    (x0, y0), (x1, y1), (x2, y2), (x3, y3) = points
+    out = []
+    for i in range(steps + 1):
+        t = i / steps
+        u = 1 - t
+        out.append((
+            u**3 * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t**3 * x3,
+            u**3 * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t**3 * y3,
+        ))
+    return out
+
+
+def quadratic(points: tuple[tuple[float, float], ...], steps: int = 24) -> list[tuple[float, float]]:
+    (x0, y0), (x1, y1), (x2, y2) = points
+    return [
+        ((1 - t) ** 2 * x0 + 2 * (1 - t) * t * x1 + t * t * x2, (1 - t) ** 2 * y0 + 2 * (1 - t) * t * y1 + t * t * y2)
+        for t in (i / steps for i in range(steps + 1))
+    ]
+
+
+def stroke(draw: ImageDraw.ImageDraw, line: list[tuple[float, float]], width: float, fill: int) -> None:
+    """A line with round joins and ends."""
+    draw.line(line, fill=fill, width=max(1, round(width)))
+    radius = width / 2
+    for x, y in line:
+        draw.ellipse((x - radius, y - radius, x + radius, y + radius), fill=fill)
+
+
+def status_icon(side: int) -> Image.Image:
+    """The mark in one colour: white where it is drawn, transparent elsewhere (drawn at 4x)."""
+    big = side * 4
+    scale = big * (STATUS_PLATE_DP / STATUS_DP) / 2 / MARK_RIM
+
+    def at(point: tuple[float, float]) -> tuple[float, float]:
+        return (big / 2 + (point[0] - MARK_CENTRE) * scale, big / 2 + (point[1] - MARK_CENTRE) * scale)
+
+    def circle(radius: float) -> tuple[float, float, float, float]:
+        r = radius * scale
+        return (big / 2 - r, big / 2 - r, big / 2 + r, big / 2 + r)
+
+    alpha = Image.new("L", (big, big), 0)
+    draw = ImageDraw.Draw(alpha)
+    draw.ellipse(circle(MARK_RIM), fill=255)
+    draw.ellipse(circle(MARK_WELL), fill=0)
+    outline = [at(leaf_point(x, y)) for curve in LEAF_CURVES for x, y in cubic(curve)]
+    draw.polygon(outline, fill=255)
+    stroke(draw, [at(leaf_point(x, y)) for x, y in quadratic(STEM)], STEM_WIDTH * scale, 255)
+    stroke(draw, [at(leaf_point(x, y)) for x, y in VEIN], VEIN_WIDTH * scale, 0)
+
+    icon = Image.new("RGBA", (side, side), (255, 255, 255, 0))
+    icon.putalpha(alpha.resize((side, side), Image.Resampling.LANCZOS))
+    return icon
+
+
+def status_icons() -> None:
+    for bucket, scale in DENSITIES.items():
+        save(status_icon(round(STATUS_DP * scale)), RES / f"drawable-{bucket}" / f"{STATUS_NAME}.png")
+
+
 def splash(tile: Image.Image, background: tuple[int, int, int], width: int, height: int) -> Image.Image:
     canvas = Image.new("RGBA", (width, height), background + (255,))
     side = round(min(width, height) * SPLASH_ICON_SHARE)
@@ -146,7 +240,8 @@ def main() -> int:
     write_colour(RES / "values" / "ic_launcher_background.xml", "ic_launcher_background", hex_colour(full.getpixel((0, 0))))
     splash_images(tile, background)
     write_colour(RES / "values" / "splash_background.xml", "splash_background", hex_colour(background))
-    print(f"icons.py: launcher icons and splash images written under {RES.relative_to(ROOT)}")
+    status_icons()
+    print(f"icons.py: launcher, splash and status-bar icons written under {RES.relative_to(ROOT)}")
     return 0
 
 

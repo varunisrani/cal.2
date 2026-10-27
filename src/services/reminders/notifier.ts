@@ -9,14 +9,15 @@
 // banner, because the goal-reached dialog is already on screen.
 //
 // `browserNotifications()` is the browser's side: the permission, the request (only from a
-// press), and the worker registration that shows notifications.
+// press), and the worker registration that shows notifications. In the Android app the same
+// access is the system's (`nativeSync.ts`, P13): its worker shows a notification at once.
 
 import type { Bus } from '../../data/bus';
 import type { Settings } from '../../data/settingsSchema';
 import type { MessageParams } from '../../i18n/message';
 import { t } from '../../i18n/t';
 import type { ReminderNotice } from './engine';
-import type { ReminderId, ReminderTextKey } from './schedule';
+import type { NoticeId, ReminderMessage, ReminderTextKey } from './schedule';
 
 /** What the browser says about notifications for this app; `unsupported` where it has none. */
 export type NotificationState = 'granted' | 'denied' | 'default' | 'unsupported';
@@ -26,10 +27,20 @@ export interface NotificationWorker {
   showNotification(title: string, options?: NotificationOptions): Promise<void>;
 }
 
+/** Where notifications come from: the browser, or Android itself in the Android app (P13). */
+export type NotificationSystem = 'browser' | 'android';
+
 /** The browser's notifications as the app uses them. */
 export interface NotificationAccess {
+  /** The browser's unless said otherwise. */
+  readonly system?: NotificationSystem;
   /** The permission now; read again at every use, since it can change outside the app. */
   state(): NotificationState;
+  /**
+   * Reads the permission again where that takes a round trip (Android); `state()` then answers
+   * the new value. Without it, `state()` is always current.
+   */
+  refresh?(): Promise<NotificationState>;
   /** Asks the browser (call it straight from a press); resolves with the answer. */
   request(): Promise<NotificationState>;
   /** The running worker's registration, which shows notifications; null without one. */
@@ -117,7 +128,7 @@ export function browserNotifications(parts: BrowserNotificationParts = {}): Noti
 
 /** One reminder shown in the app. */
 export interface ReminderBanner {
-  readonly id: ReminderId;
+  readonly id: NoticeId;
   readonly title: string;
   readonly body: string;
   /** When it fell due. */
@@ -152,20 +163,28 @@ export interface Notifier {
   /** Calls `onChange` whenever the banners change; returns the stop. */
   subscribe(onChange: () => void): () => void;
   /** Takes one reminder's banner away. */
-  dismiss(id: ReminderId): void;
+  dismiss(id: NoticeId): void;
 }
 
 /** The app's icon on a system notification, next to index.html. */
 export const NOTIFICATION_ICON = `${import.meta.env.BASE_URL}icons/icon-192.png`;
 
 /** A notification's tag: a newer one of the same reminder replaces the one still on show. */
-export function notificationTag(id: ReminderId | 'goalReached'): string {
+export function notificationTag(id: NoticeId | 'goalReached'): string {
   return `platewise-${id}`;
 }
 
 function write(key: ReminderTextKey, params?: MessageParams): string {
   // The key is one of the reminders partition's; params are whatever that message names.
   return (t as (key: string, params?: MessageParams) => string)(key, params);
+}
+
+/** A notice's title and body, written out in the language of the moment. */
+export function writeMessage(message: ReminderMessage): { title: string; body: string } {
+  return {
+    title: write(message.title, message.params),
+    body: write(message.body, message.params),
+  };
 }
 
 function reportToConsole(error: unknown): void {
@@ -215,8 +234,7 @@ export function createNotifier(deps: NotifierDeps): Notifier {
 
   return {
     async show(notice) {
-      const title = write(notice.title, notice.params);
-      const body = write(notice.body, notice.params);
+      const { title, body } = writeMessage(notice);
       if (!notice.missed && (await notify(title, body, notificationTag(notice.id)))) {
         return 'system';
       }

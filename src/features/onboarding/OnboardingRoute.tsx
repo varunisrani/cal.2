@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useRef, useState, type ChangeEvent } from 'react';
+import { Suspense, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 import { onDemand } from '../../app/onDemand';
 import { Skeleton } from '../../app/Skeleton';
 import { useToday } from '../../app/TodayProvider';
@@ -45,7 +45,10 @@ function firstQuestion(today: DayKey): WizardState {
   return wizardReducer(startWizard(today, { height, weight }), { type: 'next' });
 }
 
-/** Asks the browser for notification permission; `unsupported` where it has none to ask. */
+/**
+ * Asks the browser for notification permission; `unsupported` where it has none to ask. Used
+ * where no tracking settings service is given (screens tested without one).
+ */
 async function askNotifications(): Promise<PermissionReply> {
   if (typeof Notification === 'undefined') return 'unsupported';
   try {
@@ -84,7 +87,12 @@ interface Reopened {
  * tune-up week, over the restored diary.
  */
 export function OnboardingRoute() {
-  const { onboarding, clock } = useServices();
+  const { onboarding, clock, trackingSettings } = useServices();
+  // P13: through the service, so the Android app asks Android, as Settings does.
+  const requestNotifications = useMemo(
+    () => (trackingSettings ? () => trackingSettings.requestPermission() : askNotifications),
+    [trackingSettings],
+  );
   const today = useToday();
   const toast = useToast();
   const [reopened, setReopened] = useState<Reopened | null>(null);
@@ -155,7 +163,7 @@ export function OnboardingRoute() {
       <WizardPage
         key={reopened?.key ?? 0}
         today={today}
-        requestNotifications={askNotifications}
+        requestNotifications={requestNotifications}
         onRestore={pickBackup}
         lateSteps={LATE_STEPS}
         initialState={reopened?.state}

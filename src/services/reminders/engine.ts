@@ -6,7 +6,9 @@
 // fasting tracking for the fasting goal) and the notification permission. Whatever is off has its
 // mark dropped and no timer, so nothing shows for it and turning it back on starts counting from
 // then. A reminder found due by the open or front check was missed (its time passed while the app
-// was closed or asleep); the notifier shows those as a banner (P09-09).
+// was closed or asleep); the notifier shows those as a banner (P09-09). The reminders the person
+// wrote (P13) are checked the same way, under the same master switch and permission. In the
+// Android app this engine is not used: the system schedules every reminder (`nativeSync.ts`).
 //
 // The marks are written before anything shows, so a second check, or a second tab reading the same
 // memory, does not show it again. Checks never overlap: one requested during a check runs after
@@ -16,20 +18,25 @@
 import type { Settings } from '../../data/settingsSchema';
 import { dayKeyOf, type DayKey } from '../../domain/dates/dayKey';
 import type { Fast } from '../../domain/model';
+import type { CustomReminder } from '../../domain/reminders/custom';
 import type { Clock } from '../../lib/clock';
 import {
   DAILY_REMINDERS,
   REMINDER_SETTING,
+  customMessage,
+  customNoticeId,
   fastGoalMessage,
   fixedMessage,
+  planCustom,
   planDaily,
   planFastGoal,
   summaryMessage,
+  type CustomMarks,
   type DailyMarks,
   type DailyReminder,
   type DayTotals,
   type FastMark,
-  type ReminderId,
+  type NoticeId,
   type ReminderMessage,
   type TimedReminder,
 } from './schedule';
@@ -43,6 +50,7 @@ export const REMINDER_SETTING_KEYS = [
   'remind.summary',
   'remind.water',
   'remind.fastGoal',
+  'remind.custom',
   'water.on',
   'fasting.on',
   'units.energy',
@@ -70,9 +78,11 @@ export interface PageVisibility {
 export interface ReminderLog {
   readonly daily: DailyMarks;
   readonly fast: FastMark | null;
+  /** The written reminders' marks, by reminder id (none in a log from before P13). */
+  readonly custom?: CustomMarks;
 }
 
-export const EMPTY_LOG: ReminderLog = { daily: {}, fast: null };
+export const EMPTY_LOG: ReminderLog = { daily: {}, fast: null, custom: {} };
 
 /** Where the log is kept. `read` must answer a fresh copy, never throw. */
 export interface ReminderMemory {
@@ -82,7 +92,7 @@ export interface ReminderMemory {
 
 /** One reminder to show now. */
 export interface ReminderNotice extends ReminderMessage {
-  readonly id: ReminderId;
+  readonly id: NoticeId;
   /** When it fell due. */
   readonly dueAt: number;
   /** Found when the app opened or came back to the front: its time passed meanwhile. */
@@ -122,11 +132,22 @@ export interface ReminderEngine {
   settled(): Promise<void>;
 }
 
-function remindersOn(settings: ReminderSettings): TimedReminder[] {
+/** The daily reminders whose own switch is on (water also needs water tracking). */
+export function dailyRemindersOn(settings: ReminderSettings): TimedReminder[] {
   const wanted = (id: DailyReminder): boolean => id !== 'water' || settings['water.on'];
   return DAILY_REMINDERS.filter((id) => wanted(id) && settings[REMINDER_SETTING[id]].on).map(
     (id) => ({ id, at: settings[REMINDER_SETTING[id]].at }),
   );
+}
+
+/** Whether the fasting goal alert is wanted: its switch, and fasting tracking. */
+export function fastGoalWanted(settings: ReminderSettings): boolean {
+  return settings['fasting.on'] && settings['remind.fastGoal'];
+}
+
+/** The written reminders whose own switch is on, in the stored order. */
+export function customRemindersOn(settings: ReminderSettings): CustomReminder[] {
+  return settings['remind.custom'].filter((reminder) => reminder.on);
 }
 
 function earliest(...instants: readonly (number | null)[]): number | null {
@@ -198,8 +219,9 @@ export function createReminderEngine(deps: ReminderEngineDeps): ReminderEngine {
     const run = generation;
     const settings = await deps.settings();
     const allowed = settings['remind.master'] && deps.permitted();
-    const daily = allowed ? remindersOn(settings) : [];
-    const goalWanted = allowed && settings['fasting.on'] && settings['remind.fastGoal'];
+    const daily = allowed ? dailyRemindersOn(settings) : [];
+    const written = allowed ? customRemindersOn(settings) : [];
+    const goalWanted = allowed && fastGoalWanted(settings);
     const fast = goalWanted ? await deps.activeFast() : null;
     if (run !== generation) return;
 
@@ -207,9 +229,10 @@ export function createReminderEngine(deps: ReminderEngineDeps): ReminderEngine {
     const log = memory.read();
     const days = planDaily(daily, log.daily, now);
     const goal = planFastGoal(fast, log.fast, now);
-    memory.write({ daily: days.marks, fast: goal.mark });
-    const anyOn = daily.length > 0 || goal.mark !== null;
-    arm(anyOn ? earliest(days.wakeAt, goal.wakeAt, now + MAX_WAIT_MS) : null, now);
+    const own = planCustom(written, log.custom ?? {}, now);
+    memory.write({ daily: days.marks, fast: goal.mark, custom: own.marks });
+    const anyOn = daily.length > 0 || goal.mark !== null || written.length > 0;
+    arm(anyOn ? earliest(days.wakeAt, goal.wakeAt, own.wakeAt, now + MAX_WAIT_MS) : null, now);
 
     for (const { id, dueAt } of days.due) {
       const message = await messageFor(id, settings, now);
@@ -218,6 +241,9 @@ export function createReminderEngine(deps: ReminderEngineDeps): ReminderEngine {
     }
     if (goal.dueAt !== null && fast !== null) {
       hand({ ...fastGoalMessage(fast.goalMin), id: 'fastGoal', dueAt: goal.dueAt, missed });
+    }
+    for (const { id, text, dueAt } of own.due) {
+      hand({ ...customMessage(text), id: customNoticeId(id), dueAt, missed });
     }
   }
 

@@ -1,0 +1,81 @@
+/*
+ * "Your reminders" on Settings › Tracking & reminders (P13): a reminder's row (its switch, then
+ * its Edit button), the Add button, and the sheet's weekday buttons and problem line. The card,
+ * rows and notes reuse tracking.module.css; every value here comes from tokens.css; logical
+ * properties throughout.
+ */
+
+/* A reminder: the switch takes the room, the Edit button sits at the end. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding-inline: var(--space-4) var(--space-2);
+}
+
+.switch {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.add {
+  padding-block: var(--space-2) var(--space-3);
+  padding-inline: var(--space-4);
+}
+
+/* ---- The sheet ----------------------------------------------------------------------------- */
+
+.days {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* Reads like a field's label. */
+.legend {
+  margin-block-end: var(--space-1);
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.dayButtons {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+/* A weekday: 44 px tall, on when pressed. */
+.day {
+  min-inline-size: 0;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  cursor: pointer;
+}
+
+.day[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.day:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}

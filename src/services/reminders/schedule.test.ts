@@ -4,20 +4,27 @@ import { makeFast } from '../../test/factories';
 import { inTimeZone } from '../../test/time';
 import { t, type TKey } from '../../i18n/t';
 import type { MessageParams } from '../../i18n/message';
+import { WEEKDAYS, type CustomReminder } from '../../domain/reminders/custom';
 import {
   DAILY_REMINDERS,
   REMINDERS,
   REMINDER_SETTING,
   clockOn,
+  customMessage,
+  customNoticeId,
   due,
   fastGoalMessage,
   fixedMessage,
   lastAt,
+  lastOccurrence,
   nextAt,
+  nextOccurrence,
+  planCustom,
   planDaily,
   planFastGoal,
   summaryMessage,
   summaryNumbers,
+  timingKey,
   type DailyMarks,
   type ReminderMessage,
 } from './schedule';
@@ -322,5 +329,110 @@ describe('notice words', () => {
       'Fasting goal met',
       '16h 30m done. Your fast keeps running until you end it.',
     ]);
+  });
+});
+
+describe('reminders the person wrote (P13, D-16.93)', () => {
+  // Monday 26 October 2026.
+  const MONDAY = '2026-10-26';
+  const weekdays: CustomReminder = {
+    id: 'gym',
+    text: 'Gym bag',
+    time: '07:00',
+    days: ['mon', 'wed', 'fri'],
+    on: true,
+  };
+  const daily: CustomReminder = { ...weekdays, id: 'pills', text: 'Pills', days: WEEKDAYS };
+  const dentist: CustomReminder = {
+    id: 'dentist',
+    text: 'Dentist',
+    time: '10:15',
+    date: '2026-10-28',
+    on: true,
+  };
+
+  it('comes next on its next weekday at its time, a week on once the last one passed', () => {
+    expect(nextOccurrence(weekdays, local(`${MONDAY}T06:59:00`))).toBe(local(`${MONDAY}T07:00:00`));
+    expect(nextOccurrence(weekdays, local(`${MONDAY}T07:00:00`))).toBe(
+      local('2026-10-28T07:00:00'),
+    );
+    expect(nextOccurrence(weekdays, local('2026-10-30T08:00:00'))).toBe(
+      local('2026-11-02T07:00:00'),
+    );
+    const mondaysOnly = { ...weekdays, days: ['mon'] as const };
+    expect(nextOccurrence(mondaysOnly, local(`${MONDAY}T08:00:00`))).toBe(
+      local('2026-11-02T07:00:00'),
+    );
+    expect(nextOccurrence(daily, local(`${MONDAY}T08:00:00`))).toBe(local('2026-10-27T07:00:00'));
+  });
+
+  it('keeps its wall-clock time across the November DST change', () => {
+    const next = nextOccurrence(daily, local('2026-10-31T08:00:00'))!;
+    expect(next).toBe(local('2026-11-01T07:00:00'));
+    expect(clockText(next)).toBe('07:00');
+  });
+
+  it('comes once on its date, and never after it', () => {
+    expect(nextOccurrence(dentist, local(`${MONDAY}T12:00:00`))).toBe(local('2026-10-28T10:15:00'));
+    expect(nextOccurrence(dentist, local('2026-10-28T10:15:00'))).toBeNull();
+    expect(lastOccurrence(dentist, local('2026-10-28T10:14:00'))).toBeNull();
+    expect(lastOccurrence(dentist, local('2026-10-29T09:00:00'))).toBe(
+      local('2026-10-28T10:15:00'),
+    );
+  });
+
+  it('came last on its latest weekday at or before now', () => {
+    expect(lastOccurrence(weekdays, local(`${MONDAY}T07:00:00`))).toBe(local(`${MONDAY}T07:00:00`));
+    expect(lastOccurrence(weekdays, local('2026-10-27T12:00:00'))).toBe(
+      local(`${MONDAY}T07:00:00`),
+    );
+    expect(lastOccurrence(weekdays, local(`${MONDAY}T06:00:00`))).toBe(
+      local('2026-10-23T07:00:00'),
+    );
+  });
+
+  it('is due once when its time passed since it was counted, today only', () => {
+    const counted = planCustom([weekdays], {}, local(`${MONDAY}T06:00:00`));
+    // Nothing is due for a reminder seen for the first time.
+    expect(counted.due).toEqual([]);
+    expect(counted.wakeAt).toBe(local(`${MONDAY}T07:00:00`));
+
+    const at7 = planCustom([weekdays], counted.marks, local(`${MONDAY}T07:00:00`));
+    expect(at7.due).toEqual([{ id: 'gym', text: 'Gym bag', dueAt: local(`${MONDAY}T07:00:00`) }]);
+    expect(at7.wakeAt).toBe(local('2026-10-28T07:00:00'));
+
+    // Dealt with: not again the same day.
+    expect(planCustom([weekdays], at7.marks, local(`${MONDAY}T09:00:00`)).due).toEqual([]);
+    // Tuesday is not one of its days; Wednesday's comes after a check before it.
+    const tuesday = planCustom([weekdays], at7.marks, local('2026-10-27T07:30:00'));
+    expect(tuesday.due).toEqual([]);
+    // Missed for a day: Monday's is not shown on Tuesday.
+    expect(planCustom([weekdays], counted.marks, local('2026-10-27T07:30:00')).due).toEqual([]);
+  });
+
+  it('starts counting again when its timing changes, and forgets reminders that are off', () => {
+    const counted = planCustom([weekdays, dentist], {}, local(`${MONDAY}T06:00:00`));
+    expect(Object.keys(counted.marks)).toEqual(['gym', 'dentist']);
+    expect(counted.marks.gym!.key).toBe(timingKey(weekdays));
+
+    const moved = { ...weekdays, time: '06:30' };
+    expect(planCustom([moved], counted.marks, local(`${MONDAY}T06:45:00`)).due).toEqual([]);
+    expect(Object.keys(planCustom([], counted.marks, local(`${MONDAY}T06:45:00`)).marks)).toEqual(
+      [],
+    );
+  });
+
+  it('shows a once reminder on its date, once', () => {
+    const counted = planCustom([dentist], {}, local(`${MONDAY}T12:00:00`));
+    expect(counted.wakeAt).toBe(local('2026-10-28T10:15:00'));
+    const shown = planCustom([dentist], counted.marks, local('2026-10-28T10:15:00'));
+    expect(shown.due).toMatchObject([{ id: 'dentist', dueAt: local('2026-10-28T10:15:00') }]);
+    expect(shown.wakeAt).toBeNull();
+    expect(planCustom([dentist], shown.marks, local('2026-10-28T11:00:00')).due).toEqual([]);
+  });
+
+  it("says the person's own words under a plain title", () => {
+    expect(words(customMessage('Gym bag'))).toEqual(['Reminder', 'Gym bag']);
+    expect(customNoticeId('gym')).toBe('custom-gym');
   });
 });

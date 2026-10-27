@@ -4,9 +4,9 @@ import { createFastRepo, type FastRepo } from '../../data/repos/fastRepo';
 import { createProfileRepo } from '../../data/repos/profileRepo';
 import { createSettingsRepo, type SettingsRepo } from '../../data/repos/settingsRepo';
 import { OWNED_PREFIX } from '../../data/wipe';
-import { systemClock } from '../../lib/clock';
+import { fixedClock, systemClock } from '../../lib/clock';
 import { openTestDb } from '../../test/db';
-import { makeEntry, makeProfile } from '../../test/factories';
+import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
 import {
   EMPTY_LOG,
   REMINDER_SETTING_KEYS,
@@ -21,6 +21,7 @@ import {
   localReminderMemory,
   readLog,
   storedReminderSources,
+  storedSummaryWatch,
   type LogStorage,
 } from './ports';
 
@@ -165,6 +166,50 @@ describe('storedReminderSources', () => {
   });
 });
 
+describe('storedSummaryWatch (P13: the Android app hands the summary over ahead)', () => {
+  it('reports a change to the entries of today and the week ahead, and to the profile', async () => {
+    const repos = await storedRepos();
+    const clock = fixedClock(FACTORY_NOW, 'America/New_York');
+    const calls = vi.fn();
+    const { listener, called } = nextCall();
+    const stop = storedSummaryWatch(
+      repos,
+      clock,
+    )(() => {
+      calls();
+      listener();
+    });
+    // Both live queries answer once when they start.
+    await until(() => calls.mock.calls.length === 2);
+
+    let next = called();
+    await repos.diaryRepo.add(makeEntry({ loggedAt: FACTORY_NOW }));
+    await next;
+    expect(calls).toHaveBeenCalledTimes(3);
+
+    next = called();
+    await repos.diaryRepo.add(makeEntry({ loggedAt: FACTORY_NOW + 6 * 24 * HOUR }));
+    await next;
+    expect(calls).toHaveBeenCalledTimes(4);
+
+    next = called();
+    await repos.profileRepo.save(makeProfile({ saved: { kcal: 1_900 } }));
+    await next;
+    expect(calls).toHaveBeenCalledTimes(5);
+
+    // An entry well past the week: the summaries handed over do not change.
+    await repos.diaryRepo.add(makeEntry({ loggedAt: FACTORY_NOW + 20 * 24 * HOUR }));
+    next = called();
+    await repos.diaryRepo.add(makeEntry({ loggedAt: FACTORY_NOW + 2 * 24 * HOUR }));
+    await next;
+    for (let turn = 0; turn < 50; turn += 1) {
+      await new Promise<void>((resolve) => setImmediate(resolve));
+    }
+    expect(calls).toHaveBeenCalledTimes(6);
+    stop();
+  });
+});
+
 describe('the engine over the stored data', () => {
   async function engineOver(repos: Awaited<ReturnType<typeof storedRepos>>) {
     const shown: ReminderNotice[] = [];
@@ -260,6 +305,7 @@ describe('localReminderMemory', () => {
     const log = {
       daily: { lunch: { at: '12:00', since: 1_000 } },
       fast: { fast: 'fast-1', goalAt: 5_000, done: false },
+      custom: { gym: { key: '07:00 mon,wed', since: 1_000 } },
     };
     memory.write(log);
     expect(REMINDER_LOG_KEY.startsWith(OWNED_PREFIX)).toBe(true);
@@ -280,8 +326,19 @@ describe('localReminderMemory', () => {
           streak: { at: '21:00', since: 1_000 },
         },
         fast: { fast: 'fast-1', goalAt: 5_000 },
+        custom: {
+          gym: { key: '07:00 mon,wed', since: 1_000 },
+          dentist: { key: 10, since: 1_000 },
+          walk: { key: '18:00 sat', since: null },
+        },
       }),
-    ).toEqual({ daily: { lunch: { at: '12:00', since: 1_000 } }, fast: null });
+    ).toEqual({
+      daily: { lunch: { at: '12:00', since: 1_000 } },
+      fast: null,
+      custom: { gym: { key: '07:00 mon,wed', since: 1_000 } },
+    });
+    // A log from before P13 has no written reminders' marks.
+    expect(readLog({ daily: {}, fast: null })).toEqual(EMPTY_LOG);
 
     const storage = fakeStorage();
     storage.items.set(REMINDER_LOG_KEY, 'not json');
@@ -296,7 +353,7 @@ describe('localReminderMemory', () => {
       },
     };
     const memory = localReminderMemory(() => refusing);
-    const log = { daily: { dinner: { at: '19:00', since: 2_000 } }, fast: null };
+    const log = { daily: { dinner: { at: '19:00', since: 2_000 } }, fast: null, custom: {} };
     memory.write(log);
     expect(memory.read()).toEqual(log);
 

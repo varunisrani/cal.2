@@ -86,6 +86,31 @@ describe('createNotifier: reminders', () => {
     expect(notifier.banners()).toEqual([]);
   });
 
+  it('shows a reminder the person wrote with its own words, and as its own banner (P13)', async () => {
+    const worker = recordingWorker();
+    const { notifier } = notifierWith({ worker });
+    const written = notice({
+      id: 'custom-gym',
+      title: 'reminders.custom.title',
+      body: 'reminders.custom.body',
+      params: { text: 'Gym bag' },
+    });
+
+    await expect(notifier.show(written)).resolves.toBe('system');
+    expect(worker.showNotification).toHaveBeenCalledExactlyOnceWith(words.custom.title, {
+      body: 'Gym bag',
+      tag: 'platewise-custom-gym',
+      icon: NOTIFICATION_ICON,
+    });
+
+    await expect(notifier.show({ ...written, missed: true })).resolves.toBe('banner');
+    expect(notifier.banners()).toMatchObject([
+      { id: 'custom-gym', title: words.custom.title, body: 'Gym bag', missed: true },
+    ]);
+    notifier.dismiss('custom-gym');
+    expect(notifier.banners()).toEqual([]);
+  });
+
   it('writes out the summary with its numbers', async () => {
     const worker = recordingWorker();
     const { notifier } = notifierWith({ worker });

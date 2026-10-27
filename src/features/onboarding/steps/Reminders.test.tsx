@@ -18,14 +18,6 @@ function withoutNotifications(): void {
   vi.stubGlobal('Notification', undefined);
 }
 
-/** A page with a Notification API that has not been asked yet. */
-function withNotifications(): void {
-  vi.stubGlobal('Notification', {
-    permission: 'default',
-    requestPermission: async () => 'default',
-  });
-}
-
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -107,41 +99,39 @@ describe('Reminders', () => {
     expect(screen.getByRole('status')).toHaveTextContent(words.unsupported);
   });
 
-  it('says reminders are not available in the Android app, where the home screen cannot help (P11)', async () => {
+  it('offers the button in the Android app, where Android asks, and turns reminders on after a grant (P13)', async () => {
     inAndroidApp();
+    // The app's WebView has no Notification API: Android's own permission is asked instead.
     withoutNotifications();
     const user = userEvent.setup();
-    const ask = vi.fn<AskNotifications>(async () => 'unsupported');
+    const ask = vi.fn<AskNotifications>(async () => 'granted');
     const { latest } = renderWizard({ state: wizardAt('reminders'), ask });
 
-    // Nothing to turn on there: no button, the explanation and the app's own line (ACC-M11-9).
-    expect(screen.queryByRole('button', { name: words.ask })).toBeNull();
-    expect(document.querySelector('[data-ui="wizard.reminders.ask"]')).toBeNull();
     expect(screen.getByText(words.body)).toBeVisible();
-    expect(screen.getByRole('status')).toHaveTextContent(words.unsupportedAndroid);
-    expect(screen.getByRole('status')).not.toHaveTextContent(/home screen/);
-
-    await user.click(screen.getByRole('button', { name: continueName }));
-    expect(latest()).toMatchObject({ step: 'aiAccess', reminders: null });
-    expect(remindersOn(latest())).toBe(false);
-    expect(ask).not.toHaveBeenCalled();
-  });
-
-  it('keeps the button in the Android app where the page has notifications, and says so if they fail', async () => {
-    inAndroidApp();
-    withNotifications();
-    const user = userEvent.setup();
-    const { latest } = renderWizard({
-      state: wizardAt('reminders'),
-      ask: async () => 'unsupported',
-    });
-
     expect(screen.getByRole('status')).toHaveTextContent(words.skip);
     await user.click(screen.getByRole('button', { name: words.ask }));
 
-    expect(latest().reminders).toBe('unsupported');
+    expect(ask).toHaveBeenCalledOnce();
+    expect(remindersOn(latest())).toBe(true);
+    expect(screen.getByRole('status')).toHaveTextContent(words.granted);
+  });
+
+  it("points to Android's settings when Android refuses, and continues with reminders off (P13)", async () => {
+    inAndroidApp();
+    withoutNotifications();
+    const user = userEvent.setup();
+    const { latest } = renderWizard({ state: wizardAt('reminders'), ask: async () => 'denied' });
+
+    await user.click(screen.getByRole('button', { name: words.ask }));
+
+    expect(latest().reminders).toBe('denied');
+    expect(screen.getByRole('status')).toHaveTextContent(words.deniedAndroid);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/browser/);
+    expect(screen.queryByRole('button', { name: words.ask })).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: continueName }));
+    expect(latest()).toMatchObject({ step: 'aiAccess', reminders: 'denied' });
     expect(remindersOn(latest())).toBe(false);
-    expect(screen.getByRole('status')).toHaveTextContent(words.unsupportedAndroid);
   });
 
   it('keeps the button on the web, also where the browser has no notifications (ACC-M11-9)', async () => {

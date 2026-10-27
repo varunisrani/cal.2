@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- The web app calls the person's AI provider and the food databases. -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -20,6 +21,16 @@
     <!-- Writes, used only after the person turns write-back on: -->
     <uses-permission android:name="android.permission.health.WRITE_NUTRITION" />
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT" />
+
+    <!-- Reminders (P13): Android shows each one at its time, also with the app closed. From
+         Android 13 the app asks before it may post notifications; the alarms behind them are set
+         again after a restart, which needs the boot broadcast. (The notifications plugin declares
+         these too, with WAKE_LOCK.) Inexact alarms are enough, so the exact-alarm permissions are
+         kept out even if a library asks for one. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
 
     <!-- Up to Android 13 Health Connect is a separate app, which the client must be able to see. -->
     <queries>

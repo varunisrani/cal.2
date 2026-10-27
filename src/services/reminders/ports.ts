@@ -7,14 +7,16 @@
 // cannot be read counts as empty, which only means nothing counts as missed until the next check;
 // where localStorage is blocked or full the log lives in memory for the session.
 
-import { live } from '../../data/live';
+import { live, type LiveSource } from '../../data/live';
 import type { DiaryRepo } from '../../data/repos/diaryRepo';
 import type { FastRepo } from '../../data/repos/fastRepo';
 import type { ProfileRepo } from '../../data/repos/profileRepo';
 import type { SettingsRepo } from '../../data/repos/settingsRepo';
 import { isClockTime, type Settings } from '../../data/settingsSchema';
+import { addDays, dayKeyOf } from '../../domain/dates/dayKey';
 import { formulaPlan } from '../../domain/goals/formulas';
 import { effectiveTargets } from '../../domain/goals/targets';
+import type { Clock } from '../../lib/clock';
 import {
   EMPTY_LOG,
   REMINDER_SETTING_KEYS,
@@ -24,7 +26,13 @@ import {
   type ReminderSettings,
   type Timers,
 } from './engine';
-import { DAILY_REMINDERS, type DailyMark, type DailyReminder, type FastMark } from './schedule';
+import {
+  DAILY_REMINDERS,
+  type CustomMark,
+  type DailyMark,
+  type DailyReminder,
+  type FastMark,
+} from './schedule';
 
 /** The localStorage key of the log. */
 export const REMINDER_LOG_KEY = 'platewise-reminders';
@@ -36,6 +44,18 @@ export interface ReminderRepos {
   readonly fastRepo: Pick<FastRepo, 'active'>;
   readonly diaryRepo: Pick<DiaryRepo, 'byDay'>;
   readonly profileRepo: Pick<ProfileRepo, 'get'>;
+}
+
+/** Calls `onChange` whenever one of `sources` has a new value; returns the stop. */
+function watchAll(sources: readonly LiveSource<unknown>[], onChange: () => void): () => void {
+  const stops = sources.map((source) =>
+    source.subscribe(() => {
+      if (source.getSnapshot().status === 'ready') onChange();
+    }),
+  );
+  return () => {
+    for (const stop of stops) stop();
+  };
 }
 
 function reminderSettings(all: Settings): ReminderSettings {
@@ -52,7 +72,7 @@ function reminderSettings(all: Settings): ReminderSettings {
  */
 export function storedReminderSources(
   repos: ReminderRepos,
-): Pick<ReminderEngineDeps, 'settings' | 'activeFast' | 'todayTotals' | 'watch'> {
+): Required<Pick<ReminderEngineDeps, 'settings' | 'activeFast' | 'todayTotals' | 'watch'>> {
   const { settingsRepo, fastRepo, diaryRepo, profileRepo } = repos;
   return {
     async settings() {
@@ -75,15 +95,33 @@ export function storedReminderSources(
         live(() => settingsRepo.snapshot().then(reminderSettings)),
         live(() => fastRepo.active()),
       ];
-      const stops = sources.map((source) =>
-        source.subscribe(() => {
-          if (source.getSnapshot().status === 'ready') onChange();
-        }),
-      );
-      return () => {
-        for (const stop of stops) stop();
-      };
+      return watchAll(sources, onChange);
     },
+  };
+}
+
+/** Days after today whose entries the summary watch covers (the Android app's 7 summaries). */
+const SUMMARY_WATCH_DAYS = 7;
+
+/**
+ * A watch over what the daily summary says (P13): the entries from today to a week ahead, and
+ * the profile behind the energy goal. The Android app hands the summary's numbers to the system
+ * ahead of time, so it hands them over again after each of these changes; the web reads them when
+ * the summary shows and needs none of this.
+ */
+export function storedSummaryWatch(
+  repos: {
+    readonly diaryRepo: Pick<DiaryRepo, 'between'>;
+    readonly profileRepo: Pick<ProfileRepo, 'get'>;
+  },
+  clock: Clock,
+): (onChange: () => void) => () => void {
+  return (onChange) => {
+    const week = live(() => {
+      const today = dayKeyOf(clock.now());
+      return repos.diaryRepo.between(today, addDays(today, SUMMARY_WATCH_DAYS));
+    });
+    return watchAll([week, live(() => repos.profileRepo.get())], onChange);
   };
 }
 
@@ -132,6 +170,11 @@ function readFastMark(raw: unknown): FastMark | null {
   return { fast, goalAt, done };
 }
 
+function readCustomMark(raw: unknown): CustomMark | null {
+  if (!isFields(raw) || typeof raw.key !== 'string' || !isInstant(raw.since)) return null;
+  return { key: raw.key, since: raw.since };
+}
+
 /** A stored log as the engine reads it: unusable marks are dropped one by one. */
 export function readLog(raw: unknown): ReminderLog {
   if (!isFields(raw)) return EMPTY_LOG;
@@ -142,7 +185,14 @@ export function readLog(raw: unknown): ReminderLog {
       if (mark) daily[id] = mark;
     }
   }
-  return { daily, fast: readFastMark(raw.fast) };
+  const custom: Record<string, CustomMark> = {};
+  if (isFields(raw.custom)) {
+    for (const [id, value] of Object.entries(raw.custom)) {
+      const mark = readCustomMark(value);
+      if (mark) custom[id] = mark;
+    }
+  }
+  return { daily, fast: readFastMark(raw.fast), custom };
 }
 
 function parseLog(text: string | null): ReminderLog {

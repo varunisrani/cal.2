@@ -20,33 +20,24 @@ const ANSWER_KEYS: Readonly<Record<ReminderAnswer, TKey>> = {
 };
 
 /**
- * The line for an answer. The Android app's page has no notifications at all, so there the
- * browser's advice (add it to the home screen) cannot help, and the line says so instead.
+ * The line for an answer. In the Android app (P13) a refusal is Android's, so the line points to
+ * Android's settings instead of a browser's.
  */
 function answerKey(answer: ReminderAnswer): TKey {
-  return answer === 'unsupported' && isHealthAvailable()
-    ? 'onboarding.reminders.unsupportedAndroid'
+  return answer === 'denied' && isHealthAvailable()
+    ? 'onboarding.reminders.deniedAndroid'
     : ANSWER_KEYS[answer];
 }
 
-/**
- * Inside the Android app, whose page has no notifications (probed as the route asks), there is
- * nothing to turn on: the step offers no button. A browser keeps it, with or without them.
- */
-function appWithoutNotifications(): boolean {
-  return isHealthAvailable() && typeof Notification === 'undefined';
-}
-
 export interface RemindersProps extends StepProps {
-  /** Asks the browser for notification permission. */
+  /** Asks for notification permission: the browser's, or Android's in the Android app. */
   readonly requestNotifications: AskNotifications;
 }
 
 /**
- * Step 9 (D-16.15): what meal reminders do and a button that asks the browser for permission.
- * Only a grant turns reminders on; a block says how to allow them later, and Continue skips the
- * step. Nothing is scheduled here. Inside the Android app without notifications the button is
- * left out and the line says reminders are not available there yet.
+ * Step 9 (D-16.15): what meal reminders do and a button that asks for permission (the browser's,
+ * or Android's in the Android app, P13). Only a grant turns reminders on; a block says how to
+ * allow them later, and Continue skips the step. Nothing is scheduled here.
  */
 export function Reminders({ state, dispatch, requestNotifications }: RemindersProps) {
   const ask = async (): Promise<void> => {
@@ -61,13 +52,9 @@ export function Reminders({ state, dispatch, requestNotifications }: RemindersPr
   };
 
   const answer = state.reminders;
-  const unavailable = appWithoutNotifications();
   // Asking again only helps when the last prompt was closed without a choice.
-  const canAsk = !unavailable && (answer === null || answer === 'dismissed');
-  let line: TKey;
-  if (answer !== null) line = answerKey(answer);
-  else if (unavailable) line = 'onboarding.reminders.unsupportedAndroid';
-  else line = 'onboarding.reminders.skip';
+  const canAsk = answer === null || answer === 'dismissed';
+  const line: TKey = answer === null ? 'onboarding.reminders.skip' : answerKey(answer);
   return (
     <>
       <StepHeader

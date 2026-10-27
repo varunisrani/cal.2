@@ -12,10 +12,14 @@
 //
 // The fasting goal is one occurrence per fast, at start + goal. It is armed only while that time
 // is still ahead (R05.20); a fast first seen with its goal already behind it never alerts.
+//
+// A reminder the person wrote (P13, D-16.93) comes at its time on its weekdays, or once on its
+// date, and is counted the way a daily one is: from the moment it is first seen with that timing.
 
 import { isClockTime, type Settings } from '../../data/settingsSchema';
 import { addDays, dayKeyOf, splitDayKey, type DayKey } from '../../domain/dates/dayKey';
 import type { Fast } from '../../domain/model';
+import { weekdayOf, type CustomReminder, type CustomTiming } from '../../domain/reminders/custom';
 import { clampFastGoal, formatFast, goalAt, isActive } from '../../domain/trackers/fasting';
 import { toDisplay, type EnergyDisplayUnit } from '../../domain/units/energy';
 import type { MessageKey } from '../../i18n/catalogue';
@@ -38,6 +42,16 @@ export const REMINDER_SETTING = {
   summary: 'remind.summary',
   water: 'remind.water',
 } as const satisfies Record<DailyReminder, keyof Settings>;
+
+/** The notice of a reminder the person wrote: `custom-` and its id. */
+export type CustomNoticeId = `custom-${string}`;
+
+/** What a notice is for: a built-in reminder, or one the person wrote. */
+export type NoticeId = ReminderId | CustomNoticeId;
+
+export function customNoticeId(id: string): CustomNoticeId {
+  return `custom-${id}`;
+}
 
 /** A daily reminder that is on, with its clock time (`HH:MM`). */
 export interface TimedReminder {
@@ -185,6 +199,104 @@ export function planFastGoal(fast: Fast | null, mark: FastMark | null, now: numb
   return { dueAt: at, mark: { ...mark, done: true }, wakeAt: null };
 }
 
+// ---- Reminders the person wrote ----------------------------------------------------------------
+
+/** The longest a weekday set waits: today's time just passed, next week's same day. */
+const WEEK = 7;
+
+/** The first instant after `now` at which `timing` comes; null for a once reminder now past. */
+export function nextOccurrence(timing: CustomTiming, now: number): number | null {
+  if (timing.date !== undefined) {
+    const at = clockOn(timing.date, timing.time);
+    return at > now ? at : null;
+  }
+  const today = dayKeyOf(now);
+  for (let offset = 0; offset <= WEEK; offset += 1) {
+    const day = addDays(today, offset);
+    if (!timing.days.includes(weekdayOf(day))) continue;
+    const at = clockOn(day, timing.time);
+    if (at > now) return at;
+  }
+  return null;
+}
+
+/** The latest instant at or before `now` at which `timing` came; null when it never has. */
+export function lastOccurrence(timing: CustomTiming, now: number): number | null {
+  if (timing.date !== undefined) {
+    const at = clockOn(timing.date, timing.time);
+    return at <= now ? at : null;
+  }
+  const today = dayKeyOf(now);
+  for (let offset = 0; offset <= WEEK; offset += 1) {
+    const day = addDays(today, -offset);
+    if (!timing.days.includes(weekdayOf(day))) continue;
+    const at = clockOn(day, timing.time);
+    if (at <= now) return at;
+  }
+  return null;
+}
+
+/** A timing as one string: a reminder whose timing changed starts counting again. */
+export function timingKey(timing: CustomTiming): string {
+  return timing.date !== undefined
+    ? `${timing.time} ${timing.date}`
+    : `${timing.time} ${timing.days.join(',')}`;
+}
+
+/** How far one written reminder has been dealt with (as `DailyMark`, for its timing). */
+export interface CustomMark {
+  /** The timing it was counted for (`timingKey`). */
+  readonly key: string;
+  readonly since: number;
+}
+
+export type CustomMarks = Readonly<Record<string, CustomMark>>;
+
+/** A written reminder due now. */
+export interface DueCustom {
+  readonly id: string;
+  readonly text: string;
+  readonly dueAt: number;
+}
+
+export interface CustomPlan {
+  readonly due: DueCustom[];
+  /** One mark per reminder that is on, all counted up to now. */
+  readonly marks: CustomMarks;
+  /** When the next one comes; null when none is ahead. */
+  readonly wakeAt: number | null;
+}
+
+/**
+ * One check of the written reminders that are on now, by the daily reminders' rules: due once
+ * when its time passed since it was counted, today's occurrence only, never for one without a
+ * mark for its timing; every other reminder loses its mark.
+ */
+export function planCustom(
+  reminders: readonly CustomReminder[],
+  marks: CustomMarks,
+  now: number,
+): CustomPlan {
+  const today = dayKeyOf(now);
+  const due: DueCustom[] = [];
+  const kept: Record<string, CustomMark> = {};
+  let wakeAt: number | null = null;
+  for (const reminder of reminders) {
+    const key = timingKey(reminder);
+    const mark = marks[reminder.id];
+    if (mark && mark.key === key) {
+      const last = lastOccurrence(reminder, now);
+      if (last !== null && last > mark.since && dayKeyOf(last) === today) {
+        due.push({ id: reminder.id, text: reminder.text, dueAt: last });
+      }
+    }
+    kept[reminder.id] = { key, since: now };
+    const next = nextOccurrence(reminder, now);
+    if (next !== null && (wakeAt === null || next < wakeAt)) wakeAt = next;
+  }
+  return { due, marks: kept, wakeAt };
+}
+
 // ---- What a notice says -------------------------------------------------------------------------
 
 /** A key of the reminders' catalogue partition (src/i18n/en/reminders.ts). */
@@ -256,6 +368,11 @@ const MEAL_AND_WATER = {
 /** The words of a meal or water reminder. */
 export function fixedMessage(id: Exclude<DailyReminder, 'summary'>): ReminderMessage {
   return MEAL_AND_WATER[id];
+}
+
+/** A written reminder's words: a plain title, and the person's own text. */
+export function customMessage(text: string): ReminderMessage {
+  return { title: 'reminders.custom.title', body: 'reminders.custom.body', params: { text } };
 }
 
 /** The fasting goal's words, naming the goal's length as the alert counts it ("16h", "16h 30m"). */

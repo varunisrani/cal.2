@@ -25,6 +25,7 @@ import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
 import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
+import type { CustomRemindersService } from './reminders/customReminders';
 import type { ReminderEngine } from './reminders/engine';
 import type { Notifier } from './reminders/notifier';
 import type { ReprocessService } from './reprocess';
@@ -89,6 +90,8 @@ export interface Services {
   readonly notifier?: Notifier;
   /** Settings › Tracking & reminders: meal times and the reminder switches (P09-03, P09-09). */
   readonly trackingSettings?: TrackingSettingsService;
+  /** The reminders the person writes (P13, D-16.93): Settings, and the Coach's Add. */
+  readonly customReminders?: CustomRemindersService;
   /** The Coach's one session: send, retry, reset and pending (P08-09); optional likewise. */
   readonly coachSession?: CoachSession;
   /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */

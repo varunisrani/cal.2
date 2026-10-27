@@ -969,6 +969,42 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows a lunch reminder missed while the app was closed once on the next open (ACC-J11-2)
   - Test: src/services/reminders/schedule.test.ts > due > lists a reminder once when its time passed since it was dealt with (ACC-J11-2)
   - Test: src/services/reminders/notifier.test.ts > the engine and the notifier together, as main.tsx joins them > shows a lunch missed while the app was closed as a banner once, on the next open (ACC-J11-2)
+- **ACC-J11-3** In the Android app every reminder that is on is scheduled with Android and comes with the app closed: meals and water daily at their clock time, the summary for its next 7 days with each day's numbers, the fasting goal once at start + goal, the person's own on their weekdays or date; a reminder turned off or moved is taken back or moved, and the app hands everything over again when it starts
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan (D-16.92) > repeats meals and water every day at their wall-clock time, opening Home
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan (D-16.92) > hands the summary over as its next 7 days, each with that day's numbers
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan (D-16.92) > hands over the fasting goal once at start + goal, opening the fast
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan (D-16.92) > repeats a written reminder weekly on each of its days
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan (D-16.92) > hands over a once reminder at its moment, and nothing once it has passed
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the schedule (D-16.92) > takes back a reminder switched off, and leaves the others alone
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the schedule (D-16.92) > hands over again only the reminder whose time moved
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the schedule (D-16.92) > moves the fasting goal with the fast, and takes it back when the fast ends
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the schedule (D-16.92) > hands everything over again when the app starts, as a force stop drops the alarms
+- **ACC-J11-4** In the Android app nothing is scheduled while Android refuses notifications, a permission taken away takes everything back, and Erase everything takes every notification back
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the permission (Android 13+) > hands nothing over and takes everything back while Android refuses
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the permission (Android 13+) > starts handing over once the permission is granted
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: taps, errors and stop > takes every notification back on stop (erase everything), at once, and stops listening
+- **ACC-J11-5** Tapping a reminder's notification opens the app on Home showing today
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: taps, errors and stop > opens the fast for the fasting goal and Home for everything else
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: taps, errors and stop > opens what a tap that started the app was about, once the engine listens
+- **ACC-J11-6** The person adds, edits, switches and deletes reminders of their own (1–80 characters, a time, weekdays or one date), at most 20
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > adds a reminder on chosen weekdays, on, and lists it with when it comes
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > adds a reminder once, on a date
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > says what is wrong under the field it is about, and stores nothing
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > edits a reminder in place, keeping its switch
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > deletes a reminder from its sheet, and says so
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > keeps at most 20: Add goes off with a line saying why
+  - Test: src/services/reminders/customReminders.test.ts > addCustomReminder (the Coach will call it, D-16.93) > keeps at most 20, and says the list is full after that
+  - Test: src/services/reminders/customReminders.test.ts > addCustomReminder (the Coach will call it, D-16.93) > refuses a once reminder whose moment has passed, and keeps one later today
+  - Test: src/domain/reminders/custom.test.ts > checkCustomReminder (D-16.93) > needs 1 to 80 characters of text, counting an emoji as one
+  - Test: e2e/reminders.spec.ts > reminders of your own (P13) > adds a reminder of your own, shows it at its time while open, edits and deletes it (D-16.93)
+- **ACC-J11-7** Switching one of your own reminders on (or adding one) while notifications are off asks for the permission; a refusal leaves it off and points to the settings
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > asks for the permission when one is switched on while notifications are off, and turns them on with a grant
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > leaves the switch off when the permission is refused, and the Notifications card points to the settings
+  - Test: src/features/settings/tracking/CustomReminders.test.tsx > CustomRemindersCard (P13, D-16.93) > points to Android's settings in the Android app when Android refuses (D-16.92)
+- **ACC-J11-8** On the web your own reminders show while the app is open, on their days, like the daily ones
+  - Test: src/services/reminders/engine.test.ts > createReminderEngine: the reminders the person wrote (P13, D-16.93) > shows one at its time on its days while the app is open, with its own words
+  - Test: src/services/reminders/notifier.test.ts > createNotifier: reminders > shows a reminder the person wrote with its own words, and as its own banner (P13)
+  - Test: e2e/reminders.spec.ts > reminders of your own (P13) > adds a reminder of your own, shows it at its time while open, edits and deletes it (D-16.93)
 
 ## K · Data management, backup and privacy
 
@@ -1138,9 +1174,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/ActivityCard.test.tsx > ActivityCard (P11-04) > shows the total burn and the distance under steps and active calories, in km beside cm
   - Test: src/features/home/ActivityCard.test.tsx > ActivityCard (P11-04) > writes the distance in miles for a person who reads feet and inches
   - Test: src/features/home/HomePage.test.tsx > HomePage: Health Connect on the Android app (P11-04) > writes the day's distance in km for a person who reads centimetres
-- **ACC-M11-9** In the Android app, Tracking & reminders and the onboarding step say reminders are not available in the app yet, instead of suggesting the home screen
-  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > says reminders are not available in the Android app, where the home screen cannot help (P11)
-  - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > says reminders are not available in the Android app, where the home screen cannot help (P11)
+- **ACC-M11-9** In the Android app, Tracking & reminders and the onboarding step ask Android for the notification permission, and a refusal points to Android's settings (P13 replaces P11's "not available in the app yet")
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > asks Android in the Android app, and points to Android's settings when it says no (P13, D-16.92)
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > turns on in the Android app after a grant, and reads the permission again on return (P13)
+  - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > offers the button in the Android app, where Android asks, and turns reminders on after a grant (P13)
+  - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > points to Android's settings when Android refuses, and continues with reminders off (P13)
   - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > keeps the button on the web, also where the browser has no notifications (ACC-M11-9)
 - **ACC-M11-10** In the Android app with Health Connect connected, the Coach reads steps, active and total calories, distance and workouts per day through `activity_log` (at most 90 days, the last 7 by default); on the web or while not connected the tool is not offered
   - Test: src/services/coach/tools.test.ts > runCoachTool: activity_log (D-16.94) > gives the stored days of the last 7 by default, oldest first, with their figures and workouts
