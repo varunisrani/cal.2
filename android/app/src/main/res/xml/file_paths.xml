@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Files the FileProvider may share: only the app's own external files folder, where the
+     WebView's camera capture (Capacitor's chrome client) saves a new photo for the page. -->
+<paths>
+    <external-files-path name="captured_photos" path="." />
+</paths>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Platewise</string>
+    <string name="title_activity_main">Platewise</string>
+
+    <!-- The note Health Connect shows when someone asks why Platewise wants access. -->
+    <string name="privacy_note_title">Health data in Platewise</string>
+    <string name="privacy_note_reads">Platewise reads your steps, distance, active and total calories burned, workouts and weigh-ins from Health Connect. It shows them beside your food diary and, if you leave the switch on, adds the day\'s active calories to that day\'s calorie target.</string>
+    <string name="privacy_note_writes">Writing is off until you turn it on in Platewise. Then each meal you log goes to Health Connect as a nutrition record (calories, protein, carbs and fat), and each weigh-in as a weight record. Editing or deleting it in Platewise changes or removes the same record.</string>
+    <string name="privacy_note_storage">Platewise has no account and no server of its own, so your health data is never sent to us. It is kept in the app\'s storage on this phone and is never used for advertising.</string>
+    <string name="privacy_note_control">You can see, change or remove Platewise\'s access at any time in Health Connect.</string>
+</resources>

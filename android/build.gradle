@@ -1,0 +1,30 @@
+// Root build for the Platewise Android shell: the Gradle plugins every module uses and where
+// they come from. Versions of the Android libraries live in variables.gradle.
+
+buildscript {
+    // Read by the Capacitor library as well (its Kotlin BOM), so both use one Kotlin.
+    ext.kotlin_version = '2.2.21'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // The Health Connect client 1.1.0 needs plugin 8.9.1 or newer and compileSdk 36; 8.10 is
+        // the first line made for API 36, and it still runs on the wrapper's Gradle 8.11.1.
+        classpath 'com.android.tools.build:gradle:8.10.1'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+apply from: "variables.gradle"
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+tasks.register('clean', Delete) {
+    delete rootProject.layout.buildDirectory
+}

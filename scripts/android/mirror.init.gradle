@@ -1,0 +1,27 @@
+// Gradle init script: sends every Maven Central request to a mirror of Maven Central.
+//
+// Opt-in. scripts/android/build-apk.sh passes it (--init-script) only when PLATEWISE_MAVEN_MIRROR
+// is set: "1" means Google's mirror below, an https:// address means that mirror. Use it where
+// Maven Central itself refuses or throttles requests; Google's Maven repository is unaffected.
+
+def setting = System.getenv('PLATEWISE_MAVEN_MIRROR')?.trim()
+def mirror = (setting?.startsWith('https://')) ? setting : 'https://maven-central.storage-download.googleapis.com/maven2/'
+def centralHosts = ['repo.maven.apache.org', 'repo1.maven.org'] as Set
+
+def redirectCentral = { RepositoryHandler repositories ->
+    repositories.withType(MavenArtifactRepository).configureEach { repository ->
+        if (centralHosts.contains(repository.url?.host)) {
+            repository.url = mirror
+        }
+    }
+}
+
+beforeSettings { settings ->
+    redirectCentral(settings.pluginManagement.repositories)
+    redirectCentral(settings.dependencyResolutionManagement.repositories)
+}
+
+allprojects {
+    redirectCentral(buildscript.repositories)
+    redirectCentral(repositories)
+}

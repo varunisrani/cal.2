@@ -43,7 +43,7 @@ export format and backup format. It imports neither the reference's diary export
 | Reference (native) | Platewise (PWA) |
 |---|---|
 | iOS + Android apps, iPad, Watch, widgets, Siri, share extension | **D-16.3** One installable web app for phone and desktop browsers. No watch, widgets, Siri or share extension in v1 |
-| Apple Health / Health Connect sync and restore-from-health | **D-16.4** None (no browser API). Backups are files (D-16.30) |
+| Apple Health / Health Connect sync and restore-from-health | **D-16.4** None in the web app (no browser API). Backups are files (D-16.30). The Android app syncs with Health Connect (D-16.89, P11) |
 | Exact local notifications | **D-16.5** = D-04.2. Reminders fire while the app is open or in the background; one that was due while it was closed is shown on the next open. Every reminder is off by default and asks for notification permission when first turned on (05-Q2, 06-Q3, 06-Q6) |
 | Apple Intelligence / on-device Gemma fallbacks | **D-16.6** None in v1 |
 | Keychain / encrypted key file | **D-16.7** Keys are stored in a separate IndexedDB table. Settings says plainly that a browser cannot protect them from code on the same site. Keys never leave the device except to their own provider; backups and exports never contain them (03-Q6, 06-Q4). An optional passphrase lock is a later item (§2.8) |
@@ -144,6 +144,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | D-16.86 | Food search in Recent, Often eaten and Saved (P10-04 parity) | iOS ignores accents and case; Android ignores case only | Accents and case are ignored everywhere: "cafe" finds "Café latte" (ACC-D16-1) |
 | D-16.87 | Picking rows for a combine (P10-04 parity) | A long-press only | Also a Select button, shown when a diary row has keyboard focus, which starts the picking as the long-press does (the keyboard twin of the long-press, as D-16.75 gives the swipe one) |
 | D-16.88 | IPv6 loopback over HTTP (P10-09 S-3) | Android allows it | D-16.26's loopback list is `localhost` and `127.0.0.1`. A meta CSP cannot express an IPv6 loopback source (its grammar has no IPv6 literals, so `http://[::1]:*` is ignored as invalid and logged on every load), so plain HTTP to `[::1]` could never connect: `checkServerUrl` refuses it with a hint to type `localhost` or `127.0.0.1`; HTTPS to `[::1]` is accepted like any HTTPS host. Addresses saved before are not re-checked |
+| D-16.89 | Android app and Health Connect (P11, the owner's request 2026-10-27) | Native Android and iOS apps; Health Connect / HealthKit sync | An Android app (`app.platewise.android`, minSdk 26) built from the same web build in a Capacitor 7 shell, with Health Connect: reads steps, active and total calories, distance, exercise sessions and weight; writes nutrition per entry and weigh-ins only when switched on, keyed by our ids as client record ids. Active calories are added to the day's shown target when "Count active calories" is on (default on once connected); the goal itself never changes. The web app and PWA show no health features; no iOS app. Replaces D-16.4 and N-5 on Android |
 
 ### 2.8 Not in 1.0
 
@@ -153,7 +154,7 @@ Found in task notes and by the parity pass. The parity ledger cites these ids.
 | N-2 | Voice input, live voice assistant | Absent | Scope; needs STT providers and audio capture work |
 | N-3 | 18 more languages | English only | Scope; copy lives in one catalogue to make this cheap later |
 | N-4 | Cloud backup | Local file only | Needs OAuth set-up and verification |
-| N-5 | Health-store sync and steps | Absent | No browser API |
+| N-5 | Health-store sync and steps | Absent in the web app | No browser API; built for the Android app in P11 (D-16.89) |
 | N-6 | API-key passphrase lock | Plain IndexedDB with a warning | Scope; a later item |
 | N-7 | Body measurements, amino acids | Absent | Scope |
 | N-8 | Hosted AI, weekly challenge, meal shares | Absent | They need a server; not planned |

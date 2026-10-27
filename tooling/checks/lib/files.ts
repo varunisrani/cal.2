@@ -8,9 +8,24 @@ const PRODUCT_OUTPUT_DIRS = new Set(['dist', 'coverage', 'test-results', 'playwr
  * `node_modules` and `.git` anywhere (a checkout with worktrees keeps their commit messages under
  * `.git/worktrees/`), and the build/test output folders at the product root.
  */
+/**
+ * Folders under `android/` that `cap sync` and Gradle fill with copies of `dist/` and build output
+ * (all git-ignored, P11-01); the Android project's own sources are still checked.
+ */
+const ANDROID_OUTPUT_DIRS = new Set([
+  'android/app/src/main/assets/public',
+  'android/capacitor-cordova-android-plugins',
+  'android/.gradle',
+  'android/.kotlin',
+]);
+
 export function isGeneratedProductDir(rel: string, name: string): boolean {
   return (
-    name === 'node_modules' || name === '.git' || (rel === name && PRODUCT_OUTPUT_DIRS.has(name))
+    name === 'node_modules' ||
+    name === '.git' ||
+    (rel === name && PRODUCT_OUTPUT_DIRS.has(name)) ||
+    ANDROID_OUTPUT_DIRS.has(rel) ||
+    (rel.startsWith('android/') && name === 'build')
   );
 }
 

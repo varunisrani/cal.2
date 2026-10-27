@@ -90,6 +90,24 @@ describe('banned names', () => {
     ]);
   });
 
+  it('skips the Android copies of dist/ and Gradle output, not the Android sources (P11-01)', async () => {
+    const root = product({
+      'android/app/src/main/assets/public/assets/about.js': NAME,
+      'android/app/build/intermediates/assets/public/index.js': NAME,
+      'android/build/reports/problems.html': NAME,
+      'android/capacitor-cordova-android-plugins/build.gradle': NAME,
+      'android/.gradle/8.11.1/file.txt': NAME,
+      'android/.kotlin/sessions/x.txt': NAME,
+      'android/app/src/main/java/app/platewise/android/MainActivity.kt': NAME,
+      'android/app/src/main/assets/capacitor.config.json': NAME,
+    });
+    const res = await runBanned(contextFor(root));
+    expect([...new Set(res.findings.map((f) => f.file))].sort()).toEqual([
+      'android/app/src/main/assets/capacitor.config.json',
+      'android/app/src/main/java/app/platewise/android/MainActivity.kt',
+    ]);
+  });
+
   it('skips binary files but still checks their paths', async () => {
     const root = trees.make({
       [PATTERNS_FILE]: realPatterns,

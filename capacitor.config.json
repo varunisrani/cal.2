@@ -1,0 +1,8 @@
+{
+  "appId": "app.platewise.android",
+  "appName": "Platewise",
+  "webDir": "dist",
+  "android": {
+    "adjustMarginsForEdgeToEdge": "auto"
+  }
+}

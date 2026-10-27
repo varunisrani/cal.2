@@ -44,12 +44,14 @@ package ships are in `src/generated/notices.json` and on the app's Licences and 
 `pnpm check:licenses` checks every licence against `tooling/checks/licenses.allow.json`. Code
 that a package bundles under a licence of its own is listed under its own name.
 
+- `@capacitor/core` 7.6.9: MIT, <https://capacitorjs.com>
 - `@types/emscripten` 1.41.6: MIT, <https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/emscripten>
 - `dexie` 4.4.6: Apache-2.0, <https://dexie.org>
 - `react` 19.3.0: MIT, <https://react.dev/>
 - `react-dom` 19.3.0: MIT, <https://react.dev/>
 - `scheduler` 0.28.0: MIT, <https://react.dev/>
 - `tagged-tag` 1.0.0: MIT
+- `tslib` 2.8.1: 0BSD, <https://www.typescriptlang.org/>
 - `type-fest` 5.10.0: (MIT OR CC0-1.0)
 - `zint` (version not recorded): BSD-3-Clause, <https://sourceforge.net/projects/zint/>; bundled in `zxing-wasm` 3.1.5, which ships no copy of this licence text (it is at <https://sourceforge.net/p/zint/code/ci/master/tree/LICENSE>)
 - `zxing-cpp` commit 2ecec3f: Apache-2.0, <https://github.com/zxing-cpp/zxing-cpp>; bundled in `zxing-wasm` 3.1.5, which ships no copy of this licence text (it is at <https://github.com/zxing-cpp/zxing-cpp/blob/master/LICENSE>)

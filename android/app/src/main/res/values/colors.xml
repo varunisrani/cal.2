@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Platewise's basil and night green, in place of the Capacitor library's default colours. -->
+<resources>
+    <color name="colorPrimary">#1D7647</color>
+    <color name="colorPrimaryDark">#09120D</color>
+    <color name="colorAccent">#1D7647</color>
+</resources>

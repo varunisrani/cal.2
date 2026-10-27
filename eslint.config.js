@@ -51,6 +51,8 @@ export default tseslint.config(
       'node_modules',
       'test-results',
       'playwright-report',
+      // The Android shell: only Gradle output and the web build `cap sync` copies in.
+      'android',
       // Files that must break the rules; scripts/lint-rules.test.ts lints them under virtual paths.
       'scripts/lint-fixtures',
     ],

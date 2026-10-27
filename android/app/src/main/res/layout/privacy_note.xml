@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PrivacyNoteActivity: four short paragraphs under the title bar. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            style="@style/PrivacyNoteParagraph"
+            android:text="@string/privacy_note_reads" />
+
+        <TextView
+            style="@style/PrivacyNoteParagraph"
+            android:text="@string/privacy_note_writes" />
+
+        <TextView
+            style="@style/PrivacyNoteParagraph"
+            android:text="@string/privacy_note_storage" />
+
+        <TextView
+            style="@style/PrivacyNoteParagraph"
+            android:text="@string/privacy_note_control" />
+    </LinearLayout>
+</ScrollView>

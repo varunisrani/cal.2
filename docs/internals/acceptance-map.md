@@ -1100,6 +1100,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: scripts/bundle-budget.test.ts > measureBundle > passes under budget, counting the entry and its static imports once each
   - Test: scripts/bundle-budget.test.ts > measureBundle > fails over budget and names every counted file
 
+## M · Android app (P11)
+
+### M11 · Health-store sync, steps, burn line and the measured-energy anchor (P1)
+
+- **ACC-M11-1** On Android, once Health Connect is connected, Home shows the shown day's steps, active calories and workouts
+  - Review: P11-03, P11-04
+- **ACC-M11-2** With "Count active calories" on, the day's target is the goal plus that day's active calories, and the stored goal does not change
+  - Review: P11-04
+- **ACC-M11-3** With writing on, a logged entry and a weigh-in reach Health Connect under our ids, and an edit or delete in Platewise follows there
+  - Review: P11-03
+- **ACC-M11-4** The web app and PWA show no health features and never load the Health Connect adapter
+  - Review: P11-03, P11-04
+
 ## Known gaps
 
 Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and recorded in `docs/plan/16-what-we-change.md` §2.8 (N-ids) or §2.6 (D-ids). None of these is a P0/P1 row.

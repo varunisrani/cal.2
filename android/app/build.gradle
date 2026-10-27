@@ -1,0 +1,113 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.jetbrains.kotlin.android'
+
+// The version name follows the web app: the "version" field of the repository's package.json.
+def webPackage = new groovy.json.JsonSlurper().parse(rootProject.file('../package.json'))
+
+// The version code comes from PLATEWISE_BUILD_NUMBER (a release pipeline's build counter) and
+// is 1 for local builds. Play accepts whole numbers up to 2100000000.
+def platewiseVersionCode = { ->
+    def raw = System.getenv('PLATEWISE_BUILD_NUMBER')?.trim()
+    if (!raw) return 1
+    if (!(raw ==~ /\d{1,10}/) || raw.toLong() < 1 || raw.toLong() > 2100000000L) {
+        throw new GradleException("PLATEWISE_BUILD_NUMBER must be a whole number from 1 to 2100000000, not '${raw}'")
+    }
+    return raw.toInteger()
+}
+
+// Release signing reads four environment variables and never a file in the repository:
+//   PLATEWISE_KEYSTORE           path to the keystore (.jks or .p12)
+//   PLATEWISE_KEYSTORE_PASSWORD  the keystore's password
+//   PLATEWISE_KEY_ALIAS          the key's alias in it
+//   PLATEWISE_KEY_PASSWORD       the key's password
+// None set: assembleRelease writes an unsigned APK. Some set: the build stops and names the rest.
+def signingVariables = ['PLATEWISE_KEYSTORE', 'PLATEWISE_KEYSTORE_PASSWORD', 'PLATEWISE_KEY_ALIAS', 'PLATEWISE_KEY_PASSWORD']
+def signingValues = signingVariables.collectEntries { [(it): System.getenv(it)?.trim() ?: null] }
+def missingSigning = signingVariables.findAll { signingValues[it] == null }
+def releaseSigned = missingSigning.isEmpty()
+if (!releaseSigned && missingSigning.size() < signingVariables.size()) {
+    throw new GradleException("Release signing needs all four variables; missing: ${missingSigning.join(', ')}")
+}
+
+android {
+    namespace "app.platewise.android"
+    compileSdk rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "app.platewise.android"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        versionCode platewiseVersionCode()
+        versionName webPackage.version
+        aaptOptions {
+            // aapt's default list without its "<dir>_*" entry, so web build folders whose names
+            // start with an underscore are still packaged.
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (releaseSigned) {
+            release {
+                storeFile file(signingValues.PLATEWISE_KEYSTORE)
+                storePassword signingValues.PLATEWISE_KEYSTORE_PASSWORD
+                keyAlias signingValues.PLATEWISE_KEY_ALIAS
+                keyPassword signingValues.PLATEWISE_KEY_PASSWORD
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (releaseSigned) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+    testOptions {
+        unitTests.all {
+            // The contract test reads the plugin contract from the plan in the repository.
+            systemProperty 'platewise.repoRoot', rootProject.projectDir.parentFile.absolutePath
+            systemProperty 'platewise.manifest', file('src/main/AndroidManifest.xml').absolutePath
+        }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        // capacitor.build.gradle compiles the Java sources for Java 21; Kotlin must match.
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
+    }
+}
+
+// An APK without the web build would open on an empty WebView, so packaging stops instead.
+// `cap sync` (run by pnpm android:sync and pnpm android:apk) copies the build in.
+def webBuildIndex = file('src/main/assets/public/index.html')
+tasks.configureEach { task ->
+    if (task.name ==~ /merge(Debug|Release)Assets/) {
+        task.doFirst {
+            if (!webBuildIndex.exists()) {
+                throw new GradleException('The web build is not in android/ yet: run `pnpm android:sync` (or `pnpm android:apk`) first.')
+            }
+        }
+    }
+}
+
+repositories {
+    flatDir {
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation "androidx.health.connect:connect-client:$healthConnectClientVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutinesVersion"
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+    testImplementation "junit:junit:$junitVersion"
+}
+
+apply from: 'capacitor.build.gradle'

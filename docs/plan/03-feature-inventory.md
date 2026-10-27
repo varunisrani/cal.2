@@ -252,7 +252,7 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | M8 | More UI languages, RTL and an in-app language picker | P3 (N-3; L1) | M D | 06 §3.22; 07 §3.7 |
 | M9 | Body measurements | P3 (N-7) | M D | 05 §3.8 |
 | M10 | Amino-acid estimates | P3 (N-7) | M D | 02 §3.1 |
-| M11 | Health-store sync, steps, burn line and the measured-energy anchor | P3 (N-5) | M | 01 §3.10; 05 §3.2.2; 07 §3.7 |
+| M11 | Health-store sync, steps, burn line and the measured-energy anchor | P1 on Android (P11, D-16.89); the measured-energy anchor stays P3 | M | 01 §3.10; 05 §3.2.2; 07 §3.7 |
 | M12 | Short share links, weekly challenge, hosted AI plans, community bot | P3 (N-8) | — | 07 §3.4–3.7 |
 | M13 | Widgets, watch app, Siri and share extension | P3 (D-16.3) | — | 07 §3.7 |
 | M14 | On-device speech model | P3 (optional with L4) | M D | 07 §3.7 |

@@ -7,3 +7,17 @@ playwright-report/
 *.log
 .env
 .env.*
+
+# Android shell: Gradle output, the local SDK path, signing keys, and what `cap sync` copies in
+android/.gradle/
+android/.kotlin/
+android/**/build/
+android/local.properties
+android/**/*.jks
+android/**/*.keystore
+android/**/*.p12
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+android/app/src/main/res/xml/config.xml
+android/capacitor-cordova-android-plugins/
