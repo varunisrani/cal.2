@@ -768,16 +768,16 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I3 · Goal-aware prompt chips (P1)
 
 - **ACC-I3-1** Chips change when the goal changes
-  - Review: P08-12
+  - Test: src/features/coach/ChipRow.test.tsx > useCoachChips: chips follow the goal live > switches from the lose chips to the gain chips when the goal changes (ACC-I3-1)
 - **ACC-I3-2** A chip sends together with the attached photo
-  - Review: P08-12
+  - Test: src/features/coach/ChipRow.test.tsx > ChipRow: sending (D-16.33, R04.14) > sends the attached photo with the chip and clears it (ACC-I3-2, R04.14)
 
 ### I4 · Replies rendered as simple Markdown with safe links (P1)
 
 - **ACC-I4-1** A list in a reply renders as a list and links open in a new tab
-  - Review: P08-13
+  - Test: src/features/coach/markdown.test.tsx > MarkdownReply: blocks > draws a list as a list and opens an https link in a new tab (ACC-I4-1)
 - **ACC-I4-2** Copy puts the reply text on the clipboard
-  - Review: P08-13
+  - Test: src/features/coach/CopyButton.test.tsx > CopyButton > puts the raw reply text on the clipboard and confirms it briefly (ACC-I4-2)
 
 ### I5 · Reset with confirmation (P1)
 

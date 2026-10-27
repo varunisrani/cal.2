@@ -1,0 +1,87 @@
+/*
+ * A Coach reply drawn from its Markdown (P08-13) and the copy button under it. Every value comes
+ * from tokens.css. The text stays selectable, so a long press or a drag can copy part of it.
+ */
+
+.reply {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  overflow-wrap: anywhere;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.heading1,
+.heading2,
+.heading3,
+.paragraph,
+.list {
+  margin: 0;
+}
+
+.heading1,
+.heading2,
+.heading3 {
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.heading1 {
+  font-size: var(--type-title);
+}
+
+.heading2 {
+  font-size: var(--type-lead);
+}
+
+.heading3 {
+  font-size: var(--type-body);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-1);
+  padding-inline-start: var(--space-5);
+}
+
+.list li::marker {
+  color: var(--text-muted);
+}
+
+.code {
+  margin: 0;
+  padding: var(--space-3);
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  font-family: var(--font-mono);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+  white-space: pre;
+  overflow-wrap: normal;
+}
+
+.inlineCode {
+  padding-inline: var(--space-1);
+  border-radius: var(--space-1);
+  background: var(--accent-soft);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+}
+
+.link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--space-1);
+}

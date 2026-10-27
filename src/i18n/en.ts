@@ -5,6 +5,7 @@ import { aiSetup } from './en/aiSetup';
 import { appearance } from './en/appearance';
 import { capture } from './en/capture';
 import { charts } from './en/charts';
+import { coach } from './en/coach';
 import { common } from './en/common';
 import { display } from './en/display';
 import { fitCheck } from './en/fitCheck';
@@ -51,6 +52,7 @@ export const enPartitions = {
   fitCheck,
   progress,
   trackers,
+  coach,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

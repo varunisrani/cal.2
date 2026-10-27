@@ -1,0 +1,101 @@
+/*
+ * The Coach's suggested questions (P08-12): a row of capsules that scrolls sideways under a
+ * conversation, or the empty chat's two-column cards. Every value comes from tokens.css.
+ */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  padding-block: var(--space-1);
+  padding-inline: var(--space-4);
+}
+
+.row::-webkit-scrollbar {
+  display: none;
+}
+
+.disc {
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip,
+.card {
+  border: 1px solid var(--line);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--motion-quick) var(--ease-move);
+}
+
+.chip {
+  flex: none;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: var(--space-4);
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  line-height: var(--leading-tight);
+  white-space: nowrap;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-block-size: calc(var(--space-8) * 2 + var(--space-1));
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  line-height: var(--leading-snug);
+  text-align: start;
+}
+
+.cardIcon {
+  flex: none;
+  margin-block-start: var(--space-1);
+  color: var(--accent);
+}
+
+.cardText {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.chip:active:not(:disabled),
+.card:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.chip:focus-visible,
+.card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.chip:disabled,
+.card:disabled {
+  cursor: default;
+  opacity: 0.5;
+}

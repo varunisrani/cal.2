@@ -325,9 +325,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.1** A standby re-run discards everything the failed attempt produced
   - Review: owned by P08-08
 - **R04.2** Earlier photos are not re-sent and the prompt says the model cannot see them (D-16.48)
+  - Test: src/services/coach/history.test.ts > coachHistory: text only (R04.2, D-16.48) > never sends a thumbnail: every turn holds only its side and its words
   - Review: owned by P08-01
 - **R04.3** History sent to a provider starts with a user turn and merges same-role neighbours (D-16.34)
-  - Review: owned by P08-04
+  - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > drops a reply that opens the window, so the history starts with the person
+  - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > merges two failed questions in a row into one turn, a blank line between them
+  - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > turns are always alternating, opening with the person and closing on a reply
 - **R04.4** A failed turn keeps the question and offers Retry without duplicating it (D-16.31)
   - Review: owned by P08-09
 - **R04.5** Pending is set before the first await, so double taps start one turn
@@ -349,7 +352,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.13** Gemini: echo returned parts verbatim, echo the call id, wrap results as objects, results always valid JSON
   - Review: owned by P08-07
 - **R04.14** A chip sends with the attached photo and clears it (D-16.33)
-  - Review: owned by P08-12
+  - Test: src/features/coach/ChipRow.test.tsx > ChipRow: sending (D-16.33, R04.14) > sends the attached photo with the chip and clears it (ACC-I3-2, R04.14)
 - **R04.15** Cut-off replies are detected on every format and the cap is sent to Gemini too
   - Review: owned by P08-06 (Anthropic) and P08-07 (Gemini)
 - **R04.16** Tools and context never invent empty days: no 0 kcal rows, no inferred fasts
