@@ -142,6 +142,11 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
+**20:40 IST:** S6 (K9 damaged-data notice + security fixes S-3, S-5..S-9, S-12, S-15; D-16.88) landed as 77c587f
+(full loop: unit 5143 passed + 2 expected-fail, check 6/6, bundle 235.86 kB, e2e 37 + 1 skipped by design). Builders
+running: P10-07/08/11 (`/root/wt/wt-p10s3-r`, base 68a1456) and P10-14 release prep (`/root/wt/wt-p10s7`, base 77c587f,
+prompt `docs/handoff/wave16/w16-p10s7.txt`; it also adds the zxing-cpp and zint notices). The release commit is the one
+that lands P10-14 after P10-07/08/11, with `check --strict` green; no tag unless the user asks.
 **20:21 IST: window reset; the user said "Continue".** Both saved slices relaunched at 68a1456 from `.agents/wip/`:
 P10-07/08/11 in `/root/wt/wt-p10s3-r` and S6 (K9 banner + security fixes) in `/root/wt/wt-p10s6-r`. Earlier: **STOPPED at 19:52 IST (98 % read at 19:43; reset 20:20 IST).** Both builders stopped; their work is saved as plain
 diffs in `.agents/wip/`: `p10s3.patch` (P10-07/08/11 on 71e9727; nearly done: the fast-row restructure was finished
