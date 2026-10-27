@@ -105,7 +105,7 @@ const ENTRY_WRITE_TABLES = ['entries', ...GUARD_TABLES] as const;
  * The row to store: the codec's own reading of the entry (so it reads back the same) with the day
  * of its instant and its barcode key. Throws a TypeError for an entry the codec cannot read.
  */
-function toRow(entry: DiaryEntry): EntryRow {
+export function toRow(entry: DiaryEntry): EntryRow {
   const clean = decodeEntry({ ...entry, dayKey: dayKeyOf(entry.loggedAt) });
   if (!clean) throw new TypeError(`Refusing to store entry "${entry.id}": it cannot be read back`);
   const key = clean.product ? barcodeKey(clean.product.barcode) : undefined;

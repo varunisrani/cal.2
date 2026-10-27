@@ -26,6 +26,7 @@ import { scan } from './en/scan';
 import { settings } from './en/settings';
 import { shell } from './en/shell';
 import { trackers } from './en/trackers';
+import { transfer } from './en/transfer';
 
 /**
  * The English catalogue's partitions, one per area or slice (D-16.55). A slice owns its
@@ -59,6 +60,7 @@ export const enPartitions = {
   coach,
   fasting,
   reminders,
+  transfer,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

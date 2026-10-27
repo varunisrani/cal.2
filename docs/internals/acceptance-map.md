@@ -921,14 +921,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-K1-1** Exporting this week as CSV gives a file with food and water rows
   - Review: P09-19
 - **ACC-K1-2** A kJ user's export still holds kcal and says so
-  - Review: P09-10
+  - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > keeps kcal in a kJ reader's file (R06.14, ACC-K1-2)
+  - Test: src/services/transfer/exportFormats.test.ts > toCsv > is the same for a kJ reader: the header names kcal and values stay kcal (R06.14, ACC-K1-2)
+  - Test: src/services/transfer/exportFormats.test.ts > toMarkdown > tells a kJ reader the energy is in kcal and keeps the kcal numbers (R06.14, ACC-K1-2)
+  - Test: src/features/settings/data/ExportSheet.test.tsx > ExportSheet > keeps kcal in a kJ reader's CSV and names the column in kcal (R06.14, ACC-K1-2)
 
 ### K2 · Import our own diary JSON (P1)
 
 - **ACC-K2-1** A file with one invalid value is refused and nothing changes
-  - Review: P09-11
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > changes nothing when one value of the file is invalid (ACC-K2-1)
+  - Test: src/features/settings/data/ImportSheet.test.tsx > ImportSheet > refuses a file with one invalid value, says why, and changes nothing (ACC-K2-1)
 - **ACC-K2-2** Replacing a range keeps the photos of matched entries
-  - Review: P09-11
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > keeps a matched entry's id and photos and takes the file's values (ACC-K2-2, R06.16)
+  - Test: src/features/settings/data/ImportSheet.test.tsx > ImportSheet > replaces the dates, keeps a matched entry's photos, then closes and says so (ACC-K2-2)
 
 ### K3 · Back up to a file (P1)
 

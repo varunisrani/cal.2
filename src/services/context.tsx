@@ -23,6 +23,7 @@ import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
 import type { ReminderEngine } from './reminders/engine';
 import type { ReprocessService } from './reprocess';
+import type { TransferService } from './transfer/transfer';
 import type { WaterService } from './water';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
@@ -80,6 +81,8 @@ export interface Services {
   readonly coachSession?: CoachSession;
   /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */
   readonly combine?: CombineService;
+  /** The diary file: export and import (P09-10, P09-11); optional for the same reason. */
+  readonly transfer?: TransferService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

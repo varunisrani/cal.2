@@ -21,6 +21,7 @@ import { createProfileRepo } from './data/repos/profileRepo';
 import { createSavedMealsRepo } from './data/repos/savedMealsRepo';
 import { createSecretsRepo } from './data/repos/secretsRepo';
 import { createSettingsRepo } from './data/repos/settingsRepo';
+import { createTransferRepo } from './data/repos/transferRepo';
 import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
@@ -59,6 +60,7 @@ import {
 } from './services/reminders/ports';
 import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
+import { createTransferService } from './services/transfer/transfer';
 import { createWaterService } from './services/water';
 
 // The composition root: the one place that opens the database, creates each repository once and
@@ -261,6 +263,8 @@ async function start(): Promise<void> {
         more: (count) => t('home.combine.more', { count }),
       },
     }),
+    // The diary file (P09-10, P09-11): its modules load on first use.
+    transfer: createTransferService({ transferRepo: createTransferRepo(db), photoRepo }),
     clock: systemClock,
   };
   const data: DataSources = {

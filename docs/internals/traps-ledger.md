@@ -574,13 +574,23 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.13** The notifications switch turns on only after a grant and shows the real permission on every focus
   - Review: owned by P09-09
 - **R06.14** Exports always hold kcal; kJ users get a note and a kcal header
-  - Review: owned by P09-10
+  - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > keeps kcal in a kJ reader's file (R06.14, ACC-K1-2)
+  - Test: src/services/transfer/exportFormats.test.ts > toCsv > is the same for a kJ reader: the header names kcal and values stay kcal (R06.14, ACC-K1-2)
+  - Test: src/services/transfer/exportFormats.test.ts > toMarkdown > tells a kJ reader the energy is in kcal and keeps the kcal numbers (R06.14, ACC-K1-2)
+  - Test: src/features/settings/data/ExportSheet.test.tsx > ExportSheet > keeps kcal in a kJ reader's CSV and names the column in kcal (R06.14, ACC-K1-2)
 - **R06.15** One-time nudges are marked done only after they were shown and dismissed
   - Review: owned by P09-15
 - **R06.16** Import replace-range matches by id then by day, minute, meal and name, keeps photos, mints ids on collisions, refuses the whole file on any bad value or DST-gap time
-  - Review: owned by P09-11
+  - Test: src/services/transfer/importDiary.test.ts > readDiaryFile > refuses 02:30 on the spring-forward day, food or water, and takes 03:30 (R06.16)
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > keeps a matched entry's id and photos and takes the file's values (ACC-K2-2, R06.16)
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > gives a food a new id when an entry on another date already has it (R06.16)
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > adds every food and water log as new with Add as new, doubling the day (R06.16)
+  - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > leaves water alone for a food-only file (R06.16)
+  - Test: src/services/transfer/importDiary.test.ts > planImport > matches every food by id before any by key, each stored entry once
 - **R06.17** Export "This week" follows the week-start setting
-  - Review: owned by P09-10
+  - Test: src/services/transfer/exportDiary.test.ts > resolveRange > starts This week on the app week start: Sunday for a Sunday start (R06.17)
+  - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > exports This week from a Sunday start with a water-only day (R06.17)
+  - Test: src/features/settings/data/ExportSheet.test.tsx > ExportSheet > shares this week from a Sunday week start, with a water-only day, and closes (R06.17)
 - **R06.18** Photo cleanup stops when any referencing record is unreadable and never runs during a restore
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > deletes nothing while a saved-meal row cannot be read (R06.18)
   - Test: src/data/repos/photoRepo.test.ts > prune > deletes nothing while a restore runs (R06.18)

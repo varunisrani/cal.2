@@ -1,0 +1,133 @@
+/*
+ * Settings › Your data: the export and import sheets (P09-10, P09-11). Every value comes from
+ * tokens.css; logical properties throughout.
+ */
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.text {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* ---- Choice chips --------------------------------------------------------------------------- */
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding: 0;
+  margin-block-end: var(--space-2);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  color: var(--text);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chipOn {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* The native radio stays for keyboards and assistive tech; the chip draws it. */
+.radio {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.chip:has(.radio:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.message {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* ---- Import preview ------------------------------------------------------------------------- */
+
+.summary {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}
+
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.summaryRow dt {
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.summaryRow dd {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.fileInput {
+  display: none;
+}
