@@ -73,6 +73,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     page: onDemand(() => import('./tracking/TrackingPage').then((module) => module.TrackingPage)),
   },
+  // The AI providers and standbys, the request limits, notes and the food-database key (P09-07).
+  {
+    id: 'ai',
+    titleKey: 'aiSetup.page.title',
+    icon: 'chat',
+    group: 'prefs',
+    page: onDemand(() => import('./ai/AiPage').then((module) => module.AiPage)),
+  },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
     id: 'methods',

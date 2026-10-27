@@ -1,0 +1,135 @@
+/*
+ * Settings › AI providers (P09-07): the storage paragraph, the role cards, the request limits, the
+ * notes and the food-database card. Every value comes from tokens.css; logical properties
+ * throughout. The provider form inside each card keeps its own styles (aiSetup.module.css).
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+  min-inline-size: 0;
+}
+
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--raised);
+  color: var(--text);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.warningIcon {
+  flex: none;
+  margin-block-start: 1px;
+  color: var(--accent);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.card > h2 {
+  margin-block-end: 0;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.note,
+.alert,
+.saved {
+  margin: 0;
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.note {
+  color: var(--text-muted);
+}
+
+.alert {
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}
+
+.saved {
+  color: var(--text);
+  font-family: var(--font-mono);
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.start {
+  justify-self: start;
+}
+
+.link {
+  justify-self: start;
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+/* ---- Notes for the AI ---------------------------------------------------------------------- */
+
+.textField {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.textLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.textArea {
+  box-sizing: border-box;
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) * 3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  resize: vertical;
+}
+
+.textArea:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}

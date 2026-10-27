@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
@@ -13,10 +13,12 @@ function Harness({
   provider,
   start,
   onModel,
+  hiddenModel,
 }: {
   provider: ProviderId;
   start: string;
   onModel?: (model: string) => void;
+  hiddenModel?: string;
 }) {
   const [model, setModel] = useState(start);
   return (
@@ -29,6 +31,7 @@ function Harness({
         onModel?.(next);
       }}
       missing={model.trim() === ''}
+      hiddenModel={hiddenModel}
       data-ui="test.model"
     />
   );
@@ -94,5 +97,29 @@ describe('ModelPicker', () => {
 
     await user.type(field, 'llama-3.3-70b');
     expect(screen.queryByText(words.missing)).toBeNull();
+  });
+
+  it('leaves out a hidden preset unless it is the current model (P09-07)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Harness provider="gemini" start="gemini-4-argon" hiddenModel="gemini-3.5-flash-lite" />,
+    );
+
+    const select = screen.getByRole('combobox', { name: words.label });
+    expect(optionTexts(select)).toEqual(['gemini-3.8-flash', 'gemini-4-argon']);
+
+    // Still listed while it is chosen, so the picker never shows a model it does not hold.
+    cleanup();
+    render(
+      <Harness
+        provider="gemini"
+        start="gemini-3.5-flash-lite"
+        hiddenModel="gemini-3.5-flash-lite"
+      />,
+    );
+    const again = screen.getByRole('combobox', { name: words.label });
+    expect(again).toHaveValue('gemini-3.5-flash-lite');
+    await user.selectOptions(again, 'gemini-3.8-flash');
+    expect(optionTexts(again)).toEqual(['gemini-3.8-flash', 'gemini-4-argon']);
   });
 });

@@ -200,6 +200,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/barcode/fdc.test.ts > lookupFdc: nothing is sent without a key and a GTIN (R02.18) > sends nothing without a stored key
   - Test: src/services/barcode/fdc.test.ts > lookupFdc: the request (R02.18) > puts the key in the X-Api-Key header and nowhere else
   - Test: src/services/barcode/fdc.test.ts > englishTitleCase (R02.18) > gives "GREEK YOGURT" as "Greek Yogurt" and keeps the dotted i under a Turkish locale
+  - Test: src/features/settings/ai/FoodDbSection.test.tsx > FoodDbSection > refuses a key with a character a header cannot carry, and stores nothing (R02.18)
 - **R02.19** One photo storage rule (≤ 2 048 px at 0.8 only when smaller); restored photos are never re-encoded; thumbnails are upright
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > stores a 4 000 px photo as a 2 048 px JPEG at 0.80 when that copy is smaller
   - Test: src/services/photos.test.ts > store: one rule for new photos (R02.19) > keeps the original bytes of a large photo whose 2 048 px copy is not smaller
@@ -252,6 +253,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.5** A standby equals its role only when provider, model and effective address all match; standby addresses have their own slot
   - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > is invalid when it is the same provider, model and address as the primary
   - Test: src/ai/settings.test.ts > standbyFor: when a standby may run (R03.5) > lets two Ollama servers run the same model as primary and standby (ACC-E3-2)
+  - Test: src/services/aiSetup.test.ts > saveRole > keeps a standby address in the standby slot and the main address as it was (R03.5)
 - **R03.6** One retry ladder and one overall deadline per action; Cancel aborts and shows nothing (D-16.23)
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > reports Cancel during the body read as cancelled, not offline
   - Test: src/ai/transport.test.ts > send: Cancel and the time limits (R03.6) > stops one attempt at its 75 s cap, not before, as timeout
@@ -261,7 +263,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.8** The Gemini thinking level follows the model-id table exactly, including the -latest aliases; older models get none
   - Test: src/ai/adapters/gemini.test.ts > geminiThinkingLevel (R03.8) > gives %s the level %s
 - **R03.9** The answer token limit is shown for every provider and always sent (D-16.25)
-  - Review: owned by P09-07
+  - Test: src/features/settings/ai/AiPage.test.tsx > AiPage > shows the answer length limit with Gemini as the main provider, and stores a new one (ACC-E12-1, R03.9)
 - **R03.10** OpenAI needs max_completion_tokens; Custom only for gpt-5/6 and o1/o3/o4 ids; everything else max_tokens
   - Test: src/ai/adapters/openaiCompat.test.ts > tokenLimitField (R03.10) > gives a Custom server max_completion_tokens for %j
   - Test: src/ai/adapters/openaiCompat.test.ts > tokenLimitField (R03.10) > gives OpenAI max_completion_tokens for every model (ACC-E2-2)

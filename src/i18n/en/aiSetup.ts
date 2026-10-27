@@ -2,8 +2,9 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of AI setup (src/features/ai-setup): the provider form shared by the onboarding step and
- * the AI settings page (provider, model, server address, key), and the onboarding AI access step
- * (P05-04). Provider names are not here: they are vendor names, kept in the provider catalogue.
+ * the AI settings page (provider, model, server address, key), the onboarding AI access step
+ * (P05-04), and Settings › AI providers (`page`, P09-07). Provider names are not here: they are
+ * vendor names, kept in the provider catalogue.
  */
 export const aiSetup = {
   aiSetup: {
@@ -77,6 +78,87 @@ export const aiSetup = {
       laterNote:
         'Without AI, your plan comes from standard formulas. You can add a key in Settings at any time.',
       saveFailed: "Your AI choice didn't save. Please try again.",
+    },
+    page: {
+      title: 'AI providers',
+      storage:
+        "Your keys are kept in this browser on this device. A browser can't fully shield them from code running on this site, so use keys with a spending limit where your provider offers one, and forget a key here once you no longer need it.",
+      roles: {
+        primary: {
+          heading: 'Main provider',
+          about:
+            'Reads your meal photos, and answers everything else too unless a text model is switched on below.',
+        },
+        textRole: {
+          heading: 'Text requests',
+          switch: 'Different model for text',
+          about:
+            'Typed meals, plans and the Coach go to this model. Photos still go to the main provider.',
+        },
+        imageStandby: {
+          heading: 'Standby for photos',
+          switch: 'Back up photo requests',
+          about: 'Tried once when a request with photos fails.',
+        },
+        textStandby: {
+          heading: 'Standby for text',
+          switch: 'Back up text requests',
+          about: 'Tried once when a request without photos fails, whichever model served it.',
+        },
+      },
+      pending: 'Changes here are saved once nothing above is missing.',
+      same: 'This is the same model on the same server as the one it backs up, so it would never be tried. Pick another model or server.',
+      saveFailed: "That change didn't save. Please try again.",
+      forget: 'Forget the {provider} key',
+      limits: {
+        heading: 'Requests',
+        timeout: {
+          label: 'Give up after',
+          unit: 'seconds',
+          hint: 'From 30 to 600 seconds, for the whole request: retries and the standby included.',
+        },
+        maxTokens: {
+          label: 'Answer length limit',
+          unit: 'tokens',
+          hint: 'The longest answer a model may send, with every provider. Raise it if long meals come back cut off.',
+        },
+        effort: {
+          label: 'OpenRouter reasoning effort',
+          help: 'Used for every OpenRouter request. Models support different levels, and more effort takes longer and costs more. An answer cut off at the length limit is asked for again at low effort.',
+          options: {
+            auto: "Model's default",
+            none: 'None',
+            minimal: 'Minimal',
+            low: 'Low',
+            medium: 'Medium',
+            high: 'High',
+            xhigh: 'Very high',
+            max: 'Maximum',
+          },
+        },
+      },
+      notes: {
+        heading: 'Notes for the AI',
+        label: 'Your notes',
+        hint: 'Sent with every request: where you live, how you eat, anything you would otherwise repeat. Leave it empty to send none.',
+        save: 'Save notes',
+        saved: 'Notes saved.',
+        off: 'No notes are sent.',
+      },
+      foodDb: {
+        heading: 'Food databases',
+        about:
+          "Barcodes are looked up in Open Food Facts first. With a free FoodData Central key from the USDA, products Open Food Facts doesn't know are looked up there too.",
+        label: 'FoodData Central key',
+        save: 'Save key',
+        saved: 'Saved key: {mask}',
+        forget: 'Forget key',
+        signUp: 'Get a free key from the USDA',
+        device:
+          'Your key stays in this browser on this device and is sent only to FoodData Central.',
+        unsafe:
+          "That key holds a character a key can't have, such as a space. Copy it again from the USDA's email.",
+      },
     },
   },
 } as const satisfies MessageTree;

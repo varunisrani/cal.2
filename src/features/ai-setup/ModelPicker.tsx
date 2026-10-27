@@ -17,6 +17,11 @@ export interface ModelPickerProps {
   readonly onChange: (model: string) => void;
   /** No model id yet: shows what to do. */
   readonly missing: boolean;
+  /**
+   * A preset left out of the list unless it is the current model: a standby's list hides the
+   * model of the role it backs when both reach the same server (P09-07).
+   */
+  readonly hiddenModel?: string;
   readonly 'data-ui': string;
 }
 
@@ -32,9 +37,12 @@ export function ModelPicker({
   value,
   onChange,
   missing,
+  hiddenModel,
   'data-ui': ui,
 }: ModelPickerProps) {
-  const presets = presetsFor(provider, use);
+  const presets = presetsFor(provider, use).filter(
+    (model) => model !== hiddenModel || model === value,
+  );
   const freeForm = PROVIDERS[provider].freeFormModel;
   // Local, so typing an id that happens to match a preset does not close the field mid-word.
   const [typing, setTyping] = useState(

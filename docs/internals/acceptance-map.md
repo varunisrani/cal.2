@@ -522,7 +522,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### E12 · Answer length limit for every provider (default 1 024 tokens) and … (P1)
 
 - **ACC-E12-1** The token limit setting is visible with Gemini selected
-  - Review: P09-07
+  - Test: src/features/settings/ai/AiPage.test.tsx > AiPage > shows the answer length limit with Gemini as the main provider, and stores a new one (ACC-E12-1, R03.9)
 
 ### E13 · Server URLs (P1)
 
@@ -893,9 +893,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J8 · AI providers page (P1)
 
 - **ACC-J8-1** Setting an image standby makes photo analyses fall back to it
-  - Review: P09-07
+  - Test: src/features/settings/ai/AiPage.test.tsx > AiPage > makes photo requests fall back to the photo standby set here (ACC-J8-1)
 - **ACC-J8-2** The page states that keys stay in this browser
-  - Review: P09-07
+  - Test: src/features/settings/ai/AiPage.test.tsx > AiPage > says plainly that keys stay in this browser, which cannot fully shield them (ACC-J8-2, D-16.7)
 
 ### J9 · FoodData Central key setting (P1)
 

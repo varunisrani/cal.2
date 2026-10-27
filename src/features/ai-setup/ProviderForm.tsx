@@ -36,6 +36,8 @@ export interface ProviderFormProps {
    * that read photos; a text role lists all sixteen.
    */
   readonly use?: ModelUse;
+  /** A preset the model list leaves out unless chosen (a standby's backed model, P09-07). */
+  readonly hiddenModel?: string;
   /** The form's hook; its fields get `<data-ui>.provider`, `.model`, `.server` and `.key`. */
   readonly 'data-ui': string;
 }
@@ -52,6 +54,7 @@ export function ProviderForm({
   savedKeyMask,
   savedServers,
   use = 'image',
+  hiddenModel,
   'data-ui': ui,
 }: ProviderFormProps) {
   const entry = PROVIDERS[value.provider];
@@ -95,6 +98,7 @@ export function ProviderForm({
         value={value.model}
         onChange={(model) => onChange({ ...value, model })}
         missing={check.missing.includes('model')}
+        hiddenModel={hiddenModel}
         data-ui={`${ui}.model`}
       />
 

@@ -52,10 +52,12 @@ describe('TrackingPage', () => {
     const h = await openWater({ hash: '#/settings' });
     h.mount(<SettingsScreen nested={[]} />);
     const prefs = screen.getByRole('region', { name: settings.settings.group.prefs });
+    // Later pages join the group after Tracking; only the first three are this page's concern.
     expect(
       within(prefs)
         .getAllByRole('button')
-        .map((row) => row.textContent),
+        .map((row) => row.textContent)
+        .slice(0, 3),
     ).toEqual([profile.profile.title, goals.goals.page.title, words.page.title]);
   });
 
