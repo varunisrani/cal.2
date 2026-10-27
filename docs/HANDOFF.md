@@ -162,6 +162,11 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P12 (the user asked 01:30 IST, 2026-10-28):** an orange redesign (light: white and orange; dark: charcoal and
+orange; orange the default accent, D-16.90) and the official 1.1.0 release with an APK. Plan
+`docs/plan/phases/P12-orange-redesign-and-1.1.md`; the design builder (P12-01..04) runs in `/root/wt/wt-p12s1`
+(prompt `docs/handoff/wave18/w18-p12s1.txt`); the lead does P12-05 (version 1.1.0, CHANGELOG, checklist, APK with
+versionCode 2). No tag unless the user asks.
 **P11 polish (01:22 IST):** 27e5604 Progress total burn and distance, no "Turn on reminders" button inside the app, a
 timer for held-back write-back (full loop: unit 5292 passed + 2 expected-fail, strict 6/6, bundle 237.72 kB, e2e 47 + 1
 skipped by design). The APK built from 27e5604 was sent to the user. Nothing is left that does not need the user:
