@@ -36,7 +36,7 @@ export const FIRST_READABLE_DAY: DayKey = '1900-01-01';
 /** What the page shows: a range, and how many whole windows back from the current one. */
 export interface PeriodView {
   readonly range: ProgressRange;
-  /** 0 is the window ending today; 1 the one just before it, and so on. */
+  /** Steps back from the window that ends today (step 0), one whole window per step. */
   readonly offset: number;
 }
 

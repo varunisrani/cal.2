@@ -89,6 +89,15 @@ export function csvField(value: string): string {
   return /[",\r\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
 }
 
+/**
+ * Free text a spreadsheet would take for a formula (it starts with `=`, `+`, `-`, `@`, a tab or a
+ * carriage return) gets a leading apostrophe, so opening the file never runs a food name from a
+ * food database or an AI reply as a formula (P10-09). Numbers never come through here.
+ */
+export function inertText(value: string): string {
+  return /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
+}
+
 type Row = Partial<Record<string, string>>;
 
 function csvLine(row: Row): string {
@@ -101,15 +110,15 @@ function foodRow(date: string, meal: MealKind, item: FileItem): Row {
     time: item.time,
     kind: 'food',
     meal,
-    name: item.name,
+    name: inertText(item.name),
     grams: item.grams === undefined ? '' : plain(item.grams),
     energy_kcal: plain(item.kcal),
     protein_g: plain(item.protein),
     carbs_g: plain(item.carbs),
     fat_g: plain(item.fat),
     source: item.source,
-    note: item.note ?? '',
-    parts: partsText(item.lines),
+    note: inertText(item.note ?? ''),
+    parts: inertText(partsText(item.lines)),
   };
   NUTRIENT_KEYS.forEach((key, index) => {
     const value = item.nutrients[NUTRIENT_FILE_KEYS[key]];

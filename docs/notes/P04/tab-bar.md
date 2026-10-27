@@ -62,8 +62,9 @@ Compare checklist (filled after the rewrite; reopened `BottomNavBar.kt`, `TabBar
       (`TabBar.test.tsx > visibleTabs > shows every tab when nothing is hidden`, `> ignores Home,
       Settings and unknown names, and reads names with stray spaces`; `> TabBar > hides only Coach
       for a stored ["home", "coach"]`)
-- [x] Not drawn until the hidden set is known (`TabBar.test.tsx > TabBar > draws nothing until the
-      hidden-tab setting is read, so a hidden tab never flashes in`) (ACC-A3-2, R05.13)
+- [x] Not drawn until the hidden set is known (`TabBar.test.tsx > TabBar > draws nothing before
+      the hidden-tab setting arrives, so a hidden tab never shows for a moment`) (ACC-A3-2,
+      R05.13)
 - [x] The tab on screen becomes hidden → Home (`TabBar.test.tsx > TabBar > moves to Home when Coach
       is hidden while on Coach, and the tab disappears`, `> goes to Home when the app opens on a
       hidden tab`) (ACC-A3-1, R05.13)

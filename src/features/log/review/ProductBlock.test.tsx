@@ -93,7 +93,7 @@ describe('shownFields (D22)', () => {
     ]);
   });
 
-  it('shows nothing when the block is off, or when every field with data is hidden', () => {
+  it('draws nothing when switched off, or when the only fields with values are switched off', () => {
     expect(shownFields(FULL, false, [])).toEqual([]);
     expect(shownFields(product(), true, ['barcode'])).toEqual([]);
   });

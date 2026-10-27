@@ -18,7 +18,7 @@ export const DEFAULT_ENERGY_UNIT: EnergyDisplayUnit = 'kcal';
 /** The thermochemical calorie: 1 kcal is 4.184 kJ. */
 export const KJ_PER_KCAL = 4.184;
 
-/** The exact amount in the display unit, for charts and averages. */
+/** The amount in the reader's unit without rounding: charts and averages round at the end. */
 export function toDisplayUnrounded(kcal: number, unit: EnergyDisplayUnit): number {
   return unit === 'kJ' ? kcal * KJ_PER_KCAL : kcal;
 }

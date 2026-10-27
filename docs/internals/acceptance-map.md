@@ -25,7 +25,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-A3-1** Hiding Coach while viewing it moves you to Home and the tab disappears
   - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears
 - **ACC-A3-2** A hidden tab never flashes into the bar while the app starts
-  - Test: src/app/TabBar.test.tsx > TabBar > draws nothing until the hidden-tab setting is read, so a hidden tab never flashes in
+  - Test: src/app/TabBar.test.tsx > TabBar > draws nothing before the hidden-tab setting arrives, so a hidden tab never shows for a moment
 
 ### A4 · Tapping Settings while inside a Settings page returns to the … (P1)
 
@@ -545,6 +545,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/ai-setup/KeyField.test.tsx > KeyField > shows a saved key masked, never whole, and offers to replace it (ACC-E14-1)
 - **ACC-E14-2** A backup file never contains a key
   - Test: src/services/backup/backup.test.ts > makeBackup > never holds a key, the rows kept aside or this device’s state (ACC-E14-2, R06.7)
+  - Test: src/services/backup/plantedKey.test.ts > backup: no key in any output (P10-09, ACC-E14-2, D-16.30) > hands over (%s) a file with no stored key in its bytes, its decoded Blobs or its photos
+  - Test: src/services/backup/plantedKey.test.ts > backup: no key in any output (P10-09, ACC-E14-2, D-16.30) > restores on another device without any key, and leaves that device’s own keys as they were
 
 ## F · Home and day view
 
@@ -879,6 +881,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > marks a failed question with its kind and the provider’s message, keys cut out (ACC-I11-1)
   - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
   - Test: e2e/coach.spec.ts > coach chat (Demo 5) > shows a failed turn with Details, and Retry answers it without asking twice (D-16.31, R04.4)
+  - Test: src/services/coach/plantedKey.test.tsx > Coach Details: no key in any output (P10-09, D-16.31, R03.18) > stores and shows a refusal from %s with every key cut out
 
 ### I12 · The standby provider re-runs the whole turn when the primary fails (P1)
 

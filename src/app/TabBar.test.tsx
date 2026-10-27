@@ -81,7 +81,7 @@ describe('visibleTabs', () => {
 });
 
 describe('TabBar', () => {
-  it('draws nothing until the hidden-tab setting is read, so a hidden tab never flashes in', () => {
+  it('draws nothing before the hidden-tab setting arrives, so a hidden tab never shows for a moment', () => {
     const { settings } = renderBar('#/home', null);
     expect(screen.queryByRole('navigation')).toBeNull();
     expect(screen.queryByRole('button')).toBeNull();

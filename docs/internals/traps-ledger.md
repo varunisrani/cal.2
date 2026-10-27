@@ -297,6 +297,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R03.18** Provider text never reaches the screen; bodies are still read to classify, and daily-quota details survive retries
   - Test: src/ai/errors.test.ts > readProviderMessage: every body shape (R03.18) > classifies xAI, Mistral and DeepSeek bodies by the text they carry
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > reads Gemini's daily quota from the quota id in the error details (R03.18)
+  - Test: src/services/coach/plantedKey.test.tsx > Coach Details: no key in any output (P10-09, D-16.31, R03.18) > stores and shows a refusal from %s with every key cut out
+  - Test: src/ai/plantedKey.test.ts > failures: no key in a detail or a message (P10-09, R03.18, D-16.31) > a photo request on %s, then its standby %s, both echoing every key
 - **R03.19** Classification order is fixed: 401/403, credits, daily quota, quota, 404, 429, 503/529, generic
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > keeps the order: key before credit, credit before daily quota, quota before status
   - Test: src/ai/errors.test.ts > classify: rules in order (R03.19) > calls a 429 that says the quota was exceeded quota, not rateLimit
@@ -493,7 +495,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.12** No fallback goals flash before the profile is read
   - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves
 - **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time
-  - Test: src/app/TabBar.test.tsx > TabBar > draws nothing until the hidden-tab setting is read, so a hidden tab never flashes in
+  - Test: src/app/TabBar.test.tsx > TabBar > draws nothing before the hidden-tab setting arrives, so a hidden tab never shows for a moment
   - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears
   - Test: src/app/TabBar.test.tsx > TabBar > goes to Home when the app opens on a hidden tab
   - Test: src/data/repos/settingsRepo.test.ts > toggleHiddenTab > hides Coach without undoing Progress hidden since the screen last read (R05.13)

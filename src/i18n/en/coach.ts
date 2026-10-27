@@ -50,7 +50,7 @@ export const coach = {
     },
     empty: {
       title: 'Ask about your log',
-      lead: 'Your Coach reads your meals, weigh-ins, fasts and goals. Ask how your week went or what to eat next.',
+      lead: 'Your Coach reads your meals, weigh-ins, fasts and goals. Try asking how this week went, or what would suit your next meal.',
     },
     photo: 'Your photo',
     typing: 'The Coach is writing a reply',

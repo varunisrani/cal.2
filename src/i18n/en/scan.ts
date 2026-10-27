@@ -42,7 +42,7 @@ export const scan = {
       unexpected: "Open Food Facts sent an answer that couldn't be read. Try again.",
       offline: "You're offline. Connect to the internet and try again.",
       timeout: "Open Food Facts didn't answer in time. Try again.",
-      network: "Couldn't reach Open Food Facts. Check your connection and try again.",
+      network: "Open Food Facts couldn't be reached. Make sure you're online, then try again.",
       keyRefused:
         'FoodData Central refused your API key. Check the key in settings, or scan the nutrition label instead.',
       generic: "The product couldn't be opened. Try again.",

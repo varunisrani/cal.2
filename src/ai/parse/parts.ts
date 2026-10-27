@@ -15,7 +15,7 @@ import { FOOD_REPLY_KEYS, PART_REPLY_KEYS } from './foodReply';
 export const MAX_PARTS = 20;
 /** No part's kcal, macro or weight comes near this; a larger value is malformed. */
 export const MAX_PART_VALUE = 100_000;
-/** Pure fat; a filled-in weight that implies more energy per gram is not food. */
+/** About 9 kcal/g (fat, the densest food): weights filled in for unweighed parts stay under it. */
 export const MAX_KCAL_PER_GRAM = 9;
 /** The parts' kcal must cover at least this share of the meal's (fewer means dishes are missing)… */
 export const MIN_COVERAGE = 0.5;

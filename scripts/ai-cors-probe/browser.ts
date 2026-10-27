@@ -1,11 +1,11 @@
 /**
  * The browser side of the CORS probe (P03-19): the built app served by Vite's preview server on
  * 127.0.0.1, Chromium from Playwright on its root page, and `page.ts` bundled by Vite's build API
- * in memory and added to that page as a script. Each request is one `page.evaluate` call: the key
- * enters the page only as its argument, never in an address, a file or a log line. Meanwhile the
- * page's `requestfailed` and `console` events for the request's address are kept as clues, so a
- * CORS refusal can be told from a proxy, DNS or TLS failure (the page itself sees one TypeError
- * for all of them).
+ * in memory and added to that page as a script served from the app's own origin (its CSP refuses
+ * inline scripts). Each request is one `page.evaluate` call: the key enters the page only as its
+ * argument, never in an address, a file or a log line. Meanwhile the page's `requestfailed` and
+ * `console` events for the request's address are kept as clues, so a CORS refusal can be told
+ * from a proxy, DNS or TLS failure (the page itself sees one TypeError for all of them).
  */
 import { existsSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
@@ -19,6 +19,8 @@ import type { PageOutcome, PageRequest } from './page';
 export const PROBE_GLOBAL = 'platewiseCorsProbe';
 
 const PAGE_ENTRY = 'scripts/ai-cors-probe/page.ts';
+/** The address on the app's origin where the bundle is served (only the probe answers it). */
+const PROBE_SCRIPT_PATH = '/__platewise-cors-probe.js';
 const HOST = '127.0.0.1';
 /** How long to wait for Chromium's failure event when the page saw no reply before it came. */
 const CLUE_WAIT_MS = 1_000;
@@ -95,8 +97,12 @@ export async function openSession(
     browser = await chromium.launch();
     const context = await browser.newContext({ serviceWorkers: 'block' });
     const page = await context.newPage();
+    // The built app's CSP runs only scripts from its own origin, so the bundle is served there.
+    await page.route(`${origin}${PROBE_SCRIPT_PATH}`, (route) =>
+      route.fulfill({ contentType: 'text/javascript', body: script }),
+    );
     await page.goto(`${origin}/`);
-    await page.addScriptTag({ content: script });
+    await page.addScriptTag({ url: PROBE_SCRIPT_PATH });
     const loaded = await page.evaluate(
       (name) => typeof (globalThis as Record<string, unknown>)[name] === 'object',
       PROBE_GLOBAL,

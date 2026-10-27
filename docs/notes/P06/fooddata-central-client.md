@@ -15,11 +15,12 @@ R02.16 (the FDC half), R02.18. A live pre-flight on 2026-10-26 to
 
 What it does (own words): when Open Food Facts cannot help, the person's own FoodData Central key
 lets the app search the USDA Branded Foods list for the scanned code. Nothing is sent without a
-stored key and a code that can be a GTIN. A key that a request header cannot carry (anything
-outside printable ASCII, such as a pasted zero-width space) is reported as refused without
-sending it, and the key only ever travels in the `X-Api-Key` header (R02.18). The search ORs every
-spelling the database may store the code under, and only a Branded food whose GTIN equals the
-code (leading zeros ignored) is used, because the search also returns near misses (R02.14). The
+stored key and a code that can be a GTIN. The key must be made of characters an HTTP header can
+hold (visible ASCII, no spaces): when it is not, for example after a paste that brought in an
+invisible character, the lookup ends as a refused key and nothing is sent. The key only ever
+travels in the `X-Api-Key` header (R02.18). The search ORs every spelling the database may store
+the code under, and only a Branded food whose GTIN equals the code (leading zeros ignored) is
+used, because the search also returns near misses (R02.14). The
 food becomes a review draft: with a known serving weight, label values win and per-100 g values
 are scaled to it; without one, the label set and the per-100 g set are never mixed (R02.16), so the
 draft is either one serving of unknown weight or exactly 100 g. All-caps names get English title

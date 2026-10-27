@@ -21,9 +21,10 @@ already JPEG, D-16.52). Every entry gets a CRC-32, a local header and a central-
 the file ends with the end record. The reader starts from the end record, walks the central
 directory, checks every local header against it and reads every entry to the end so its CRC is
 checked before anyone uses the file; it refuses compressed, encrypted, ZIP64 and split archives and
-any CRC mismatch, with a reason code. `archive.ts` is the backup layout: `payload.json` first, then
-one `photos/<name>` entry per photo. A photo name must be plain: ASCII letters, digits, `.`, `_`,
-`-`, a jpg/jpeg/png/webp extension, at most 128 characters, no leading dot, no `..`, no folder part.
+any CRC mismatch, with a reason code. `archive.ts` is the backup layout: the archive opens with
+`payload.json`, and each photo follows under `photos/<name>`. A photo name must be plain: ASCII
+letters, digits, `.`, `_`, `-`, a jpg/jpeg/png/webp extension, at most 128 characters, no leading
+dot, no `..`, no folder part.
 Writing refuses any other name; reading skips any entry that is not `payload.json` or
 `photos/<plain name>` and says which ones it skipped (R06.9). `hash.ts` turns what a backup holds
 into one SHA-256 (WebCrypto): a canonical text of the kept table rows (keys sorted at every level,

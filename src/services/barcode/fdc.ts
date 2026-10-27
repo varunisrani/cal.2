@@ -146,10 +146,10 @@ const GTIN_WIDTHS = [8, 12, 13, 14] as const;
 const ASCII_DIGITS = /^[0-9]+$/;
 
 /**
- * Every spelling FoodData Central may store a code under: as scanned, without leading zeros, and
- * zero-padded to 8, 12, 13 and 14 digits where it fits; no spelling longer than 14 digits, no
- * repeats. Empty (so no request) for anything but digits, all zeros, or more than 14 significant
- * digits.
+ * The ways FoodData Central may have written a code down. We search for the code itself, the code
+ * with its leading zeros removed, and that number left-padded with zeros to each GTIN width it
+ * fits (8, 12, 13, 14). Nothing over 14 digits, each spelling once. A code that is not all digits,
+ * is only zeros or has more than 14 digits after its zeros gives none, and so sends no request.
  */
 export function gtinSpellings(code: string): string[] {
   if (!ASCII_DIGITS.test(code)) return [];
