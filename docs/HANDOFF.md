@@ -113,10 +113,12 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-No builders running. Wave 11's P07-16 (b2f9de2) and P07-15 (dc6c909) were started early and landed
+One builder started at 08:51 IST: P07-06 water (`/root/wt/wt-p07s2a`, base 358143a). Usage was flat at
+81 % for 30 min with about an hour left in the window, so one builder fits under the 88 % stop (expected
+about +5 %); the 88 % stop rule still applies. Wave 11's P07-16 (b2f9de2) and P07-15 (dc6c909) were started early and landed
 (full loop green: unit 3807 passed + 2 expected-fail, bundle 209.22 kB, e2e 6/6). Wave 10 is fully landed. The
-next window starts at the 10:20 IST reset: launch the other three wave 11 prompts in `docs/handoff/wave11/`
-at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2a,p07s2b}`):
+next window starts at the 10:20 IST reset: launch the other two wave 11 prompts (P06-11, P07-07) in
+`docs/handoff/wave11/` at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2b}`):
 - P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
 - P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
 - P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse

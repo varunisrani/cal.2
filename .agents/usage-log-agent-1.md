@@ -45,3 +45,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 07:46 | Agent 1 | Account 1 | 78 (reading 07:43) | 22 | 2026-10-27 10:20 | 119/176 tasks; 2 builders (P07-15, P07-16); about 0.33 %/min |
 | 2026-10-27 08:01 | Agent 1 | Account 1 | 80 (reading 07:50) | 20 | 2026-10-27 10:20 | 121/176 tasks (P07-16, P07-15 landed); no builders; waiting for the reset |
 | 2026-10-27 08:19 | Agent 1 | Account 1 | 81 (reading 08:18) | 19 | 2026-10-27 10:20 | 121/176 tasks; no builders; small lead cleanup only; wave 12 prompts pushed (2966011) |
+| 2026-10-27 08:51 | Agent 1 | Account 1 | 81 (reading 08:51) | 19 | 2026-10-27 10:20 | 121/176 tasks; flat for 30 min; 1 builder started (P07-06 water), expected about +5 % |
