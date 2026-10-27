@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 12:24 IST (Agent 1, session 3). 144/176 tasks; P00–P05 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landing.
+Updated: 2026-10-27 12:32 IST (Agent 1, session 3). 150/176 tasks; P00–P05 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landed except the logging e2e.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -125,13 +125,14 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 12 | P08-10, P08-11 (Coach page and composer; `Menu` gains `disabled`) | 75bdb01 |
 | Lead fix | FastEditor "ended elsewhere" test waits for its toast (a loaded-machine flake) | 2ed6962 |
 | Wave 13 | P09-07 (AI providers page and the food-database key; `AiSettingsEdits`) | 27596b1 |
+| Wave 13 | P09-02, P09-04, P09-06 (App settings and units, Tab bar, Product details; `appSettings` service) | bcfa20d |
+| Wave 13 | P09-17, P09-18 (service worker and update flow; manifest, install prompt, CSP) | 9abd7b0 |
+| Wave 13 | P09-13 (backup and restore; `backupRepo`; GIF/HEIC photos go in as JPEG copies) | d8fcdfc |
 
 ## In progress
 
-Landing (12:24 IST): three wave 13 slices stacked on `/root/wt/verify` over 27596b1 in one full loop: P09-02/04/06
-(6f36335, msg `w13-02`), P09-17/18 (8b8a34a, msg `w13-03`), P09-13 (606ca2a, msg `w13-04`). Push with
-`/root/wt/land-multi.sh 27596b1 6f36335 /root/wt/msgs/w13-02.txt 8b8a34a /root/wt/msgs/w13-03.txt 606ca2a
-/root/wt/msgs/w13-04.txt` once the loop log ends with ci=0 (ledger scripts already applied).
+Landed at 12:32 IST: bcfa20d, 9abd7b0, d8fcdfc (full loop: unit 4776 passed + 2 expected-fail in 333 files, check 6/6,
+bundle 228.56 kB, e2e 6/6).
 Builder running: P06-20 logging e2e (`/root/wt/wt-p06s20`, base 085a9bb, prompt `docs/handoff/wave13/w13-p06s20.txt`).
 Usage 74 % at 12:14 IST: no new builders this window. Next window (15:20 IST): P09-05 menu editor (prompt ready),
 P09-09 notifier and reminders section, P09-01 hub, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data
@@ -142,8 +143,7 @@ Bundle: 228.34 kB gzip of 250 at 27596b1. Follow-ups from wave 13: the CSP's `ht
 L8; no inline theme script is possible under `script-src 'self'`; nothing else may use Cache Storage under the
 `platewise-` prefix; `appVersion` is '0.1.0' until P09-16's build constant; wire restore's `afterRestore` to
 `reminders.refresh()`; a Coach reply running during a restore can land in the restored chat.
-**Progress: 144/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 13/14, P09 5/19, P10 0/14); the stack above
-brings P09 to 11/19 (150).
+**Progress: 150/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 13/14, P09 11/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
