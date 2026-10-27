@@ -70,3 +70,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 18:31 | Agent 1 | Account 1 | 89 (reading 18:21) | 11 | 2026-10-27 20:20 | 168/176: P10-01..04 and P09-19 landed after a passing loop; STOPPED_90 holds |
 | 2026-10-27 18:55 | Agent 1 | Account 1 | 89 (reading 18:21) | 11 | 2026-10-27 20:20 | User: keep working until 100 %. ACTIVE again; P10-07/08/11 builder resumed from its patch; save point 97 % |
 | 2026-10-27 19:28 | Agent 1 | Account 1 | 94 (reading 19:28) | 6 | 2026-10-27 20:20 | 170/176: P10-05/06 landed; P10-07/08/11 builder running; K9 banner to build before P10-14 |
+| 2026-10-27 19:52 | Agent 1 | Account 1 | 98 (reading 19:43) | 2 | 2026-10-27 20:20 | Stopped: both builders saved to .agents/wip/ (p10s3, p10s6); 170/176 |

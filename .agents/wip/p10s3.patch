@@ -1,21 +1,23 @@
 diff --git a/docs/internals/browser-matrix-v1.0.md b/docs/internals/browser-matrix-v1.0.md
 new file mode 100644
-index 0000000..4fb234a
+index 0000000..27695d1
 --- /dev/null
 +++ b/docs/internals/browser-matrix-v1.0.md
-@@ -0,0 +1,107 @@
+@@ -0,0 +1,114 @@
 +# Browser matrix, v1.0
 +
 +What Platewise was run on before v1.0 (P10-11), and what still needs a person with the device in
-+hand. Recorded on 2026-10-27 against the build of this slice (base `e370445`).
++hand. Recorded on 2026-10-27 against the build of this slice (base `71e9727`).
 +
 +## Automated: Playwright projects
 +
-+`playwright.config.ts` has one project that always runs and two that run only when asked for:
++`playwright.config.ts` has two Chromium projects that always run and two projects that run only
++when asked for:
 +
 +| Project           | Engine   | Device                                             | Runs                       |
 +| ----------------- | -------- | -------------------------------------------------- | -------------------------- |
 +| `mobile-chromium` | Chromium | Pixel 7 (touch, mobile flag)                       | every spec (`pnpm e2e`)    |
++| `offline-chromium`| Chromium | Pixel 7, with the service worker allowed           | the `@offline` test of `e2e/settings-data.spec.ts` (P09-19) |
 +| `mobile-webkit`   | WebKit   | iPhone 13 (touch, mobile flag)                     | the smoke subset: 5 tests  |
 +| `phone-firefox`   | Firefox  | a Pixel 7-sized window (no mobile mode in Firefox) | the smoke subset: 3 tests  |
 +
@@ -46,7 +48,8 @@ index 0000000..4fb234a
 +
 +| Project           | Result                                                         |
 +| ----------------- | -------------------------------------------------------------- |
-+| `mobile-chromium` | pass: the whole e2e folder, 39/39 with one worker (the five smoke tests among them); `e2e/a11y.spec.ts` 18/18 with `--repeat-each=2` |
++| `mobile-chromium` | pass: in one run of the whole e2e folder with one worker (46 passed, 1 skipped, of 47), 45 passed and 1 skipped (the `@offline` test, which runs in `offline-chromium` instead), the five smoke tests among them; `e2e/a11y.spec.ts` 18/18 with `--repeat-each=2` |
++| `offline-chromium` | pass: 1/1, in the same run                                     |
 +| `mobile-webkit`   | not run here: WebKit is not installed in the container         |
 +| `phone-firefox`   | not run here: Firefox is not installed in the container        |
 +
@@ -65,7 +68,9 @@ index 0000000..4fb234a
 +  app opens standalone with the dark page colour and the icons of `public/manifest.webmanifest`.
 +- **Offline.** After the first visit the service worker (`sw.js`) holds the app shell: a reload
 +  with the network off opens the app on the stored `index.html`; AI and food-database requests are
-+  never cached and fail with their normal messages.
++  never cached and fail with their normal messages. On Chromium this is automated:
++  `e2e/settings-data.spec.ts > … > reloads with the network off from the service worker, and an AI
++  request offline says so (ACC-L2-1, R03.2)` in the `offline-chromium` project.
 +- **HEIC photos.** A photo is decoded by the browser (`src/lib/imageCodec.ts`). Safari decodes
 +  HEIC; where the browser cannot, the photo is refused with "This browser can't open one of these
 +  photos (HEIC photos open in Safari)…" and nothing is added (D-16.21). On iPhone the photo picker
@@ -79,7 +84,9 @@ index 0000000..4fb234a
 +  the installed app (iOS 16.4 and later). Nothing is pushed from a server: a reminder shows only
 +  while the app is open or kept alive by the browser.
 +- **Storage persistence.** The app asks once, after the first logged entry
-+  (`src/data/storage.ts`); Settings shows the answer (persistent, best-effort or unknown). Safari
++  (`src/services/storageNudge.ts` through `src/data/storage.ts`); Settings › Your data shows the
++  answer ("Kept by the browser": Yes, Not guaranteed or unknown), and Home's keep-safe card
++  suggests installing while it is not kept. Safari
 +  may evict a site's data after seven days without a visit unless it is installed.
 +
 +| Feature                 | iOS Safari, in the browser | iOS Safari, installed | Android Chrome | Desktop Chrome | Desktop Firefox | Desktop Safari |
@@ -113,13 +120,13 @@ index 0000000..4fb234a
 +its own storage policy.
 diff --git a/docs/internals/ship-inventory-v1.0.md b/docs/internals/ship-inventory-v1.0.md
 new file mode 100644
-index 0000000..f3eaf56
+index 0000000..31ae37f
 --- /dev/null
 +++ b/docs/internals/ship-inventory-v1.0.md
-@@ -0,0 +1,223 @@
+@@ -0,0 +1,256 @@
 +# What ships, v1.0
 +
-+The production build (`pnpm build` → `dist/`) as of 2026-10-27 (base `e370445` plus the P10 S3
++The production build (`pnpm build` → `dist/`) as of 2026-10-27 (base `71e9727` plus the P10 S3
 +accessibility fixes), read three ways (P10-08): the bundle budget, REA's static analysis of
 +`dist/`, and the banned-names check run once over `dist/`. Static analysis says what the code
 +can do, not what a session does; where the two differ the code is quoted by path.
@@ -131,7 +138,7 @@ index 0000000..f3eaf56
 +
 +| Counted file (start-up) | Raw | Gzip |
 +| --- | ---: | ---: |
-+| `index-*.js` | 602.23 kB | 188.59 kB |
++| `index-*.js` | 608.70 kB | 190.71 kB |
 +| `primitives.module-*.js` | 10.16 kB | 3.88 kB |
 +| `react-dom-*.js` | 3.92 kB | 1.44 kB |
 +| `result-*.js` | 0.13 kB | 0.13 kB |
@@ -141,7 +148,7 @@ index 0000000..f3eaf56
 +| `targets-*.js` | 0.54 kB | 0.36 kB |
 +| `numbers-*.js` | 2.15 kB | 0.98 kB |
 +| `body-*.js` | 1.17 kB | 0.58 kB |
-+| `t-*.js` | 65.36 kB | 22.77 kB |
++| `t-*.js` | 67.77 kB | 23.52 kB |
 +| `Button-*.js` | 1.55 kB | 0.72 kB |
 +| `modalLayer-*.js` | 1.81 kB | 0.91 kB |
 +| `ranges-*.js` | 0.45 kB | 0.30 kB |
@@ -156,41 +163,42 @@ index 0000000..f3eaf56
 +| `goalDefaults-*.js` | 1.98 kB | 0.97 kB |
 +| `context-*.js` | 0.41 kB | 0.29 kB |
 +| `inputs.module-*.js` | 1.43 kB | 0.51 kB |
-+| **Total** | | **232.73 kB** |
++| **Total** | | **235.60 kB** |
 +| Budget | | 250.00 kB |
-+| Headroom | | 17.27 kB |
++| Headroom | | 14.40 kB |
 +
-+Before this slice's fixes the same build counted 232.64 kB; the stretched buttons and the
-+focus ring add 0.09 kB. `pnpm check:bundle`: `PASS: initial JS is 232.73 kB gzip, 17.27 kB under
-+the 250.00 kB budget.`
++`pnpm check:bundle`: `PASS: initial JS is 235.60 kB gzip, 14.40 kB under the 250.00 kB budget.`
++The Your data page (P09-15) and this slice's fixes are in it; the page itself is a lazy chunk.
 +
 +| Lazy chunk (not counted) | Raw | Gzip |
 +| --- | ---: | ---: |
 +| `ReviewSheet-*.js` | 42.72 kB | 13.82 kB |
-+| `ProgressPage-*.js` | 41.31 kB | 12.99 kB |
++| `ProgressPage-*.js` | 41.31 kB | 12.98 kB |
 +| `wasmReader-*.js` | 34.95 kB | 12.18 kB |
 +| `engine-*.js` | 25.02 kB | 9.90 kB |
-+| `CreditsPage-*.js` | 29.66 kB | 8.10 kB |
++| `CreditsPage-*.js` | 29.66 kB | 8.09 kB |
 +| `CoachPage-*.js` | 16.64 kB | 5.81 kB |
 +| `planning-*.js` | 13.32 kB | 5.68 kB |
 +| `client-*.js` | 12.54 kB | 5.46 kB |
 +| `payload-*.js` | 12.62 kB | 4.84 kB |
 +| `GoalsPage-*.js` | 15.48 kB | 4.74 kB |
 +| `food-*.js` | 11.54 kB | 4.69 kB |
++| `DataPage-*.js` | 14.82 kB | 4.43 kB |
 +| `ProfilePage-*.js` | 15.13 kB | 4.43 kB |
 +| `TrackingPage-*.js` | 15.49 kB | 4.28 kB |
 +| `AiPage-*.js` | 10.86 kB | 3.71 kB |
-+| `SettingsScreen-*.js` | 9.56 kB | 3.30 kB |
++| `SettingsScreen-*.js` | 9.97 kB | 3.41 kB |
 +| `EntryEditor-*.js` | 8.08 kB | 3.24 kB |
-+| `importDiary-*.js` | 6.80 kB | 2.73 kB |
++| `importDiary-*.js` | 6.75 kB | 2.70 kB |
 +| `MenuEditorPage-*.js` | 7.53 kB | 2.60 kB |
-+| `RestoreFromFile-*.js` | 6.69 kB | 2.08 kB |
-+| `AppPage-*.js` | 6.01 kB | 1.88 kB |
-+| `exportDiary-*.js` | 3.81 kB | 1.83 kB |
-+| `exportFormats-*.js` | 4.20 kB | 1.72 kB |
++| `exportDiary-*.js` | 3.96 kB | 1.90 kB |
++| `AppPage-*.js` | 6.01 kB | 1.89 kB |
++| `exportFormats-*.js` | 4.22 kB | 1.71 kB |
 +| `backup-*.js` | 3.20 kB | 1.62 kB |
 +| `AboutPage-*.js` | 4.25 kB | 1.50 kB |
 +| `restore-*.js` | 2.86 kB | 1.39 kB |
++| `RestoreSheet-*.js` | 3.52 kB | 1.32 kB |
++| `RestoreFromFile-*.js` | 3.47 kB | 1.26 kB |
 +| `FastEditor-*.js` | 3.03 kB | 1.25 kB |
 +| `AnalysisOverlay-*.js` | 2.44 kB | 1.17 kB |
 +| `aboutPage.module-*.js` | 1.96 kB | 1.08 kB |
@@ -221,7 +229,38 @@ index 0000000..f3eaf56
 +
 +## REA static analysis
 +
-+REA-SECTION
++REA 6.8.0 (`~/rea-lab/rea analyze-javascript-application --artifact-format directory`) read a copy
++of this `dist/` without its source maps and Vite's manifest (96 files: the page, the web manifest,
++the icons, the `.wasm`, `sw.js` and 66 chunks). Source maps are not code the browser runs, and
++with them the analysis did not finish. The Evidence stays outside the repository
++(02-rea-workflow §1); this page cites its ids.
++
++| Run | Sources | Result | Evidence |
++| --- | --- | --- | --- |
++| 1 | all 67 JavaScript files, 900 s per source | stopped on `index-*.js` (the entry chunk, 609 kB) at the per-source deadline, after 43 files | partial observation `ev_7567b2cbca34450e1a539fcf51fa3b5d14468aef21c7839a363352c63285c43a` (not kept) |
++| 2 | the 66 files other than the entry chunk | complete: 68 relevant files, 66 parsed, no parse failure, 136,366 syntax nodes visited, 1,956 findings | `ev_5b08c637688825e1ddd874a2e7c2e66d11ca83b7b087f9e508c787adc4cc238f` in `~/rea-lab/evidence/platewise-v1.0.json` (101 MB); summary view `ev_d509b7449b36a89c9fba1ae143a06a234e99cccb6bbc4127ea78f39d16b99a74` |
++| 3 | the entry chunk alone, lower semantic limits, 2 GB heap | RUN3-RESULT | RUN3-EVIDENCE |
++
++What the Evidence of run 2 says, family by family:
++
++- **Routes:** none. Its route inventory is empty, with application routes "unknown": REA looks
++  for path routers, and ours reads `location.hash` (`src/app/router.ts`). The Routes table below
++  comes from the router and the Settings registry.
++- **Network endpoints:** two `fetch` call sites, both in `wasmReader-*.js`, whose address is
++  worked out at run time (resolution "partial"): zxing-wasm loading its `.wasm`, which
++  `src/services/barcode/wasmReader.ts` points at the build's own copy. No other endpoint.
++- **Storage and workers:** none recorded.
++- **Limits:** REA kept its per-file static facts for 22 of the 66 files; for the rest its result
++  budget (bound to its own heap) ran out (`resource_constraint`), and the semantic analysis of 30
++  files was interrupted. 15,344 semantic unknowns remain.
++
++So the Evidence contradicts nothing below, but it cannot prove the tables alone: everything that
++talks to the network or stores data sits in the entry chunk (the source maps place every
++`fetch` in `src/ai/transport.ts` and `src/services/barcode/http.ts`, `localStorage` in
++`src/app/InstallPrompt.tsx`, `src/data/wipe.ts`, `src/services/reminders/ports.ts` and
++`src/services/storageNudge.ts`, IndexedDB in `src/data/db.ts` and `src/data/wipe.ts`) or in
++`sw.js`. The tables therefore come from that code, cited by path, and from a scan of every address
++in the shipped `.js`, `.html` and manifest files (the last table under Network endpoints).
 +
 +## Routes
 +
@@ -236,7 +275,7 @@ index 0000000..f3eaf56
 +| `#/progress`                  | Progress (lazy chunk)                                                  |
 +| `#/coach`                     | Coach (lazy chunk)                                                     |
 +| `#/settings`                  | the Settings list (lazy chunk)                                         |
-+| `#/settings/<page>`           | `profile`, `goals`, `tracking`, `ai`, `app`, `about`, `methods` from the list; `menu`, `product-fields`, `tab-bar` from App settings; `credits` from About (each a lazy chunk) |
++| `#/settings/<page>`           | `profile`, `goals`, `tracking`, `ai`, `app`, `data`, `about`, `methods` from the list; `menu`, `product-fields`, `tab-bar` from App settings; `credits` from About (each a lazy chunk) |
 +
 +An address the router cannot read opens Home (`parseHash` returns `null`). The service worker is
 +at `/sw.js` with the page's own scope; `manifest.webmanifest` declares `start_url` and `scope` as
@@ -251,6 +290,7 @@ index 0000000..f3eaf56
 +| IndexedDB         | database `platewise`, schema version 1 (`src/data/schema.ts`) | tables `profile`, `entries`, `photos`, `savedMeals`, `weighIns`, `bodyFat`, `water`, `fasts`, `coachMessages`, `settings`, `secrets` (API keys, AES-GCM sealed), `drafts`, `quarantine` (rows that failed the guard), `meta` (the non-exportable device key that seals the API keys, and two flags: a restore in progress, unreadable rows found) |
 +| localStorage      | `platewise-reminders`                  | the reminder log: what was shown when (`src/services/reminders/ports.ts`)               |
 +| localStorage      | `platewise-install-shown`              | when the install card was last shown (`src/app/InstallPrompt.tsx`)                       |
++| localStorage      | `platewise-backup-quiet`               | when the backup card's 14 days last started (`src/services/storageNudge.ts`)            |
 +| Cache Storage     | `platewise-shell-<version>`            | the app shell of one build, and the decoder's `.wasm` once a scan has fetched it; older `platewise-` caches are deleted on activate (`src/sw/sw.ts`) |
 +| BroadcastChannel  | `platewise`                            | not storage: tells other open tabs what changed, and that everything is being erased (`src/data/bus.ts`) |
 +
@@ -324,7 +364,7 @@ index 0000000..f3eaf56
 +`pnpm check:banned` walks the repository and leaves build output out, so it was run once over
 +`dist/` with the check's own code, unchanged (`loadPatterns` and `scanBanned` from
 +`tooling/checks/banned.ts`, the root set to `dist/`, from a throwaway script outside the repo).
-+All 24 patterns over the 159 files of the build, source maps included (binary files, the icons
++All 24 patterns over the 164 files of the build, source maps included (binary files, the icons
 +and the `.wasm`, are skipped as the check skips them everywhere):
 +
 +- **6 findings, all in one place:** `assets/aboutPage.module-*.js`, the credit to the app that
@@ -342,10 +382,10 @@ index 0000000..f3eaf56
 +`dist/` for real, it needs that one chunk on its allow-list with this reason.
 diff --git a/docs/notes/P10/accessibility-pass.md b/docs/notes/P10/accessibility-pass.md
 new file mode 100644
-index 0000000..e712c05
+index 0000000..8e3c257
 --- /dev/null
 +++ b/docs/notes/P10/accessibility-pass.md
-@@ -0,0 +1,187 @@
+@@ -0,0 +1,204 @@
 +# Task: accessibility pass (P10-07) · Phase: 10 · Owner: builder (wt-p10s3)
 +
 +<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
@@ -384,9 +424,10 @@ index 0000000..e712c05
 +the component that owns the finding (see "Fixes"): `src/features/onboarding/onboarding.module.css`,
 +`src/features/settings/profile/ProfilePage.tsx`, `src/features/home/{EntryRow.tsx,
 +selection.module.css,FastRow.tsx,diaryRows.module.css}`, `src/features/progress/{HistoryLink.tsx,
-+readings.module.css}`, `src/features/coach/coach.module.css`; two unit tests follow a change of
-+markup: `src/features/settings/profile/ProfilePage.test.tsx` (the row's text has a space) and
-+`src/features/progress/HistorySheet.test.tsx` (the card contains the button).
++readings.module.css}`, `src/features/coach/coach.module.css`, `src/ui/SwipeRow.tsx` and
++`src/features/log/reuse/ReuseSheet.tsx` (with a new test in each one's unit file); two unit tests
++follow a change of markup: `src/features/settings/profile/ProfilePage.test.tsx` (the row's text
++has a space) and `src/features/progress/HistorySheet.test.tsx` (the card contains the button).
 +
 +Edge cases / failure modes:
 +- axe runs on the document as it is at that moment: a sheet that is still sliding in, a lazy
@@ -496,6 +537,18 @@ index 0000000..e712c05
 +   focus ring as every other field while the field has the keyboard focus
 +   (`:has(.field:focus-visible)`); the accent border stays.
 +
++4. Two controls with one name (reported by the parity pass, P10-04): each saved meal in the
++   reuse Saved sheet had its visible trash button and the swipe row's keyboard delete button,
++   both named "Remove <name>", so a keyboard or screen-reader user met the same action twice in a
++   row. Owner: `src/ui/SwipeRow.tsx` gains `keyboardDelete` (default true; false leaves its
++   keyboard button out and keeps the swipe), and `src/features/log/reuse/ReuseSheet.tsx` passes
++   `false` for saved rows, whose own Remove button stays (ACC-D17-2's test relies on it). The hook
++   `reuse.saved.row.delete` goes with the button; no parity scenario or e2e spec used it. Tests,
++   both failing first: `src/ui/SwipeRow.test.tsx > SwipeRow > leaves its keyboard delete button
++   out where the content shows its own, and still swipes (P10-07)` and
++   `src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Saved > gives each saved meal one
++   Remove control: the visible one, no keyboard twin (P10-07)`.
++
 +## Decisions for the lead
 +
 +- Gate: axe's `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa` and `best-practice` rules;
@@ -526,19 +579,23 @@ index 0000000..e712c05
 +
 +## Status
 +
-+Done (2026-10-27). After `pnpm build`: `e2e/a11y.spec.ts` 18/18 with `--workers=1
-+--repeat-each=2`; the whole e2e folder 39/39 with `--workers=1`; the unit tests of the touched
-+components pass (`src/features/home/{EntryRow,FastRow,Diary,HomePage}.test.tsx`,
-+`src/features/progress`, `src/features/settings/profile`). The only finding axe still reports on
-+the scanned screens is the moderate `heading-order` on the Coach (follow-up above). Lines outside
-+the task's own files: the fixes listed under "Fixes", in the components that own them, and the two
-+unit tests that follow their markup.
++Done (2026-10-27, base `71e9727`). After `pnpm build`: `e2e/a11y.spec.ts` 18/18 on
++`mobile-chromium` with `--workers=1 --repeat-each=2` (the Settings scan now includes the Your data
++page); the whole e2e folder once with `--workers=1`: 46 passed, 1 skipped by design (the `@offline`
++test outside `offline-chromium`), of 47. Unit tests of the touched components: 52 files, 513/513
++(`src/features/{home,progress,settings/profile,onboarding,coach}`), and `src/ui/SwipeRow.test.tsx`
++with `src/features/log/reuse/ReuseSheet.test.tsx` 40/40, whose two new tests failed before the fix;
++`scripts/parity.test.ts` 28/28 (no `data-ui` hook a scenario uses was renamed). The only finding
++axe reported on the scanned screens in the first runs is the moderate `heading-order` on the Coach
++(follow-up above); lesser findings are attached to the report, not gated, and were not re-read on
++this base. Lines outside the task's own files: the fixes listed under "Fixes", in the components
++that own them, and the unit tests that follow their markup or prove the fix.
 diff --git a/docs/notes/P10/browser-matrix.md b/docs/notes/P10/browser-matrix.md
 new file mode 100644
-index 0000000..7ace58f
+index 0000000..32b0f74
 --- /dev/null
 +++ b/docs/notes/P10/browser-matrix.md
-@@ -0,0 +1,87 @@
+@@ -0,0 +1,88 @@
 +# Task: browser matrix (P10-11) · Phase: 10 · Owner: builder (wt-p10s3)
 +
 +<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
@@ -599,10 +656,11 @@ index 0000000..7ace58f
 +Compare checklist (filled after the rewrite; no reference to reopen; compared with the row's
 +Verify column instead):
 +- [x] WebKit and Firefox projects for the smoke subset, off by default (`playwright.config.ts`;
-+      `pnpm exec playwright test --list`: 39 tests on mobile Chromium alone; with
-+      `PLATEWISE_E2E_ENGINES=webkit,firefox` 47, of which 5 on `mobile-webkit` and 3 on
-+      `phone-firefox`)
-+- [x] the smoke subset passes on Chromium here (inside the whole e2e folder, 39/39); WebKit and
++      `pnpm exec playwright test --list` on base `71e9727`: 47 tests (46 on `mobile-chromium`, 1
++      on P09-19's `offline-chromium`); with `PLATEWISE_E2E_ENGINES=webkit,firefox` 55, of which 5
++      on `mobile-webkit` and 3 on `phone-firefox`)
++- [x] the smoke subset passes on Chromium here (inside the whole e2e folder: 46 passed, 1 skipped
++      by design, of 47); WebKit and
 +      Firefox recorded as not run here (not installed; installing is not allowed in the container)
 +- [ ] every manual row has a result and a date: open, listed for the lead (no devices here); the
 +      matrix gives what to expect per row and a headless Chromium probe as a pointer
@@ -628,10 +686,10 @@ index 0000000..7ace58f
 +which the task names.
 diff --git a/docs/notes/P10/ship-inventory.md b/docs/notes/P10/ship-inventory.md
 new file mode 100644
-index 0000000..20b7676
+index 0000000..82d7d9e
 --- /dev/null
 +++ b/docs/notes/P10/ship-inventory.md
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,80 @@
 +# Task: bundle budget and shipped inventory (P10-08) · Phase: 10 · Owner: builder (wt-p10s3)
 +
 +<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
@@ -685,8 +743,9 @@ index 0000000..20b7676
 +Compare checklist (filled after the rewrite; no reference to reopen; compared with the row's
 +Verify column and 04-architecture §6 instead):
 +- [x] initial JS ≤ 250 kB gzip with the decoder, charts and Markdown lazy: `pnpm check:bundle`
-+      PASS at 232.73 kB (17.27 kB headroom); the source maps place the charts in the Progress
-+      chunk, the Markdown renderer in the Coach chunk and zxing in `wasmReader-*.js`, none counted
++      PASS at 235.60 kB (14.40 kB headroom) on base `71e9727`; the source maps place the charts
++      in the Progress chunk, the Markdown renderer in the Coach chunk and zxing in
++      `wasmReader-*.js`, none counted
 +- [x] the inventory lists routes, storage, network endpoints and workers, and no unexpected host
 +      (`docs/internals/ship-inventory-v1.0.md`; every address in the shipped files is accounted
 +      for: requested hosts are the providers, Open Food Facts and FoodData Central, the rest are
@@ -1376,10 +1435,10 @@ index 0000000..886d0b4
 +  });
 +});
 diff --git a/package.json b/package.json
-index 69be1cb..327d33f 100644
+index 26d9c35..9a73d05 100644
 --- a/package.json
 +++ b/package.json
-@@ -36,6 +36,7 @@
+@@ -37,6 +37,7 @@
      "zxing-wasm": "3.1.5"
    },
    "devDependencies": {
@@ -1388,7 +1447,7 @@ index 69be1cb..327d33f 100644
      "@playwright/test": "1.63.0",
      "@testing-library/dom": "10.4.2",
 diff --git a/playwright.config.ts b/playwright.config.ts
-index f62c127..d7d0d35 100644
+index 00802a9..d479a6f 100644
 --- a/playwright.config.ts
 +++ b/playwright.config.ts
 @@ -1,7 +1,67 @@
@@ -1460,15 +1519,14 @@ index f62c127..d7d0d35 100644
  export default defineConfig({
    testDir: './e2e',
    // Only specs: the Vitest files in e2e/fake-ai/ (*.test.ts) belong to `pnpm test`.
-@@ -19,7 +79,7 @@ export default defineConfig({
-     trace: 'retain-on-failure',
-     serviceWorkers: 'block',
-   },
--  projects: [{ name: 'mobile-chromium', use: { ...devices['Pixel 7'] } }],
-+  projects: [{ name: 'mobile-chromium', use: { ...devices['Pixel 7'] } }, ...otherEngines],
+@@ -29,6 +89,7 @@ export default defineConfig({
+       grep: /@offline/,
+       use: { ...devices['Pixel 7'], serviceWorkers: 'allow' },
+     },
++    ...otherEngines,
+   ],
    webServer: {
      command: `pnpm exec vite preview --host 127.0.0.1 --port ${port} --strictPort`,
-     url: `http://127.0.0.1:${port}`,
 diff --git a/pnpm-lock.yaml b/pnpm-lock.yaml
 index 003a567..4bfab37 100644
 --- a/pnpm-lock.yaml
@@ -1858,6 +1916,42 @@ index 7ffaf27..93a29d4 100644
  }
  
  .check {
+diff --git a/src/features/log/reuse/ReuseSheet.test.tsx b/src/features/log/reuse/ReuseSheet.test.tsx
+index fdfa7b2..d717561 100644
+--- a/src/features/log/reuse/ReuseSheet.test.tsx
++++ b/src/features/log/reuse/ReuseSheet.test.tsx
+@@ -357,6 +357,17 @@ describe('ReuseSheet: Saved', () => {
+     expect(document.querySelectorAll('[data-ui="reuse.saved.row"]')).toHaveLength(2);
+   });
+ 
++  it('gives each saved meal one Remove control: the visible one, no keyboard twin (P10-07)', async () => {
++    await openSheet('saved', savedMeals('Porridge', 'Toast'));
++    await untilShown('[data-ui="reuse.list"]');
++
++    const removeName = (name: string) => words.row.remove.replace('{name}', name);
++    for (const name of ['Porridge', 'Toast']) {
++      const removes = screen.getAllByRole('button', { name: removeName(name) });
++      expect(removes.map((button) => button.getAttribute('data-ui'))).toEqual(['reuse.row.remove']);
++    }
++  });
++
+   it('says how to save one when there are none', async () => {
+     await openSheet('saved');
+     await untilShown('[data-ui="reuse.empty"]');
+diff --git a/src/features/log/reuse/ReuseSheet.tsx b/src/features/log/reuse/ReuseSheet.tsx
+index 54adc6e..43f62d7 100644
+--- a/src/features/log/reuse/ReuseSheet.tsx
++++ b/src/features/log/reuse/ReuseSheet.tsx
+@@ -221,7 +221,8 @@ function SavedFoods({ meals, query, energyUnit, onPick }: SavedFoodsProps) {
+           <li key={meal.id}>
+             <SwipeRow
+               onRequestDelete={() => void remove(meal)}
+-              deleteLabel={t('reuse.row.remove', { name })}
++              // The row's own Remove button serves the keyboard: no second one of the same name.
++              keyboardDelete={false}
+               data-ui="reuse.saved.row"
+             >
+               <ReuseRow
 diff --git a/src/features/onboarding/onboarding.module.css b/src/features/onboarding/onboarding.module.css
 index 7f16988..4e13c78 100644
 --- a/src/features/onboarding/onboarding.module.css
@@ -2019,3 +2113,82 @@ index ac6b34e..2059ad3 100644
          <span className={styles.rowValue}>{value}</span>
          <Icon name="chevronRight" size={18} className={styles.chevron} />
        </button>
+diff --git a/src/ui/SwipeRow.test.tsx b/src/ui/SwipeRow.test.tsx
+index e4759ec..26d20e1 100644
+--- a/src/ui/SwipeRow.test.tsx
++++ b/src/ui/SwipeRow.test.tsx
+@@ -20,7 +20,10 @@ function setupUser() {
+ }
+ 
+ /** A Home-like row of the given width (jsdom lays nothing out, so the width is stubbed). */
+-function renderRow(width = 400, props: { deleteLabel?: string; disabled?: boolean } = {}) {
++function renderRow(
++  width = 400,
++  props: { deleteLabel?: string; disabled?: boolean; keyboardDelete?: boolean } = {},
++) {
+   const onRequestDelete = vi.fn();
+   const onOpen = vi.fn();
+   render(
+@@ -223,6 +226,18 @@ describe('SwipeRow', () => {
+     expect(onOpen).toHaveBeenCalledTimes(1);
+   });
+ 
++  it('leaves its keyboard delete button out where the content shows its own, and still swipes (P10-07)', () => {
++    const { slide, onRequestDelete } = renderRow(400, {
++      deleteLabel: 'Delete Toast',
++      keyboardDelete: false,
++    });
++    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Toast']);
++    expect(document.querySelector('[data-ui="entry-row.delete"]')).toBeNull();
++
++    press(slide, 350, [300, 100])();
++    expect(onRequestDelete).toHaveBeenCalledTimes(1);
++  });
++
+   it('names the delete button from the catalogue by default', () => {
+     renderRow(400);
+     expect(
+diff --git a/src/ui/SwipeRow.tsx b/src/ui/SwipeRow.tsx
+index 3c3385d..724c2a4 100644
+--- a/src/ui/SwipeRow.tsx
++++ b/src/ui/SwipeRow.tsx
+@@ -48,6 +48,12 @@ export interface SwipeRowProps {
+   readonly deleteLabel?: string;
+   /** No swipe and no delete button, e.g. while rows are being picked for a combine. */
+   readonly disabled?: boolean;
++  /**
++   * False where the content already shows its own delete control: the keyboard and screen readers
++   * reach that one, and a second button with the same name would only repeat it (P10-07). The
++   * swipe stays. Default true.
++   */
++  readonly keyboardDelete?: boolean;
+   /** Extra class for the outer box, e.g. the rounded corners of a first or last row. */
+   readonly className?: string;
+   /** Hook for the row; the delete button gets `<hook>.delete`. */
+@@ -57,14 +63,15 @@ export interface SwipeRowProps {
+ /**
+  * A diary row that slides toward the leading edge to reveal a delete strip. The slide stops at
+  * 72 % of the row's width; letting go past the threshold calls `onRequestDelete` and the row
+- * slides back. For the keyboard, a delete button follows the row's content; while it has the
+- * focus the row slides aside to show it.
++ * slides back. For the keyboard, a delete button follows the row's content (unless the content
++ * has its own); while it has the focus the row slides aside to show it.
+  */
+ export function SwipeRow({
+   children,
+   onRequestDelete,
+   deleteLabel,
+   disabled = false,
++  keyboardDelete = true,
+   className,
+   'data-ui': dataUi,
+ }: SwipeRowProps) {
+@@ -178,7 +185,7 @@ export function SwipeRow({
+       >
+         {children}
+       </div>
+-      {disabled ? null : (
++      {disabled || !keyboardDelete ? null : (
+         <button
+           type="button"
+           className={styles.swipeDelete}

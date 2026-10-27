@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 18:55 IST (Agent 1, session 3), ACTIVE to 100 % (user). 170/176 tasks; P00–P09 complete; the app runs on the
-real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, security and similarity landed; P10-07/08/11 builder running.
+Updated: 2026-10-27 18:55 IST (Agent 1, session 3), STOPPED at 98 % (user: work to 100 %). 170/176 tasks; P00–P09 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, ledgers, security and similarity landed; two slices in .agents/wip/.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -142,6 +142,13 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
+**STOPPED at 19:52 IST (98 % read at 19:43; reset 20:20 IST).** Both builders stopped; their work is saved as plain
+diffs in `.agents/wip/`: `p10s3.patch` (P10-07/08/11 on 71e9727; nearly done: the fast-row restructure was finished
+and it was tidying the last ids before its checks) and `p10s6.patch` (S6, K9 banner + security fixes on 5ce6e07; the
+code and tests were written, it was about to run the clean-room checks and `ledger:gaps`). Resume each: a new
+worktree at the landed head, `git apply -3 .agents/wip/<slice>.patch`, relaunch its prompt (`/root/wt/prompt-p10s3.txt`
+with the resume notes used at 18:55, or `docs/handoff/wave16/w16-p10s6.txt`) saying "your work so far is applied;
+read the diff, finish, run your checks and report". Then land both, then P10-14.
 **18:55 IST: the user said to keep working until 100 %.** Work resumed at an 89 % read; save point at a 97 % read
 (stop builders, patches to `.agents/wip/`, push), since nothing can be pushed at 100 %. Builder running at 71e9727:
 P10-07/08/11 resumed from `.agents/wip/p10s3.patch` in `/root/wt/wt-p10s3b` (playwright.config.ts conflict resolved:

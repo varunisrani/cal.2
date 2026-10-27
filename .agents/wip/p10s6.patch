@@ -1,0 +1,1488 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index becea72..e6b7d2b 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -49,6 +49,9 @@ jobs:
+       - name: Install
+         run: pnpm install --frozen-lockfile
+ 
++      - name: Audit dependencies (high and critical)
++        run: pnpm audit --audit-level high
++
+       - name: Lint
+         run: pnpm lint
+ 
+diff --git a/docs/internals/acceptance-map.md b/docs/internals/acceptance-map.md
+index e1fb633..67f0357 100644
+--- a/docs/internals/acceptance-map.md
++++ b/docs/internals/acceptance-map.md
+@@ -1033,6 +1033,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
+ 
+ - **ACC-K9-1** A damaged entry is skipped, kept aside, and the other entries still show
+   - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
++- **ACC-K9-2** A notice above the screen says some saved data could not be read and was kept aside; Dismiss takes it away for good
++  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > draws nothing while no stored data has been set aside, and shows the notice once some has (R06.1, ACC-K9-2)
++  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > clears the flag on Dismiss, and stays gone after the live state is read again (R06.1, ACC-K9-2)
+ 
+ ## L · Platform
+ 
+@@ -1105,5 +1108,4 @@ Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and re
+ - **Key passphrase lock (N-6).** Keys are wrapped by a device key and the Settings page states the browser's limits (E14, D-16.7).
+ - **Body measurements, amino acids (N-7).** Not recorded; the Coach context has no measurement block.
+ - **Hosted AI, weekly challenge, short share links (N-8).** Not planned; every server-side trap (R07.14, R07.15, R07.18, R07.19) is recorded as not planned in the traps ledger.
+-- **Damaged-data banner (part of K9, P1; proposed N-9, found in P10-05).** Unreadable records are skipped and kept aside (ACC-K9-1), and the guard sets the flag the banner would read (`useUnreadableFlag`), but no screen shows a notice that some data could not be read, and no task owns one (R06.1). Unlike the entries above, this one is not decided yet: the lead records N-9 in `docs/plan/16-what-we-change.md` §2.8 or schedules the banner.
+ - **What's New dialog (D-16.43), streaming Coach replies (D-16.47), on-device models (D-16.6), watch, widgets and Siri (D-16.3).** Not in v1.
+diff --git a/docs/internals/security-review-v1.0.md b/docs/internals/security-review-v1.0.md
+index 63c47c3..6fc795e 100644
+--- a/docs/internals/security-review-v1.0.md
++++ b/docs/internals/security-review-v1.0.md
+@@ -1,7 +1,8 @@
+ # Security review, v1.0 (P10-09)
+ 
+ Reviewed on 2026-10-27 against `e370445` plus this slice (P10 S4). Task note:
+-`docs/notes/P10/security-review.md`. Every claim below names the code, the test or the run it rests
++`docs/notes/P10/security-review.md`. The open findings the lead decided were fixed afterwards in
++P10 S6 (task note `docs/notes/P10/security-fixes.md`); §6 says which, with their tests. Every claim below names the code, the test or the run it rests
+ on. This is an engineering review of the app as built, not an audit by a third party.
+ 
+ ## Summary
+@@ -18,12 +19,12 @@ on. This is an engineering review of the app as built, not an audit by a third p
+   preview`: inline scripts, inline handlers, inline styles, third-party scripts, styles and fonts,
+   third-party images, frames, objects, `<base>`, blob workers and plain http beyond this device
+   are all refused; the app's own scripts, CSSOM styles, Open Food Facts images, any https host
+-  and loopback http work (§5.1).
++  and loopback http work (§5.1). The probes ran before S6 changed the policy (S-3, S-5).
+ - **Fixed in this slice (small and local):** S-1 CSV exports could hand a spreadsheet a formula
+   from a food name; S-2 the CORS probe (P03-19) could no longer load its page script under the CSP
+   that P09-18 added.
+-- **Open, with a proposed fix:** S-3 to S-9 (one medium-low, the rest low or deployment). The
+-  `http://[::1]:*` CSP source: **drop it** (S-3).
++- **Fixed afterwards (P10 S6):** S-3, S-5 to S-9, S-12 and S-15, each with a test (§6).
++- **Open:** S-4 (security headers from the host), for the release checklist (P10-14).
+ 
+ ## 1. What Platewise is, for this review
+ 
+@@ -62,13 +63,13 @@ service worker caches the app shell only.
+ | T2 | A Coach reply with a `javascript:` or tracking link | Only `http:`/`https:` links become anchors, read through `new URL`; `rel="noopener noreferrer"`; images are never drawn from Markdown | §5.6 | A person can still click a deceptive https link (by design) |
+ | T3 | Keys leaking into exports, backups, error details or logs | Exports and backups never read `secrets`; error details have every stored AI key cut out before they are kept (`src/ai/errors.ts` `fromReply`); the network error text is never kept; services log only our own sentences plus error objects that carry no key | §5.3 (planted-key tests) | The food-database key is not in the AI redaction list (S-10, accepted) |
+ | T4 | A key sent somewhere else (another provider, an address, plain http) | Each request carries only its own provider's key, in a header, never in the address (`src/ai/plantedKey.test.ts`); plain http only to this device (D-16.26, CSP `connect-src`) | §5.3, §5.4 | Anthropic's direct-browser header is required for browser calls (inherent to BYOK) |
+-| T5 | A crafted backup writing outside its tables, over keys, or blowing up memory | Stored-only ZIP (no decompression bombs), CRC on every entry, plain photo names only, unknown entries skipped and listed, local tables (`secrets`, `meta`, `quarantine`) never written, all-or-nothing transaction, free-space check | §5.5 | No upper bound on `payload.json` before it is read (S-9); a Coach thumbnail keeps the file's MIME type (S-6) |
+-| T6 | A crafted diary file | 20 MiB cap before reading; JSON only; every value checked; one bad value refuses the whole file; replace mode touches only the file's date range, shown before the person confirms | §5.5 | Error details echo file text without a length cap (S-8) |
++| T5 | A crafted backup writing outside its tables, over keys, or blowing up memory | Stored-only ZIP (no decompression bombs), CRC on every entry, plain photo names only, unknown entries skipped and listed, local tables (`secrets`, `meta`, `quarantine`) never written, all-or-nothing transaction, free-space check | §5.5 | None known (S-6 and S-9 fixed) |
++| T6 | A crafted diary file | 20 MiB cap before reading; JSON only; every value checked; one bad value refuses the whole file; replace mode touches only the file's date range, shown before the person confirms | §5.5 | None known (S-8 fixed: at most 40 characters of file text) |
+ | T7 | A spreadsheet running a formula from an exported name | Formula-looking text gets a leading apostrophe in the CSV | S-1 (fixed), `src/services/transfer/csvFormula.test.ts` | — |
+ | T8 | Third-party code at run time (scripts, fonts, CDNs) | None in `dist/` (§5.2); the CSP refuses them; the barcode decoder's WASM is served from our build, not the library's CDN default | §5.1, §5.2 | `connect-src https:` would allow a CDN fetch if code asked for one (S-14, info) |
+ | T9 | Someone with the device's storage files | Keys sealed under a non-extractable device key (D-16.51) | `src/data/crypto.ts`, `secretsRepo.test.ts` | Code on the origin can still use the key; a passphrase lock is a later item (D-16.7) |
+ | T10 | Clickjacking or framing | Modern browsers partition a framed app's storage, so a frame sees an empty app; the CSP's `frame-src` blocks frames inside the app | §5.1 | `frame-ancestors` cannot be set from a meta tag (S-4: hosting header) |
+-| T11 | Vulnerable or hostile dependencies, CI | 4 production dependencies; exact versions; frozen lockfile in CI; actions pinned by SHA; `contents: read`; `persist-credentials: false`; licence check | §5.8, `.github/workflows/ci.yml` | `pnpm audit` is not a CI gate yet (S-15, proposed) |
++| T11 | Vulnerable or hostile dependencies, CI | 4 production dependencies; exact versions; frozen lockfile in CI; actions pinned by SHA; `contents: read`; `persist-credentials: false`; licence check | §5.8, `.github/workflows/ci.yml` | None known (S-15 fixed: `pnpm audit --audit-level high` in CI) |
+ | T12 | Data leaving for an unexpected host | Services never use the global `fetch` (lint rule); the CSP limits `img-src`; the service worker never caches cross-origin responses | `eslint.config.js`, `src/sw/sw.ts` | Hosts at run time are P10-08's inventory |
+ 
+ ## 5. Checks
+@@ -81,10 +82,14 @@ keeps it):
+ ```
+ default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self';
+ img-src 'self' blob: data: https://images.openfoodfacts.org;
+-connect-src 'self' https: http://localhost:* http://127.0.0.1:* http://[::1]:*;
+-worker-src 'self'; object-src 'none'; base-uri 'none'
++connect-src 'self' https: http://localhost:* http://127.0.0.1:*;
++worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'
+ ```
+ 
++This is the policy after P10 S6, which dropped `http://[::1]:*` (S-3) and added
++`form-action 'none'` (S-5). The probes below ran against the policy before that change; the
++dropped source allowed nothing then either (see below).
++
+ Run: `pnpm build`, then a throwaway Playwright script (scratchpad, not committed) that serves
+ `dist/` with Vite's preview API on 127.0.0.1 and a free port, opens Chromium 153.0.8010.12 with
+ service workers allowed and the policy in force, answers every https request locally (nothing left
+@@ -124,7 +129,8 @@ Policy directive 'connect-src' contains an invalid source: 'http://[::1]:*'. It
+ The CSP grammar has no IPv6 literals, so the source allows nothing (the `[::1]` probe above was
+ refused) and only adds a console error. Meanwhile `checkServerUrl` (`src/ai/endpoint.ts`) accepts
+ `http://[::1]:11434/v1` as a loopback address, so a person who saves it gets a connection failure
+-with no reason given. **Proposal: drop it** (S-3).
++with no reason given. **Fixed** (S-3, P10 S6): the source is gone, and `checkServerUrl` refuses
++`[::1]` with a hint to type `localhost` or `127.0.0.1`.
+ 
+ Not expressible in a meta tag, so left to hosting (S-4): `frame-ancestors`, `report-to`,
+ `sandbox`.
+@@ -167,10 +173,10 @@ and keep failures as values), and no error type in the app carries a request, a
+ 
+ ### 5.4 Loopback-only plain HTTP
+ 
+-Two walls. Saving: `checkServerUrl` accepts https anywhere and plain http only for `localhost`,
+-`127.0.0.1` and `[::1]`, and refuses user names and passwords in the address
+-(`src/ai/endpoint.test.ts`, R03.3, ACC-E13-1). Sending: the CSP's `connect-src` allows plain http
+-only to `localhost:*` and `127.0.0.1:*` (§5.1; `[::1]` is dropped by the browser, S-3). A LAN
++Two walls. Saving: `checkServerUrl` accepts https anywhere and plain http only for `localhost`
++and `127.0.0.1` (`[::1]` is refused with a hint to use one of those, S-3), and refuses user names
++and passwords in the address (`src/ai/endpoint.test.ts`, R03.3, ACC-E13-1). Sending: the CSP's
++`connect-src` allows plain http only to `localhost:*` and `127.0.0.1:*` (§5.1). A LAN
+ server must sit behind https (D-16.26). The fake AI server used by e2e listens on 127.0.0.1 only.
+ 
+ ### 5.5 Import and restore: paths and sizes
+@@ -186,11 +192,15 @@ server must sit behind https (D-16.26). The fake AI server used by e2e listens o
+   photo, the document and a 16 MiB reserve, and the write is one transaction (R06.6). Device
+   tables (`secrets`, `meta`, `quarantine`) and device settings are never written, even from a file
+   that carries them (`restore.test.ts`; this slice's restore test also shows a device's own keys
+-  survive). Restored photos are typed from their extension (JPEG, PNG or WebP only, never SVG).
++  survive). Restored photos are typed from their extension (JPEG, PNG or WebP only, never SVG);
++  a Coach thumbnail keeps its stored type only when it is one of those three, else it is dropped
++  and the message kept (S-6). A `payload.json` declared over 256 MiB is refused before it is read
++  (S-9).
+ - **Diary import** (`src/services/transfer/importDiary.ts`): files over 20 MiB are refused before
+   they are read; JSON only, our own format and major version; any bad value refuses the whole file
+-  (R06.16); no photos travel in it.
+-- Left over: S-6, S-8, S-9.
++  (R06.16); no photos travel in it. A refusal repeats at most 40 characters of the file's text
++  (S-8).
++- Left over: none (S-6, S-8 and S-9 fixed in P10 S6).
+ 
+ ### 5.6 Markdown link sanitising
+ 
+@@ -222,8 +232,8 @@ Run on 2026-10-27 (pnpm 10.28.0, Node 22.22.0): `pnpm audit` → "No known vulne
+ `pnpm audit --json`: info 0, low 0, moderate 0, high 0, critical 0, 307 dependencies;
+ `pnpm audit --prod`: none. **Decision:** nothing to update or override. Production dependencies
+ are four (dexie 4.4.6, react 19.3.0, react-dom 19.3.0, zxing-wasm 3.1.5), all at exact versions.
+-Proposed (S-15): run `pnpm audit --audit-level high` in CI so a new advisory is seen on the next
+-push.
++S-15 (fixed in P10 S6): CI runs `pnpm audit --audit-level high` right after the install, so a
++new high or critical advisory fails the next push.
+ 
+ ## 6. Findings
+ 
+@@ -231,19 +241,19 @@ push.
+ |---|---|---|---|
+ | S-1 | Medium-low | CSV export wrote food names, notes and parts as they were; a name from an AI reply or Open Food Facts that starts with `=`, `+`, `-` or `@` (`=IMPORTXML(...)`, `=HYPERLINK(...)`) would run as a formula when the file is opened in a spreadsheet, and could send other cells to a web address | **Fixed**: `inertText` in `src/services/transfer/exportFormats.ts` puts a leading apostrophe on free text that starts with `=`, `+`, `-`, `@`, a tab or a carriage return (OWASP's advice); numbers never pass through it; JSON and Markdown keep names exactly. Test: `src/services/transfer/csvFormula.test.ts` (12) |
+ | S-2 | Tooling | The CORS probe (`scripts/ai-cors-probe/browser.ts`, P03-19) added its bundle as an inline script; since P09-18's CSP the page refuses it ("Executing inline script violates … script-src"), so the probe could not run against the built app | **Fixed**: the bundle is answered from an address on the app's origin (`/__platewise-cors-probe.js`, routed by Playwright) and loaded with `<script src>`. Checked: the session now opens and the probe global loads (Chromium 153) |
+-| S-3 | Low | `http://[::1]:*` in `connect-src` is invalid for the CSP parser, allows nothing and logs a console error on every load; `checkServerUrl` still accepts `http://[::1]` addresses, which then fail as a bare connection error | Open: drop the source from `index.html` (and from the exact-directives test in `src/app/InstallPrompt.test.tsx`), and either refuse `[::1]` in `checkServerUrl` with a hint to use `localhost` or `127.0.0.1` (change `LOOPBACK_HOSTS` and its test in `src/ai/endpoint.test.ts`), or keep accepting it and add a hint. Recommended: refuse with the hint; it changes D-16.26's list, so the lead decides |
++| S-3 | Low | `http://[::1]:*` in `connect-src` is invalid for the CSP parser, allows nothing and logs a console error on every load; `checkServerUrl` still accepts `http://[::1]` addresses, which then fail as a bare connection error | **Fixed** (P10 S6, lead's choice: refuse with the hint): `http://[::1]:*` is gone from `index.html`; `checkServerUrl` refuses plain http to `[::1]` as `ipv6Loopback` (`LOOPBACK_HOSTS` is `localhost` and `127.0.0.1`), and the server field says to type `localhost` or `127.0.0.1` instead. D-16.26's loopback list changes with it (the lead records the decision). Tests: `src/app/InstallPrompt.test.tsx > index.html > carries the CSP with exactly these directives, before anything loads (ACC-L6-1)`; `src/ai/endpoint.test.ts > checkServerUrl: which addresses can be saved (D-16.26, R03.3) > refuses [::1], which the CSP cannot allow, with a hint to use localhost or 127.0.0.1`; `src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > refuses http://[::1]:11434/v1 and suggests localhost or 127.0.0.1 (S-3, D-16.26)` |
+ | S-4 | Deployment | A meta CSP cannot carry `frame-ancestors`, `report-to` or `sandbox`; the static host sends no security headers | Open: when a host is chosen, send `Content-Security-Policy: frame-ancestors 'none'` (or `X-Frame-Options: DENY`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer` and a long `Strict-Transport-Security`. Record them in the release checklist (P10-14) |
+-| S-5 | Low | `form-action` is not set and does not fall back to `default-src`: an HTML page under our origin (S-6) could post a form anywhere | Open: add `form-action 'none'` to the CSP (every form in the app handles `submit` in script) and to the exact-directives test |
+-| S-6 | Low | A Coach thumbnail restored from a backup keeps the MIME type written in the file (`{"@blob": <type>}`), so a crafted file can store `text/html`; opened at the top level (for example "open image in new tab") it renders static HTML on our origin. Scripts stay blocked (the Blob inherits the CSP, §5.1) | Open: in the restore, accept a thumbnail only as `image/jpeg`, `image/png` or `image/webp` (the app only ever writes JPEG), else treat the row as damaged or drop the thumbnail; together with S-5 this leaves nothing to exploit |
+-| S-7 | Low | The Markdown export copies names and notes into table cells with only `|`, `\` and line breaks escaped; a name with HTML or Markdown (`<img src=https://…>`, `![](…)`) will be drawn by Markdown viewers that render HTML or images, which can fetch a tracking URL when the file is previewed | Open: in `markdownCell`, also escape `<`, `>`, `[`, `]`, `!`, `` ` ``, `*` and `_` with backslashes (`exportFormats.test.ts` gains a case) |
+-| S-8 | Low | Diary import errors put file text into the message (`detail: String(value)`) with no length limit; a crafted file can make a very long message | Open: cut `detail` to about 40 characters with an ellipsis in `importDiary.ts` |
+-| S-9 | Low | Restore reads all of `payload.json` into memory before checking it; a crafted multi-gigabyte entry can exhaust the tab's memory (no code runs; the person picked the file) | Open: refuse a backup whose `payload.json` entry is over, say, 256 MiB before reading it (the app's own documents are far smaller: photos travel as separate entries) |
++| S-5 | Low | `form-action` is not set and does not fall back to `default-src`: an HTML page under our origin (S-6) could post a form anywhere | **Fixed** (P10 S6): `form-action 'none'` in the CSP. Test: `src/app/InstallPrompt.test.tsx > index.html > carries the CSP with exactly these directives, before anything loads (ACC-L6-1)` |
++| S-6 | Low | A Coach thumbnail restored from a backup keeps the MIME type written in the file (`{"@blob": <type>}`), so a crafted file can store `text/html`; opened at the top level (for example "open image in new tab") it renders static HTML on our origin. Scripts stay blocked (the Blob inherits the CSP, §5.1) | **Fixed** (P10 S6): the backup's row shaping (`shapeMessage` in `src/services/backup/payload.ts`) keeps a Coach thumbnail only when its type is `image/jpeg`, `image/png` or `image/webp`; any other thumbnail is dropped and the message kept. The content hash is still taken over the file as written, so such a file is restored, not refused; the restore result has no count of dropped parts, so none is added. Test: `src/services/backup/restore.test.ts > inspectBackup and applyBackup > drops a Coach thumbnail that is not a JPEG, PNG or WebP image, and keeps its message (S-6)` (a crafted `text/html` and an `image/svg+xml` thumbnail) |
++| S-7 | Low | The Markdown export copies names and notes into table cells with only `|`, `\` and line breaks escaped; a name with HTML or Markdown (`<img src=https://…>`, `![](…)`) will be drawn by Markdown viewers that render HTML or images, which can fetch a tracking URL when the file is previewed | **Fixed** (P10 S6): `markdownCell` also escapes `<`, `>`, `[`, `]`, `!`, `` ` ``, `*` and `_` with backslashes. Test: `src/services/transfer/exportFormats.test.ts > markdownCell > escapes what a viewer would draw as HTML, an image, a link or emphasis (S-7)` |
++| S-8 | Low | Diary import errors put file text into the message (`detail: String(value)`) with no length limit; a crafted file can make a very long message | **Fixed** (P10 S6): a refusal's `detail` is at most 40 characters (code points), ellipsis included; a food's name is cut first so its date stays. Test: `src/services/transfer/importDiary.test.ts > readDiaryFile > repeats at most 40 characters of the file in a refusal, cut with an ellipsis (S-8)` |
++| S-9 | Low | Restore reads all of `payload.json` into memory before checking it; a crafted multi-gigabyte entry can exhaust the tab's memory (no code runs; the person picked the file) | **Fixed** (P10 S6): `unpackBackup` refuses a `payload.json` whose declared size is over 256 MiB (`MAX_PAYLOAD_BYTES`) before reading it into memory (`payloadTooLarge`, shown as a damaged file). Test: `src/services/backup/archive.test.ts > packBackup and unpackBackup > refuses a payload.json declared over 256 MiB before reading it (S-9)` (a stubbed entry size) |
+ | S-10 | Accepted | The AI layer cuts every stored AI key out of a provider's error text, but not the food-database key | Accepted: that key is sent only to FoodData Central, in its `X-Api-Key` header, never to an AI provider, so no AI reply can echo it; `src/services/coach/plantedKey.test.tsx` checks each request carries only its own provider's key |
+ | S-11 | Info | The build ships source maps (`build.sourcemap: true`) | Accepted: the source is public; maps help people report problems |
+-| S-12 | Info | Requests to providers carry the default `Referer` policy, so a provider sees the app's origin | Open, optional: pass `referrerPolicy: 'no-referrer'` in the transport's `fetch` init (OpenRouter's attribution uses its own header, not `Referer`) |
++| S-12 | Info | Requests to providers carry the default `Referer` policy, so a provider sees the app's origin | **Fixed** (P10 S6): `send` (`src/ai/transport.ts`) and `fetchWithin` (`src/services/barcode/http.ts`) pass `referrerPolicy: 'no-referrer'`, after the caller's init. Tests: `src/ai/transport.test.ts > send: no Referer (S-12) > asks the browser to send no Referer, whatever the caller passed`; `src/services/barcode/http.test.ts > fetchWithin > asks the browser to send no Referer, whatever the caller passed (S-12)` |
+ | S-13 | Inherent | Any script running on the origin can use the stored keys (the device key is non-extractable but usable) | Accepted (D-16.7, said plainly in Settings); the CSP and the absence of HTML sinks are what keep foreign script out; a passphrase lock is a later item |
+ | S-14 | Info | `connect-src https:` lets the page reach any https host, as BYOK custom endpoints need | Accepted: the CSP here guards against script injection, not against exfiltration; services never use the global `fetch` (lint), and P10-08 inventories the hosts |
+-| S-15 | Process | `pnpm audit` is not part of CI | Open: add `pnpm audit --audit-level high` to `.github/workflows/ci.yml` (lead's file) |
++| S-15 | Process | `pnpm audit` is not part of CI | **Fixed** (P10 S6): `.github/workflows/ci.yml` runs `pnpm audit --audit-level high` right after Install (step "Audit dependencies (high and critical)"). Checked locally on 2026-10-27: "No known vulnerabilities found" |
+ 
+ ## 7. Evidence
+ 
+@@ -252,6 +262,12 @@ push.
+   src/services/coach/plantedKey.test.tsx src/ai/plantedKey.test.ts
+   src/services/transfer/csvFormula.test.ts --maxWorkers=1` (52 tests).
+ - CSP: `pnpm build`, then the scratchpad script described in §5.1 (20/20 probes as expected).
++- Fixes of P10 S6 (S-3, S-5 to S-9, S-12): `pnpm vitest run src/app/InstallPrompt.test.tsx
++  src/ai/endpoint.test.ts src/features/ai-setup/ProviderForm.test.tsx
++  src/services/backup/restore.test.ts src/services/backup/archive.test.ts
++  src/services/transfer/exportFormats.test.ts src/services/transfer/importDiary.test.ts
++  src/ai/transport.test.ts src/services/barcode/http.test.ts --maxWorkers=1`; S-15:
++  `pnpm audit --audit-level high` ("No known vulnerabilities found").
+ - Audit: `pnpm audit`, `pnpm audit --json`, `pnpm audit --prod` (§5.8).
+ - Sinks: `grep -rnE "dangerouslySetInnerHTML|innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function|DOMParser|createContextualFragment|srcdoc" src scripts`
+   (no product hit).
+diff --git a/docs/internals/traps-ledger.md b/docs/internals/traps-ledger.md
+index ef84ce1..58de1bd 100644
+--- a/docs/internals/traps-ledger.md
++++ b/docs/internals/traps-ledger.md
+@@ -568,7 +568,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
+   - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
+   - Test: src/data/guard.test.ts > writeOne > keeps a corrupt profile aside before saving over it (R06.1)
+   - Test: src/data/guard.test.ts > writeOne > refuses the save and leaves the record untouched when the copy fails (R06.1)
+-  - Review: the banner is missing from v1: the flag is set and `useUnreadableFlag` reads it, but no screen shows it and no task owns it (K9; acceptance map Known gaps, proposed N-9)
++  - Test: src/data/guard.test.ts > clearUnreadableFlag > lowers the flag, keeps the copies aside, and stays down until something new is set aside (R06.1)
++  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > draws nothing while no stored data has been set aside, and shows the notice once some has (R06.1, ACC-K9-2)
++  - Test: src/app/DamagedDataNotice.test.tsx > DamagedDataNotice > clears the flag on Dismiss, and stays gone after the live state is read again (R06.1, ACC-K9-2)
+ - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
+   - Test: src/data/repos/diaryRepo.test.ts > update > keeps both of two edits made at the same time to different entries (R06.2)
+   - Test: src/data/repos/settingsRepo.test.ts > update > keeps both changes when two updates run at once (R06.2)
+diff --git a/docs/notes/P10/damaged-data-banner.md b/docs/notes/P10/damaged-data-banner.md
+new file mode 100644
+index 0000000..5c97c90
+--- /dev/null
++++ b/docs/notes/P10/damaged-data-banner.md
+@@ -0,0 +1,89 @@
++# Task: damaged-data banner (P10 slice S6, K9; no task id) · Phase: 10 · Owner: builder (wt-p10s6)
++
++<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
++BEFORE writing code, in your own words. Never paste or paraphrase the reference line by line. -->
++
++Read (reference @ `10e14b67`): none. The research spec asks for the banner as part of the rebuild
++(`docs/plan/research/06-settings-data.md` §6 R06.1: "surface a 'some data could not be read'
++banner"), and §3.18 describes only the guard, which P02-02 built; there is no reference screen to
++compare against. Read instead: inventory row K9 (`docs/plan/03-feature-inventory.md`), R06.1 in
++`docs/internals/traps-ledger.md`, the "Damaged-data banner" entry under Known gaps in
++`docs/internals/acceptance-map.md`, `src/data/guard.ts`, `useUnreadableFlag` in
++`src/data/hooks.ts`, and the shell's other notices (`src/app/UpdateBanner.tsx`,
++`src/app/ReminderBanners.tsx`, `src/app/notices.module.css`).
++
++What it does (own words): when the record guard finds a stored record it cannot read, it leaves the
++record where it is, copies it into `quarantine` and sets `meta.unreadableData`. Until now nothing
++showed that flag, so a person whose diary lost an entry to damage saw it silently missing. The
++notice closes that: above the tab screen, in the page's flow like the update banner, a short card
++says some saved data could not be read and was kept aside, not deleted. Dismiss clears the flag,
++so the card goes and stays gone. Reading the same damaged record again does not bring it back; a
++newly damaged record does.
++
++Inputs → outputs: `meta.unreadableData` (through `useUnreadableFlag`) → the notice or nothing;
++Dismiss → `meta.unreadableData` removed (through a small service) → the live read turns false.
++
++Files: created `src/app/DamagedDataNotice.tsx`, `src/app/DamagedDataNotice.test.tsx`,
++`src/services/damagedData.ts`; changed `src/data/guard.ts` (`clearUnreadableFlag`; the flag is
++raised only when a new copy is kept aside), `src/data/guard.test.ts`, `src/i18n/en/shell.ts`
++(three keys), and, shared: `src/app/App.tsx` (one line in the shell), `src/services/context.tsx`
++(one optional service), `src/main.tsx` (its wiring). Docs: R06.1 in the traps ledger, K9 in the
++acceptance map, the Known gaps entry removed.
++
++Edge cases / failure modes:
++- Flag not set, or still loading, or its read failed: nothing is drawn (the notice never blocks
++  the app).
++- Dismiss fails (storage refused): the card stays, and the failure is logged; pressing again
++  retries.
++- A damaged record stays in its table after Dismiss: every read drops it again, but its copy is
++  already aside, so the flag stays down. A different damaged value (another record, or the same
++  record damaged again differently) is a new copy and raises the flag.
++- Another tab dismisses it: the live read re-runs there too (R06.3), so it goes in every tab.
++- Onboarding: the wizard has no shell, so the notice shows once the tab screens do.
++- No service (screens tested without one): nothing is drawn, and the data sources are not read.
++
++Our design differences / decisions:
++- The flag is raised only when a copy is newly kept aside. Before, every read of a damaged record
++  raised it again, so a dismissed notice would come straight back on the next read. Decision for
++  the lead: this is the smallest change that makes "Dismiss, and it stays gone" true; the
++  quarantine still keeps one copy per distinct value.
++- Dismiss removes the `meta` row rather than writing `false`, so the store looks as it did before
++  anything was damaged.
++- The write goes through a service (`damagedData.dismiss`), as screens never reach the data layer;
++  the service holds no rules of its own.
++- `role="status"`, not an alert: the data is safe, nothing needs doing now.
++- Placed first among the shell's notices: it is about the person's own data.
++
++Tests we will write:
++- `src/data/guard.test.ts`: clearing the flag leaves the quarantine as it is; reading the same
++  damaged record again leaves the flag down; a new damaged value raises it again.
++- `src/app/DamagedDataNotice.test.tsx`: nothing while the flag is not set; the notice (role
++  status, hooks, words) while it is; Dismiss clears it and it stays gone after the damaged record
++  is read again and the notice is mounted afresh over the live state; a refused Dismiss keeps the
++  notice and logs; nothing without the service.
++
++Compare checklist (filled after the rewrite; no reference file to reopen):
++- [x] Notice shows only while the flag is set (tested in `src/app/DamagedDataNotice.test.tsx` >
++      DamagedDataNotice > draws nothing while no stored data has been set aside, and shows the
++      notice once some has (R06.1, ACC-K9-2))
++- [x] Dismiss clears the flag and the notice stays gone after a fresh mount and another read of
++      the damaged record (tested in `src/app/DamagedDataNotice.test.tsx` > DamagedDataNotice >
++      clears the flag on Dismiss, and stays gone after the live state is read again (R06.1,
++      ACC-K9-2))
++- [x] Clearing call in the data layer (tested in `src/data/guard.test.ts` > clearUnreadableFlag >
++      lowers the flag, keeps the copies aside, and stays down until something new is set aside
++      (R06.1))
++- [x] A refused Dismiss keeps the notice (tested in `src/app/DamagedDataNotice.test.tsx` >
++      DamagedDataNotice > keeps the notice when the flag cannot be cleared, and says so in the
++      console)
++- [x] Mutation check: with the old flag raising (raised on every read), both the guard test and
++      the Dismiss test above fail.
++- Deliberate differences: none against the reference (it has no such screen to compare).
++- Not taken: a way to look at or export the kept-aside rows (not asked for in K9; the raw copies
++  stay in `quarantine`, never in a backup).
++
++## Status
++
++Done (2026-10-27). Lines changed outside the task's files: `src/app/App.tsx` (the notice in the
++shell), `src/services/context.tsx` (the optional `damagedData` service), `src/main.tsx` (its
++wiring). Handed to the lead: the flag-raising change above, and ACC-K9-2 as a new acceptance id.
+diff --git a/docs/notes/P10/security-fixes.md b/docs/notes/P10/security-fixes.md
+new file mode 100644
+index 0000000..b19a33a
+--- /dev/null
++++ b/docs/notes/P10/security-fixes.md
+@@ -0,0 +1,105 @@
++# Task: security fixes S-3, S-5–S-9, S-12, S-15 (P10 slice S6; no task id) · Phase: 10 · Owner: builder (wt-p10s6)
++
++<!-- Save as platewise/docs/notes/P<nn>/<slug>.md. Write everything above "Compare checklist"
++BEFORE writing code, in your own words. Never paste or paraphrase the reference line by line. -->
++
++Read (reference @ `10e14b67`): none. Every finding is about the web build (its CSP, its backup and
++diary files, its `fetch` calls, its CI), which the native reference does not have. Read instead:
++`docs/internals/security-review-v1.0.md` §5–§6 (the findings and their proposed fixes, and the
++lead's decisions in this slice's prompt), `index.html`, `src/app/InstallPrompt.test.tsx` (the
++exact-directives test), `src/ai/endpoint.ts` and its test, `src/features/ai-setup/ProviderForm.tsx`
++(how a refused address is explained), `src/services/backup/{archive,payload,restore,hash}.ts`,
++`src/services/transfer/{exportFormats,importDiary}.ts`, `src/ai/transport.ts`,
++`src/services/barcode/http.ts`, `.github/workflows/ci.yml`.
++
++What it does (own words): closes the open, low-severity findings of the v1.0 security review that
++the lead decided, each with a test:
++- S-3: the CSP's `http://[::1]:*` source is invalid in a CSP and allowed nothing, while the
++  server-address check accepted `[::1]`; the source goes, and the check now refuses `[::1]` with a
++  hint to type `localhost` or `127.0.0.1` instead (the browser could never reach it from the app).
++- S-5: `form-action 'none'`, so no HTML on our origin can post a form anywhere.
++- S-6: a Coach thumbnail coming back from a backup keeps its stored type only when it is JPEG,
++  PNG or WebP; any other type (`text/html`, SVG) drops the thumbnail, the message stays.
++- S-7: the Markdown export also escapes `<`, `>`, `[`, `]`, `!`, backtick, `*` and `_` in cells,
++  so a name cannot become HTML, a link or an image in a Markdown viewer.
++- S-8: a diary-import refusal repeats at most 40 characters of file text, with an ellipsis.
++- S-9: a backup whose `payload.json` entry says it is over 256 MiB is refused before it is read.
++- S-12: AI and food-database requests carry `referrerPolicy: 'no-referrer'`.
++- S-15: CI runs `pnpm audit --audit-level high` after the install.
++
++Inputs → outputs: as above, per finding.
++
++Files: `index.html`, `src/app/InstallPrompt.test.tsx`, `src/ai/endpoint.ts`,
++`src/ai/endpoint.test.ts`, `src/features/ai-setup/ProviderForm.tsx` and `src/i18n/en/aiSetup.ts`
++(the new refusal's words; shared), `src/services/backup/payload.ts`,
++`src/services/backup/restore.test.ts`, `src/services/backup/archive.ts`,
++`src/services/backup/archive.test.ts`, `src/services/transfer/exportFormats.ts`,
++`src/services/transfer/exportFormats.test.ts`, `src/services/transfer/importDiary.ts`,
++`src/services/transfer/importDiary.test.ts`, `src/ai/transport.ts`, `src/ai/transport.test.ts`,
++`src/services/barcode/http.ts` and a test for it, `.github/workflows/ci.yml`,
++`docs/internals/security-review-v1.0.md`.
++
++Edge cases / failure modes:
++- S-3: `http://[0:0:0:0:0:0:0:1]` is written `[::1]` by the URL parser, so it is refused too;
++  `https://[::1]` stays accepted (https to any host). Addresses saved before this change are not
++  re-checked; they failed to connect anyway.
++- S-6: the content hash is taken over the file as written (the decoded Blob's type and size), so
++  dropping the thumbnail happens in the shaping step, after the hash check: a crafted file with a
++  correct hash is restored without the thumbnail, never refused. The backup direction shares the
++  shaping, so a stored thumbnail of another type is not carried into a new backup either.
++- S-7: escaping changes the Markdown source, not what a viewer shows: `\*` renders as `*`.
++- S-8: the cut counts code points, so an emoji is never split. A food's detail is its name and its
++  date: the name is cut first, so the date that locates it stays.
++- S-9: the size is the ZIP entry's declared size (the reader already checks every entry against its
++  declared size and CRC in pieces, so nothing is held in memory before this check).
++- S-12: the policy is set after the caller's init, so no caller can turn it off by accident.
++
++Our design differences / decisions:
++- S-3: a new address problem, `ipv6Loopback`, rather than folding `[::1]` into `plainHttp`: the
++  fix for the person is different (another spelling of this device, not https).
++- S-6: no count of dropped thumbnails: the restore result has no count of anything left out
++  (`BackupSummary` counts what is restored), and the prompt asks for one only if it exists.
++- S-9: refused as a damaged backup (`BackupArchiveError` `payloadTooLarge` → `damaged`), the same
++  words a person sees for any file that does not read back; our own backups are far below the cap.
++- S-15: `pnpm audit` runs right after Install and before Lint, so a new high advisory fails fast.
++- D-16.26's loopback list changes (`localhost`, `127.0.0.1`): written up for the lead as
++  D-16.NEW; `docs/plan/**` is not edited here.
++
++Tests we will write:
++- `src/app/InstallPrompt.test.tsx`: the exact-directives test without `[::1]` and with
++  `form-action 'none'`.
++- `src/ai/endpoint.test.ts`: `[::1]` refused as `ipv6Loopback`, the others still accepted.
++- `src/features/ai-setup/ProviderForm.test.tsx`: the refusal shows its hint.
++- `src/services/backup/restore.test.ts`: a crafted `text/html` thumbnail is dropped, the message
++  and a JPEG thumbnail kept.
++- `src/services/backup/archive.test.ts`: a payload entry declaring 256 MiB + 1 is refused without
++  reading its bytes (a stubbed entry size); exactly 256 MiB is not refused for its size.
++- `src/services/transfer/exportFormats.test.ts`: the new characters escaped.
++- `src/services/transfer/importDiary.test.ts`: a long name, meal and date cut to 40 characters.
++- `src/ai/transport.test.ts`, `src/services/barcode/http.test.ts`: the init carries
++  `referrerPolicy: 'no-referrer'`.
++
++Compare checklist (filled after the rewrite; no reference file to reopen):
++- [x] S-3 CSP (tested in `src/app/InstallPrompt.test.tsx` > index.html > carries the CSP with
++      exactly these directives, before anything loads (ACC-L6-1))
++- [x] S-3 address check (tested in `src/ai/endpoint.test.ts` > checkServerUrl: which addresses can
++      be saved (D-16.26, R03.3) > refuses [::1], which the CSP cannot allow, with a hint to use
++      localhost or 127.0.0.1)
++- [x] S-5 (same CSP test)
++- [x] S-6 (tested in `src/services/backup/restore.test.ts` > inspectBackup and applyBackup > drops
++      a Coach thumbnail that is not a JPEG, PNG or WebP image, and keeps its message (S-6); fails
++      with the type check taken out)
++- [x] S-7 (tested in `src/services/transfer/exportFormats.test.ts`)
++- [x] S-8 (tested in `src/services/transfer/importDiary.test.ts`)
++- [x] S-9 (tested in `src/services/backup/archive.test.ts`)
++- [x] S-12 (tested in `src/ai/transport.test.ts` and `src/services/barcode/http.test.ts`)
++- [x] S-15 (`.github/workflows/ci.yml`; the command run here: "No known vulnerabilities found")
++- Deliberate differences: none against the reference (nothing to compare).
++- Not taken: S-4 (hosting headers) stays open for the release checklist (P10-14).
++
++## Status
++
++Done (2026-10-27). Lines changed outside the task's files: `src/features/ai-setup/ProviderForm.tsx`
++and `src/i18n/en/aiSetup.ts` (the words for the new address refusal),
++`src/features/ai-setup/ProviderForm.test.tsx` (one case). Handed to the lead: the D-16.NEW text
++for S-3 (in the final report).
+diff --git a/index.html b/index.html
+index 2483be1..47ef728 100644
+--- a/index.html
++++ b/index.html
+@@ -4,7 +4,7 @@
+     <meta charset="UTF-8" />
+     <meta
+       http-equiv="Content-Security-Policy"
+-      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data: https://images.openfoodfacts.org; connect-src 'self' https: http://localhost:* http://127.0.0.1:* http://[::1]:*; worker-src 'self'; object-src 'none'; base-uri 'none'"
++      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data: https://images.openfoodfacts.org; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'"
+     />
+     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+     <meta name="theme-color" content="#09120d" />
+diff --git a/src/ai/endpoint.test.ts b/src/ai/endpoint.test.ts
+index 62399df..a99a055 100644
+--- a/src/ai/endpoint.test.ts
++++ b/src/ai/endpoint.test.ts
+@@ -22,23 +22,33 @@ describe('checkServerUrl: which addresses can be saved (D-16.26, R03.3)', () =>
+     expect(checkServerUrl(' https://gpu-box.example.org/openai/v1 ').ok).toBe(true);
+   });
+ 
+-  it('accepts plain http to this device: localhost, 127.0.0.1 and [::1]', () => {
++  it('accepts plain http to this device: localhost and 127.0.0.1', () => {
+     expect(checkServerUrl('http://localhost:11434/v1/')).toEqual({
+       ok: true,
+       value: { url: 'http://localhost:11434/v1' },
+     });
+     for (const url of [
+       'http://127.0.0.1:8080/v1',
+-      'http://[::1]:11434/v1',
+       'HTTP://LOCALHOST:11434/v1',
+-      // The URL parser writes these as 127.0.0.1 and [::1].
++      // The URL parser writes this as 127.0.0.1.
+       'http://127.1:11434/v1',
+-      'http://[0:0:0:0:0:0:0:1]/v1',
+     ]) {
+       expect(checkServerUrl(url).ok, url).toBe(true);
+     }
+   });
+ 
++  it('refuses [::1], which the CSP cannot allow, with a hint to use localhost or 127.0.0.1', () => {
++    for (const url of [
++      'http://[::1]:11434/v1',
++      // The URL parser writes this as [::1].
++      'http://[0:0:0:0:0:0:0:1]/v1',
++    ]) {
++      expect(checkServerUrl(url), url).toEqual({ ok: false, error: 'ipv6Loopback' });
++    }
++    // Over https it is an address like any other.
++    expect(checkServerUrl('https://[::1]:11434/v1').ok).toBe(true);
++  });
++
+   it('refuses plain http to the local network or the internet, with the reason', () => {
+     for (const url of [
+       'http://192.168.1.5:11434/v1',
+diff --git a/src/ai/endpoint.ts b/src/ai/endpoint.ts
+index de67b0f..6e13237 100644
+--- a/src/ai/endpoint.ts
++++ b/src/ai/endpoint.ts
+@@ -31,15 +31,24 @@ function canonical(text: string): string {
+   }
+ }
+ 
+-/** The hosts plain http may reach: this device only, as the URL parser writes them. */
+-const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1', '[::1]']);
++/**
++ * The hosts plain http may reach: this device only, as the URL parser writes them. Not `[::1]`:
++ * a CSP source cannot name an IPv6 address, so the page's `connect-src` could never let a request
++ * to it through (S-3).
++ */
++const LOOPBACK_HOSTS: ReadonlySet<string> = new Set(['localhost', '127.0.0.1']);
++
++/** This device as an IPv6 address, as the URL parser writes it. */
++const IPV6_LOOPBACK = '[::1]';
+ 
+ /**
+  * Why an address cannot be saved: nothing typed; not an address (or one carrying a query or
+  * fragment, which the appended path would break); a user name or password inside it (`fetch`
+- * refuses those); a scheme other than http and https; plain http to another machine.
++ * refuses those); a scheme other than http and https; plain http to another machine; plain http
++ * to this device written as `[::1]` (type `localhost` or `127.0.0.1` instead).
+  */
+-export type UrlProblem = 'empty' | 'malformed' | 'credentials' | 'scheme' | 'plainHttp';
++export type UrlProblem =
++  'empty' | 'malformed' | 'credentials' | 'scheme' | 'plainHttp' | 'ipv6Loopback';
+ 
+ /** Advice that does not block saving: Ollama's OpenAI-compatible API lives under `/v1`. */
+ export type UrlHint = 'addV1';
+@@ -52,8 +61,8 @@ export interface CheckedUrl {
+ 
+ /**
+  * Checks a server address before it is saved: https to any host, plain http only to
+- * `localhost`, `127.0.0.1` or `[::1]`. For Ollama, an address whose path does not end in `/v1`
+- * is accepted with the `addV1` hint.
++ * `localhost` or `127.0.0.1`. For Ollama, an address whose path does not end in `/v1` is accepted
++ * with the `addV1` hint.
+  */
+ export function checkServerUrl(
+   text: string,
+@@ -72,6 +81,7 @@ export function checkServerUrl(
+   }
+   if (parsed.username !== '' || parsed.password !== '') return err('credentials');
+   if (parsed.protocol === 'http:') {
++    if (parsed.hostname === IPV6_LOOPBACK) return err('ipv6Loopback');
+     if (!LOOPBACK_HOSTS.has(parsed.hostname)) return err('plainHttp');
+   } else if (parsed.protocol !== 'https:') {
+     return err('scheme');
+diff --git a/src/ai/transport.test.ts b/src/ai/transport.test.ts
+index 291fab0..bc40637 100644
+--- a/src/ai/transport.test.ts
++++ b/src/ai/transport.test.ts
+@@ -97,6 +97,21 @@ describe('send: any 2xx is a success (R03.26)', () => {
+   });
+ });
+ 
++describe('send: no Referer (S-12)', () => {
++  it('asks the browser to send no Referer, whatever the caller passed', async () => {
++    useFakeTime(START);
++    const { fake, deadline } = setup([{ json: {} }, { json: {} }]);
++    const fetch = vi.fn(fake.fetch);
++
++    await send(CHAT, REQUEST, deadline, 75_000, { fetch });
++    await send(CHAT, { ...REQUEST, referrerPolicy: 'unsafe-url' }, deadline, 75_000, { fetch });
++
++    const policies = fetch.mock.calls.map(([, init]) => init?.referrerPolicy);
++    expect(policies).toEqual(['no-referrer', 'no-referrer']);
++    expect(fake.requests).toHaveLength(2);
++  });
++});
++
+ describe('send: Cancel and the time limits (R03.6)', () => {
+   it('reports Cancel during the body read as cancelled, not offline', async () => {
+     useFakeTime(START);
+diff --git a/src/ai/transport.ts b/src/ai/transport.ts
+index bed001b..5800524 100644
+--- a/src/ai/transport.ts
++++ b/src/ai/transport.ts
+@@ -2,8 +2,8 @@
+  * The one place that calls `fetch` for AI (the P00-07 lint allows only this file). A request
+  * runs under the action's deadline plus its own attempt cap (D-16.60), any 2xx is a success
+  * (R03.26), the body is read as text for the adapters and the classifier, and a request that got
+- * no reply becomes one failure kind (R03.2, R03.6). Headers and bodies are never logged: they
+- * carry keys and the person's food.
++ * no reply becomes one failure kind (R03.2, R03.6). Requests carry no Referer (S-12). Headers and
++ * bodies are never logged: they carry keys and the person's food.
+  */
+ import { timeoutError, type Deadline, type StopCause } from './deadline';
+ import { fromNetwork, type SingleFailure } from './errors';
+@@ -71,7 +71,12 @@ export async function send(
+       : undefined;
+ 
+   try {
+-    const response = await fetchImpl(url, { ...init, signal: attempt.signal });
++    // No Referer: a provider has no need to learn which page sent the request (S-12).
++    const response = await fetchImpl(url, {
++      ...init,
++      referrerPolicy: 'no-referrer',
++      signal: attempt.signal,
++    });
+     const body = await response.text();
+     return ok({ status: response.status, ok: isSuccess(response.status), body });
+   } catch (error) {
+diff --git a/src/app/App.tsx b/src/app/App.tsx
+index aa53e53..27fc94e 100644
+--- a/src/app/App.tsx
++++ b/src/app/App.tsx
+@@ -9,6 +9,7 @@ import { useOptionalServices } from '../services/context';
+ import { ToastProvider } from '../ui/Toast';
+ import { appState as sharedAppState, AppStateContext, type AppStateStore } from './appState';
+ import { Boot } from './Boot';
++import { DamagedDataNotice } from './DamagedDataNotice';
+ import { ErrorBoundary } from './ErrorBoundary';
+ import { InstallPrompt } from './InstallPrompt';
+ import { onDemand } from './onDemand';
+@@ -78,6 +79,8 @@ function Shell() {
+   return (
+     <div className={styles.shell}>
+       <main className={styles.content} data-ui="shell.content">
++        {/* Some saved data could not be read and was kept aside (K9), above the screen. */}
++        <DamagedDataNotice />
+         {/* A waiting update (P09-17) and the install card (P09-18), above the screen. */}
+         <UpdateBanner />
+         <InstallPrompt />
+diff --git a/src/app/DamagedDataNotice.test.tsx b/src/app/DamagedDataNotice.test.tsx
+new file mode 100644
+index 0000000..60c35bd
+--- /dev/null
++++ b/src/app/DamagedDataNotice.test.tsx
+@@ -0,0 +1,162 @@
++import { act, render, screen } from '@testing-library/react';
++import userEvent from '@testing-library/user-event';
++import { Dexie } from 'dexie';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { DataProvider, type DataSources } from '../data/DataProvider';
++import { decodeEntry } from '../data/codecs';
++import {
++  UNREADABLE_FLAG,
++  clearUnreadableFlag,
++  hasUnreadableData,
++  readAll,
++  settleQuarantine,
++} from '../data/guard';
++import type { PlatewiseDb } from '../data/schema';
++import { shell } from '../i18n/en/shell';
++import { fixedClock } from '../lib/clock';
++import { ServicesProvider, type Services } from '../services/context';
++import { createDamagedDataService, type DamagedDataService } from '../services/damagedData';
++import { countRuns, openTestDb, type CountedQuery } from '../test/db';
++import { FACTORY_NOW, makeEntry } from '../test/factories';
++import { untilGone, untilShown } from '../test/screenHarness';
++import { DamagedDataNotice } from './DamagedDataNotice';
++
++const words = shell.shell.damagedData;
++const NOTICE = '[data-ui="shell.damagedData"]';
++const clock = fixedClock(FACTORY_NOW, 'America/New_York');
++
++const opened: Array<{ db: PlatewiseDb; flag: CountedQuery<[], boolean> }> = [];
++
++afterEach(async () => {
++  for (const { db, flag } of opened.splice(0)) {
++    await settleQuarantine(db);
++    flag.close();
++    db.close();
++  }
++});
++
++/** The flag as the app reads it, through a Dexie chain so its runs can be counted. */
++async function setUp() {
++  const { db } = await openTestDb();
++  const flag = countRuns(() => db.meta.get(UNREADABLE_FLAG).then((row) => row?.value === true));
++  opened.push({ db, flag });
++  return { db, flag };
++}
++
++/** Puts an unreadable entry beside a good one and lets the guard set it aside, as a read would. */
++async function damage(db: PlatewiseDb): Promise<void> {
++  await db.table('entries').bulkPut([makeEntry({ id: 'good' }), { id: 'broken', kcal: 'lots' }]);
++  await readAll(db, 'entries', decodeEntry);
++  await settleQuarantine(db);
++}
++
++/** Only what the notice reads; every other read never finishes (the notice never asks). */
++function sourcesOver(flag: CountedQuery<[], boolean>): DataSources {
++  const unused = () => new Dexie.Promise<never>(() => {});
++  return {
++    profileRepo: { get: unused },
++    settingsRepo: { snapshot: unused, loaded: unused() },
++    diaryRepo: { byDay: unused, between: unused },
++    waterRepo: { byDay: unused },
++    fastRepo: { between: unused, active: unused },
++    weightRepo: { between: unused },
++    bodyFatRepo: { between: unused },
++    savedMealsRepo: { list: unused },
++    coachRepo: { list: unused },
++    unreadableFlag: flag.query,
++    clock,
++  };
++}
++
++function servicesWith(damagedData: DamagedDataService): Services {
++  return {
++    diary: { logEntry: vi.fn(), deleteEntry: vi.fn() },
++    onboarding: { complete: vi.fn() },
++    aiSetup: {
++      saveChoice: vi.fn(),
++      savedKeyMask: vi.fn(),
++      setTermsAccepted: vi.fn(),
++      setUpLater: vi.fn(),
++    },
++    planBuilder: { build: vi.fn() },
++    damagedData,
++    clock,
++  };
++}
++
++function mount(flag: CountedQuery<[], boolean>, damagedData: DamagedDataService) {
++  return render(
++    <ServicesProvider services={servicesWith(damagedData)}>
++      <DataProvider sources={sourcesOver(flag)}>
++        <DamagedDataNotice />
++      </DataProvider>
++    </ServicesProvider>,
++  );
++}
++
++const serviceOver = (db: PlatewiseDb) =>
++  createDamagedDataService({ clearFlag: () => clearUnreadableFlag(db) });
++
++describe('DamagedDataNotice', () => {
++  it('draws nothing while no stored data has been set aside, and shows the notice once some has (R06.1, ACC-K9-2)', async () => {
++    const { db, flag } = await setUp();
++    mount(flag, serviceOver(db));
++    await act(() => flag.untilRuns(1));
++    expect(document.querySelector(NOTICE)).toBeNull();
++
++    await act(() => damage(db));
++    await untilShown(NOTICE);
++    const notice = screen.getByRole('status');
++    expect(notice).toHaveAttribute('data-ui', 'shell.damagedData');
++    expect(notice).toHaveTextContent(words.title);
++    expect(notice).toHaveTextContent(words.body);
++    expect(screen.getByRole('button', { name: words.dismiss })).toHaveAttribute(
++      'data-ui',
++      'shell.damagedData.dismiss',
++    );
++  });
++
++  it('clears the flag on Dismiss, and stays gone after the live state is read again (R06.1, ACC-K9-2)', async () => {
++    const user = userEvent.setup();
++    const { db, flag } = await setUp();
++    await damage(db);
++    const first = mount(flag, serviceOver(db));
++    await untilShown(NOTICE);
++
++    await user.click(screen.getByRole('button', { name: words.dismiss }));
++    await untilGone(NOTICE);
++    expect(await hasUnreadableData(db)).toBe(false);
++    // The damaged row is still there, and its copy is still aside.
++    expect(await db.entries.get('broken')).toEqual({ id: 'broken', kcal: 'lots' });
++    expect(await db.quarantine.count()).toBe(1);
++
++    // The same damaged row is read again, and the notice is drawn afresh over the live state.
++    first.unmount();
++    await damage(db);
++    const runs = flag.runs();
++    mount(flag, serviceOver(db));
++    await act(() => flag.untilRuns(runs + 1));
++    expect(document.querySelector(NOTICE)).toBeNull();
++    expect(await hasUnreadableData(db)).toBe(false);
++  });
++
++  it('keeps the notice when the flag cannot be cleared, and says so in the console', async () => {
++    const user = userEvent.setup();
++    const { db, flag } = await setUp();
++    await damage(db);
++    const failure = new DOMException('The quota has been exceeded', 'QuotaExceededError');
++    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
++    mount(flag, { dismiss: () => Promise.reject(failure) });
++    await untilShown(NOTICE);
++
++    await user.click(screen.getByRole('button', { name: words.dismiss }));
++    expect(logged).toHaveBeenCalledWith(expect.stringContaining('Platewise'), failure);
++    expect(document.querySelector(NOTICE)).not.toBeNull();
++    expect(await hasUnreadableData(db)).toBe(true);
++  });
++
++  it('draws nothing, and reads nothing, without the service', () => {
++    const { container } = render(<DamagedDataNotice />);
++    expect(container).toBeEmptyDOMElement();
++  });
++});
+diff --git a/src/app/DamagedDataNotice.tsx b/src/app/DamagedDataNotice.tsx
+new file mode 100644
+index 0000000..2191351
+--- /dev/null
++++ b/src/app/DamagedDataNotice.tsx
+@@ -0,0 +1,43 @@
++import { useUnreadableFlag } from '../data/hooks';
++import { t } from '../i18n/t';
++import { useOptionalServices } from '../services/context';
++import type { DamagedDataService } from '../services/damagedData';
++import { Button } from '../ui/Button';
++import styles from './notices.module.css';
++
++/**
++ * "Some saved data could not be read" (K9, R06.1): above the screen, like the update banner,
++ * while the record guard has kept something aside, until Dismiss. It follows the live flag, so a
++ * Dismiss in another tab takes it away here too. Nothing is drawn while the flag is down, still
++ * being read or unreadable, or without the service (screens tested without one).
++ */
++export function DamagedDataNotice() {
++  const damagedData = useOptionalServices()?.damagedData;
++  return damagedData ? <Notice service={damagedData} /> : null;
++}
++
++function Notice({ service }: { readonly service: DamagedDataService }) {
++  const flag = useUnreadableFlag();
++  if (flag.status !== 'ready' || !flag.value) return null;
++
++  // The live flag takes the notice away once the write is in; on a refusal it stays.
++  const dismiss = (): void => {
++    service.dismiss().catch((error: unknown) => {
++      console.error('Platewise: the damaged-data notice could not be dismissed', error);
++    });
++  };
++
++  return (
++    <div className={styles.notice} role="status" data-ui="shell.damagedData">
++      <div className={styles.text}>
++        <p className={styles.title}>{t('shell.damagedData.title')}</p>
++        <p className={styles.body}>{t('shell.damagedData.body')}</p>
++      </div>
++      <div className={styles.actions}>
++        <Button variant="quiet" data-ui="shell.damagedData.dismiss" onClick={dismiss}>
++          {t('shell.damagedData.dismiss')}
++        </Button>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/InstallPrompt.test.tsx b/src/app/InstallPrompt.test.tsx
+index 8e1efd4..fa3707a 100644
+--- a/src/app/InstallPrompt.test.tsx
++++ b/src/app/InstallPrompt.test.tsx
+@@ -265,16 +265,13 @@ describe('index.html', () => {
+       'script-src': ["'self'", "'wasm-unsafe-eval'"],
+       'style-src': ["'self'"],
+       'img-src': ["'self'", 'blob:', 'data:', 'https://images.openfoodfacts.org'],
+-      'connect-src': [
+-        "'self'",
+-        'https:',
+-        'http://localhost:*',
+-        'http://127.0.0.1:*',
+-        'http://[::1]:*',
+-      ],
++      // No IPv6 loopback: a CSP source cannot name one (S-3).
++      'connect-src': ["'self'", 'https:', 'http://localhost:*', 'http://127.0.0.1:*'],
+       'worker-src': ["'self'"],
+       'object-src': ["'none'"],
+       'base-uri': ["'none'"],
++      // Every form is handled in script; none may post anywhere (S-5).
++      'form-action': ["'none'"],
+     });
+     // Only the charset comes before it, so the policy covers every link and script.
+     expect(meta.previousElementSibling?.getAttribute('charset')).toBe('UTF-8');
+diff --git a/src/data/guard.test.ts b/src/data/guard.test.ts
+index a78242d..3f4db17 100644
+--- a/src/data/guard.test.ts
++++ b/src/data/guard.test.ts
+@@ -6,6 +6,7 @@ import { decodeEntry, decodeProfile } from './codecs';
+ import {
+   UNREADABLE_FLAG,
+   WriteBlockedError,
++  clearUnreadableFlag,
+   decodeRows,
+   fingerprint,
+   hasUnreadableData,
+@@ -273,6 +274,44 @@ describe('keepAside', () => {
+   });
+ });
+ 
++describe('clearUnreadableFlag', () => {
++  it('lowers the flag, keeps the copies aside, and stays down until something new is set aside (R06.1)', async () => {
++    const { db } = await openTestDb();
++    const broken = { id: 'b', kcal: 'many' };
++    await plant(db, 'entries', [makeEntry({ id: 'a' }), broken]);
++    await readAll(db, 'entries', decodeEntry);
++    await settleQuarantine(db);
++    expect(await hasUnreadableData(db)).toBe(true);
++
++    await clearUnreadableFlag(db);
++    expect(await hasUnreadableData(db)).toBe(false);
++    expect(await db.meta.get(UNREADABLE_FLAG)).toBeUndefined();
++    expect(await db.quarantine.count()).toBe(1);
++    expect(await db.entries.get('b')).toEqual(broken);
++
++    // The same damaged row, read again: its copy is already aside, so the flag stays down.
++    await readAll(db, 'entries', decodeEntry);
++    await readOne(db, 'entries', 'b', decodeEntry);
++    await settleQuarantine(db);
++    expect(await hasUnreadableData(db)).toBe(false);
++
++    // Something newly damaged raises it again.
++    await plant(db, 'entries', [{ id: 'c', name: 'half' }]);
++    await readAll(db, 'entries', decodeEntry);
++    await settleQuarantine(db);
++    expect(await hasUnreadableData(db)).toBe(true);
++    expect(await db.quarantine.count()).toBe(2);
++    db.close();
++  });
++
++  it('does nothing when the flag is not set', async () => {
++    const { db } = await openTestDb();
++    await clearUnreadableFlag(db);
++    expect(await hasUnreadableData(db)).toBe(false);
++    db.close();
++  });
++});
++
+ describe('fingerprint', () => {
+   it('is the same for equal values in any key order', () => {
+     expect(fingerprint({ a: 1, b: [1, 'x', null] })).toBe(fingerprint({ b: [1, 'x', null], a: 1 }));
+diff --git a/src/data/guard.ts b/src/data/guard.ts
+index 4ab56e9..ef4e86d 100644
+--- a/src/data/guard.ts
++++ b/src/data/guard.ts
+@@ -2,7 +2,8 @@
+ // never overwritten or deleted while it is the only copy. Reads drop unreadable rows from their
+ // results but leave them in their table and copy them into `quarantine`; a write or delete over an
+ // unreadable record copies it first, in the same transaction, and is refused when that copy fails.
+-// Whenever anything is dropped or kept aside, `meta.unreadableData` is set for the banner (K9).
++// Whenever a raw value is newly kept aside, `meta.unreadableData` is set for the notice (K9); the
++// notice's Dismiss clears it, and reading the same damaged row again does not set it again.
+ 
+ import { systemClock, type Clock } from '../lib/clock';
+ import { isBlobLike, type Codec } from './codecs';
+@@ -161,13 +162,15 @@ async function copyAside(
+     .equals(table)
+     .filter((row) => row.key === key && row.hash === hash)
+     .count();
+-  if (copies === 0) await db.quarantine.add({ table, key, at, raw, hash });
++  if (copies > 0) return;
++  await db.quarantine.add({ table, key, at, raw, hash });
+   await raiseFlag(db);
+ }
+ 
+ /**
+- * Copies an unreadable raw value into `quarantine` (once per value) and sets the flag. Joins the
+- * caller's read-write transaction when there is one; it must include `GUARD_TABLES`.
++ * Copies an unreadable raw value into `quarantine` once per value, setting the flag when the copy
++ * is new. Joins the caller's read-write transaction when there is one; it must include
++ * `GUARD_TABLES`.
+  */
+ export function keepAside(
+   db: PlatewiseDb,
+@@ -332,8 +335,16 @@ export async function removeRows<T>(
+   });
+ }
+ 
+-/** True once anything has been dropped or kept aside. */
++/** True once anything has been kept aside, until `clearUnreadableFlag`. */
+ export async function hasUnreadableData(db: PlatewiseDb): Promise<boolean> {
+   const row = await db.meta.get(UNREADABLE_FLAG);
+   return row?.value === true;
+ }
++
++/**
++ * Lowers the flag once the person has seen the notice. The damaged rows stay in their tables and
++ * their copies in `quarantine`; only a value not kept aside before raises the flag again.
++ */
++export async function clearUnreadableFlag(db: PlatewiseDb): Promise<void> {
++  await db.meta.delete(UNREADABLE_FLAG);
++}
+diff --git a/src/features/ai-setup/ProviderForm.test.tsx b/src/features/ai-setup/ProviderForm.test.tsx
+index 7ee5bd2..a2fd29d 100644
+--- a/src/features/ai-setup/ProviderForm.test.tsx
++++ b/src/features/ai-setup/ProviderForm.test.tsx
+@@ -118,6 +118,21 @@ describe('ProviderForm', () => {
+     expect(field).not.toBeInvalid();
+   });
+ 
++  it('refuses http://[::1]:11434/v1 and suggests localhost or 127.0.0.1 (S-3, D-16.26)', async () => {
++    const user = userEvent.setup();
++    render(<Harness start={withProvider('ollama', 'image')} />);
++
++    const field = serverField()!;
++    await user.clear(field);
++    await user.paste('http://[::1]:11434/v1');
++
++    expect(field).toBeInvalid();
++    expect(field).toHaveAccessibleDescription(
++      expect.stringContaining(words.server.problem.ipv6Loopback),
++    );
++    expect(screen.getByText(words.server.problem.ipv6Loopback)).toBeVisible();
++  });
++
+   it('accepts an Ollama address without /v1 with a hint to add it (R03.22)', async () => {
+     const user = userEvent.setup();
+     render(<Harness start={withProvider('ollama', 'image')} />);
+diff --git a/src/features/ai-setup/ProviderForm.tsx b/src/features/ai-setup/ProviderForm.tsx
+index 60b0b05..ea2630a 100644
+--- a/src/features/ai-setup/ProviderForm.tsx
++++ b/src/features/ai-setup/ProviderForm.tsx
+@@ -16,6 +16,7 @@ const URL_PROBLEM_KEYS: Readonly<Record<Exclude<UrlProblem, 'empty'>, TKey>> = {
+   credentials: 'aiSetup.server.problem.credentials',
+   scheme: 'aiSetup.server.problem.scheme',
+   plainHttp: 'aiSetup.server.problem.plainHttp',
++  ipv6Loopback: 'aiSetup.server.problem.ipv6Loopback',
+ };
+ 
+ const SERVER_HELP_KEYS: Readonly<Partial<Record<ProviderId, TKey>>> = {
+diff --git a/src/i18n/en/aiSetup.ts b/src/i18n/en/aiSetup.ts
+index ef38643..b36bb50 100644
+--- a/src/i18n/en/aiSetup.ts
++++ b/src/i18n/en/aiSetup.ts
+@@ -34,6 +34,8 @@ export const aiSetup = {
+         scheme: 'Use an address that starts with https:// (http:// only for this device).',
+         plainHttp:
+           'Plain http only works for this device (localhost). For a server on another machine, use its https address: over http your key would travel unencrypted.',
++        ipv6Loopback:
++          'For this device, type localhost or 127.0.0.1 instead of [::1]: the browser does not let Platewise reach [::1].',
+       },
+     },
+     key: {
+diff --git a/src/i18n/en/shell.ts b/src/i18n/en/shell.ts
+index e5be79e..4201d49 100644
+--- a/src/i18n/en/shell.ts
++++ b/src/i18n/en/shell.ts
+@@ -4,7 +4,7 @@ import type { MessageTree } from '../catalogue';
+  * Words of the app shell (src/app): the tab bar's name, the start-up skeleton, the card shown
+  * when the stored data cannot be opened and the card shown after a crash. The tab names
+  * themselves are shared words, in `common.tabs`. Also the update banner and the install card
+- * (P09-17, P09-18).
++ * (P09-17, P09-18), and the notice that some saved data could not be read (K9).
+  */
+ export const shell = {
+   shell: {
+@@ -35,5 +35,10 @@ export const shell = {
+       iosBody: 'In Safari, tap Share, then Add to Home Screen.',
+       gotIt: 'Got it',
+     },
++    damagedData: {
++      title: 'Some saved data could not be read',
++      body: 'It was kept aside on this device, not deleted. The rest of your data shows as usual.',
++      dismiss: 'Dismiss',
++    },
+   },
+ } as const satisfies MessageTree;
+diff --git a/src/main.tsx b/src/main.tsx
+index f09a385..2675c0f 100644
+--- a/src/main.tsx
++++ b/src/main.tsx
+@@ -14,7 +14,7 @@ import { documentVisibility } from './app/useTuneUp';
+ import { appBus } from './data/bus';
+ import { DataProvider, type DataSources } from './data/DataProvider';
+ import { openDb } from './data/db';
+-import { hasUnreadableData } from './data/guard';
++import { clearUnreadableFlag, hasUnreadableData } from './data/guard';
+ import { createBackupRepo } from './data/repos/backupRepo';
+ import { createBodyFatRepo } from './data/repos/bodyFatRepo';
+ import { createCoachRepo } from './data/repos/coachRepo';
+@@ -43,6 +43,7 @@ import { createCaptureDraftService } from './services/captureDrafts';
+ import { createCoachSession } from './services/coach/session';
+ import { createCombineService } from './services/combine';
+ import { createCopyDayService } from './services/copyDay';
++import { createDamagedDataService } from './services/damagedData';
+ import { ServicesProvider, type Services } from './services/context';
+ import { createAiAccess } from './services/aiAccess';
+ import { createDiaryService } from './services/diary';
+@@ -327,6 +328,8 @@ async function start(): Promise<void> {
+       erase: () => eraseEverything({ db }),
+     }),
+     storageNudge,
++    // The "some saved data could not be read" notice's Dismiss (K9).
++    damagedData: createDamagedDataService({ clearFlag: () => clearUnreadableFlag(db) }),
+     clock: systemClock,
+   };
+   const data: DataSources = {
+diff --git a/src/services/backup/archive.test.ts b/src/services/backup/archive.test.ts
+index c0168b0..5a04b3a 100644
+--- a/src/services/backup/archive.test.ts
++++ b/src/services/backup/archive.test.ts
+@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
+ import { bytesOf, storableBlob } from '../../test/blobs';
+ import {
+   BackupArchiveError,
++  MAX_PAYLOAD_BYTES,
+   MAX_PHOTO_NAME,
+   PAYLOAD_ENTRY,
+   isSafePhotoName,
+@@ -10,7 +11,13 @@ import {
+   unpackBackup,
+   type BackupArchiveProblem,
+ } from './archive';
+-import { ZipError, readZip, writeZip, type ZipInput } from './zip';
++import { ZipError, readZip, writeZip, type ZipEntry, type ZipInput } from './zip';
++
++// The real reader, which a test can stand in for once (S-9: an entry size no test file could have).
++vi.mock('./zip', async (importOriginal) => {
++  const real = await importOriginal<typeof import('./zip')>();
++  return { ...real, readZip: vi.fn(real.readZip) };
++});
+ 
+ const MADE_AT = Date.UTC(2026, 9, 27, 9, 30);
+ const encode = (text: string) => new TextEncoder().encode(text);
+@@ -263,6 +270,33 @@ describe('packBackup and unpackBackup', () => {
+     }
+   });
+ 
++  it('refuses a payload.json declared over 256 MiB before reading it (S-9)', async () => {
++    const read = vi.fn(() => Promise.resolve(new ArrayBuffer(0)));
++    const declared = (size: number, data: Blob): ZipEntry => ({
++      name: PAYLOAD_ENTRY,
++      size,
++      crc32: 0,
++      data,
++    });
++    const huge = { size: MAX_PAYLOAD_BYTES + 1, type: '', arrayBuffer: read } as unknown as Blob;
++    vi.mocked(readZip).mockResolvedValueOnce([declared(MAX_PAYLOAD_BYTES + 1, huge)]);
++
++    expect(await problemOf(unpackBackup(new Blob()))).toEqual({
++      problem: 'payloadTooLarge',
++      entry: PAYLOAD_ENTRY,
++    });
++    expect(read).not.toHaveBeenCalled();
++    expect(MAX_PAYLOAD_BYTES).toBe(256 * 1024 * 1024);
++
++    // At the limit the document is read as usual.
++    const text = new Blob([encode(JSON.stringify(DOCUMENT))]);
++    vi.mocked(readZip).mockResolvedValueOnce([declared(MAX_PAYLOAD_BYTES, text)]);
++    await expect(unpackBackup(new Blob())).resolves.toMatchObject({
++      document: DOCUMENT,
++      documentBytes: MAX_PAYLOAD_BYTES,
++    });
++  });
++
+   it('fails the CRC of a file with one flipped byte before handing out anything', async () => {
+     const file = await packBackup({
+       document: DOCUMENT,
+diff --git a/src/services/backup/archive.ts b/src/services/backup/archive.ts
+index 0104e82..649a1b9 100644
+--- a/src/services/backup/archive.ts
++++ b/src/services/backup/archive.ts
+@@ -15,6 +15,12 @@ export const PAYLOAD_ENTRY = 'payload.json';
+ export const PHOTO_FOLDER = 'photos/';
+ export const MAX_PHOTO_NAME = 128;
+ 
++/**
++ * The largest `payload.json` a restore reads into memory: 256 MiB, far above any real backup
++ * (photos travel as entries of their own). A larger one is refused by its declared size (S-9).
++ */
++export const MAX_PAYLOAD_BYTES = 256 * 1024 * 1024;
++
+ /** Photo extensions a backup carries, with the type a restored photo gets. */
+ const PHOTO_TYPES: Readonly<Record<string, string>> = {
+   jpg: 'image/jpeg',
+@@ -34,13 +40,16 @@ export type BackupArchiveProblem =
+   /** Reading: the file has no `payload.json`. */
+   | 'noPayload'
+   /** Reading: `payload.json` is not UTF-8 JSON. */
+-  | 'badPayload';
++  | 'badPayload'
++  /** Reading: `payload.json` is larger than `MAX_PAYLOAD_BYTES`. */
++  | 'payloadTooLarge';
+ 
+ const PROBLEM_TEXT: Readonly<Record<BackupArchiveProblem, string>> = {
+   unsafeName: 'not a plain photo name',
+   duplicateName: 'two entries share a name',
+   noPayload: 'the file has no backup document',
+   badPayload: 'the backup document is not JSON',
++  payloadTooLarge: 'the backup document is too large to read',
+ };
+ 
+ export class BackupArchiveError extends Error {
+@@ -160,8 +169,9 @@ async function readDocument(entry: ZipEntry): Promise<unknown> {
+ /**
+  * Reads a backup file: every entry is read to the end and CRC checked first (`readZip`), so a
+  * damaged file fails before anything is used. Throws `ZipError` for a file that is not a readable
+- * stored ZIP and `BackupArchiveError` when the payload is missing or not JSON, or when the payload
+- * or a plain photo name appears twice. Other entries are skipped and listed.
++ * stored ZIP and `BackupArchiveError` when the payload is missing, larger than
++ * `MAX_PAYLOAD_BYTES` or not JSON, or when the payload or a plain photo name appears twice. Other
++ * entries are skipped and listed.
+  */
+ export async function unpackBackup(file: Blob): Promise<UnpackedBackup> {
+   const entries = await readZip(file);
+@@ -192,6 +202,10 @@ export async function unpackBackup(file: Blob): Promise<UnpackedBackup> {
+   }
+ 
+   if (payload === null) throw new BackupArchiveError('noPayload');
++  // By its declared size, before a byte of it is held in memory.
++  if (payload.size > MAX_PAYLOAD_BYTES) {
++    throw new BackupArchiveError('payloadTooLarge', PAYLOAD_ENTRY);
++  }
+   return {
+     document: await readDocument(payload),
+     documentBytes: payload.size,
+diff --git a/src/services/backup/payload.ts b/src/services/backup/payload.ts
+index 9ca15a5..6cad7d5 100644
+--- a/src/services/backup/payload.ts
++++ b/src/services/backup/payload.ts
+@@ -8,15 +8,17 @@
+ //
+ // The document: `{format, version, exportedAt, appVersion, contentHash, payload: {tables}}`, with
+ // `tables` holding one list of rows per table the backup carries. Blobs inside rows (a Coach
+-// message's thumbnail) are written as `{"@blob": <type>, "data": <base64>}`. The `photos` list
+-// holds each photo's id, its file in the archive and its size in pixels; the bytes are the file.
++// message's thumbnail) are written as `{"@blob": <type>, "data": <base64>}`; a thumbnail is kept
++// only as a JPEG, PNG or WebP image, so a crafted file cannot store a page (`text/html`) or an SVG
++// on our origin (S-6). The `photos` list holds each photo's id, its file in the archive and its
++// size in pixels; the bytes are the file.
+ 
+ import { barcodeKey } from '../../data/barcodeKey';
+ import { isBlobLike } from '../../data/codecs';
+ import { BACKUP_CODECS, type BackupTable } from '../../data/repos/backupRepo';
+ import { PROFILE_KEY, TABLE_NAMES } from '../../data/schema';
+ import { isSettingKey, readSetting } from '../../data/settingsSchema';
+-import type { DiaryEntry } from '../../domain/model';
++import type { CoachMessage, DiaryEntry } from '../../domain/model';
+ import { isLocalSetting, isLocalTable } from './hash';
+ 
+ /** The format id a backup document carries. */
+@@ -114,9 +116,15 @@ function shapeEntry(raw: unknown): Shaped {
+   return { kind: 'row', row: key === undefined ? entry : { ...entry, barcodeKey: key } };
+ }
+ 
++/** The only types a Blob inside a row may carry into the store: the app's own thumbnails. */
++const IMAGE_TYPES: ReadonlySet<string> = new Set(['image/jpeg', 'image/png', 'image/webp']);
++
++/** A Coach message; a thumbnail of any other type is left behind and the message kept. */
+ function shapeMessage(raw: unknown): Shaped {
+-  const message = BACKUP_CODECS.coachMessages(raw);
+-  if (!message) return BAD;
++  const read = BACKUP_CODECS.coachMessages(raw) as CoachMessage | null;
++  if (!read) return BAD;
++  const { thumb, ...rest } = read;
++  const message = thumb === undefined || IMAGE_TYPES.has(thumb.type) ? read : rest;
+   const seq = fieldsOf(raw)?.seq;
+   return { kind: 'row', row: isFiniteNumber(seq) ? { ...message, seq } : message };
+ }
+diff --git a/src/services/backup/restore.test.ts b/src/services/backup/restore.test.ts
+index 4787298..0c5dcc9 100644
+--- a/src/services/backup/restore.test.ts
++++ b/src/services/backup/restore.test.ts
+@@ -413,6 +413,34 @@ describe('inspectBackup and applyBackup', () => {
+     expect(side?.thumb).toBeUndefined();
+   });
+ 
++  it('drops a Coach thumbnail that is not a JPEG, PNG or WebP image, and keeps its message (S-6)', async () => {
++    const source = await seededBackup();
++    const target = await otherStore();
++    const page = '<h1>Hello</h1><script>alert(1)</script>';
++    let askedId = '';
++    const crafted = await rewrite(source.file, (doc) => {
++      const [asked, ...rest] = doc.payload.tables.coachMessages as Record<string, unknown>[];
++      askedId = String(asked!.id);
++      doc.payload.tables.coachMessages = [
++        { ...asked, thumb: { '@blob': 'text/html', data: btoa(page) } },
++        { ...asked, id: 'message-svg', thumb: { '@blob': 'image/svg+xml', data: btoa('<svg/>') } },
++        { ...asked, id: 'message-webp', thumb: { '@blob': 'image/webp', data: 'AAEC' } },
++        ...rest,
++      ];
++    });
++
++    const result = await applyBackup(await checked(crafted), applyDeps(target.db));
++    expect(result.ok && result.value.messages).toBe(4);
++
++    const stored = new Map((await target.db.coachMessages.toArray()).map((row) => [row.id, row]));
++    expect(stored.size).toBe(4);
++    expect(stored.get(askedId)?.text).toBe('Was this lunch balanced?');
++    expect(stored.get(askedId)).not.toHaveProperty('thumb');
++    expect(stored.get('message-svg')).not.toHaveProperty('thumb');
++    expect(stored.get('message-webp')?.thumb?.type).toBe('image/webp');
++    expect(await bytesOf(stored.get('message-webp')!.thumb!)).toEqual([0, 1, 2]);
++  });
++
+   it('refuses on a page without WebCrypto, changing nothing', async () => {
+     const source = await seededBackup();
+ 
+diff --git a/src/services/barcode/http.test.ts b/src/services/barcode/http.test.ts
+new file mode 100644
+index 0000000..f5f7710
+--- /dev/null
++++ b/src/services/barcode/http.test.ts
+@@ -0,0 +1,28 @@
++import { describe, expect, it, vi } from 'vitest';
++import { fakeFetch } from '../../ai/testing/fakeFetch';
++import { useFakeTime } from '../../test/time';
++import { fetchWithin, readTextReply } from './http';
++
++const PRODUCT = 'https://food.example.test/api/product/0071234567896.json';
++
++describe('fetchWithin', () => {
++  it('asks the browser to send no Referer, whatever the caller passed (S-12)', async () => {
++    useFakeTime('2026-10-26T12:00:00Z');
++    const fake = fakeFetch().on(PRODUCT, { json: { status: 1 } }, { json: { status: 1 } });
++    const fetch = vi.fn(fake.fetch);
++
++    await fetchWithin(
++      PRODUCT,
++      { headers: { 'X-Api-Key': 'test' } },
++      { fetch },
++      10_000,
++      readTextReply,
++    );
++    await fetchWithin(PRODUCT, { referrerPolicy: 'origin' }, { fetch }, 10_000, readTextReply);
++
++    const inits = fetch.mock.calls.map(([, init]) => init);
++    expect(inits.map((init) => init?.referrerPolicy)).toEqual(['no-referrer', 'no-referrer']);
++    expect(inits[0]?.headers).toEqual({ 'X-Api-Key': 'test' });
++    expect(inits[0]?.signal).toBeInstanceOf(AbortSignal);
++  });
++});
+diff --git a/src/services/barcode/http.ts b/src/services/barcode/http.ts
+index 957d53b..d4adc54 100644
+--- a/src/services/barcode/http.ts
++++ b/src/services/barcode/http.ts
+@@ -51,7 +51,12 @@ export async function fetchWithin<T>(
+   );
+ 
+   try {
+-    const response = await deps.fetch(url, { ...setup, signal: controller.signal });
++    // No Referer: the database has no need to learn which page sent the request (S-12).
++    const response = await deps.fetch(url, {
++      ...setup,
++      referrerPolicy: 'no-referrer',
++      signal: controller.signal,
++    });
+     return ok(await read(response));
+   } catch (error) {
+     return err(failureOf(error, stoppedBy));
+diff --git a/src/services/context.tsx b/src/services/context.tsx
+index 30f166d..7f23035 100644
+--- a/src/services/context.tsx
++++ b/src/services/context.tsx
+@@ -9,6 +9,7 @@ import type { CaptureDraftService } from './captureDrafts';
+ import type { CoachSession } from './coach/session';
+ import type { CombineService } from './combine';
+ import type { CopyDayService } from './copyDay';
++import type { DamagedDataService } from './damagedData';
+ import type { DiaryService } from './diary';
+ import type { FastingService } from './fasting';
+ import type { FitCheckService } from './fitCheck';
+@@ -101,6 +102,8 @@ export interface Services {
+   readonly yourData?: YourDataService;
+   /** The persistent-storage request and Home's storage cards (P09-15); optional likewise. */
+   readonly storageNudge?: StorageNudge;
++  /** Dismiss on the "some saved data could not be read" notice (K9); optional likewise. */
++  readonly damagedData?: DamagedDataService;
+   /** Where "now" comes from for the actions screens start. */
+   readonly clock: Clock;
+ }
+diff --git a/src/services/damagedData.ts b/src/services/damagedData.ts
+new file mode 100644
+index 0000000..24833e6
+--- /dev/null
++++ b/src/services/damagedData.ts
+@@ -0,0 +1,17 @@
++// The "some saved data could not be read" notice (K9, R06.1): its one action. Dismiss lowers the
++// flag the record guard sets when it keeps a damaged record aside. The record stays in its table
++// and its copy stays in `quarantine`; the flag comes back only when something new is kept aside.
++
++export interface DamagedDataService {
++  /** The person has read the notice: lowers the flag. Rejects when the write is refused. */
++  dismiss(): Promise<void>;
++}
++
++export interface DamagedDataDeps {
++  /** Lowers `meta.unreadableData` (`clearUnreadableFlag` of src/data/guard.ts). */
++  readonly clearFlag: () => Promise<void>;
++}
++
++export function createDamagedDataService({ clearFlag }: DamagedDataDeps): DamagedDataService {
++  return { dismiss: () => clearFlag() };
++}
+diff --git a/src/services/transfer/exportFormats.test.ts b/src/services/transfer/exportFormats.test.ts
+index 7e43a14..1667509 100644
+--- a/src/services/transfer/exportFormats.test.ts
++++ b/src/services/transfer/exportFormats.test.ts
+@@ -148,6 +148,22 @@ describe('markdownCell', () => {
+     expect(markdownCell('a\\b')).toBe('a\\\\b');
+     expect(markdownCell('two\n  lines')).toBe('two lines');
+   });
++
++  it('escapes what a viewer would draw as HTML, an image, a link or emphasis (S-7)', () => {
++    expect(markdownCell('<img src=https://pixel.example.net/t.gif>')).toBe(
++      '\\<img src=https://pixel.example.net/t.gif\\>',
++    );
++    expect(markdownCell('Soup ![](https://pixel.example.net/t.gif)')).toBe(
++      'Soup \\!\\[\\](https://pixel.example.net/t.gif)',
++    );
++    expect(markdownCell('[Soup](https://elsewhere.example.org)')).toBe(
++      '\\[Soup\\](https://elsewhere.example.org)',
++    );
++    expect(markdownCell('*rich* _oat_ `bar`')).toBe('\\*rich\\* \\_oat\\_ \\`bar\\`');
++    // Each character is escaped once, the backslash included.
++    expect(markdownCell('a\\<b>|c')).toBe('a\\\\\\<b\\>\\|c');
++    expect(markdownCell('Pear, ripe (2)')).toBe('Pear, ripe (2)');
++  });
+ });
+ 
+ describe('toMarkdown', () => {
+diff --git a/src/services/transfer/exportFormats.ts b/src/services/transfer/exportFormats.ts
+index d0d4101..0263a0a 100644
+--- a/src/services/transfer/exportFormats.ts
++++ b/src/services/transfer/exportFormats.ts
+@@ -152,11 +152,14 @@ export function toCsv(document: DiaryDocument): string {
+ 
+ // ---- Markdown ------------------------------------------------------------------------------
+ 
+-/** A table cell: escapes what would end the cell or the row. */
++/**
++ * A table cell: escapes what would end the cell or the row, and what a Markdown viewer would draw
++ * as HTML, an image, a link or emphasis (S-7), so a name from an AI reply or a food database shows
++ * as the text it is and never makes the viewer fetch an address.
++ */
+ export function markdownCell(value: string): string {
+   return value
+-    .replace(/\\/g, '\\\\')
+-    .replace(/\|/g, '\\|')
++    .replace(/[\\|<>[\]!`*_]/g, (character) => `\\${character}`)
+     .replace(/\s*[\r\n]+\s*/g, ' ');
+ }
+ 
+diff --git a/src/services/transfer/importDiary.test.ts b/src/services/transfer/importDiary.test.ts
+index 962df56..5908147 100644
+--- a/src/services/transfer/importDiary.test.ts
++++ b/src/services/transfer/importDiary.test.ts
+@@ -9,6 +9,7 @@ import { openTestDb } from '../../test/db';
+ import { makeEntry, makeLine, makeProduct, makeWater } from '../../test/factories';
+ import { buildDocument, toJson } from './exportDiary';
+ import {
++  MAX_DETAIL_CHARS,
+   MAX_IMPORT_BYTES,
+   planImport,
+   previewOf,
+@@ -283,6 +284,35 @@ describe('readDiaryFile', () => {
+       Date.parse('2026-03-08T03:30:00-04:00'),
+     );
+   });
++
++  it('repeats at most 40 characters of the file in a refusal, cut with an ellipsis (S-8)', () => {
++    const long = 'x'.repeat(5_000);
++    const name = `Chicken ${'and rice '.repeat(400)}`;
++    const cut = (text: string) =>
++      `${Array.from(text)
++        .slice(0, MAX_DETAIL_CHARS - 1)
++        .join('')}…`;
++
++    expect(problemOf(file([{ date: MON, meals: [{ meal: long, items: [food()] }] }]))).toEqual({
++      kind: 'meal',
++      detail: cut(long),
++    });
++    expect(problemOf(file([{ date: long, meals: [] }]))).toEqual({
++      kind: 'date',
++      detail: cut(long),
++    });
++    expect(problemOf(file(day(food({ time: long }))))).toEqual({
++      kind: 'time',
++      detail: cut(`${MON} ${long}`),
++    });
++    // A food's name is cut first, so the date that says where it is stays.
++    const named = problemOf(file(day(food({ name, kcal: -1 }))));
++    expect(named).toEqual({ kind: 'food', detail: `${name.slice(0, 27)}…, ${MON}` });
++    expect(named && 'detail' in named && named.detail.length).toBe(MAX_DETAIL_CHARS);
++    // An emoji is never split in two.
++    const emoji = problemOf(file([{ date: MON, meals: [{ meal: '🍲'.repeat(50), items: [] }] }]));
++    expect(emoji).toEqual({ kind: 'meal', detail: `${'🍲'.repeat(39)}…` });
++  });
+ });
+ 
+ describe('readPickedFile', () => {
+diff --git a/src/services/transfer/importDiary.ts b/src/services/transfer/importDiary.ts
+index f1df82e..0479d98 100644
+--- a/src/services/transfer/importDiary.ts
++++ b/src/services/transfer/importDiary.ts
+@@ -45,6 +45,9 @@ export const MAX_IMPORT_BYTES = 20 * 1024 * 1024;
+ /** The only major version this build reads. */
+ const READABLE_MAJOR = 1;
+ 
++/** The most characters of file text a refusal repeats, ellipsis included (S-8). */
++export const MAX_DETAIL_CHARS = 40;
++
+ /** Why a file was refused; `detail` names the place in the file where it can. */
+ export type ImportProblem =
+   | { readonly kind: 'tooLarge' | 'unreadable' | 'notDiary' | 'version' | 'empty' }
+@@ -127,8 +130,15 @@ class Refused extends Error {
+   }
+ }
+ 
++/** `text` cut to `room` characters (code points, so an emoji stays whole), ending in "…". */
++function clip(text: string, room = MAX_DETAIL_CHARS): string {
++  const characters = Array.from(text);
++  return characters.length <= room ? text : `${characters.slice(0, room - 1).join('')}…`;
++}
++
++/** Throws the refusal; a crafted file cannot make its message long (S-8). */
+ function refuse(problem: ImportProblem): never {
+-  throw new Refused(problem);
++  throw new Refused('detail' in problem ? { ...problem, detail: clip(problem.detail) } : problem);
+ }
+ 
+ type Fields = Readonly<Record<string, unknown>>;
+@@ -218,7 +228,8 @@ function lineOf(raw: unknown, where: string): ImportLine {
+ function foodOf(raw: unknown, date: DayKey, meal: MealKind): ImportFood {
+   const fields = fieldsOf(raw);
+   const name = typeof fields?.name === 'string' ? fields.name.trim() : '';
+-  const where = name === '' ? date : `${name}, ${date}`;
++  // The name is cut first, so the date that locates the food stays in the refusal.
++  const where = name === '' ? date : `${clip(name, MAX_DETAIL_CHARS - date.length - 2)}, ${date}`;
+   if (!fields || name === '') refuse({ kind: 'food', detail: where });
+   const { kcal, protein, carbs, fat, grams, id, note } = fields;
+   if (!isAmount(kcal) || !isAmount(protein) || !isAmount(carbs) || !isAmount(fat)) {
