@@ -4,7 +4,7 @@ import { useSheet } from '../../app/useRoute';
 import { useBodyFat, useProfile, useSettings, useWeighIns } from '../../data/hooks';
 import type { DayKey } from '../../domain/dates/dayKey';
 import type { DayWindow } from '../../domain/dates/ranges';
-import type { WeighIn } from '../../domain/model';
+import type { BodyFatReading, WeighIn } from '../../domain/model';
 import {
   availableMetrics,
   FIRST_READABLE_DAY,
@@ -24,6 +24,11 @@ import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
 import { Switch } from '../../ui/Switch';
 import { useToast } from '../../ui/Toast';
+import { shownWeight } from '../onboarding/steps/WeightPicker';
+import { BodyFatCard, shownBodyFat } from './BodyFatCard';
+import { HistoryLink } from './HistoryLink';
+import { HISTORY_SHEET, HistorySheet, type HistoryReading } from './HistorySheet';
+import { LogBodyFatSheet, seedBodyFat } from './LogBodyFatSheet';
 import { LogWeightSheet, seedWeightKg } from './LogWeightSheet';
 import { MetricSwitch } from './MetricSwitch';
 import styles from './progress.module.css';
@@ -32,25 +37,19 @@ import { WeightCard } from './WeightCard';
 
 /** The Log weight sheet's place on the sheet stack. */
 export const LOG_WEIGHT_SHEET = 'logWeight';
+/** The Log body fat sheet's place on the sheet stack. */
+export const LOG_BODY_FAT_SHEET = 'logBodyFat';
 
 const SETTINGS = ['units.weight', 'progress.countToday'] as const;
 
 const NO_WEIGH_INS: readonly WeighIn[] = [];
+const NO_BODY_FAT: readonly BodyFatReading[] = [];
+const NO_HISTORY: readonly HistoryReading[] = [];
 
 // ---- Places the next slices fill; each renders nothing until its card exists --------------------
 
 /** P07-15: the weekly recap card, at the top of the page. */
 function RecapSlot(): null {
-  return null;
-}
-
-/** P07-13: the body-fat card, in place of the weight card while Body fat is chosen. */
-function BodyFatSlot(): null {
-  return null;
-}
-
-/** P07-14: the chosen metric's history link, under its card (hidden with no readings). */
-function HistorySlot(_props: { readonly metric: BodyMetric }): null {
   return null;
 }
 
@@ -109,6 +108,8 @@ export function ProgressPage() {
   const weighIns = useWeighIns(FIRST_READABLE_DAY, today);
   const bodyFat = useBodyFat(FIRST_READABLE_DAY, today);
   const logWeight = useSheet(LOG_WEIGHT_SHEET);
+  const logBodyFat = useSheet(LOG_BODY_FAT_SHEET);
+  const history = useSheet(HISTORY_SHEET);
   const [view, setView] = useState<PeriodView>(FIRST_VIEW);
   const [chosen, setChosen] = useState<BodyMetric>('weight');
 
@@ -119,6 +120,12 @@ export function ProgressPage() {
     [allWeighIns, first, last],
   );
   const latest = useMemo(() => latestWeighIn(allWeighIns), [allWeighIns]);
+  const allBodyFat = bodyFat.status === 'ready' ? bodyFat.value : NO_BODY_FAT;
+  const bodyFatInWindow = useMemo(
+    () => readingsIn(allBodyFat, { first, last }),
+    [allBodyFat, first, last],
+  );
+  const latestBodyFat = useMemo(() => latestWeighIn(allBodyFat), [allBodyFat]);
 
   const setCountToday = (on: boolean): void => {
     const progress = services.progress;
@@ -155,6 +162,14 @@ export function ProgressPage() {
     const metric = shownMetric(chosen, metrics);
     // A metric that went away stays away: Weight is the choice from then on.
     if (metric !== chosen) setChosen(metric);
+    // Only the open history is written out; the link needs just the count.
+    let historyRows = NO_HISTORY;
+    if (history.open) {
+      historyRows =
+        metric === 'weight'
+          ? allWeighIns.map(({ id, at, kg }) => ({ id, at, value: shownWeight(kg, unit) }))
+          : allBodyFat.map(({ id, at, fraction }) => ({ id, at, value: shownBodyFat(fraction) }));
+    }
     body = (
       <>
         <RecapSlot />
@@ -169,9 +184,19 @@ export function ProgressPage() {
             onLog={logWeight.show}
           />
         ) : (
-          <BodyFatSlot />
+          <BodyFatCard
+            readings={bodyFatInWindow}
+            latest={latestBodyFat}
+            profileValue={profile?.bodyFat}
+            goal={profile?.goalBodyFat}
+            onLog={logBodyFat.show}
+          />
         )}
-        <HistorySlot metric={metric} />
+        <HistoryLink
+          metric={metric}
+          count={metric === 'weight' ? allWeighIns.length : allBodyFat.length}
+          onOpen={history.show}
+        />
         <CountToday on={countToday} view={view} today={today} onChange={setCountToday} />
         <NutritionSlot window={nutritionWindow(view, today, countToday)} />
         <LogWeightSheet
@@ -179,6 +204,17 @@ export function ProgressPage() {
           seedKg={seedWeightKg(latest?.kg, profile?.weightKg)}
           unit={unit}
           onClose={logWeight.close}
+        />
+        <LogBodyFatSheet
+          open={logBodyFat.open}
+          seed={seedBodyFat(latestBodyFat?.fraction, profile?.bodyFat)}
+          onClose={logBodyFat.close}
+        />
+        <HistorySheet
+          open={history.open}
+          metric={metric}
+          readings={historyRows}
+          onClose={history.close}
         />
       </>
     );

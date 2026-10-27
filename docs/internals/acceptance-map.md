@@ -643,12 +643,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G5 · Body-fat card and Log body fat (3–60 % in 0.5 steps) (P1)
 
 - **ACC-G5-1** Logging 18.5 % updates the body-fat card and the profile
-  - Review: P07-13
+  - Test: src/features/progress/BodyFatCard.test.tsx > LogBodyFatSheet > saves 18.5 % stamped now and moves the profile body fat and the card to it (ACC-G5-1)
 
 ### G6 · Weight and body-fat histories, newest first, delete with … (P1)
 
 - **ACC-G6-1** Deleting a weigh-in asks first and removes it from the list at once
-  - Review: P07-14
+  - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)
 
 ### G7 · The profile's weight and body fat follow the latest reading (P1)
 

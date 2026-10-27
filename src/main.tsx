@@ -191,7 +191,7 @@ async function start(): Promise<void> {
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
       fetch: browserFetch,
     }),
-    progress: createProgressService({ weightRepo, settingsRepo, clock: systemClock }),
+    progress: createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: systemClock }),
     clock: systemClock,
   };
   const data: DataSources = {

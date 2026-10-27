@@ -1,0 +1,139 @@
+/*
+ * Body-fat logging and the reading histories on Progress (P07-13, P07-14): the percent wheel with
+ * its unit, the history link card under the metric card, and the rows of the history sheet. Every
+ * value comes from tokens.css; logical properties throughout.
+ */
+
+/* ---- Log body fat ---------------------------------------------------------------------------- */
+
+.wheelRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-1);
+}
+
+.wheelUnit {
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+  text-align: center;
+}
+
+/* ---- History link ---------------------------------------------------------------------------- */
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.linkIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.linkText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.linkTitle {
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.linkDetail {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* ---- History sheet --------------------------------------------------------------------------- */
+
+.list {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4) var(--space-2);
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--line);
+}
+
+.rowText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.rowValue {
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowDate {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.emptyList {
+  margin: 0;
+  padding-block: var(--space-6);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  text-align: center;
+}

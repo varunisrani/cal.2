@@ -401,6 +401,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/weightRepo.test.ts > addWeighIn (R05.8, R01.11) > moves the profile weight to the newest reading only when it differs by more than 0.01 kg (R05.8)
   - Test: src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > deletes the reading and the profile change together, or neither (R05.8)
   - Test: src/data/repos/bodyFatRepo.test.ts > deleteReading (R05.8) > keeps the profile value when the last reading is deleted (R05.8)
+  - Test: src/services/progress.test.ts > logBodyFat > stamps the reading now and moves the profile body fat to it (R05.8)
+  - Test: src/services/progress.test.ts > history deletes > deletes the newest weigh-in and moves the profile weight to the one before (R05.8)
+  - Test: src/services/progress.test.ts > history deletes > deletes body-fat readings; the profile follows the newest left, then keeps the last value (R05.8)
+  - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > moves the profile weight to the one before when the newest weigh-in is deleted (R05.8)
+  - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > lists body-fat readings in percent and deletes them; the profile follows the newest left (R05.8)
 - **R05.9** Tracker switches hide entry controls, not history
   - Review: owned by P07-05
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
@@ -447,7 +452,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows the running fast on today and not on the day it started (R05.21)
 - **R05.22** History rows have a visible delete with a confirmation and vanish at once (D-16.38)
-  - Review: owned by P07-14
+  - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > asks first, naming the date and the value, and keeps the row on Cancel (R05.22)
+  - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)
 
 ## R06 · Settings and data (`research/06-*.md` §6)
 

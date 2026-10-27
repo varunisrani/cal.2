@@ -36,7 +36,7 @@ export async function openProgress({
   await settingsRepo.set('units.weight', weight);
   for (const reading of weighIns) await weightRepo.addWeighIn(reading);
   for (const reading of bodyFat) await bodyFatRepo.addReading(reading);
-  const progress = createProgressService({ weightRepo, settingsRepo, clock: h.clock });
+  const progress = createProgressService({ weightRepo, bodyFatRepo, settingsRepo, clock: h.clock });
   const services = { ...h.services, progress };
 
   /** Renders `ui` in the harness's providers with the progress service. */

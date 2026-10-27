@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import type { BusMessage } from '../data/bus';
+import { createBodyFatRepo } from '../data/repos/bodyFatRepo';
 import { createProfileRepo } from '../data/repos/profileRepo';
 import { createSettingsRepo } from '../data/repos/settingsRepo';
 import { createWeightRepo } from '../data/repos/weightRepo';
@@ -23,6 +24,7 @@ async function setUp(profile: Profile = makeProfile({ goal: 'maintain', weightKg
     profileRepo: createProfileRepo(db),
     settingsRepo: createSettingsRepo(db, { locale: 'en-GB', bus }),
     weightRepo: createWeightRepo(db, { bus }),
+    bodyFatRepo: createBodyFatRepo(db),
   };
   await repos.profileRepo.save(profile);
   const posted: BusMessage[] = [];
@@ -32,12 +34,14 @@ async function setUp(profile: Profile = makeProfile({ goal: 'maintain', weightKg
     ...repos,
     clock: fixedClock(FACTORY_NOW, 'America/New_York'),
   });
-  const profileWeight = async (): Promise<number> => {
+  const stored = async (): Promise<Profile> => {
     const read = await repos.profileRepo.get();
     if (read.kind !== 'ok') throw new Error(`no profile: ${read.kind}`);
-    return read.value.weightKg;
+    return read.value;
   };
-  return { ...repos, service, posted, profileWeight };
+  const profileWeight = async (): Promise<number> => (await stored()).weightKg;
+  const profileBodyFat = async (): Promise<number | undefined> => (await stored()).bodyFat;
+  return { ...repos, service, posted, profileWeight, profileBodyFat };
 }
 
 describe('logWeight', () => {
@@ -94,6 +98,64 @@ describe('logWeight', () => {
     const h = await setUp();
     await expect(h.service.logWeight(70, '26/10/2026')).rejects.toThrow(RangeError);
     expect(await h.weightRepo.history()).toEqual([]);
+  });
+});
+
+describe('logBodyFat', () => {
+  it('stamps the reading now and moves the profile body fat to it (R05.8)', async () => {
+    const h = await setUp(makeProfile({ bodyFat: 0.22 }));
+    await h.bodyFatRepo.addReading({ at: FACTORY_NOW - 24 * HOUR, fraction: 0.21 });
+
+    const added = await h.service.logBodyFat(0.185);
+
+    expect(added).toEqual({ id: expect.any(String), at: FACTORY_NOW, fraction: 0.185 });
+    expect(await h.profileBodyFat()).toBe(0.185);
+    expect(await h.bodyFatRepo.history()).toHaveLength(2);
+  });
+
+  it('refuses a value that is not a fraction between 0 and 1, and stores nothing', async () => {
+    const h = await setUp(makeProfile({ bodyFat: 0.22 }));
+    await expect(h.service.logBodyFat(18.5)).rejects.toThrow(RangeError);
+    expect(await h.bodyFatRepo.history()).toEqual([]);
+    expect(await h.profileBodyFat()).toBe(0.22);
+  });
+});
+
+describe('history deletes', () => {
+  it('deletes the newest weigh-in and moves the profile weight to the one before (R05.8)', async () => {
+    const h = await setUp();
+    await h.weightRepo.addWeighIn({ at: FACTORY_NOW - 48 * HOUR, kg: 72.6 });
+    const newest = await h.weightRepo.addWeighIn({ at: FACTORY_NOW - 2 * HOUR, kg: 71.8 });
+    expect(await h.profileWeight()).toBe(71.8);
+
+    await h.service.deleteWeighIn(newest.entry.id);
+
+    expect((await h.weightRepo.history()).map((reading) => reading.kg)).toEqual([72.6]);
+    expect(await h.profileWeight()).toBe(72.6);
+  });
+
+  it('deletes body-fat readings; the profile follows the newest left, then keeps the last value (R05.8)', async () => {
+    const h = await setUp(makeProfile({ bodyFat: 0.24 }));
+    const older = await h.bodyFatRepo.addReading({ at: FACTORY_NOW - 48 * HOUR, fraction: 0.23 });
+    const newest = await h.bodyFatRepo.addReading({ at: FACTORY_NOW - 2 * HOUR, fraction: 0.22 });
+
+    await h.service.deleteBodyFatReading(newest.id);
+    expect(await h.profileBodyFat()).toBe(0.23);
+
+    await h.service.deleteBodyFatReading(older.id);
+    expect(await h.bodyFatRepo.history()).toEqual([]);
+    expect(await h.profileBodyFat()).toBe(0.23);
+  });
+
+  it('does nothing for an id that is not stored', async () => {
+    const h = await setUp();
+    await h.weightRepo.addWeighIn({ at: FACTORY_NOW - 2 * HOUR, kg: 71.8 });
+
+    await h.service.deleteWeighIn('gone');
+    await h.service.deleteBodyFatReading('gone');
+
+    expect(await h.weightRepo.history()).toHaveLength(1);
+    expect(await h.profileWeight()).toBe(71.8);
   });
 });
 
