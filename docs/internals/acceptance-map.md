@@ -105,19 +105,23 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > keeps Continue disabled until a needed key is entered and the terms are accepted, then stores the choice (ACC-B6-1)
 - **ACC-B6-2** Set up later continues and the plan uses the formulas
   - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > continues with "Set up later" and saves no provider, so the plan uses the formulas (ACC-B6-2)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > uses the formula plan and sends nothing when AI is set up later (ACC-B6-2)
 
 ### B7 · Building the plan (P1)
 
 - **ACC-B7-1** With the AI unreachable the formula plan appears after 60 s with a note
   - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the formula plan with the AI-unavailable note at 60 s when the AI never answers (ACC-B7-1, R01.8, D-16.14)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > falls back to the formula plan with the AI-unavailable note when the AI answer cannot be read (ACC-B7-1)
 - **ACC-B7-2** A valid AI plan is shown after the animation
   - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the AI plan on Plan ready after the animation when the AI answered at 2 s (ACC-B7-2)
   - Test: src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan > moves on only once the 4 s animation is over when the plan came at 2 s, for the run it started (ACC-B7-2)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)
 
 ### B8 · Plan Ready (P1)
 
 - **ACC-B8-1** Changing protein re-derives carbs so the plan still adds up
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives carbs when protein changes to 150 (ACC-B8-1, R01.7)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)
 - **ACC-B8-2** A plan under 1 200 kcal shows the warning
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > warns under 1 200 kcal: 1 150 shows it, 1 200 does not (ACC-B8-2)
 
@@ -126,6 +130,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-B9-1** After finishing, Home shows the plan's targets and Progress shows the first weigh-in
   - Test: src/services/onboarding.test.ts > complete > stores the profile with the plan, one weigh-in at now, the units, the tune-up on from today, and onboarding done (ACC-B9-1)
   - Test: src/features/onboarding/OnboardingRoute.test.tsx > OnboardingRoute > walks the shortest path and finishes: the plan, one weigh-in, the units and the done flag are stored (ACC-B9-1)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)
 - **ACC-B9-2** An edited plan leaves the weekly tune-up off
   - Test: src/services/onboarding.test.ts > complete > leaves the weekly tune-up off when the plan was changed by hand (ACC-B9-2, R01.7)
 
@@ -181,6 +186,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-C4-1** Rebuild shows the new calorie target and the AI's reason
   - Test: src/services/goals/rebuild.test.ts > rebuild: a stored plan > stores all four targets, clears every lock and returns the kcal and the reason (ACC-C4-1)
   - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: rebuild plan > words a rebuilt plan: the new target in the display unit and the AI reason (ACC-C4-1)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > rebuilds the plan from Settings › Goals and nutrition and names the new daily target (ACC-C4-1)
 - **ACC-C4-2** Editing the profile while a rebuild runs discards its result
   - Test: src/services/goals/rebuild.test.ts > rebuild: a profile changed during the call (R01.4) > drops the plan when %s changed, leaving targets and locks (R01.4, ACC-C4-2)
 

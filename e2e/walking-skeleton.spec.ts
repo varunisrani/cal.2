@@ -6,12 +6,7 @@
  * REA.
  */
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
-import { lookupMessage, type MessageKey } from '../src/i18n/catalogue';
-import { en } from '../src/i18n/en';
-import { numberFormat, pluralRules } from '../src/i18n/format';
-import { parseMessage, renderMessage, type MessageParams } from '../src/i18n/message';
-
-const LOCALE = 'en-US';
+import { LOCALE, ui, words } from './support';
 
 // The same browser settings as the parity scenario's environment block, on the full Pixel 7
 // profile (touch and mobile flags included).
@@ -19,25 +14,6 @@ test.use({ ...devices['Pixel 7'], locale: LOCALE, timezoneId: 'UTC', reducedMoti
 
 /** 08:30 in the browser's zone (UTC): inside the default breakfast window (05:00 to 12:00). */
 const MORNING = new Date('2026-10-26T08:30:00Z');
-
-/** The app's words for `key`, rendered as the app renders them in this locale. */
-function words(key: MessageKey<typeof en>, params?: MessageParams): string {
-  const source = lookupMessage(en, key);
-  if (source === undefined) throw new Error(`The catalogue has no message "${key}"`);
-  return renderMessage(parseMessage(source), {
-    params,
-    plural: pluralRules('en'),
-    number: numberFormat(LOCALE),
-    onProblem: (problem) => {
-      throw new Error(`${problem} in message "${key}"`);
-    },
-  });
-}
-
-/** The element with a `data-ui` hook. */
-function ui(scope: Page | Locator, hook: string): Locator {
-  return scope.locator(`[data-ui="${hook}"]`);
-}
 
 /** Drags a row from near its trailing edge to its leading edge with the pointer, then lets go. */
 async function swipeTowardLeadingEdge(page: Page, row: Locator): Promise<void> {

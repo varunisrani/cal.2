@@ -45,6 +45,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives carbs when protein changes to 150 (ACC-B8-1, R01.7)
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives kcal when carbs change to 300 (R01.7)
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > marks the plan edited and says the tune-up will start off (R01.7)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)
 - **R01.8** Building the plan cannot hang or advance from elsewhere: Back disabled, stale completions ignored, 60 s cap then formulas (D-16.14)
   - Test: src/features/onboarding/wizard.test.ts > building the plan > ignores a completion that arrives after the person left (R01.8)
   - Test: src/features/onboarding/wizard.test.ts > Continue and Back > does nothing on Back from Welcome or Building plan
@@ -268,6 +269,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/ai-setup/ModelPicker.test.tsx > ModelPicker > gives Custom only the field, and asks for a model while it is blank (R03.20)
   - Test: src/features/ai-setup/ProviderForm.test.tsx > ProviderForm > asks Custom for its address and model, and makes its key optional (R03.20)
   - Test: src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > blocks Continue for Custom without a model, and opens it once one is typed (R03.20)
+  - Test: e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)
 - **R03.21** Ollama accepts free-form model ids
   - Test: src/ai/catalog/presets.test.ts > resolveModel: a saved pick > keeps an Ollama tag typed freely (R03.21, ACC-E13-2)
   - Test: src/features/ai-setup/ModelPicker.test.tsx > ModelPicker > lets a free-form provider type any model id, such as an Ollama tag (R03.21)

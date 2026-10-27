@@ -1,0 +1,29 @@
+{
+  "description": "One daily plan in our plan reply keys: 2 400 kcal, 125 g protein, 340 g carbs, 60 g fat, for the wizard's default profile.",
+  "replies": [
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-plan-ok",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "{\"kcal\":2400,\"protein\":125,\"carbs\":340,\"fat\":60,\"why\":\"Your daily burn for keeping your weight, with a little more protein.\"}"
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 1460,
+          "completion_tokens": 41,
+          "total_tokens": 1501
+        }
+      }
+    }
+  ]
+}
