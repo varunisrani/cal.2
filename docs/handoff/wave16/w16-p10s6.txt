@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s6 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P10 slice S6 (no new task id; fixes before P10-14): the damaged-data banner (K9) and the open security findings of P10-09 that the lead has decided. Spec: docs/internals/security-review-v1.0.md §findings (S-3, S-5, S-6, S-7, S-8, S-9, S-12, S-15); K9 in docs/plan/04-feature-inventory (or wherever K9 is specified: grep "K9"); R06.1 in docs/internals/traps-ledger.md and the "Damaged-data banner" entry under Known gaps in docs/internals/acceptance-map.md; src/data/guard.ts and `useUnreadableFlag` in src/data/hooks.ts.
+Task notes (each before its text): docs/notes/P10/damaged-data-banner.md, docs/notes/P10/security-fixes.md.
+
+Decisions already made (the lead's):
+- K9 banner: build it. The guard sets `meta.unreadableData` when a stored record cannot be read and is set aside; `useUnreadableFlag` reads it; nothing shows it. Add a notice in the app shell (above the routed page, not a modal) that says some saved data could not be read and was kept aside, with a Dismiss button that clears the flag (add the clearing call to the data layer if there is none, with a test). Strings through i18n (en-US, same keys in every locale file the project has); a `data-ui` hook on the notice and on the button; `role="status"`. Tests first: the notice shows when the flag is set, not otherwise, and Dismiss clears it and it stays gone after a reload of the live state. Then: replace R06.1's "Review: the banner is missing from v1 …" line with Test lines, and remove the Known gaps entry (the acceptance row for K9, if one names the banner, gets the Test line).
+- S-3: drop `http://[::1]:*` from the CSP in index.html and from the exact-directives test (src/app/InstallPrompt.test.tsx, or wherever the CSP directives are asserted); refuse `[::1]` in `checkServerUrl` with a hint to use `localhost` or `127.0.0.1` (LOOPBACK_HOSTS and src/ai/endpoint.test.ts). Write a D-16.NEW row text in your report for the lead: D-16.26's loopback list becomes `localhost` and `127.0.0.1` because a meta CSP cannot express an IPv6 loopback source. Do not edit docs/plan/**.
+- S-5: add `form-action 'none'` to the CSP and the exact-directives test.
+- S-6: restore accepts a stored Blob's type only as `image/jpeg`, `image/png` or `image/webp`; any other type: drop that thumbnail (the row stays) and count it in the restore result if there is such a count. Test with a crafted `text/html` Blob.
+- S-7: `markdownCell` also escapes `<`, `>`, `[`, `]`, `!`, backtick, `*` and `_` with backslashes; exportFormats.test.ts gains a case.
+- S-8: import error `detail` is cut to 40 characters with an ellipsis (importDiary.ts); test.
+- S-9: refuse a backup whose `payload.json` entry is over 256 MiB before reading it (use the zip entry's declared size); test with a stubbed entry size, not a real large file.
+- S-12: the AI and food-database transports pass `referrerPolicy: 'no-referrer'` in their fetch init; test that the init carries it.
+- S-15: add a `pnpm audit --audit-level high` step to .github/workflows/ci.yml after install (that step only).
+- Update docs/internals/security-review-v1.0.md: each of these findings becomes **Fixed** with the commit-to-be's test names; S-4 stays open for the release checklist.
+
+You own: the files above, new tests, the notice component (src/app/ or src/ui/, next to the shell), the two task notes.
+Do not touch: docs/plan/**, pnpm-lock.yaml, package.json, parity/** except to add a step if a parity scenario breaks (it should not), e2e/** (P10-07/08/11 is running there; no e2e is needed: the unit tests are enough for these).
+
+Tests:
+- unit: the files you add or touch, with --maxWorkers=1; do not run the full `pnpm test`.
+- before you finish: lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`, `pnpm ledger:gaps` (none), `pnpm build` and `pnpm check:bundle` (say the new size).
+
+Final report as the rules file says: each finding with its fix and test (file > describe > test name), the K9 tests, the trap and acceptance ids whose lines you changed, the D-16.NEW text for S-3, and anything you could not do. Leave everything uncommitted.

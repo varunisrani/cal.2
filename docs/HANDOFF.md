@@ -152,6 +152,11 @@ owns them); `pnpm ledger:gaps` lists none. **Lead decision (K9):** the damaged-d
 (the guard sets `meta.unreadableData`, `useUnreadableFlag` in `src/data/hooks.ts` reads it, no screen shows it). Build
 it before P10-14 as a small slice (a shell notice using the hook, with a dismiss that clears the flag, a test that fails
 first), then move it from Known gaps to a Test line on R06.1; not N-9.
+Builder running at 5ce6e07: S6, the K9 banner plus the decided security fixes (S-3 drop `[::1]` from the CSP and refuse
+it in `checkServerUrl`, needing a D-16 row for D-16.26's list; S-5 `form-action 'none'`; S-6 restore takes only image
+Blob types; S-7 Markdown cell escaping; S-8 short import details; S-9 refuse a payload.json over 256 MiB; S-12
+`referrerPolicy: 'no-referrer'`; S-15 `pnpm audit --audit-level high` in CI). S-4 (host headers) stays for the release
+checklist. Worktree `/root/wt/wt-p10s6`, prompt `docs/handoff/wave16/w16-p10s6.txt`.
 Landed at 18:31 IST (89 % read), after the full loop passed (unit 5121 passed + 2 expected-fail in 360 files, check 6/6,
 bundle 235.49 kB, e2e 37 passed + the offline test skipped by design in `mobile-chromium`): 4deddf0 P10-01..04 parity
 (13 REA scenarios, 14/14 flows, `pnpm parity`, obligations ledger, parity report, the `reuse.saved.row` fix,
