@@ -252,7 +252,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C13 · Weight forecast (30/60/90-day weights, days to goal, under-logging … (P1)
 
 - **ACC-C13-1** With two food days and two weigh-ins the Coach context lists the forecast
-  - Review: P08-01
+  - Test: src/services/coach/context.test.ts > coachContext: the weight forecast (P01-18) > lists the forecast with two food days and two weigh-ins (ACC-C13-1)
 
 ## D · Food logging
 
@@ -787,14 +787,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I6 · Fresh context each turn (P1)
 
 - **ACC-I6-1** The context sent with a question includes today's calories left and water
-  - Review: P08-01
+  - Test: src/services/coach/context.test.ts > coachContext: today so far (D-16.27) > gives today's intake, what is left of each target and water (ACC-I6-1)
 
 ### I7 · Six read-only nutrition tools (P1)
 
 - **ACC-I7-1** Asking about yesterday's meals uses the food log tool and answers from it
   - Review: P08-14
 - **ACC-I7-2** Daily totals leave out days without entries
-  - Review: P08-02
+  - Test: src/services/coach/tools.test.ts > runCoachTool: daily_energy_totals (R04.16) > leaves days without entries out instead of giving them 0 kcal (ACC-I7-2)
 
 ### I8 · Tool loop of up to six rounds on all three formats, with the … (P1)
 
@@ -806,7 +806,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I9 · Tool results capped at 60 000 characters on every provider, … (P1)
 
 - **ACC-I9-1** A year of entries is trimmed to fit and the newest rows are kept
-  - Review: P08-03
+  - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > trims a year of food_log output and keeps the newest days (ACC-I9-1)
 
 ### I10 · Conversation kept locally (P1)
 

@@ -1,0 +1,450 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { addDays } from '../../domain/dates/dayKey';
+import { makeBodyFat, makeEntry } from '../../test/factories';
+import {
+  SNAPSHOT_TODAY,
+  at,
+  entryOn,
+  fastFrom,
+  fixtureDiary,
+  makeSnapshot,
+  weighInOn,
+} from './__fixtures__/snapshot';
+import type { CoachSnapshot } from './snapshot';
+import { LATER_TOOL_NAMES, NUTRITION_TOOL_NAMES } from './toolSchemas';
+import { runCoachTool } from './tools';
+
+type Json = Record<string, unknown>;
+
+function call(name: string, args: unknown, snapshot: CoachSnapshot): Json {
+  return JSON.parse(runCoachTool(name, args, snapshot)) as Json;
+}
+
+function items(result: Json): Json[] {
+  return result.items as Json[];
+}
+
+/** One entry a day at noon, named "Meal 1" (oldest) to "Meal <count>" (today). */
+function dailyEntries(count: number): CoachSnapshot['entries'] {
+  return Array.from({ length: count }, (_, index) =>
+    entryOn(addDays(SNAPSHOT_TODAY, index - count + 1), '12:00', { name: `Meal ${index + 1}` }),
+  );
+}
+
+const WIDE = { from: '2025-01-01', to: SNAPSHOT_TODAY };
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('runCoachTool: ranges (R04.17)', () => {
+  it('defaults a bad from to 30 days before to and echoes the range it used', () => {
+    const result = call('weight_log', { from: 'last week', to: '2026-10-20' }, makeSnapshot());
+    expect(result).toMatchObject({ from: '2026-09-20', to: '2026-10-20' });
+  });
+
+  it('defaults a missing to to today and a missing from to 30 days before it', () => {
+    for (const name of [
+      'weight_log',
+      'body_fat_log',
+      'daily_energy_totals',
+      'food_log',
+      'fasting_log',
+    ]) {
+      expect(call(name, {}, makeSnapshot())).toMatchObject({
+        from: '2026-09-26',
+        to: '2026-10-26',
+      });
+    }
+  });
+
+  it('treats a day that is not a real YYYY-MM-DD day as missing', () => {
+    for (const bad of ['2026-02-30', '2026-10-01T00:00:00Z', '26/10/2026', '', 20261001, null]) {
+      expect(call('food_log', { from: bad, to: bad }, makeSnapshot())).toMatchObject({
+        from: '2026-09-26',
+        to: '2026-10-26',
+      });
+    }
+    expect(
+      call('food_log', { from: ' 2026-10-01 ', to: '2026-10-02' }, makeSnapshot()),
+    ).toMatchObject({
+      from: '2026-10-01',
+    });
+  });
+
+  it('swaps a range given in the wrong order', () => {
+    expect(
+      call('food_log', { from: '2026-10-25', to: '2026-10-01' }, makeSnapshot()),
+    ).toMatchObject({
+      from: '2026-10-01',
+      to: '2026-10-25',
+    });
+  });
+
+  it('includes both end days whole and nothing either side', () => {
+    const snapshot = makeSnapshot({
+      weighIns: [
+        weighInOn('2026-10-09', 64.9, '23:59'),
+        weighInOn('2026-10-10', 64.8, '00:00'),
+        weighInOn('2026-10-12', 64.6, '23:59'),
+        weighInOn('2026-10-13', 64.5, '00:00'),
+      ],
+    });
+    const result = call('weight_log', { from: '2026-10-10', to: '2026-10-12' }, snapshot);
+    expect(items(result).map((row) => row.date)).toEqual(['2026-10-10', '2026-10-12']);
+  });
+
+  it('keeps every date Gregorian under a Buddhist or Japanese locale', () => {
+    const Native = Intl.DateTimeFormat;
+    for (const locale of ['th-TH-u-ca-buddhist', 'ja-JP-u-ca-japanese']) {
+      vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(function (
+        _locales?: unknown,
+        options?: Intl.DateTimeFormatOptions,
+      ) {
+        return new Native(locale, options);
+      });
+      vi.spyOn(Date.prototype, 'toLocaleDateString').mockReturnValue('2569');
+      vi.spyOn(Date.prototype, 'toLocaleString').mockReturnValue('2569');
+      // The stub is in force: the default format no longer writes the Gregorian year.
+      expect(new Intl.DateTimeFormat().format(at(SNAPSHOT_TODAY))).not.toContain('2026');
+      const snapshot = makeSnapshot({
+        entries: [entryOn('2026-10-25', '08:00')],
+        weighIns: [weighInOn('2026-10-25', 64)],
+        fasts: [fastFrom(at('2026-10-25', '20:00'), at('2026-10-26', '10:00'))],
+      });
+      expect(call('data_overview', {}, snapshot)).toMatchObject({ today: '2026-10-26' });
+      expect(items(call('food_log', {}, snapshot))[0]).toMatchObject({ date: '2026-10-25' });
+      expect(items(call('weight_log', {}, snapshot))[0]).toMatchObject({ date: '2026-10-25' });
+      expect(items(call('fasting_log', {}, snapshot))[0]).toMatchObject({
+        start: '2026-10-25T20:00:00-04:00',
+        end: '2026-10-26T10:00:00-04:00',
+      });
+      vi.restoreAllMocks();
+    }
+  });
+});
+
+describe('runCoachTool: limits keep the newest rows (R04.10, D-16.32)', () => {
+  it('returns the newest 365 of 400 entries, oldest first, with the markers', () => {
+    const result = call(
+      'food_log',
+      { ...WIDE, from: '2024-01-01', limit: 365 },
+      makeSnapshot({ entries: dailyEntries(400) }),
+    );
+    const rows = items(result);
+    expect(rows).toHaveLength(365);
+    expect(result).toMatchObject({ count: 365, limited: true, omittedOlder: 35 });
+    expect(rows[0]?.name).toBe('Meal 36');
+    expect(rows[364]?.name).toBe('Meal 400');
+    expect(rows.map((row) => row.date)).toEqual([...rows.map((row) => row.date as string)].sort());
+  });
+
+  it('holds limit to 1…max, cuts fractions and reads numeric text', () => {
+    const snapshot = makeSnapshot({ entries: dailyEntries(400) });
+    const range = { from: '2024-01-01', to: SNAPSHOT_TODAY };
+    const counted = (limit: unknown): unknown =>
+      call('food_log', { ...range, limit }, snapshot).count;
+    expect(counted(0)).toBe(1);
+    expect(counted(-5)).toBe(1);
+    expect(counted(1000)).toBe(365);
+    expect(counted(2.9)).toBe(2);
+    expect(counted('3')).toBe(3);
+    expect(counted('many')).toBe(200);
+    expect(counted(Number.NaN)).toBe(200);
+    expect(counted(true)).toBe(200);
+    expect(counted(undefined)).toBe(200);
+  });
+
+  it("uses each tool's own default and maximum", () => {
+    const snapshot = makeSnapshot({
+      weighIns: Array.from({ length: 400 }, (_, index) =>
+        weighInOn(addDays(SNAPSHOT_TODAY, -index), 64),
+      ),
+      fasts: Array.from({ length: 250 }, (_, index) => {
+        const start = at(addDays(SNAPSHOT_TODAY, -index - 1), '20:00');
+        return fastFrom(start, start + 12 * 3_600_000);
+      }),
+    });
+    const range = { from: '2024-01-01', to: SNAPSHOT_TODAY };
+    expect(call('weight_log', range, snapshot)).toMatchObject({ count: 365, omittedOlder: 35 });
+    expect(call('fasting_log', range, snapshot)).toMatchObject({ count: 200, omittedOlder: 50 });
+    expect(call('fasting_log', { ...range, limit: 365 }, snapshot).count).toBe(250);
+  });
+
+  it('adds no markers when nothing was left out', () => {
+    const result = call('food_log', WIDE, makeSnapshot({ entries: fixtureDiary() }));
+    expect(result.count).toBe(4);
+    expect(result).not.toHaveProperty('limited');
+    expect(result).not.toHaveProperty('omittedOlder');
+  });
+});
+
+describe('runCoachTool: daily_energy_totals (R04.16)', () => {
+  it('leaves days without entries out instead of giving them 0 kcal (ACC-I7-2)', () => {
+    const snapshot = makeSnapshot({
+      entries: [
+        entryOn('2026-10-20', '08:00', { kcal: 300 }),
+        entryOn('2026-10-20', '19:00', { kcal: 650 }),
+        entryOn('2026-10-22', '13:00', { kcal: 540 }),
+      ],
+    });
+    const result = call('daily_energy_totals', { from: '2026-10-19', to: '2026-10-23' }, snapshot);
+    expect(result).toEqual({
+      from: '2026-10-19',
+      to: '2026-10-23',
+      daysWithData: 2,
+      items: [
+        { date: '2026-10-20', kcal: 950 },
+        { date: '2026-10-22', kcal: 540 },
+      ],
+    });
+  });
+
+  it('counts an entry on its stored day key', () => {
+    const late = makeEntry({
+      loggedAt: at('2026-10-25', '23:50'),
+      dayKey: '2026-10-26',
+      kcal: 200,
+    });
+    const result = call(
+      'daily_energy_totals',
+      { from: '2026-10-25', to: '2026-10-26' },
+      makeSnapshot({ entries: [late] }),
+    );
+    expect(items(result)).toEqual([{ date: '2026-10-26', kcal: 200 }]);
+  });
+});
+
+describe('runCoachTool: food_log', () => {
+  it('gives the day, name, energy, macros, meal, source, weight and every nutrient with its unit', () => {
+    const entry = entryOn('2026-10-25', '19:45', {
+      meal: 'dinner',
+      source: 'label',
+      nutrients: { fibre: 14, sodium: 820, vitaminD: 2.5, omega3: 0.4, sugar: 6.123 },
+      extras: { creatine: 5 },
+    });
+    const result = call(
+      'food_log',
+      { from: '2026-10-25', to: '2026-10-25' },
+      makeSnapshot({ entries: [entry] }),
+    );
+    expect(items(result)).toEqual([
+      {
+        date: '2026-10-25',
+        name: 'Lentil soup',
+        kcal: 410,
+        proteinG: 24,
+        carbsG: 58,
+        fatG: 9.5,
+        meal: 'dinner',
+        source: 'label',
+        weightG: 420,
+        fibreG: 14,
+        omega3G: 0.4,
+        sugarG: 6.12,
+        sodiumMg: 820,
+        vitaminDMcg: 2.5,
+        creatineG: 5,
+      },
+    ]);
+  });
+
+  it('gives servings when the weight is unknown and leaves unknown nutrients out', () => {
+    const entry = entryOn('2026-10-25', '08:00', {
+      basis: { kind: 'servings', count: 2 },
+      nutrients: { sugar: Number.NaN },
+    });
+    const [row] = items(call('food_log', {}, makeSnapshot({ entries: [entry] })));
+    expect(row).toMatchObject({ servings: 2 });
+    expect(row).not.toHaveProperty('weightG');
+    expect(row).not.toHaveProperty('sugarG');
+    expect(Object.keys(row ?? {})).not.toContain('loggedAt');
+  });
+
+  it('lists entries by day, then by the time they were logged', () => {
+    const snapshot = makeSnapshot({ entries: [...fixtureDiary()].reverse() });
+    const names = items(call('food_log', WIDE, snapshot)).map((row) => row.name);
+    expect(names).toEqual([
+      'Grandma Rosa lasagne',
+      'Matcha oat latte',
+      'Kimchi fried rice',
+      'Smoked mackerel bagel',
+    ]);
+  });
+});
+
+describe('runCoachTool: weight_log and body_fat_log', () => {
+  it("gives each weigh-in's day with kg and lb to one decimal, oldest first", () => {
+    const snapshot = makeSnapshot({
+      weighIns: [weighInOn('2026-10-25', 70.04), weighInOn('2026-10-18', 70.96)],
+    });
+    expect(call('weight_log', {}, snapshot)).toEqual({
+      from: '2026-09-26',
+      to: '2026-10-26',
+      count: 2,
+      items: [
+        { date: '2026-10-18', kg: 71, lb: 156.4 },
+        { date: '2026-10-25', kg: 70, lb: 154.4 },
+      ],
+    });
+  });
+
+  it('gives body fat in percent to one decimal (D-16.64)', () => {
+    const snapshot = makeSnapshot({
+      bodyFat: [makeBodyFat({ at: at('2026-10-20'), fraction: 0.2468 })],
+    });
+    expect(items(call('body_fat_log', {}, snapshot))).toEqual([
+      { date: '2026-10-20', percent: 24.7 },
+    ]);
+  });
+});
+
+describe('runCoachTool: fasting_log', () => {
+  it("includes a fast from 21:00 yesterday to 13:00 today in today's range", () => {
+    const snapshot = makeSnapshot({
+      now: at('2026-10-26', '15:00'),
+      fasts: [fastFrom(at('2026-10-25', '21:00'), at('2026-10-26', '13:00'), 900)],
+    });
+    expect(call('fasting_log', { from: SNAPSHOT_TODAY, to: SNAPSHOT_TODAY }, snapshot)).toEqual({
+      from: '2026-10-26',
+      to: '2026-10-26',
+      count: 1,
+      items: [
+        {
+          status: 'completed',
+          start: '2026-10-25T21:00:00-04:00',
+          end: '2026-10-26T13:00:00-04:00',
+          durationMin: 960,
+          goalMin: 900,
+          goalReached: true,
+        },
+      ],
+    });
+  });
+
+  it('measures a running fast to now and finds it in every range from its start through today', () => {
+    const snapshot = makeSnapshot({ fasts: [fastFrom(at('2026-10-25', '20:00'), null, 1080)] });
+    const today = items(
+      call('fasting_log', { from: SNAPSHOT_TODAY, to: SNAPSHOT_TODAY }, snapshot),
+    );
+    expect(today).toEqual([
+      {
+        status: 'active',
+        start: '2026-10-25T20:00:00-04:00',
+        end: null,
+        durationMin: 990,
+        goalMin: 1080,
+        goalReached: false,
+      },
+    ]);
+    expect(call('fasting_log', { from: '2026-10-25', to: '2026-10-25' }, snapshot).count).toBe(1);
+    expect(call('fasting_log', { from: '2026-10-01', to: '2026-10-24' }, snapshot).count).toBe(0);
+  });
+
+  it('leaves out fasts that end before the range or start after it', () => {
+    const snapshot = makeSnapshot({
+      fasts: [
+        fastFrom(at('2026-10-19', '20:00'), at('2026-10-20', '10:00')),
+        fastFrom(at('2026-10-22', '20:00'), at('2026-10-23', '10:00')),
+        fastFrom(at('2026-10-25', '20:00'), at('2026-10-26', '10:00')),
+      ],
+    });
+    const rows = items(call('fasting_log', { from: '2026-10-21', to: '2026-10-24' }, snapshot));
+    expect(rows.map((row) => row.start)).toEqual(['2026-10-22T20:00:00-04:00']);
+  });
+
+  it('never makes a fast out of a day without entries (R04.16)', () => {
+    const snapshot = makeSnapshot({ entries: [entryOn('2026-10-20', '12:00')] });
+    expect(call('fasting_log', { from: '2026-10-01', to: SNAPSHOT_TODAY }, snapshot)).toMatchObject(
+      {
+        count: 0,
+        items: [],
+      },
+    );
+  });
+});
+
+describe('runCoachTool: data_overview', () => {
+  it('gives counts with the first and last day, and the fasts with whether one is running', () => {
+    const snapshot = makeSnapshot({
+      entries: fixtureDiary(),
+      weighIns: [weighInOn('2026-10-25', 64), weighInOn('2026-03-02', 66.1)],
+      bodyFat: [makeBodyFat({ at: at('2026-09-14') })],
+      fasts: [
+        fastFrom(at('2026-10-24', '20:00'), at('2026-10-25', '12:00')),
+        fastFrom(at('2026-10-26', '08:00'), null),
+      ],
+    });
+    expect(call('data_overview', {}, snapshot)).toEqual({
+      today: '2026-10-26',
+      weighIns: { count: 2, firstDate: '2026-03-02', lastDate: '2026-10-25' },
+      bodyFat: { count: 1, firstDate: '2026-09-14', lastDate: '2026-09-14' },
+      foodEntries: { count: 4, firstDate: '2026-10-24', lastDate: '2026-10-26' },
+      fasts: { count: 2, active: true },
+    });
+  });
+
+  it('gives null days for empty data', () => {
+    expect(call('data_overview', {}, makeSnapshot())).toEqual({
+      today: '2026-10-26',
+      weighIns: { count: 0, firstDate: null, lastDate: null },
+      bodyFat: { count: 0, firstDate: null, lastDate: null },
+      foodEntries: { count: 0, firstDate: null, lastDate: null },
+      fasts: { count: 0, active: false },
+    });
+  });
+});
+
+describe('runCoachTool: names and answers (R04.20)', () => {
+  const available = `Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}.`;
+
+  it('answers our later-phase workout_log, and every other later tool, with not available', () => {
+    expect(call('workout_log', {}, makeSnapshot())).toEqual({
+      error: `The tool "workout_log" is not available in this version of the app. ${available}`,
+    });
+    for (const name of LATER_TOOL_NAMES) {
+      expect(call(name, {}, makeSnapshot()).error).toContain('is not available');
+    }
+  });
+
+  it('answers an unknown name with the six available tools', () => {
+    expect(call('meal_planner', {}, makeSnapshot())).toEqual({
+      error: `There is no tool called "meal_planner". ${available}`,
+    });
+  });
+
+  it('reads arguments that are not an object as none', () => {
+    for (const args of [null, 'from=2026-01-01', [1, 2], 7]) {
+      expect(call('food_log', args, makeSnapshot())).toMatchObject({
+        from: '2026-09-26',
+        to: '2026-10-26',
+      });
+    }
+  });
+
+  it('answers every tool with one JSON object', () => {
+    const snapshot = makeSnapshot({ entries: fixtureDiary() });
+    for (const name of [...NUTRITION_TOOL_NAMES, ...LATER_TOOL_NAMES, 'nope']) {
+      const parsed: unknown = JSON.parse(runCoachTool(name, {}, snapshot));
+      expect(typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)).toBe(true);
+    }
+  });
+
+  it('answers {error} instead of throwing when the data cannot be read', () => {
+    const broken = { ...makeSnapshot(), entries: undefined } as unknown as CoachSnapshot;
+    expect(call('food_log', {}, broken)).toEqual({
+      error: 'The stored data for this tool could not be read.',
+    });
+  });
+
+  it('leaves the snapshot as it was', () => {
+    const snapshot = makeSnapshot({
+      entries: [...fixtureDiary()].reverse(),
+      weighIns: [weighInOn('2026-10-25', 64), weighInOn('2026-10-01', 65)],
+      fasts: [fastFrom(at('2026-10-25', '20:00'), null)],
+    });
+    const before = structuredClone(snapshot);
+    for (const name of NUTRITION_TOOL_NAMES) runCoachTool(name, WIDE, snapshot);
+    expect(snapshot).toEqual(before);
+  });
+});

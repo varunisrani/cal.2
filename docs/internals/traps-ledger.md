@@ -326,7 +326,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Review: owned by P08-08
 - **R04.2** Earlier photos are not re-sent and the prompt says the model cannot see them (D-16.48)
   - Test: src/services/coach/history.test.ts > coachHistory: text only (R04.2, D-16.48) > never sends a thumbnail: every turn holds only its side and its words
-  - Review: owned by P08-01
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: who the Coach is > says photos from earlier messages are not sent again and cannot be seen (R04.2)
 - **R04.3** History sent to a provider starts with a user turn and merges same-role neighbours (D-16.34)
   - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > drops a reply that opens the window, so the history starts with the person
   - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > merges two failed questions in a row into one turn, a blank line between them
@@ -342,9 +342,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.8** Chat storage is bounded: one record per message, newest 200, small thumbnails (D-16.29)
   - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > keeps the newest 200 of 205 messages, removing the oldest with their thumbnails (ACC-I10-1, R04.8, D-16.29)
 - **R04.9** The 60 000-character tool-result cap applies on every provider (D-16.32)
-  - Review: owned by P08-03
+  - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > fits 2 000 rows under 60 000, keeping count and the newest rows, with the markers
+  - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > keeps as many rows as fit: one more would go over the cap
 - **R04.10** Count and size limits keep the newest rows (D-16.32, Proposed D-16.59), with markers and the echoed range
-  - Review: owned by P08-02
+  - Test: src/services/coach/tools.test.ts > runCoachTool: limits keep the newest rows (R04.10, D-16.32) > returns the newest 365 of 400 entries, oldest first, with the markers
+  - Test: src/services/coach/toolSchemas.test.ts > NUTRITION_TOOLS: the schemas > says the limit keeps the newest rows (R04.10)
 - **R04.11** Round-limit and cut-off-twice failures keep their own kinds and messages
   - Review: owned by P08-08
 - **R04.12** Every tool call id gets exactly one result, an error result for calls without a name
@@ -368,9 +370,14 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/chat/geminiChat.test.ts > askRound on the Gemini wire (R04.15) > asks again once with the same body after a MAX_TOKENS stop
   - Test: src/ai/chat/geminiChat.test.ts > askRound on the Gemini wire (R04.15) > gives truncated after a second MAX_TOKENS stop
 - **R04.16** Tools and context never invent empty days: no 0 kcal rows, no inferred fasts
-  - Review: owned by P08-02
+  - Test: src/services/coach/tools.test.ts > runCoachTool: daily_energy_totals (R04.16) > leaves days without entries out instead of giving them 0 kcal (ACC-I7-2)
+  - Test: src/services/coach/tools.test.ts > runCoachTool: fasting_log > never makes a fast out of a day without entries (R04.16)
+  - Test: src/services/coach/context.test.ts > coachContext: data on record and the missing-log rule (R04.16) > says a day without entries is neither a fast nor 0 kcal
+  - Test: src/services/coach/toolSchemas.test.ts > NUTRITION_TOOLS: a missing log is not a fast (R04.16) > says in the fasting tool that only tracked fasts count and an empty day is not a fast
 - **R04.17** Tool dates are local, ISO, Gregorian and inclusive; bad dates default silently and the effective range is echoed
-  - Review: owned by P08-02
+  - Test: src/services/coach/tools.test.ts > runCoachTool: ranges (R04.17) > defaults a bad from to 30 days before to and echoes the range it used
+  - Test: src/services/coach/tools.test.ts > runCoachTool: ranges (R04.17) > keeps every date Gregorian under a Buddhist or Japanese locale
+  - Test: src/services/coach/tools.test.ts > runCoachTool: ranges (R04.17) > includes both end days whole and nothing either side
 - **R04.18** One compact retry per round; only OpenRouter changes the request
   - Test: src/ai/chat/openaiChat.test.ts > openAiChat.build: reasoning switches > hides OpenRouter reasoning and asks for low effort on the compact re-ask (R04.18)
   - Test: src/ai/chat/openaiChat.test.ts > openAiChat.build: reasoning switches > sends the same body on the re-ask to every provider but OpenRouter (R04.18)
@@ -378,9 +385,13 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > changes only OpenRouter’s reasoning on the re-ask: hidden, low effort
   - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > gives truncated after a second cut, with no third request
 - **R04.19** Six requests per turn include the answer; the prompt asks the model to batch tool calls
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > asks for every needed tool in the same round (R04.19)
   - Review: owned by P08-08
 - **R04.20** v1 offers and mentions only the six nutrition tools; a stray workout call gets not available
-  - Review: owned by P08-02
+  - Test: src/services/coach/tools.test.ts > runCoachTool: names and answers (R04.20) > answers our later-phase workout_log, and every other later tool, with not available
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > names exactly the six nutrition tools of the schemas, and no later one (R04.20)
+  - Test: src/services/coach/context.test.ts > coachContext: what never enters it > holds no workout words (R04.20)
+  - Test: src/services/coach/toolSchemas.test.ts > NUTRITION_TOOLS: the catalogue (R04.20) > offers exactly the six nutrition tools, in order
 - **R04.21** Exercise proposals: add only while pending, mark added after the write, fixed ids, name re-check, dedupe, at most 10 (workouts)
   - Review: owned by L3
 - **R04.22** Tools read the snapshot taken at send time, never live stores mid-loop
