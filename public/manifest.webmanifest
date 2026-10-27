@@ -1,0 +1,60 @@
+{
+  "id": "platewise",
+  "name": "Platewise",
+  "short_name": "Platewise",
+  "description": "Snap, scan or type your food and let your own AI key do the counting.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "theme_color": "#09120d",
+  "background_color": "#09120d",
+  "categories": ["food", "health", "lifestyle"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "icons/mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Camera",
+      "short_name": "Camera",
+      "description": "Photograph a meal",
+      "url": "./#/log/camera"
+    },
+    {
+      "name": "Describe",
+      "short_name": "Describe",
+      "description": "Describe a meal in words",
+      "url": "./#/log/describe"
+    },
+    {
+      "name": "Scan",
+      "short_name": "Scan",
+      "description": "Scan a barcode",
+      "url": "./#/log/scan"
+    }
+  ]
+}

@@ -976,21 +976,23 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L1 · Installable app (P1)
 
 - **ACC-L1-1** The manifest lists our icons and the app can be installed
-  - Review: P09-18
+  - Test: src/app/InstallPrompt.test.tsx > InstallPrompt > shows the kept install offer once, then not again within seven days (ACC-L1-1)
+  - Test: src/app/InstallPrompt.test.tsx > manifest.webmanifest > lists our icons, a maskable one included, each present with the size it claims (ACC-L1-1)
 - **ACC-L1-2** iOS Safari shows Add-to-Home-Screen instructions
-  - Review: P09-18
+  - Test: src/app/InstallPrompt.test.tsx > InstallPrompt > explains Add to Home Screen in Safari on %s (ACC-L1-2)
 
 ### L2 · Works offline except AI and food-database lookups (P1)
 
 - **ACC-L2-1** The installed app reloads with the network off
   - Review: P09-19
 - **ACC-L2-2** AI requests are never cached by the service worker
-  - Review: P09-17
+  - Test: src/sw/sw.test.ts > fetch > leaves a request to %s alone: no answer, no cache (ACC-L2-2)
 
 ### L3 · Update-ready banner and Settings dot (P1)
 
 - **ACC-L3-1** A new version shows Update ready and waits for the tap
-  - Review: P09-17
+  - Test: src/app/swRegistration.test.ts > registerServiceWorker > sets the flag when a waiting worker appears, and reloads only after Reload (ACC-L3-1)
+  - Test: src/app/UpdateBanner.test.tsx > UpdateBanner > shows Update ready and reloads only when Reload is pressed (ACC-L3-1)
 
 ### L4 · Persistent storage requested after the first logged entry, with … (P1)
 
@@ -1005,7 +1007,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L6 · Privacy (P1)
 
 - **ACC-L6-1** The page's CSP allows only our own scripts
-  - Review: P09-18
+  - Test: src/app/InstallPrompt.test.tsx > index.html > carries the CSP with exactly these directives, before anything loads (ACC-L6-1)
 - **ACC-L6-2** The built app contacts no host outside the providers and food databases
   - Review: P10-08
 

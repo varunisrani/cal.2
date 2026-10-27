@@ -9,6 +9,7 @@ import { ToastProvider } from '../ui/Toast';
 import { appState as sharedAppState, AppStateContext, type AppStateStore } from './appState';
 import { Boot } from './Boot';
 import { ErrorBoundary } from './ErrorBoundary';
+import { InstallPrompt } from './InstallPrompt';
 import { onDemand } from './onDemand';
 import { ShellPortsContext, type ShellPorts } from './ports';
 import type { Router } from './router';
@@ -17,6 +18,7 @@ import styles from './shell.module.css';
 import { TabBar } from './TabBar';
 import { ThemeProvider } from './ThemeProvider';
 import { TodayProvider } from './TodayProvider';
+import { UpdateBanner } from './UpdateBanner';
 import { RouterProvider, useRoute } from './useRoute';
 import { useTuneUp } from './useTuneUp';
 
@@ -74,6 +76,9 @@ function Shell() {
   return (
     <div className={styles.shell}>
       <main className={styles.content} data-ui="shell.content">
+        {/* A waiting update (P09-17) and the install card (P09-18), above the screen. */}
+        <UpdateBanner />
+        <InstallPrompt />
         <Screen route={route} />
       </main>
       <TabBar />

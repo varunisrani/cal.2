@@ -7,6 +7,8 @@ import { App } from './app/App';
 import { appState } from './app/appState';
 import type { ShellPorts } from './app/ports';
 import { createRouter, windowHost } from './app/router';
+import { installOffer } from './app/installOffer';
+import { appUpdates, registerServiceWorker } from './app/swRegistration';
 import { documentVisibility } from './app/useTuneUp';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
@@ -73,6 +75,11 @@ if (!container) throw new Error('Platewise: #root element missing from index.htm
 
 const root = createRoot(container);
 const router = createRouter(windowHost());
+
+// P09-18: the browser's install offer can come before anything is drawn; keep it for the card.
+installOffer.listen(window);
+// P09-17: the offline worker (production builds only), once the page itself has loaded.
+window.addEventListener('load', () => void registerServiceWorker(appUpdates), { once: true });
 
 function render(ports: ShellPorts, services?: Services, data?: DataSources): void {
   const app = <App ports={ports} router={router} />;
