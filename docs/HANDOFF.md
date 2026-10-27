@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 08:01 IST (Agent 1, session 3). 121/176 tasks; P00–P05 complete; the app runs on the
-real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 two of five landed.
+Updated: 2026-10-27 09:24 IST (Agent 1, session 3). 122/176 tasks; P00–P05 complete; the app runs on the
+real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 three of five landed.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -110,25 +110,25 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 10 | P07-03, P07-04 (gauge and pillars in full; the day's nutrients sheet and pillar picker; `homePrefs` service) | 630e227 |
 | Wave 11 | P07-16 (calories card and averages; cancellable sliced computation) | b2f9de2 |
 | Wave 11 | P07-15 (weekly recap; D-16.84; plan cell corrected: 1 799 kcal is outside ±10 % of 2 000) | dc6c909 |
+| Wave 11 | P07-06 (water menu page, custom amount, water settings and presets editor; Settings › Tracking & reminders; `water` service) | c3b9f43 |
 
 ## In progress
 
-One builder started at 08:51 IST: P07-06 water (`/root/wt/wt-p07s2a`, base 358143a). Usage was flat at
-81 % for 30 min with about an hour left in the window, so one builder fits under the 88 % stop (expected
-about +5 %); the 88 % stop rule still applies. Wave 11's P07-16 (b2f9de2) and P07-15 (dc6c909) were started early and landed
-(full loop green: unit 3807 passed + 2 expected-fail, bundle 209.22 kB, e2e 6/6). Wave 10 is fully landed. The
-next window starts at the 10:20 IST reset: launch the other two wave 11 prompts (P06-11, P07-07) in
+No builders running. Wave 11's P07-16 (b2f9de2), P07-15 (dc6c909) and P07-06 (c3b9f43) were started early and
+landed (latest full loop: unit 3854 passed + 2 expected-fail, bundle 210.71 kB, e2e 6/6). Wave 10 is fully
+landed. The next window starts at the 10:20 IST reset: launch the other two wave 11 prompts (P06-11, P07-07) in
 `docs/handoff/wave11/` at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2b}`):
 - P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
 - P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
 - P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse
-  (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page.
+  (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page (the
+  marked place in `src/features/settings/tracking/TrackingPage.tsx`; ACC-J10-1's fasting half).
 Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
 water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
 `PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.
 Landed this window (05:20–10:20 IST): 9a83eee, d855e53, c69fd91, d9ae5fc, 289332c, 1e3db66, 26e1c99 +
-cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227, b2f9de2, dc6c909. **Progress:
-121/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 12/17,
+cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227, b2f9de2, dc6c909, a37c20d, c3b9f43. **Progress:
+122/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 13/17,
 P08 0/14, P09 0/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
@@ -142,7 +142,13 @@ whether to fast-forward `main` to the work branch.
 3. Follow-ups noted by builders, not yet done (the shared list formatter landed in a37c20d): the
    gauge says "No goal set" while the pillars say "No goal"; energy and nutrient unit words used from
    the `home` partition by Progress (a shared units partition); unify the three AI-setup readers; lazy onboarding and Home sheets; a shared nutrients
-   partition; `data/barcodeKey` re-exporting the domain barcode key.
+   partition; `data/barcodeKey` re-exporting the domain barcode key; the water service has no delete
+   yet (P07-05's swipe-delete adds `deleteLog`); "water off" is two settings writes (no multi-key
+   update); a plain state update after an IndexedDB write waits for `until`'s act to end, so screen
+   tests that wait for toasts can hang under load (the water tests use a `settle` helper in
+   `src/features/water/testing/openWater.tsx`; a shared one in `src/test/` would fix it for all).
+   P07-08: `WaterMenuPage` takes `onCustom` so the + menu can close and Home can show
+   `CustomWaterSheet` (a sheet drawn inside the menu popup closes with it).
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
