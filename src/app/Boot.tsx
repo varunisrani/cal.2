@@ -1,10 +1,9 @@
 import { useLayoutEffect, type ReactNode } from 'react';
 import { t } from '../i18n/t';
-import { cx } from '../ui/classes';
 import { useBootState, useShellSettings, type BootState } from './ports';
 import { HOME_ROUTE, ONBOARDING_ROUTE, type Route } from './router';
-import styles from './shell.module.css';
 import { reloadPage, ShellNotice } from './ShellNotice';
+import { Skeleton } from './Skeleton';
 import { useRoute, useRouter } from './useRoute';
 
 /** Where start-up must send the person from `route`, or `null` to stay. */
@@ -13,24 +12,6 @@ function redirectFor(boot: BootState, route: Route): Route | null {
   if (boot.status === 'needsOnboarding') return onOnboarding ? null : ONBOARDING_ROUTE;
   if (boot.status === 'ready') return onOnboarding ? HOME_ROUTE : null;
   return null;
-}
-
-/** Grey shapes where the screen will be: no numbers, no switches, nothing to tap. */
-function BootSkeleton() {
-  return (
-    <main
-      className={styles.skeleton}
-      role="status"
-      aria-busy="true"
-      aria-label={t('shell.loading')}
-      data-ui="shell.skeleton"
-    >
-      <div className={cx(styles.block, styles.blockTitle)} />
-      <div className={cx(styles.block, styles.blockHero)} />
-      <div className={cx(styles.block, styles.blockRow)} />
-      <div className={cx(styles.block, styles.blockRow)} />
-    </main>
-  );
 }
 
 export interface BootProps {
@@ -57,7 +38,7 @@ export function Boot({ children, onReload = reloadPage }: BootProps) {
     if (redirect) router.navigate(redirect, { replace: true });
   }, [redirect, router]);
 
-  if (!boot || !settings || redirect) return <BootSkeleton />;
+  if (!boot || !settings || redirect) return <Skeleton page data-ui="shell.skeleton" />;
   if (boot.status === 'openError') {
     return (
       <ShellNotice

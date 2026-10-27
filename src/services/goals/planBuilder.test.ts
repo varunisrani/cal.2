@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_AI_SETTINGS, type AiSettings, type ProviderKeys } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type FakeStep } from '../../ai/testing/fakeFetch';
 import { geminiAnswer } from '../../ai/testing/wire';
@@ -63,6 +63,12 @@ function watch<T>(promise: Promise<T>) {
   );
   return { promise, settled: () => settled };
 }
+
+// The AI tasks are fetched on first use (P10-08): load them before any clock is faked, so fake time
+// measures the request alone.
+beforeAll(async () => {
+  await import('../../ai/tasks/planning');
+});
 
 describe('buildPlan', () => {
   it('gives the formula plan at once, sending nothing, when no AI is set up (Set up later)', async () => {

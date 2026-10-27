@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { ImageBackend } from '../ai/image';
 import { labelScanPrompt, photoMealPrompt, textMealPrompt } from '../ai/prompts/food';
 import { DEFAULT_AI_SETTINGS } from '../ai/settings';
@@ -361,6 +361,12 @@ describe('start: a finished analysis waits for review', () => {
 });
 
 describe('the time limit (fake timers)', () => {
+  // The AI tasks are fetched on first use (P10-08): load them first, so the fake clock measures
+  // the request alone whichever test runs first.
+  beforeAll(async () => {
+    await import('../ai/tasks/food');
+  });
+
   it('stops at the timeout from the AI settings and offers Retry', async () => {
     const setup = await setUp();
     await setup.settingsRepo.set('ai.settings', { ...DEFAULT_AI_SETTINGS, timeoutSec: 30 });

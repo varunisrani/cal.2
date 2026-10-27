@@ -7,7 +7,6 @@
 import { isProviderId, type ProviderId } from '../../ai/catalog/providers';
 import { startDeadline, type Deadline } from '../../ai/deadline';
 import { missingFor, roleFor, type AiSettings, type ProviderKeys } from '../../ai/settings';
-import { requestPlan } from '../../ai/tasks/planning';
 import type { DisplayUnits } from '../../ai/prompts/shared';
 import type { DayKey } from '../../domain/dates/dayKey';
 import { carbsLeft, formulaPlan } from '../../domain/goals/formulas';
@@ -81,6 +80,8 @@ async function askAi(
   // Nothing set up ("Set up later"), or the role that would answer cannot send yet.
   if (settings === null || missingFor(roleFor({}, settings), keys).length > 0) return null;
   const energy = await deps.energyUnit();
+  // The AI layer is fetched only now, when there is an AI to ask (P10-08's budget).
+  const { requestPlan } = await import('../../ai/tasks/planning');
   const answer = await requestPlan(
     { profile: request.profile, today: request.today, units: { ...request.units, energy } },
     { settings, keys, fetch: deps.fetch, deadline },

@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { ImageBackend } from '../../../ai/image';
 import { DEFAULT_AI_SETTINGS } from '../../../ai/settings';
 import { createPhotoRepo } from '../../../data/repos/photoRepo';
@@ -27,6 +27,12 @@ import { closeHarnesses, openHarness, until, untilShown } from '../../../test/sc
 import { SOURCES_NOT_BUILT_YET } from './AddIngredientMenu';
 import { IngredientsCard } from './IngredientsCard';
 import { AnalysisReview, ReviewSheet, type ReviewSlots } from './ReviewSheet';
+
+// The AI tasks are fetched on first use (P10-08): load them once first, so a test that cancels a
+// part analysis meets a request already in flight rather than a module still loading.
+beforeAll(async () => {
+  await import('../../../ai/tasks/food');
+});
 
 afterEach(closeHarnesses);
 

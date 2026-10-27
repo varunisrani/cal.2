@@ -1,14 +1,15 @@
+import { Suspense, useSyncExternalStore } from 'react';
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
-import { AnalysisOverlay } from '../features/log/AnalysisOverlay';
-import { AnalysisReview } from '../features/log/review/ReviewSheet';
 import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
 import { systemClock, type Clock } from '../lib/clock';
+import type { AnalysisService } from '../services/analysis';
 import type { TuneUpRunner } from '../services/goals/tuneUp';
 import { useOptionalServices } from '../services/context';
 import { ToastProvider } from '../ui/Toast';
 import { appState as sharedAppState, AppStateContext, type AppStateStore } from './appState';
 import { Boot } from './Boot';
 import { ErrorBoundary } from './ErrorBoundary';
+import { onDemand } from './onDemand';
 import { ShellPortsContext, type ShellPorts } from './ports';
 import type { Router } from './router';
 import { Screen } from './Screen';
@@ -27,6 +28,31 @@ export interface AppProps {
   readonly appState?: AppStateStore;
   /** What Reload on the recovery and crash cards does (tests pass their own). */
   readonly onReload?: () => void;
+}
+
+// Fetched the first time an analysis starts or a draft waits for review.
+const AnalysisOverlay = onDemand(() =>
+  import('../features/log/AnalysisOverlay').then((module) => module.AnalysisOverlay),
+);
+const AnalysisReview = onDemand(() =>
+  import('../features/log/review/ReviewSheet').then((module) => module.AnalysisReview),
+);
+
+/**
+ * The food analysis's layers: the overlay while it runs or after it failed, the review while a
+ * draft waits; nothing at other times, so neither is fetched before it is needed. The tab bar
+ * hides through the app state the service sets, not through the overlay, so it hides at once.
+ */
+function AnalysisLayers({ analysis }: { readonly analysis: AnalysisService }) {
+  const { phase } = useSyncExternalStore(analysis.subscribe, analysis.getSnapshot);
+  return (
+    <>
+      <Suspense fallback={null}>
+        {phase === 'analysing' || phase === 'failed' ? <AnalysisOverlay /> : null}
+      </Suspense>
+      <Suspense fallback={null}>{phase === 'reviewReady' ? <AnalysisReview /> : null}</Suspense>
+    </>
+  );
 }
 
 /** The weekly tune-up's triggers (P05-09): the tab frame shows only once onboarding is done. */
@@ -53,12 +79,7 @@ function Shell() {
       <TabBar />
       <GoalReachedDialog />
       {tuneUp ? <TuneUp runner={tuneUp} /> : null}
-      {services?.analysis ? (
-        <>
-          <AnalysisOverlay />
-          <AnalysisReview />
-        </>
-      ) : null}
+      {services?.analysis ? <AnalysisLayers analysis={services.analysis} /> : null}
     </div>
   );
 }

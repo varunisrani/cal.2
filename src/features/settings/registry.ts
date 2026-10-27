@@ -1,14 +1,13 @@
 // The Settings categories: one record per category page, in the order the hub lists them. A later
 // phase registers its pages by adding records to SETTINGS_CATEGORIES (one task per phase owns that
-// edit: P05-10, P07-06, P09-01); the hub and the router need no change.
+// edit: P05-10, P07-06, P09-01); the hub and the router need no change. A page is named through
+// `onDemand(() => import(...))`, never imported here, so it stays out of the start-up download.
 
 import type { ComponentType } from 'react';
+import { onDemand } from '../../app/onDemand';
 import { tabRoute, type TabRoute } from '../../app/router';
 import type { IconName } from '../../ui/icons';
-import { MethodsPage } from '../about/MethodsPage';
-import { ProfilePage } from './profile/ProfilePage';
 import type { TxKey } from '../home/text';
-import { GoalsPage } from './goals/GoalsPage';
 
 /** The hub's two cards: the person's preferences, then information about the app. */
 export const SETTINGS_GROUPS = ['prefs', 'info'] as const;
@@ -22,7 +21,10 @@ export interface SettingsCategory {
   /** Where the hub's row goes. */
   readonly route: TabRoute;
   readonly group: SettingsGroup;
-  /** The page's content, drawn under the back link and the title. */
+  /**
+   * The page's content, drawn under the back link and the title. Registered pages are fetched on
+   * first open (`onDemand`), so the hub never downloads them.
+   */
   readonly page: ComponentType;
 }
 
@@ -53,7 +55,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'profile.title',
     icon: 'heart',
     group: 'prefs',
-    page: ProfilePage,
+    page: onDemand(() => import('./profile/ProfilePage').then((module) => module.ProfilePage)),
   },
   // Targets and locks, the rebuild, the weekly tune-up, nutrient goals and alerts (P05-11).
   {
@@ -61,7 +63,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'goals.page.title',
     icon: 'chart',
     group: 'prefs',
-    page: GoalsPage,
+    page: onDemand(() => import('./goals/GoalsPage').then((module) => module.GoalsPage)),
   },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
@@ -69,7 +71,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'about.methods.title',
     icon: 'info',
     group: 'info',
-    page: MethodsPage,
+    page: onDemand(() => import('../about/MethodsPage').then((module) => module.MethodsPage)),
   },
 ]);
 

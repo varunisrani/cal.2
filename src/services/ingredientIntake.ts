@@ -12,7 +12,6 @@
 import type { AiDeps } from '../ai/client';
 import { failureMessages, type AiFailure, type AiMessage } from '../ai/errors';
 import type { ImageBackend } from '../ai/image';
-import { analyzePhotos, analyzeText } from '../ai/tasks/food';
 import type { PhotoRepo } from '../data/repos/photoRepo';
 import type { IngredientLine, NutritionDraft } from '../domain/model';
 import { draftAsLine } from '../domain/servings/ingredients';
@@ -149,6 +148,8 @@ export function createIngredientIntake(deps: IngredientIntakeDeps): IngredientIn
             const problem = sizeProblem(file);
             if (problem) return { kind: 'refused', reason: problem };
             const request = { images: [file], note: '', progressive: false };
+            // The AI layer loads on first use, never with the start-up download.
+            const { analyzePhotos } = await import('../ai/tasks/food');
             const result = await ask((ai) => analyzePhotos(request, ai), cancel);
             if (closed) return STOPPED;
             if (!result.ok) return failed(result.error);
@@ -163,6 +164,7 @@ export function createIngredientIntake(deps: IngredientIntakeDeps): IngredientIn
 
         describe(text) {
           return run(async (cancel) => {
+            const { analyzeText } = await import('../ai/tasks/food');
             const result = await ask((ai) => analyzeText(text.trim(), ai), cancel);
             if (closed) return STOPPED;
             if (!result.ok) return failed(result.error);

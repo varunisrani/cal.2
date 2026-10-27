@@ -20,7 +20,6 @@ import { startDeadline } from '../ai/deadline';
 import { failureMessages, type AiFailure, type AiMessage } from '../ai/errors';
 import type { ImageBackend } from '../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings, type ProviderKeys } from '../ai/settings';
-import { analyzeLabelScan, analyzePhotos, analyzeText } from '../ai/tasks/food';
 import type { AppStateStore } from '../app/appState';
 import type { DraftsRepo } from '../data/repos/draftsRepo';
 import type { PhotoRepo } from '../data/repos/photoRepo';
@@ -295,6 +294,8 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
 
   /** The AI task for the request, under one deadline that Cancel also stops. */
   async function analyse(attempt: Attempt): Promise<Result<Analysed, AiFailure>> {
+    // The AI layer is fetched on first use, before the deadline starts (P10-08's budget).
+    const { analyzeLabelScan, analyzePhotos, analyzeText } = await import('../ai/tasks/food');
     const { settings, keys } = await aiAccess();
     const deadline = startDeadline({
       timeoutSeconds: settings.timeoutSec,

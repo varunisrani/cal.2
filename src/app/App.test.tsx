@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { Dexie } from 'dexie';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { createBus } from '../data/bus';
 import { DataProvider, type DataSources } from '../data/DataProvider';
 import { capture } from '../i18n/en/capture';
@@ -57,6 +57,16 @@ const data: DataSources = {
   clock: services.clock,
   bus,
 };
+
+// Fetched on first draw (P10-08): load their modules once, up front, so a wait below never
+// includes a first transform.
+beforeAll(async () => {
+  await Promise.all([
+    import('../features/progress/ProgressPage'),
+    import('../features/log/AnalysisOverlay'),
+    import('../features/log/review/ReviewSheet'),
+  ]);
+});
 
 function renderApp(ports: ShellPorts, initialHash = '', withServices: Services = services) {
   const host = memoryHost(initialHash);
@@ -115,7 +125,7 @@ describe('App', () => {
     expect(document.documentElement.dataset.accent).toBe('ember');
   });
 
-  it('shows the goal-reached dialog over a tab screen when a weigh-in reaches the goal', () => {
+  it('shows the goal-reached dialog over a tab screen when a weigh-in reaches the goal', async () => {
     const boot = controlledStore<BootState>({ status: 'ready' });
     const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
     renderApp({ boot, settings }, '#/progress');
@@ -128,9 +138,9 @@ describe('App', () => {
     const dialog = screen.getByRole('alertdialog', { name: goals.goals.reached.title });
     expect(dialog).toBeVisible();
     expect(screen.getAllByRole('alertdialog')).toHaveLength(1);
-    // The tab screen stays underneath.
+    // The tab screen stays underneath (it is fetched on first open).
     expect(
-      screen.getByRole('heading', { level: 1, name: common.common.tabs.progress }),
+      await screen.findByRole('heading', { level: 1, name: common.common.tabs.progress }),
     ).toBeInTheDocument();
   });
 
@@ -149,7 +159,7 @@ describe('App', () => {
     expect(check).toHaveBeenCalledWith('open');
   });
 
-  it('shows the analysis overlay once over a tab screen, and never on onboarding (P06-01)', () => {
+  it('shows the analysis overlay once over a tab screen, and never on onboarding (P06-01)', async () => {
     const state: AnalysisState = { phase: 'analysing', kind: 'text', photoIds: [] };
     const analysis: AnalysisService = {
       getSnapshot: () => state,
@@ -161,22 +171,27 @@ describe('App', () => {
       restore: vi.fn(),
     };
     const settings = controlledStore<ShellSettings>(DEFAULT_SHELL_SETTINGS);
-    const onboardingBoot = controlledStore<BootState>({ status: 'needsOnboarding' });
-    const first = renderApp({ boot: onboardingBoot, settings }, '', { ...services, analysis });
-    expect(document.querySelector('[data-ui="analysis"]')).toBeNull();
-    first.unmount();
-
+    // Over a tab screen first: the overlay is fetched on first draw (P10-08).
     const readyBoot = controlledStore<BootState>({ status: 'ready' });
-    renderApp({ boot: readyBoot, settings }, '#/progress', { ...services, analysis });
-    expect(document.querySelectorAll('[data-ui="analysis"]')).toHaveLength(1);
+    const first = renderApp({ boot: readyBoot, settings }, '#/progress', {
+      ...services,
+      analysis,
+    });
     expect(
-      screen.getByRole('dialog', { name: capture.capture.analysing.textStatus }),
+      await screen.findByRole('dialog', { name: capture.capture.analysing.textStatus }),
     ).toBeVisible();
+    expect(document.querySelectorAll('[data-ui="analysis"]')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
     expect(analysis.cancel).toHaveBeenCalledTimes(1);
+    first.unmount();
+
+    // Now that it is loaded it would draw at once, so its absence means it is not there.
+    const onboardingBoot = controlledStore<BootState>({ status: 'needsOnboarding' });
+    renderApp({ boot: onboardingBoot, settings }, '', { ...services, analysis });
+    expect(document.querySelector('[data-ui="analysis"]')).toBeNull();
   });
 
-  it('opens the review over the tab screen while the analysis has a draft waiting (P06-06)', () => {
+  it('opens the review over the tab screen while the analysis has a draft waiting (P06-06)', async () => {
     let state: AnalysisState = { phase: 'idle' };
     const listeners = new Set<() => void>();
     const analysis: AnalysisService = {
@@ -202,7 +217,7 @@ describe('App', () => {
       state = { phase: 'reviewReady', draft: makeAnalysisDraft(), generation: 1 };
       for (const listener of listeners) listener();
     });
-    expect(screen.getByRole('dialog', { name: review.review.title })).toBeInTheDocument();
+    expect(await screen.findByRole('dialog', { name: review.review.title })).toBeInTheDocument();
     // The settings are still being read: nothing can be logged yet.
     expect(screen.getByRole('button', { name: review.review.log })).toBeDisabled();
     expect(

@@ -176,7 +176,7 @@ describe('MethodsPage', () => {
     expect(screen.getByRole('heading', { level: 3, name: words.resting.heading })).toBeVisible();
   });
 
-  it('is registered as an About page in Settings at #/settings/methods', () => {
+  it('is registered as an About page in Settings at #/settings/methods', async () => {
     expect(SETTINGS_CATEGORIES.find((category) => category.id === 'methods')).toMatchObject({
       group: 'info',
       titleKey: 'about.methods.title',
@@ -197,6 +197,9 @@ describe('MethodsPage', () => {
 
     expect(host.hash()).toBe('#/settings/methods');
     expect(screen.getByRole('heading', { level: 1, name: words.title })).toBeVisible();
-    expect(screen.getByRole('heading', { level: 2, name: words.resting.heading })).toBeVisible();
+    // The page is fetched on first open (P10-08).
+    expect(
+      await screen.findByRole('heading', { level: 2, name: words.resting.heading }),
+    ).toBeVisible();
   });
 });

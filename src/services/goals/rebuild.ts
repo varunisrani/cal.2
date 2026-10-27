@@ -14,7 +14,6 @@ import type { GoalValues } from '../../domain/nutrients/goalDefaults';
 import { planInputsKey } from '../../domain/profile/signature';
 import type { AiFailure } from '../../ai/errors';
 import type { DisplayUnits } from '../../ai/prompts/shared';
-import { requestNutrientGoals } from '../../ai/tasks/planning';
 import {
   aiDepsOf,
   preparePlanRequest,
@@ -91,6 +90,8 @@ export function createRebuildService(deps: PlanServiceDeps): RebuildService {
     units: DisplayUnits,
   ): Promise<NutrientGoalsRefresh> {
     const current = await settingsRepo.get('goals.nutrients');
+    // Already fetched by the plan request; the AI layer is not in the start-up download.
+    const { requestNutrientGoals } = await import('../../ai/tasks/planning');
     const reply = await requestNutrientGoals(
       { profile, today, units, targets, current },
       await aiDepsOf(deps),

@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ImageBackend } from '../../ai/image';
 import { fakeFetch, type FakeFetch, type FakeStep } from '../../ai/testing/fakeFetch';
 import { geminiAnswer, geminiError } from '../../ai/testing/wire';
@@ -53,6 +53,12 @@ const backend: ImageBackend = {
       close: () => undefined,
     }),
 };
+
+// The analysis fetches the AI tasks on first use (P10-08): load them once, up front, so the waits
+// below never include their first load.
+beforeAll(async () => {
+  await import('../../ai/tasks/food');
+});
 
 // ---- Object URLs: jsdom has none, so the photo's preview is recorded here ----------------------
 

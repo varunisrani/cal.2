@@ -1,4 +1,6 @@
+import { Suspense } from 'react';
 import { tabRoute } from '../../app/router';
+import { Skeleton } from '../../app/Skeleton';
 import { useRouter } from '../../app/useRoute';
 import { Icon } from '../../ui/icons';
 import { tx } from '../home/text';
@@ -11,8 +13,8 @@ export interface CategoryFrameProps {
 
 /**
  * A Settings category page: a back link labelled with the Settings tab's name, the category's
- * title, then its page. The back link goes up to the hub by stepping back over the page, so the
- * browser's Back does not return here.
+ * title, then its page (the skeleton while the page is still loading). The back link goes up to
+ * the hub by stepping back over the page, so the browser's Back does not return here.
  */
 export function CategoryFrame({ category }: CategoryFrameProps) {
   const router = useRouter();
@@ -30,7 +32,9 @@ export function CategoryFrame({ category }: CategoryFrameProps) {
         <span>{tx('common.tabs.settings')}</span>
       </button>
       <h1 className={styles.title}>{tx(category.titleKey)}</h1>
-      <Page />
+      <Suspense fallback={<Skeleton heading={false} data-ui="settings.pageLoading" />}>
+        <Page />
+      </Suspense>
     </section>
   );
 }

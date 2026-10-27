@@ -6,7 +6,6 @@
 
 import { failureMessages, type AiMessage } from '../ai/errors';
 import type { FitCheckInput } from '../ai/prompts/fitCheck';
-import { fitCheck } from '../ai/tasks/planning';
 import type { StoredAiAccess } from './aiAccess';
 
 // Screens build the request; the types they need come from here.
@@ -47,6 +46,8 @@ export function createFitCheckService(deps: FitCheckDeps): FitCheckService {
         const access = await deps.aiAccess();
         if (cancel.aborted) return CANCELLED;
         if (!access.configured) return NO_KEY;
+        // The AI layer loads on first use, never with the start-up download.
+        const { fitCheck } = await import('../ai/tasks/planning');
         const result = await fitCheck(input, {
           settings: access.settings,
           keys: access.keys,

@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { DEFAULT_AI_SETTINGS } from '../../../ai/settings';
 import { fakeFetch, type FakeStep } from '../../../ai/testing/fakeFetch';
 import { geminiAnswer } from '../../../ai/testing/wire';
@@ -257,6 +257,12 @@ describe('BuildingPlan', () => {
 });
 
 describe('BuildingPlan with the real plan builder and Plan ready', () => {
+  // The builder fetches the AI tasks on first use (P10-08): load them before any clock is faked,
+  // so fake time measures the request alone.
+  beforeAll(async () => {
+    await import('../../../ai/tasks/planning');
+  });
+
   const GEMINI = 'https://generativelanguage.googleapis.com/v1beta/models/';
   const planReply = (delayMs: number): FakeStep => ({
     json: geminiAnswer(

@@ -137,6 +137,12 @@
   padding-inline: calc(var(--safe-left) + var(--space-4)) calc(var(--safe-right) + var(--space-4));
 }
 
+/* The same shapes inside the content area, which pads the page already (a screen loading). */
+.skeletonInline {
+  display: grid;
+  gap: var(--space-4);
+}
+
 .block {
   border-radius: var(--radius-card);
   background: var(--card);

@@ -1,6 +1,6 @@
 import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TodayProvider } from '../../../app/TodayProvider';
 import { RouterProvider } from '../../../app/useRoute';
 import { DataProvider } from '../../../data/DataProvider';
@@ -16,11 +16,17 @@ import type { RebuildOutcome, RebuildService } from '../../../services/goals/reb
 import { createTargetEditsService } from '../../../services/goals/targetEdits';
 import type { TuneUpOutcome } from '../../../services/goals/tuneUp';
 import { FACTORY_NOW } from '../../../test/factories';
+import { untilLoaded } from '../../../test/lazy';
 import { closeHarnesses, openHarness, until, untilShown } from '../../../test/screenHarness';
 import { ToastProvider } from '../../../ui/Toast';
 import { SettingsScreen } from '../SettingsScreen';
 
 afterEach(closeHarnesses);
+
+// The registry fetches the page on first open (P10-08): load its module once, up front.
+beforeAll(async () => {
+  await import('./GoalsPage');
+});
 
 const words = goals.goals.page;
 
@@ -98,6 +104,7 @@ async function showGoals(options: ShowOptions = {}) {
       </DataProvider>
     </ServicesProvider>,
   );
+  await untilLoaded();
   await untilShown('[data-ui="goals.target.kcal"]');
 
   const stored = async (): Promise<Profile | null> => {

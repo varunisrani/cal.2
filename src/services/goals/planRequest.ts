@@ -14,7 +14,6 @@ import type { AiFailure } from '../../ai/errors';
 import type { PlanPromptInput } from '../../ai/prompts/plan';
 import type { DisplayUnits } from '../../ai/prompts/shared';
 import type { AiSettings, ProviderKeys } from '../../ai/settings';
-import { requestPlan } from '../../ai/tasks/planning';
 import type { Clock } from '../../lib/clock';
 import type { Result } from '../../lib/result';
 import type { BodyFatRepo } from '../../data/repos/bodyFatRepo';
@@ -124,6 +123,8 @@ export async function sendPlanRequest(
   deps: PlanServiceDeps,
   input: PlanPromptInput,
 ): Promise<Result<CheckedPlan, AiFailure>> {
+  // The AI layer is fetched on first use (P10-08's budget).
+  const { requestPlan } = await import('../../ai/tasks/planning');
   return requestPlan(input, await aiDepsOf(deps));
 }
 

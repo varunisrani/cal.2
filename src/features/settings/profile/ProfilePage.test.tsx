@@ -7,6 +7,7 @@ import { common } from '../../../i18n/en/common';
 import { onboarding } from '../../../i18n/en/onboarding';
 import { profile as profileWords } from '../../../i18n/en/profile';
 import { makeProfile } from '../../../test/factories';
+import { untilLoaded } from '../../../test/lazy';
 import { closeHarnesses, until, untilGone, untilShown } from '../../../test/screenHarness';
 import { categoryFor } from '../registry';
 import { SettingsScreen } from '../SettingsScreen';
@@ -236,12 +237,14 @@ describe('ProfilePage', () => {
       id: 'profile',
       titleKey: 'profile.title',
       group: 'prefs',
-      page: ProfilePage,
     });
 
+    // The page is fetched on first open (P10-08), so it is known by what it draws: ProfilePage's
+    // rows under the category's title.
     const h = await openProfile({ profile: PLANNED });
     h.mount(<SettingsScreen nested={['profile']} />);
     expect(screen.getByRole('heading', { level: 1, name: words.title })).toBeVisible();
+    await untilLoaded();
     await untilShown('[data-ui="profile.sex"]');
   });
 });
