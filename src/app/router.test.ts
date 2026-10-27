@@ -235,6 +235,34 @@ describe('createRouter', () => {
     expect(host.entries()).toEqual({ hashes: ['#/settings'], index: 0 });
   });
 
+  it('steps back to the page a nested page was opened from instead of adding one', () => {
+    const { host, router, at } = setup('#/settings');
+    host.setScroll(300);
+    router.navigate(tabRoute('settings', 'app'));
+    drawn(router);
+    router.navigate(tabRoute('settings', 'tab-bar'));
+    drawn(router);
+
+    router.navigate(tabRoute('settings', 'app'));
+    drawn(router);
+    expect(at()).toBe('#/settings/app');
+    expect(host.entries()).toEqual({
+      hashes: ['#/settings', '#/settings/app', '#/settings/tab-bar'],
+      index: 1,
+    });
+    // Back from there still reaches the hub, where it was left.
+    host.back();
+    drawn(router);
+    expect(at()).toBe('#/settings');
+    expect(host.scrollY()).toBe(300);
+  });
+
+  it('adds an entry for a page other than the one a nested page was opened from', () => {
+    const { host, router } = setup('#/settings/tab-bar');
+    router.navigate(tabRoute('settings', 'app'));
+    expect(host.entries()).toEqual({ hashes: ['#/settings/tab-bar', '#/settings/app'], index: 1 });
+  });
+
   it('does nothing when the tab on screen is tapped again', () => {
     const { host, router } = setup('#/home');
     router.selectTab('coach');

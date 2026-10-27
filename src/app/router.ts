@@ -152,6 +152,8 @@ interface EntryRecord {
   readonly overHome: boolean;
   /** The page's scroll when a nested page was pushed over this entry. */
   readonly scroll?: number;
+  /** The address of the page this nested page was pushed over (going up to it steps back). */
+  readonly from?: string;
 }
 
 const STATE_KEY = 'platewise';
@@ -171,11 +173,13 @@ function readRecord(state: unknown): EntryRecord | null {
     : [];
   const depth = typeof raw.depth === 'number' && Number.isInteger(raw.depth) ? raw.depth : 0;
   const scroll = typeof raw.scroll === 'number' && raw.scroll >= 0 ? raw.scroll : undefined;
+  const from = typeof raw.from === 'string' ? raw.from : undefined;
   return {
     sheets,
     depth: Math.max(0, depth),
     overHome: raw.overHome === true,
     ...(scroll === undefined ? {} : { scroll }),
+    ...(from === undefined ? {} : { from }),
   };
 }
 
@@ -340,10 +344,20 @@ export function createRouter(host: HistoryHost): Router {
       stepBack(open + record().depth, () => land(to, (entry) => entry.scroll ?? 0));
       return;
     }
+    if (open === 0 && record().from === routeHash(to)) {
+      // Up to the page this one was opened from (a Settings sub-page's parent): step back to it.
+      stepBack(1, () => land(to, (entry) => entry.scroll ?? 0));
+      return;
+    }
     stepBack(open, () => {
       const here = record();
       write('replace', from, { ...here, sheets: [], scroll: host.scrollY() });
-      write('push', to, { sheets: [], depth: here.depth + 1, overHome: here.overHome });
+      write('push', to, {
+        sheets: [],
+        depth: here.depth + 1,
+        overHome: here.overHome,
+        from: routeHash(from),
+      });
       commit(to, [], 0);
     });
   };

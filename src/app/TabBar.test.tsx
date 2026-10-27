@@ -10,6 +10,7 @@ import {
   type ShellSettings,
 } from './ports';
 import { createRouter, routeHash, type Router } from './router';
+import { createAppUpdates, type AppUpdates } from './swRegistration';
 import { isHiddenTab, TabBar, visibleTabs } from './TabBar';
 import { controlledStore, type ControlledStore } from './testing/controlledStore';
 import { memoryHost, type MemoryHost } from './testing/memoryHost';
@@ -34,6 +35,7 @@ function renderBar(
   initialHash = '#/home',
   /** `null`: the settings have not been read yet. */
   settingsValue: ShellSettings | null = DEFAULT_SHELL_SETTINGS,
+  updates: AppUpdates = createAppUpdates(),
 ): Harness {
   const host = memoryHost(initialHash);
   const router = createRouter(host);
@@ -44,7 +46,7 @@ function renderBar(
     <ShellPortsContext value={ports}>
       <AppStateContext value={appState}>
         <RouterProvider router={router}>
-          <TabBar />
+          <TabBar updates={updates} />
         </RouterProvider>
       </AppStateContext>
     </ShellPortsContext>,
@@ -171,6 +173,20 @@ describe('TabBar', () => {
   it('shows Settings as selected on a nested Settings page', () => {
     renderBar('#/settings/units/weight');
     expect(tab(NAMES.settings)).toHaveAttribute('aria-current', 'page');
+  });
+
+  it('marks Settings with a dot only while an update waits, adding no words to its name', () => {
+    const updates = createAppUpdates();
+    renderBar('#/home', DEFAULT_SHELL_SETTINGS, updates);
+    const dot = () => document.querySelector('[data-ui="shell.tabbar.updateDot"]');
+    expect(dot()).toBeNull();
+
+    act(() => updates.offer(() => undefined));
+
+    expect(tab(NAMES.settings)).toContainElement(dot() as HTMLElement);
+    expect(dot()).toHaveAttribute('aria-hidden', 'true');
+    expect(document.querySelectorAll('[data-ui="shell.tabbar.updateDot"]')).toHaveLength(1);
+    expect(tabNames()).toEqual([NAMES.home, NAMES.progress, NAMES.coach, NAMES.settings]);
   });
 
   it('is not drawn on onboarding', () => {

@@ -61,7 +61,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-A10-1** No calorie numbers appear before the stored profile has been read
   - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves
 - **ACC-A10-2** A Settings page shows a spinner, not default switches, until settings are loaded
-  - Review: P09-01
+  - Test: src/features/settings/CategoryPage.test.tsx > CategoryPage > shows a spinner, not switches at their defaults, until the settings are read (R06.22, ACC-A10-2)
 
 ### A11 · "Today" moves to the new day at local midnight and when the app … (P1)
 
@@ -866,7 +866,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-J1-1** The hub lists its categories and each opens with a back link
   - Test: src/features/settings/SettingsHub.test.tsx > SettingsHub > opens a category from its row, under a back link labelled Settings (ACC-J1-1)
 - **ACC-J1-2** The hub shows every v1 category in order
-  - Review: P09-01
+  - Test: src/features/settings/SettingsHub.test.tsx > SettingsHub > shows every v1 category in order, with the sub-pages of App settings left out (ACC-J1-2)
+  - Test: src/features/settings/SettingsHub.test.tsx > SettingsHub > puts Your data and About in their slots, then help and privacy, once they exist (ACC-J1-2)
 
 ### J2 · App settings (P1)
 

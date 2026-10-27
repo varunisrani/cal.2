@@ -128,6 +128,18 @@
   white-space: nowrap;
 }
 
+/* A new version is waiting (P09-01): a small accent dot at the top corner of the icon. */
+.tabDot {
+  position: absolute;
+  inset-block-start: calc(50% - var(--space-5));
+  inset-inline-start: calc(50% + var(--space-2));
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border: 2px solid var(--raised);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 /* ---- Start-up skeleton -------------------------------------------------------------------- */
 
 .skeleton {

@@ -642,6 +642,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/settings/app/TabsPage.test.tsx > TabsPage > draws nothing until the settings are read (R06.22)
   - Test: src/features/settings/app/ProductFieldsPage.test.tsx > ProductFieldsPage > draws nothing until the settings are read (R06.22)
   - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > draws nothing until the stored menu is read, then shows it with a change made meanwhile (R06.21, R06.22)
+  - Test: src/features/settings/CategoryPage.test.tsx > CategoryPage > shows a spinner, not switches at their defaults, until the settings are read (R06.22, ACC-A10-2)
+  - Test: src/features/settings/CategoryPage.test.tsx > CategoryPage > holds back even a page that draws its switches at once, until the settings are read (R06.22)
   - Review: the settings screens owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue

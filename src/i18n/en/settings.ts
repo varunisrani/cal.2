@@ -2,9 +2,10 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of the Settings hub (src/features/settings). The back link on category pages uses the
- * tab's own name (`common.tabs.settings`). Later phases add their category titles under
- * `settings.category`. `menuEditor` is Settings › Add menu (P09-05); method and group names come
- * from the menu's own words (`menu.method`, `menu.group`).
+ * tab's own name (`common.tabs.settings`), or on a sub-page its parent's title. Later phases add
+ * their category titles under `settings.category`. `links` are the hub's rows that open Platewise's
+ * own pages outside the app (P09-01). `menuEditor` is Settings › Add menu (P09-05); method and group
+ * names come from the menu's own words (`menu.method`, `menu.group`).
  */
 export const settings = {
   settings: {
@@ -13,6 +14,11 @@ export const settings = {
       info: 'About',
     },
     empty: 'Nothing to set up here yet. Your preferences will appear in this list.',
+    loading: 'Loading your settings',
+    links: {
+      help: 'Help & feedback',
+      privacy: 'Privacy & terms',
+    },
     menuEditor: {
       title: 'Add menu',
       food: 'Food',

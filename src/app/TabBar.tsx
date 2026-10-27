@@ -6,6 +6,7 @@ import { useAppState } from './appState';
 import { useShellSettings } from './ports';
 import { TABS, type TabId } from './router';
 import styles from './shell.module.css';
+import { appUpdates, useAppUpdate, type AppUpdates } from './swRegistration';
 import { useRoute, useRouter } from './useRoute';
 
 /** The tabs a person may hide; Home and Settings always stay. */
@@ -60,13 +61,20 @@ function HomeGlyph() {
   );
 }
 
+export interface TabBarProps {
+  /** The update flag behind the Settings tab's dot (P09-01); the app's own by default. */
+  readonly updates?: AppUpdates;
+}
+
 /**
  * The floating bar of tabs at the bottom of every tab screen. It is drawn only once the settings
  * are known, so a hidden tab never shows for a moment (R05.13), and not at all on onboarding or
- * while the analysis overlay covers the screen.
+ * while the analysis overlay covers the screen. While a new version waits, a dot marks Settings,
+ * where About tells more (the update banner says it in words).
  */
-export function TabBar() {
+export function TabBar({ updates = appUpdates }: TabBarProps = {}) {
   const settings = useShellSettings();
+  const update = useAppUpdate(updates).status;
   const route = useRoute();
   const router = useRouter();
   const { analysisOverlay } = useAppState();
@@ -106,6 +114,9 @@ export function TabBar() {
             onClick={() => router.selectTab(tab)}
           >
             {tab === 'home' ? <HomeGlyph /> : <Icon name={TAB_ICONS[tab]} />}
+            {tab === 'settings' && update === 'ready' ? (
+              <span className={styles.tabDot} aria-hidden="true" data-ui="shell.tabbar.updateDot" />
+            ) : null}
             <span className={styles.tabLabel}>{t(TAB_LABEL_KEYS[tab])}</span>
           </button>
         );

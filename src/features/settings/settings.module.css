@@ -1,6 +1,7 @@
 /*
- * The Settings hub and the frame of its category pages (P04-13; P09 adds the pages). Every value
- * comes from tokens.css; logical properties throughout.
+ * The Settings hub and the frame of its category pages (P04-13; P09 adds the pages, the link rows,
+ * the update dot and the loading spinner). Every value comes from tokens.css; logical properties
+ * throughout.
  */
 
 .page {
@@ -59,6 +60,7 @@
   font-size: var(--type-body);
   font-weight: var(--weight-medium);
   text-align: start;
+  text-decoration: none;
   cursor: pointer;
 }
 
@@ -89,6 +91,15 @@
   color: var(--text-muted);
 }
 
+/* A new version is waiting (P09-17): a small accent dot before the chevron. */
+.dot {
+  flex: none;
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: 50%;
+  background: var(--accent);
+}
+
 /* ---- Category page ----------------------------------------------------------------------- */
 
 .back {
@@ -110,4 +121,33 @@
 
 .back svg:dir(rtl) {
   transform: scaleX(-1);
+}
+
+/* ---- Page not ready yet: its download, or the stored settings it shows (R06.22) ----------- */
+
+.loading {
+  display: grid;
+  place-items: center;
+  padding-block: var(--space-8);
+}
+
+.spinner {
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border: 3px solid var(--accent-soft);
+  border-block-start-color: var(--accent);
+  border-radius: 50%;
+  animation: turn calc(var(--motion-slow) * 2) linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }
