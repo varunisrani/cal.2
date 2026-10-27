@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s20 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 slice S20 = P06-20, the logging e2e. Spec: that row in docs/plan/phases/P06-logging-flows.md; the landed specs e2e/walking-skeleton.spec.ts and e2e/onboarding.spec.ts and their helpers in e2e/support.ts (the fake AI client `fakeAi`, the app's Custom provider at the fake's loopback address). Traps and acceptance ids: every row whose Review line names P06-20.
+Task note (before its code): docs/notes/P06/logging-e2e.md.
+
+You own:
+- e2e/logging.spec.ts, e2e/fixtures/meal.jpg (a small JPEG of our own: generate it, never copy one), e2e/fixtures/off-product.json and off-not-found.json (our own made-up product data in Open Food Facts' public response shape), and additive helpers in e2e/support.ts (fake AI scripts for these flows; Playwright `route` handlers for Open Food Facts and FoodData Central)
+- data-ui hooks the spec needs, added to components only where one is missing (one attribute per line; say which in the report)
+
+Do not touch:
+- other e2e specs (other builders may add specs now), src/** beyond the data-ui attributes above, eslint.config.js, scripts/**, playwright.config.ts (unless a route needs a config switch: say so instead)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Scenarios from the row: photo → analysis → 1.5 servings → Log → Home shows it; describe "two eggs and toast" → review → Log; typed barcode → the OFF fixture → Log; OFF not found → Scan label → photo → label entry; reuse from Recent; edit an entry's kcal (the entry editor, row tap); combine two entries (long-press, Combine); reload during review → the draft reopens; a busy-then-ok fake script shows no error.
+- No network outside loopback and the routed hosts: route every other request to fail, so a stray call shows up as a failure.
+- Every scenario passes three times in a row (`--repeat-each=3`), one worker.
+
+Tests:
+- after pnpm build: PLATEWISE_E2E_PORT=4191 PLATEWISE_FAKE_AI_PORT=4337 pnpm exec playwright test e2e/logging.spec.ts --workers=1 --repeat-each=3, then the whole e2e folder once with --workers=1 (the walking skeleton and onboarding must still pass)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
