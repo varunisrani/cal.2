@@ -1,0 +1,31 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 wave C slice S5 = P08-10 and P08-11: the Coach page and the composer with photo attachment. Spec: those two rows in docs/plan/phases/P08-coach.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 04 §3.1–3.2; D-16.31, D-16.34. Traps and acceptance ids: every row whose Review line names P08-10 or P08-11.
+Task notes (each before its code): docs/notes/P08/coach-page.md, docs/notes/P08/composer-and-photo.md.
+
+You own:
+- src/features/coach/{CoachPage,MessageList,Bubble,TypingDots,ErrorBanner,EmptyCoach,Composer}.tsx (+ tests; coach.module.css), replacing the placeholder CoachPage
+- your words in the coach partition (src/i18n/en/coach.ts: additive keys)
+
+Landed, to use (import; extend additively only if a prop is missing):
+- `useServices().coachSession` (src/services/coach/session.ts): `getState(): {pending}`, `subscribe(listener)`, `send(text, image?)` and `retry(id)` resolving with 'ignored' | 'photoUnreadable' | 'answered' | 'failed' | 'dropped' (never rejecting), `reset()` (rejects only when storage fails). Messages come from the coach repository's live read hook (src/data/hooks), not from the session.
+- `ChipRow` (layout "cards" for the empty state, the default row above the composer) fed by `useCoachChips()`; `MarkdownReply` and `CopyButton` for assistant bubbles (CopyButton needs the app's ToastProvider) — src/features/coach/{ChipRow,markdown,CopyButton}.
+- Failure kinds and friendly messages from P03-01 (src/ai), Details showing the stored detail text.
+
+Do not touch:
+- src/services/coach/** and src/ai/** (landed: import), src/features/{home,log,fasting,water,progress,settings}/** (other builders now), src/domain/** (import only), src/data/** (import only), e2e/** (P08-14 writes the Coach e2e next), eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. The Coach tab already loads on demand: keep its code out of the first chunk (bundle budget 250 kB gzip, now about 215).
+- As the rows say: Reset disabled when empty, a confirm with a destructive "Clear"; the empty state with up to four cards in two columns that send at once and are disabled while pending; user bubbles right with a thumbnail, assistant left with a small badge; typing dots move every 350 ms; the error banner inline at the end with a warning icon, our message, a Details disclosure and Retry; auto-scroll on new messages and while pending; the composer stays above the on-screen keyboard (visualViewport); dragging the list blurs the field. Composer: grows to five lines; Camera (capture=environment) and Photo library; one image with a thumbnail and remove; Send when not pending and the text is non-blank or an image is attached; Enter sends and Shift+Enter adds a line with a physical keyboard; attach disabled while pending; 'photoUnreadable' shows a short message and keeps the draft.
+- data-ui hooks for the e2e: keep the chip and reply ones the landed parts use (coach.chips, coach.cards, coach.chip.N, coach.card.N, coach.reply, coach.copy) and add coach.reset, coach.input, coach.send, coach.attach, coach.error, coach.details, coach.retry, coach.typing.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/coach src/i18n src/app --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4189 PLATEWISE_FAKE_AI_PORT=4335 pnpm exec playwright test e2e/walking-skeleton.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, check:bundle (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
