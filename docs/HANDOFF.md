@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 05:25 IST (Agent 1, session 3). 96/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 06:20 IST (Agent 1, session 3). 103/176 tasks; P00–P04 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -93,21 +93,31 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 9 | P05-08, P05-09 (rebuild and tune-up services, wired; `aiAccess`, `browserFetch`) | 0478616 |
 | Wave 9 | P06-15, P06-16 (Open Food Facts and FoodData Central clients) | 57b504a |
 | Wave 9 | P06-04, P06-05 (analysis service and overlay, describe sheet; one shared drafts repository) | de1e2fe |
+| Wave 10 | P06-01 (add menu, wired to capture, describe and the overlay; Demo 1 opens the Describe page) | 9a83eee |
+| Wave 10 | P05-10 (Settings › Personal info; `profileEdits` service) | d855e53 |
+| Wave 10 | P05-11, P05-12 (Settings › Goals and nutrition; nutrient goals editor; `targetEdits` service) | c69fd91 |
+| Wave 10 | P06-06..08 (review sheet, serving card and amount field, nutrition rows and micronutrients) | d9ae5fc |
 | Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
 
 ## In progress
 
-Window reset at 05:20 IST (next reset 10:20 IST). Four builders, wave 10 (prompts in `docs/handoff/wave10/`),
-all at base c26b203: P05 S4a (P05-10 personal info, `/root/wt/wt-p05s4a`), P05 S4b (P05-11/12 goals page and
-nutrient goals sheet, `/root/wt/wt-p05s4b`), P06 S4a (P06-01 add menu and its wiring, `/root/wt/wt-p06s4a`),
-P06 S2a (P06-06..08 review sheet, `/root/wt/wt-p06s2a`). P06 S3b (P06-14/17) waits for P06 S4a to land. At
-landing: `registry.ts`, `Services`, `main.tsx`, `App.tsx` and `en.ts` take lines from several slices; merge
-them by hand. The container restarted at 05:23 IST with `/root/reference`, `/root/wt` and `~/rea-lab` intact.
+Window reset at 05:20 IST (next reset 10:20 IST). Four builders (prompts in `docs/handoff/wave10/`):
+- P06 S3b (P06-14 scanner, P06-17 lookup order and label memory), base 48a1f56 (staged P06-01), `/root/wt/wt-p06s3b`.
+- P06 S4b (P06-12 reuse lists, P06-13 copy a day; `analysis.openForReview`), base 9a83eee, `/root/wt/wt-p06s4b`.
+- P05-15 (onboarding and goals e2e, `plan-ok` script), base b0022df (staged P05-11/12), `/root/wt/wt-p05s5`.
+- P06 S2b (P06-09 ingredients card and recipe split, P06-10 fit check; `ingredientIntake` service), base
+  ef8c0c9 (staged P06-06..08), `/root/wt/wt-p06s2b`.
+At landing: AddMenu's METHODS_NOT_BUILT_YET and HomePage's `choose` take lines from S3b and S4b; `Services`,
+`main.tsx`, `App.tsx`, `en.ts` take lines from several slices; merge by hand.
+Next after these land: a lazy-loading slice (initial JS 206.57 kB of 250 kB): tab screens and Settings category
+pages through React.lazy, the logging sheets (capture, describe, review, scan, reuse, copy day) loaded on first
+open, and the AI layer (client, adapters, prompts, tasks) through a dynamic import in the services that ask a
+model; `pnpm check:bundle` must show the drop. Then P06-18, P06 wave C (P06-11, P06-19, P06-20), P07.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
 restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
 (latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
 container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-96/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 11/15, P06 6/20, P07 2/17).
+103/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 14/15, P06 10/20, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -130,6 +140,15 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- Similarity findings for the P10-10 report (`docs/internals/similarity-report-v1.0.md`): P03-15/16, one
+  activity-table line of a prompt rewritten by its builder; P05-12, the nutrient-name list in
+  `src/i18n/en/goals.ts` shared a 13-word run in the reference's order and was rewritten in our model's order.
+- From wave 10: the review sheet's typed slots (`ReviewSlots`: savedLabelNotice, allergenLine, productBlock,
+  ingredients, fitCheck) are filled in `AnalysisReview`; the review is not on the router's sheet stack (Back
+  never closes it) and edits are not kept across a reload. Nutrient names exist in both the `goals` and the
+  `review` partitions: a shared nutrients partition would serve Home too. `profileEdits` repeats the wizard's
+  target rule and wheel holds (move them into src/domain). Testing Library's `until` helpers deadlock after a
+  click that raises a toast (the review tests use a local `settle`): a shared helper would help.
 - From wave 9 (analysis, P06 S1b): `analysis.start(kind, inputs)`; `armedLabel` on photo inputs (P06-17
   passes the hand-off; `fromSavedLabel` is always false until then); the barcode is stamped onto
   `draft.product` (P06-17 may replace that helper); `closeReview()` serves Log and Cancel for P06-06 and
