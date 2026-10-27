@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 07:00 IST (Agent 1, session 3). 114/176 tasks; P00–P05 complete; the app runs on the
-real database. Usage window resets 05:20 IST; waves 8–9 running.
+Updated: 2026-10-27 07:31 IST (Agent 1, session 3). 119/176 tasks; P00–P05 complete; the app runs on the
+real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 prompts ready.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -105,22 +105,27 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 10 | P07-09, P07-12 (Progress layout, ranges, weight card, Log weight) | 63a79c7 |
 | Wave 10 | P07-01, P07-02 (week bar, selected day, day swipe) | cad5f93 |
 | Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
+| Wave 10 | P07-13, P07-14 (body-fat card and logging; history sheets) | 2b1a1c3 |
+| Wave 10 | P06-18 (product block, ingredient label with bold allergens, allergen line; lead: the draft codec keeps `markedIngredients`) | c447eaf |
+| Wave 10 | P07-03, P07-04 (gauge and pillars in full; the day's nutrients sheet and pillar picker; `homePrefs` service) | 630e227 |
 
 ## In progress
 
-Window reset at 05:20 IST (next reset 10:20 IST). Three builders, all at base d78c140 (prompts in
-`docs/handoff/wave10/`):
-- P07 S1b (P07-03 gauge and pillars, P07-04 day nutrients sheet and pillar picker), `/root/wt/wt-p07s1b`.
-- P07 S4c (P07-13 body-fat card and logging, P07-14 history sheets), `/root/wt/wt-p07s4c`.
-- P06-18 (product block, allergen line, label text; the saved-label notice slot; an OFF ingredients-markup
-  field on the draft), `/root/wt/wt-p06s18`.
-Next: P06 wave C (P06-11 entry editor, P06-19 selection bar and combine, P06-20 logging e2e), P07 S2 (P07-05..08
-water, fasting, sort, diary update), P07 S4b (P07-15 recap, P07-16 averages), P07-17 e2e; P08–P10.
-Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
-restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
-(latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
-container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-114/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 16/20, P07 6/17).
+No builders running. Wave 10 is fully landed (last: P07-03/04 at 630e227, full loop green). The
+next window starts at the 10:20 IST reset: launch the five wave 11 prompts in `docs/handoff/wave11/`
+at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2a,p07s2b,p07s4b,p07s4d}`):
+- P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
+- P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
+- P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse
+  (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page.
+- P07-15 weekly recap; P07-16 calories card and averages (both mount on `ProgressPage`: merge by hand).
+Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
+water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
+`PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.
+Landed this window (05:20–10:20 IST): 9a83eee, d855e53, c69fd91, d9ae5fc, 289332c, 1e3db66, 26e1c99 +
+cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227. **Progress:
+119/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 10/17,
+P08 0/14, P09 0/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -128,10 +133,12 @@ whether to fast-forward `main` to the work branch.
 
 ## Next
 
-1. Land waves 8–9 as they return (see In progress).
-2. Next window (after the 05:20 IST reset): launch the four wave 10 prompts at the head; P06 S3b after P06
-   S4a lands; then P05-15 e2e, P06 S4b (P06-12 reuse, P06-13 copy day, P06-18 product block / allergen line /
-   label text), P06 S2b (P06-09/10), P06 wave C (P06-11, P06-19, P06-20); the rest of P07; P08–P10.
+1. After the 10:20 IST reset: wave 11 (above), landing each slice as it returns.
+2. Wave 12, then wave 13 (above); then P08 (Coach), P09 (settings, data, platform), P10 (hardening).
+3. Follow-ups noted by builders, not yet done: a public `formatList` in `src/i18n/format.ts` (the
+   nutrients sheet uses `Intl.ListFormat` directly); the gauge says "No goal set" while the pillars say
+   "No goal"; unify the three AI-setup readers; lazy onboarding and Home sheets; a shared nutrients
+   partition; `data/barcodeKey` re-exporting the domain barcode key.
 
 ## Notes for later waves (from wave-1 and wave-2 builders; put them in the prompts)
 
