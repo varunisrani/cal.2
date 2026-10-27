@@ -1,13 +1,16 @@
 /**
- * The third-party notices of the app (P09-16): `tsx scripts/notices.ts [--check]`.
+ * The third-party notices of the app (P09-16, P10-14): `tsx scripts/notices.ts [--check]`.
  *
  * Lists every production dependency the way the licence check finds them (package.json
  * "dependencies" and "optionalDependencies", then theirs, each looked up through `node_modules`
  * as Node does) with its version, its licence id, its homepage and the text of the licence and
- * notice files it ships, and writes the list to src/generated/notices.json for the credits page.
- * The build refreshes the file too (vite.config.ts). The output holds no dates and no paths, so
- * the same installed packages always give the same bytes. `--check` writes nothing and exits 1
- * when the file is missing or stale. Exit codes: 0 done, 1 stale (`--check`), 2 setup problem.
+ * notice files it ships, plus the code some of them bundle under other licences (BUNDLED_CODE),
+ * and writes the list twice: in full to src/generated/notices.json for the credits page, and as
+ * the "Runtime dependencies" section of THIRD_PARTY_NOTICES.md (names, versions, licences and
+ * project pages). The build refreshes both (vite.config.ts). The output holds no dates and no
+ * paths, so the same installed packages always give the same bytes. `--check` writes nothing and
+ * exits 1 when a file is missing or stale. Exit codes: 0 done, 1 stale (`--check`), 2 setup
+ * problem.
  *
  * `readCredit` reads the credit to the app that inspired Platewise out of THIRD_PARTY_NOTICES.md;
  * the build turns it into a constant, so that app's name and notice never sit in product code.
@@ -29,8 +32,14 @@ export const PRODUCT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..
 /** Where the list goes, relative to the product root. */
 export const NOTICES_FILE = 'src/generated/notices.json';
 
-/** The file that holds the credit, relative to the product root. */
+/**
+ * The notices file at the product root: the credit, written by hand, then the dependency list,
+ * which this script writes from DEPENDENCY_HEADING to the end of the file.
+ */
 export const CREDIT_SOURCE = 'THIRD_PARTY_NOTICES.md';
+
+/** The heading of the section of CREDIT_SOURCE this script writes. */
+export const DEPENDENCY_HEADING = '## Runtime dependencies';
 
 /** One package as the credits page lists it. */
 export interface PackageNotice {
@@ -55,6 +64,49 @@ export interface Credit {
   /** Its licence notice, exactly as reproduced there. */
   notice: string;
 }
+
+/**
+ * Code a package carries inside its own files (here compiled into WebAssembly) under a licence of
+ * its own, which no package.json declares. Each entry is written by hand from what the carrying
+ * package says about it (its README) and names the version it was read from: an install of any
+ * other version stops the script until someone reads that package again.
+ */
+export interface BundledCode {
+  /** The package that carries the code, and the version this entry was read from. */
+  carrier: { name: string; version: string };
+  name: string;
+  /** Its version as the carrying package records it; `?` when the package records none. */
+  version: string;
+  license: string;
+  homepage: string;
+  /** Where its licence text is, since the carrying package ships no copy of it. */
+  licenseUrl: string;
+}
+
+/**
+ * zxing-wasm 3.1.5 builds its barcode reader and writer from zxing-cpp (Apache-2.0), and its
+ * writer from zint (BSD-3-Clause) as well; its README's "Licenses" section names both, with the
+ * links below, and the package ships neither licence text. It exports the zxing-cpp commit as
+ * ZXING_CPP_COMMIT; it records no zint version.
+ */
+export const BUNDLED_CODE: readonly BundledCode[] = [
+  {
+    carrier: { name: 'zxing-wasm', version: '3.1.5' },
+    name: 'zxing-cpp',
+    version: 'commit 2ecec3f',
+    license: 'Apache-2.0',
+    homepage: 'https://github.com/zxing-cpp/zxing-cpp',
+    licenseUrl: 'https://github.com/zxing-cpp/zxing-cpp/blob/master/LICENSE',
+  },
+  {
+    carrier: { name: 'zxing-wasm', version: '3.1.5' },
+    name: 'zint',
+    version: '?',
+    license: 'BSD-3-Clause',
+    homepage: 'https://sourceforge.net/projects/zint/',
+    licenseUrl: 'https://sourceforge.net/p/zint/code/ci/master/tree/LICENSE',
+  },
+];
 
 /** The installed packages or the notices file cannot give a right answer. */
 export class NoticesError extends Error {
@@ -150,10 +202,15 @@ function noticeOf(dir: string, manifest: Manifest, fallbackName: string): Packag
 }
 
 /**
- * Every production package installed under `productRoot`, sorted by name and then version. A
- * required dependency that is not installed is a NoticesError; a missing optional one is skipped.
+ * Every production package installed under `productRoot`, plus the code `bundled` says they
+ * carry, sorted by name and then version. A required dependency that is not installed is a
+ * NoticesError, and so is a carrying package installed at another version than its entry names;
+ * a missing optional dependency is skipped, and so is an entry whose carrying package is absent.
  */
-export function collectNotices(productRoot: string): Notices {
+export function collectNotices(
+  productRoot: string,
+  bundled: readonly BundledCode[] = BUNDLED_CODE,
+): Notices {
   const pending: Array<{ name: string; from: string; optional: boolean }> = runtimeDependencies(
     readManifest(productRoot),
   ).map(([name, optional]) => ({ name, from: productRoot, optional }));
@@ -177,8 +234,42 @@ export function collectNotices(productRoot: string): Notices {
   if (missing.length > 0) {
     throw new NoticesError(`not installed: ${[...new Set(missing)].sort().join(', ')}`);
   }
+  packages.push(...bundledNotices(packages, bundled));
   packages.sort((a, b) => byCodePoint(a.name, b.name) || byCodePoint(a.version, b.version));
   return { packages };
+}
+
+/** The entries of `bundled` whose carrying package is among `installed`, as notices. */
+function bundledNotices(
+  installed: readonly PackageNotice[],
+  bundled: readonly BundledCode[],
+): PackageNotice[] {
+  const notices: PackageNotice[] = [];
+  for (const code of bundled) {
+    const carriers = installed.filter((pkg) => pkg.name === code.carrier.name);
+    const other = carriers.find((pkg) => pkg.version !== code.carrier.version);
+    if (other) {
+      throw new NoticesError(
+        `${other.name} ${other.version} is installed, but the entry for the ${code.name} code it ` +
+          `bundles was read from ${code.carrier.version}: read that version's licence notes and ` +
+          'update BUNDLED_CODE in scripts/notices.ts',
+      );
+    }
+    if (carriers.length === 0) continue;
+    const { name, version, license, homepage } = code;
+    notices.push({ name, version, license, homepage, text: null });
+  }
+  return notices;
+}
+
+/** The entry of `bundled` a notice was made from, if it was made from one. */
+function bundledEntry(
+  notice: PackageNotice,
+  bundled: readonly BundledCode[],
+): BundledCode | undefined {
+  return bundled.find(
+    (code) => code.name === notice.name && code.version === notice.version && notice.text === null,
+  );
 }
 
 /** The file's text: two-space JSON and a final newline, a shape Prettier leaves alone. */
@@ -187,16 +278,91 @@ export function formatNotices(notices: Notices): string {
 }
 
 /**
- * Writes the notices of the packages installed under `productRoot` to NOTICES_FILE when its bytes
- * would change; true when it wrote. The build calls this before anything reads the file.
+ * The dependency section of THIRD_PARTY_NOTICES.md, from DEPENDENCY_HEADING to the end of the
+ * file: one line per notice, in the list's order. Only list items, code spans and `<https:…>`
+ * links, which Prettier leaves as they are.
  */
-export function writeNotices(productRoot: string): boolean {
-  const text = formatNotices(collectNotices(productRoot));
-  const path = join(productRoot, NOTICES_FILE);
-  if (existsSync(path) && readFileSync(path, 'utf8') === text) return false;
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, text);
-  return true;
+export function dependencySection(
+  notices: Notices,
+  bundled: readonly BundledCode[] = BUNDLED_CODE,
+): string {
+  const lines = notices.packages.map((pkg) => {
+    const version = pkg.version === '?' ? '(version not recorded)' : pkg.version;
+    const page = pkg.homepage === null ? '' : `, <${pkg.homepage}>`;
+    const code = bundledEntry(pkg, bundled);
+    const note = code
+      ? `; bundled in \`${code.carrier.name}\` ${code.carrier.version}, which ships no copy of ` +
+        `this licence text (it is at <${code.licenseUrl}>)`
+      : pkg.text === null
+        ? '; ships no licence text of its own'
+        : '';
+    return `- \`${pkg.name}\` ${version}: ${pkg.license}${page}${note}`;
+  });
+  return [
+    DEPENDENCY_HEADING,
+    '',
+    '<!-- Written by scripts/notices.ts from the installed packages (pnpm build runs it too).',
+    'Change the script, not this section: it runs to the end of the file. -->',
+    '',
+    'The packages that ship in the app, with their licences. The licence and notice texts each',
+    "package ships are in `src/generated/notices.json` and on the app's Licences and credits page;",
+    '`pnpm check:licenses` checks every licence against `tooling/checks/licenses.allow.json`. Code',
+    'that a package bundles under a licence of its own is listed under its own name.',
+    '',
+    ...lines,
+    '',
+  ].join('\n');
+}
+
+/**
+ * `markdown` with its dependency section, from DEPENDENCY_HEADING to the end, replaced by
+ * `section`; everything above the heading is kept. A file without the heading is a NoticesError.
+ */
+export function withDependencySection(markdown: string, section: string): string {
+  const text = markdown.replace(/\r\n?/g, '\n');
+  const heading = new RegExp(`^${DEPENDENCY_HEADING}[ \\t]*$`, 'm').exec(text);
+  if (!heading) {
+    throw new NoticesError(`${CREDIT_SOURCE} has no "${DEPENDENCY_HEADING}" section`);
+  }
+  return text.slice(0, heading.index) + section;
+}
+
+/** Each file this script writes, relative to the product root, with the text it should hold. */
+function expectedFiles(
+  productRoot: string,
+  bundled: readonly BundledCode[],
+): Array<{ file: string; text: string }> {
+  const notices = collectNotices(productRoot, bundled);
+  const markdownPath = join(productRoot, CREDIT_SOURCE);
+  if (!existsSync(markdownPath)) throw new NoticesError(`${CREDIT_SOURCE} is missing`);
+  const markdown = readFileSync(markdownPath, 'utf8');
+  return [
+    { file: NOTICES_FILE, text: formatNotices(notices) },
+    {
+      file: CREDIT_SOURCE,
+      text: withDependencySection(markdown, dependencySection(notices, bundled)),
+    },
+  ];
+}
+
+/**
+ * Writes the notices of the packages installed under `productRoot` to NOTICES_FILE and to the
+ * dependency section of CREDIT_SOURCE, each only when its bytes would change; returns the files
+ * it wrote. The build calls this before anything reads them.
+ */
+export function writeNotices(
+  productRoot: string,
+  bundled: readonly BundledCode[] = BUNDLED_CODE,
+): string[] {
+  const written: string[] = [];
+  for (const { file, text } of expectedFiles(productRoot, bundled)) {
+    const path = join(productRoot, file);
+    if (existsSync(path) && readFileSync(path, 'utf8') === text) continue;
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, text);
+    written.push(file);
+  }
+  return written;
 }
 
 /**
@@ -225,33 +391,40 @@ const USAGE = 'usage: tsx scripts/notices.ts [--check]';
 
 export interface MainOverrides {
   productRoot?: string;
+  bundled?: readonly BundledCode[];
   write?: (text: string) => void;
 }
 
 export function main(argv: string[], overrides: MainOverrides = {}): number {
   const write = overrides.write ?? ((text: string) => process.stdout.write(`${text}\n`));
   const root = overrides.productRoot ?? PRODUCT_ROOT;
+  const bundled = overrides.bundled ?? BUNDLED_CODE;
   const unknown = argv.find((arg) => arg !== '--check');
   if (unknown !== undefined) {
     write(`unknown argument "${unknown}"\n${USAGE}`);
     return 2;
   }
+  const both = `${NOTICES_FILE} and ${CREDIT_SOURCE}`;
   try {
     if (!argv.includes('--check')) {
-      const wrote = writeNotices(root);
-      write(wrote ? `notices: wrote ${NOTICES_FILE}` : `notices: ${NOTICES_FILE} is up to date`);
+      const written = writeNotices(root, bundled);
+      write(
+        written.length > 0
+          ? `notices: wrote ${written.join(' and ')}`
+          : `notices: ${both} are up to date`,
+      );
       return 0;
     }
-    const path = join(root, NOTICES_FILE);
-    const current = existsSync(path) ? readFileSync(path, 'utf8') : null;
-    if (current === formatNotices(collectNotices(root))) {
-      write(`notices: ${NOTICES_FILE} is up to date`);
+    const stale = expectedFiles(root, bundled).flatMap(({ file, text }) => {
+      const path = join(root, file);
+      if (!existsSync(path)) return [`${file} is missing`];
+      return readFileSync(path, 'utf8') === text ? [] : [`${file} is stale`];
+    });
+    if (stale.length === 0) {
+      write(`notices: ${both} are up to date`);
       return 0;
     }
-    write(
-      `notices: ${NOTICES_FILE} is ${current === null ? 'missing' : 'stale'}; ` +
-        'run tsx scripts/notices.ts (pnpm build does it too)',
-    );
+    write(`notices: ${stale.join('; ')}; run tsx scripts/notices.ts (pnpm build does it too)`);
     return 1;
   } catch (error) {
     if (!(error instanceof NoticesError)) throw error;

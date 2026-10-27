@@ -104,8 +104,9 @@ function platewiseWorker(): Plugin[] {
 }
 
 /**
- * P09-16: refreshes src/generated/notices.json (the credits page's list of third-party licences)
- * from the installed packages at the start of every build, before anything reads it.
+ * P09-16, P10-14: refreshes src/generated/notices.json (the credits page's list of third-party
+ * licences) and the runtime-dependencies section of THIRD_PARTY_NOTICES.md from the installed
+ * packages at the start of every build, before anything reads them.
  */
 function platewiseNotices(): Plugin {
   return {

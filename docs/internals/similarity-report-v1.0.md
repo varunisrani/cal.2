@@ -114,7 +114,7 @@ gate; no `*`, so no gate fired):
 | 12 | 0.78 | tokens | `src/services/barcode/product.ts:47-49` | `isRecord(value): value is Record<string, unknown>`, the standard TypeScript type guard | keep: a language idiom (39 of 50 tokens) |
 | 13 | 0.75 | prose | `docs/notes/P03/gemini-adapter.md:87` | quotes the test name about the `x-goog-api-key` header | keep: header name |
 | 14–20 | 0.75 | prose | `docs/plan/research/{03,05,06,07}-*.md` | JSON keys of the reference's reply schema, request shapes, nutrient lists, quoted dialog titles, environment variable names, websocket addresses | keep: identifier lists and vendor facts |
-| 21 | 0.75 | prose | `index.html:9` | `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">` | keep: the standard viewport tag |
+| 21 | 0.75 | prose | `index.html:9` | the standard viewport meta tag (device width, initial scale 1, cover the safe areas) | keep: the standard viewport tag |
 | 22 | 0.75 | prose | `src/ai/adapters/gemini.test.ts:96` | test name about the `x-goog-api-key` header | keep: header name |
 | 23 | 0.75 | prose | `src/i18n/en/about.ts:101` | the title of Hall et al. (2011), cited on the Methods page | keep: a paper's title |
 | 24–30 | 0.67 | prose | `docs/handoff/**`, `docs/notes/P03`, `P05`, `P07`, `P09` | 8-word runs in builder prompts and task notes (ranges, field names, test names) | none: well under the gate |

@@ -36,5 +36,21 @@ SOFTWARE.
 
 ## Runtime dependencies
 
-The licences of the packages that ship in the app are listed by `pnpm licenses list --prod` and
-checked against `tooling/checks/licenses.allow.json` by `pnpm check:licenses`.
+<!-- Written by scripts/notices.ts from the installed packages (pnpm build runs it too).
+Change the script, not this section: it runs to the end of the file. -->
+
+The packages that ship in the app, with their licences. The licence and notice texts each
+package ships are in `src/generated/notices.json` and on the app's Licences and credits page;
+`pnpm check:licenses` checks every licence against `tooling/checks/licenses.allow.json`. Code
+that a package bundles under a licence of its own is listed under its own name.
+
+- `@types/emscripten` 1.41.6: MIT, <https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/emscripten>
+- `dexie` 4.4.6: Apache-2.0, <https://dexie.org>
+- `react` 19.3.0: MIT, <https://react.dev/>
+- `react-dom` 19.3.0: MIT, <https://react.dev/>
+- `scheduler` 0.28.0: MIT, <https://react.dev/>
+- `tagged-tag` 1.0.0: MIT
+- `type-fest` 5.10.0: (MIT OR CC0-1.0)
+- `zint` (version not recorded): BSD-3-Clause, <https://sourceforge.net/projects/zint/>; bundled in `zxing-wasm` 3.1.5, which ships no copy of this licence text (it is at <https://sourceforge.net/p/zint/code/ci/master/tree/LICENSE>)
+- `zxing-cpp` commit 2ecec3f: Apache-2.0, <https://github.com/zxing-cpp/zxing-cpp>; bundled in `zxing-wasm` 3.1.5, which ships no copy of this licence text (it is at <https://github.com/zxing-cpp/zxing-cpp/blob/master/LICENSE>)
+- `zxing-wasm` 3.1.5: MIT, <https://github.com/Sec-ant/zxing-wasm>
