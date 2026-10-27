@@ -1,0 +1,959 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "wizard.welcome",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"aiAccess\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.formula-plan",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.kcal\"]:has-text(\"2,452\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.formula-note",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.aiUnavailable\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "toast.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Toast"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "250"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Coffee with milk"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "60"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Coffee with milk\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "logged.gauge-310",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"310\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\") [data-ui=\"entry.row.open\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.editor",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"editor\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.unlock",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"editor\"] [data-ui=\"review.lock\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.kcal",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"editor\"] [data-ui=\"review.kcal\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "320"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"editor.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"editor\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.row-320",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\"):has-text(\"320\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "edit.gauge-380",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"380\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.select",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\") [data-ui=\"entry.row.select\"]"
+      },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.bar",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.add-hidden",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "state": "hidden",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.one-held",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection.combine\"]:disabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.pick-coffee",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Coffee with milk\") [data-ui=\"entry.row.open\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection.combine\"]:enabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.go",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection.combine\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.bar-gone",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast + Coffee with milk\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.gauge-380",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"380\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "combine.add-back",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.yesterday",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.yesterday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"false\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Leftover curry"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "520"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.meal",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.meal\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.meal.lunch",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.mealPicker.lunch\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.meal.chosen",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.mealPicker\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Leftover curry\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.today",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.today.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.reuse\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.copyDay\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"copyDay\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.source-food",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"copyDay.entry\"]:has-text(\"Leftover curry\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.all",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"copyDay.all\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"copyDay\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.today-row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.meal.lunch\"] [data-ui=\"entry.row\"]:has-text(\"Leftover curry\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy.gauge-900",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"900\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copied.yesterday",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copied.yesterday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"false\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copied.yesterday-kept",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Leftover curry\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copied.yesterday-gauge",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"520\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

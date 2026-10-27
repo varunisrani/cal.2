@@ -1,0 +1,169 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "welcome.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"welcome\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "restore.pick-photo",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.restore\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "refused.problem",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"welcomeRestore.problem\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "refused.try-again",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"welcomeRestore.tryAgain\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "restore.pick-backup",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"welcomeRestore.tryAgain\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "restore.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"restore\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "restore.counts",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"restore.counts\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "restore.confirm",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"restore.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "restored.open",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"welcomeRestore.open\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "restored.go",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"welcomeRestore.open\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.restored-row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Restored porridge\")"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "home.gauge",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"320\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.progress\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.restored-weight",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.current\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

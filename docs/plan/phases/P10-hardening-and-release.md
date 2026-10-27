@@ -1,6 +1,6 @@
 # P10 · Hardening and release
 
-**Weeks:** 2 · **Tracks:** all hands: parity, ledgers, quality, security, docs · **Depends on:** P00–P09 · **Status:** 🔨 in progress: P10-09, P10-10, P10-12, P10-13 landed (4/14, 2026-10-27)
+**Weeks:** 2 · **Tracks:** all hands: parity, ledgers, quality, security, docs · **Depends on:** P00–P09 · **Status:** 🔨 in progress: P10-01..04, P10-09, P10-10, P10-12, P10-13 landed (8/14, 2026-10-27)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

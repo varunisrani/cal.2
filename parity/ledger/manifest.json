@@ -1,0 +1,671 @@
+{
+  "about": "Each claim of obligations.json bound to the module that owns it and the tests that prove it (the acceptance map's Test lines).",
+  "bindings": [
+    {
+      "id": "PC-ACC-B1-1",
+      "module": "src/features/onboarding/WizardPage.tsx",
+      "symbol": "WizardPage",
+      "tests": [
+        "src/features/onboarding/WizardPage.test.tsx > WizardPage > opens a fresh wizard on Welcome without Back or progress, and Get started begins it (ACC-B1-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B2-1",
+      "module": "src/features/onboarding/wizard.ts",
+      "symbol": "wizardReducer",
+      "tests": [
+        "src/features/onboarding/WizardPage.test.tsx > WizardPage > walks from Welcome to Body fat with the keyboard only, each step keeping its answer (ACC-B2-1)",
+        "src/features/onboarding/WizardPage.test.tsx > WizardPage > walks from Activity to AI access, each step starting on its default (ACC-B2-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B11-2",
+      "module": "src/domain/units/defaults.ts",
+      "symbol": "defaultUnits",
+      "tests": [
+        "src/features/onboarding/WizardPage.test.tsx > WizardPage > shows weight in pounds in a fresh wizard in an en-US browser (ACC-B11-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B3-1",
+      "module": "src/features/onboarding/wizard.ts",
+      "symbol": "wizardReducer",
+      "tests": [
+        "src/features/onboarding/wizard.test.ts > units > keeps 70.0 kg through kg → lb → kg (R01.3, ACC-B3-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B4-1",
+      "module": "src/features/onboarding/wizard.ts",
+      "symbol": "targetProblem",
+      "tests": [
+        "src/features/onboarding/wizard.test.ts > target weight > blocks Continue for a lose target of 72 kg when the current weight is 70 (R01.6, ACC-B4-1)",
+        "src/features/onboarding/steps/Target.test.tsx > Target > shows why a lose target above the current weight is refused and holds Continue (ACC-B4-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B6-1",
+      "module": "src/features/onboarding/steps/AiAccess.tsx",
+      "symbol": "AiAccess",
+      "tests": [
+        "src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > keeps Continue disabled until a needed key is entered and the terms are accepted, then stores the choice (ACC-B6-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B7-2",
+      "module": "src/features/onboarding/steps/BuildingPlan.tsx",
+      "symbol": "BuildingPlan",
+      "tests": [
+        "src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan with the real plan builder and Plan ready > shows the AI plan on Plan ready after the animation when the AI answered at 2 s (ACC-B7-2)",
+        "src/features/onboarding/steps/BuildingPlan.test.tsx > BuildingPlan > moves on only once the 4 s animation is over when the plan came at 2 s, for the run it started (ACC-B7-2)",
+        "e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B8-1",
+      "module": "src/features/onboarding/steps/PlanReady.tsx",
+      "symbol": "PlanReady",
+      "tests": [
+        "src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > re-derives carbs when protein changes to 150 (ACC-B8-1, R01.7)",
+        "e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B9-1",
+      "module": "src/services/onboarding.ts",
+      "symbol": "createOnboardingService",
+      "tests": [
+        "src/services/onboarding.test.ts > complete > stores the profile with the plan, one weigh-in at now, the units, the tune-up on from today, and onboarding done (ACC-B9-1)",
+        "src/features/onboarding/OnboardingRoute.test.tsx > OnboardingRoute > walks the shortest path and finishes: the plan, one weigh-in, the units and the done flag are stored (ACC-B9-1)",
+        "e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > walks the wizard with the AI as a Custom provider at loopback, edits protein on Plan ready and finds those targets on Home (ACC-B7-2, ACC-B8-1, ACC-B9-1, R01.7, R03.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B6-2",
+      "module": "src/features/onboarding/steps/AiAccess.tsx",
+      "symbol": "AiAccess",
+      "tests": [
+        "src/features/onboarding/steps/AiAccess.test.tsx > AiAccess > continues with \"Set up later\" and saves no provider, so the plan uses the formulas (ACC-B6-2)",
+        "e2e/onboarding.spec.ts > onboarding and goals (Demo 2) > uses the formula plan and sends nothing when AI is set up later (ACC-B6-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F4-1",
+      "module": "src/features/home/DaySummary.tsx",
+      "symbol": "DaySummary",
+      "tests": [
+        "src/features/home/DaySummary.test.tsx > DaySummary pillars > shows protein, carbs, fat and fibre against their goals, in that order (ACC-F4-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D3-2",
+      "module": "src/features/log/AddMenu.tsx",
+      "symbol": "AddMenu",
+      "tests": [
+        "src/features/log/AddMenu.test.tsx > AddMenu > draws the default menu's three groups as pages with their methods and Back (ACC-D3-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D3-1",
+      "module": "src/features/log/AddMenu.tsx",
+      "symbol": "AddMenu",
+      "tests": [
+        "src/features/home/HomePage.test.tsx > HomePage > offers Enter manually in the + menu, which opens the manual sheet over Home (ACC-D3-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D2-1",
+      "module": "src/features/log/ManualSheet.tsx",
+      "symbol": "ManualSheet",
+      "tests": [
+        "e2e/walking-skeleton.spec.ts > walking skeleton (Demo 1) > a manual entry lands under its meal, moves the gauge, survives a reload and is deleted only after confirming (ACC-D2-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F7-1",
+      "module": "src/features/home/Diary.tsx",
+      "symbol": "Diary",
+      "tests": [
+        "src/features/home/Diary.test.tsx > Diary > shows a 300 kcal breakfast under Breakfast with the section total 300 (ACC-F7-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > sorts the diary newest first, where breakfast comes back, and by meal again (ACC-F7-1, ACC-F7-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D8-1",
+      "module": "src/domain/servings/expression.ts",
+      "symbol": "evalAmount",
+      "tests": [
+        "src/features/log/review/AmountField.test.tsx > AmountField > sets the amount to 70 while 50+20 is typed (ACC-D8-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D6-1",
+      "module": "src/features/log/DescribeSheet.tsx",
+      "symbol": "DescribeSheet",
+      "tests": [
+        "e2e/logging.spec.ts > logging flows (Demo 3) > describes \"two eggs and toast\", reviews the estimate from the AI and logs it (ACC-D6-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D25-1",
+      "module": "src/services/analysis.ts",
+      "symbol": "createAnalysisService",
+      "tests": [
+        "e2e/logging.spec.ts > logging flows (Demo 3) > reopens the review with the same values after a reload, and only until it is logged (ACC-D25-1, D-16.46)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D19-1",
+      "module": "src/features/log/scan/ScanSheet.tsx",
+      "symbol": "ScanSheet",
+      "tests": [
+        "e2e/logging.spec.ts > logging flows (Demo 3) > looks up typed barcode digits in Open Food Facts and logs the product (ACC-D19-1, ACC-D20-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D20-1",
+      "module": "src/services/barcode/lookup.ts",
+      "symbol": "createBarcodeService",
+      "tests": [
+        "src/services/barcode/lookup.test.ts > createBarcodeService > stores an Open Food Facts product with its photo as the analysis draft, then opens its review (ACC-D20-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > closes the scanner on typed digits, and a product found opens its review (ACC-D20-1)",
+        "e2e/logging.spec.ts > logging flows (Demo 3) > looks up typed barcode digits in Open Food Facts and logs the product (ACC-D19-1, ACC-D20-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D22-1",
+      "module": "src/features/log/review/ProductBlock.tsx",
+      "symbol": "ProductBlock",
+      "tests": [
+        "src/features/log/review/ProductBlock.test.tsx > ProductBlock > shows only the fields with data that are not hidden: a hidden NOVA group stays out (ACC-D22-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D23-1",
+      "module": "src/features/log/review/LabelText.tsx",
+      "symbol": "LabelText",
+      "tests": [
+        "src/features/log/review/ProductBlock.test.tsx > ProductBlock > shows Open Food Facts' marked allergens in bold in the label (ACC-D23-1)",
+        "src/data/codecs.test.ts > other food codecs > keep the marked ingredient list of a product through a stored analysis draft (ACC-D23-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D20-2",
+      "module": "src/features/log/scan/LookupOverlay.tsx",
+      "symbol": "LookupOverlay",
+      "tests": [
+        "src/services/barcode/lookup.test.ts > createBarcodeService > offers Scan label after a miss everywhere and holds the code for one analysis (ACC-D20-2, R02.20)",
+        "src/features/home/HomePage.test.tsx > HomePage: barcodes (P06-14, P06-17) > offers Scan label after a miss, and the label photo runs as that product’s label (ACC-D20-2, R02.20)",
+        "e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D21-1",
+      "module": "src/services/barcode/lookup.ts",
+      "symbol": "createBarcodeService",
+      "tests": [
+        "src/services/barcode/lookup.test.ts > createBarcodeService > opens a saved label as a label draft marked as such, with its own photo (ACC-D21-1)",
+        "e2e/logging.spec.ts > logging flows (Demo 3) > offers Scan label for a product Open Food Facts lacks, logs the label, and finds that label on the next scan (ACC-D20-2, ACC-D21-1, R02.15, R02.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D16-1",
+      "module": "src/domain/food/reuse.ts",
+      "symbol": "searchFoods",
+      "tests": [
+        "src/domain/food/reuse.test.ts > search > finds \"Café\" for \"cafe\", and \"cafe\" for \"CAFÉ\" (ACC-D16-1)",
+        "src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: search > finds \"Café latte\" for \"cafe\", ignoring case, accents and the spaces around (ACC-D16-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D16-2",
+      "module": "src/features/log/reuse/ReuseSheet.tsx",
+      "symbol": "ReuseSheet",
+      "tests": [
+        "src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Recent > opens the review with the entry's grams, units, photos and source, and logs nothing (ACC-D16-2)",
+        "e2e/logging.spec.ts > logging flows (Demo 3) > logs yesterday's food again from Recent, on today, leaving yesterday as it was (ACC-D16-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D12-2",
+      "module": "src/features/log/EntryEditor.tsx",
+      "symbol": "EntryEditor",
+      "tests": [
+        "src/features/log/EntryEditor.test.tsx > EntryEditor: Save > saves calories edited through the unlock (ACC-D12-2, D-16.19), at the amount shown",
+        "e2e/logging.spec.ts > logging flows (Demo 3) > edits an entry's calories from its row through the nutrition lock (ACC-D12-2, D-16.19)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F12-1",
+      "module": "src/features/home/SelectionBar.tsx",
+      "symbol": "SelectionBar",
+      "tests": [
+        "src/features/home/EntryRow.test.tsx > EntryRow: on Home (P06-19) > starts picking after a press held still for half a second, and the click that ends it does nothing more (ACC-F12-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > starts picking on a long-press: the bar with the count, Cancel and Combine takes the place of \"+\" (ACC-F12-1)",
+        "src/features/home/SelectionBar.test.tsx > SelectionBar > says how many rows are picked and offers Combine from two (ACC-F12-1)",
+        "e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a combine during a fast; End fast and log ends it and combines (ACC-F12-1, R05.1, D-16.35)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D15-1",
+      "module": "src/services/combine.ts",
+      "symbol": "createCombineService",
+      "tests": [
+        "src/services/combine.test.ts > combine > replaces three entries by one named \"Toast + Eggs + Tea\" at the latest time, in one write (ACC-D15-1, R02.24)",
+        "src/features/home/SelectionBar.test.tsx > SelectionBar > combines three rows into one named \"Toast + Eggs + Tea\" at the latest time, then ends picking (ACC-D15-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > combines three picked rows into one entry named \"Toast + Eggs + Tea\" at the latest time, and the \"+\" comes back (ACC-D15-1, D-16.20)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D18-1",
+      "module": "src/services/copyDay.ts",
+      "symbol": "createCopyDayService",
+      "tests": [
+        "src/services/copyDay.test.ts > copy > copies yesterday onto today with new ids at the clock time, meals kept and yesterday unchanged (ACC-D18-1)",
+        "src/features/log/CopyDaySheet.test.tsx > CopyDaySheet > copies all of them with the count on the button, keeps their meals and leaves yesterday as it was (ACC-D18-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: the add menu opens its sheets (P06-01) > copies a day onto the day Home shows, and the copies appear in the diary (ACC-D18-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-H1-1",
+      "module": "src/features/settings/tracking/TrackingPage.tsx",
+      "symbol": "TrackingPage",
+      "tests": [
+        "src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > adds the water pillar on Home once water is turned on, and a log from the water page fills it (ACC-H1-1)",
+        "src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > logs a custom amount from the + menu's water page on the sheet over Home (ACC-H1-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F11-1",
+      "module": "src/features/water/WaterMenuPage.tsx",
+      "symbol": "WaterMenuPage",
+      "tests": [
+        "src/features/water/WaterMenuPage.test.tsx > WaterMenuPage > logs 500 ml on the selected day at once, confirms it and is done (ACC-F11-1)",
+        "src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > opens the water page inside the menu, where a preset logs on the day shown at once (ACC-F11-1, ACC-H1-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-H4-1",
+      "module": "src/features/home/DaySummary.tsx",
+      "symbol": "DaySummary",
+      "tests": [
+        "src/features/home/PillarRow.test.tsx > PillarRow > shows the day's water against the daily goal in the water unit (ACC-H4-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > shows the stored pillars, then water with the shown day's logs while it is tracked (ACC-H4-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-H3-1",
+      "module": "src/features/water/CustomWaterSheet.tsx",
+      "symbol": "CustomWaterSheet",
+      "tests": [
+        "src/features/water/CustomWaterSheet.test.tsx > CustomWaterSheet > refuses 6 000 ml with a message naming 5,000 ml and stores nothing (ACC-H3-1, R05.10, D-16.39)",
+        "src/services/water.test.ts > logWater > refuses more than 5 000 ml, nothing, and part of a ml, storing nothing (ACC-H3-1, D-16.39)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F9-1",
+      "module": "src/features/home/WaterRow.tsx",
+      "symbol": "WaterRow",
+      "tests": [
+        "src/features/home/WaterRow.test.tsx > WaterRow > asks before deleting on a swipe, and keeps the log on Cancel (ACC-F9-1)",
+        "src/features/home/WaterRow.test.tsx > WaterRow > deletes the log once Delete is confirmed (ACC-F9-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > asks before deleting a water row and removes it once confirmed (ACC-F9-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-H6-1",
+      "module": "src/features/settings/tracking/TrackingPage.tsx",
+      "symbol": "TrackingPage",
+      "tests": [
+        "src/features/fasting/FastingSettings.test.tsx > FastingSettings > shows the default goal of 16 hours once fasting is on (ACC-J10-1, ACC-H6-1)",
+        "src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)",
+        "e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)"
+      ]
+    },
+    {
+      "id": "PC-ACC-H7-1",
+      "module": "src/services/fasting.ts",
+      "symbol": "createFastingService",
+      "tests": [
+        "src/features/fasting/StartFastSheet.test.tsx > StartFastSheet > opens on the default 16 hours and starts a running fast now (ACC-H7-1)",
+        "src/features/fasting/FastEditor.test.tsx > FastEditor > cancels a running fast so it leaves no history (ACC-H7-1)",
+        "e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F11-2",
+      "module": "src/features/log/AddMenu.tsx",
+      "symbol": "AddMenu",
+      "tests": [
+        "src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > shows only Water and Fasting while a fast runs: no food group or method (ACC-F11-2)",
+        "src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)",
+        "e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D27-1",
+      "module": "src/features/fasting/PausedDialog.tsx",
+      "symbol": "PausedDialog",
+      "tests": [
+        "src/features/fasting/PausedDialog.test.tsx > the review during a fast (D-16.35) > ends the fast and logs the food in one step with End fast and log (ACC-D27-1)",
+        "src/features/log/ManualSheet.test.tsx > ManualSheet > ends the fast and stores the entry with End fast and log (ACC-D27-1, D-16.35)",
+        "src/services/fasting.test.ts > endFastAndLog (D-16.35) > ends the running fast now and stores the food, in one step (ACC-D27-1)",
+        "e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a manual entry when a fast starts in another tab; End fast and log does both (ACC-D27-1, R05.1, D-16.35)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F1-2",
+      "module": "src/features/home/WeekBar.tsx",
+      "symbol": "WeekBar",
+      "tests": [
+        "src/features/home/WeekBar.test.tsx > WeekBar > shows the days after today but never selects them: tomorrow is disabled (ACC-F1-2, D-16.36)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F1-1",
+      "module": "src/features/home/WeekBar.tsx",
+      "symbol": "WeekBar",
+      "tests": [
+        "src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows the week bar on today, and last Monday's diary and summary once it is selected (ACC-F1-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F10-1",
+      "module": "src/features/home/Diary.tsx",
+      "symbol": "Diary",
+      "tests": [
+        "src/features/home/Diary.test.tsx > Diary > shows the empty card on a day with nothing logged (ACC-F10-1)",
+        "src/features/home/HomePage.test.tsx > HomePage > shows the empty card on a day with nothing logged (ACC-F10-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F6-1",
+      "module": "src/features/home/DayNutrientsSheet.tsx",
+      "symbol": "DayNutrientsSheet",
+      "tests": [
+        "src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > lists every nutrient of the day with its unit and its goal (ACC-F6-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > opens the shown day's nutrients from All nutrients: yesterday's while yesterday is shown (ACC-F6-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F5-1",
+      "module": "src/features/home/PillarPicker.tsx",
+      "symbol": "PillarPicker",
+      "tests": [
+        "src/features/home/PillarPicker.test.tsx > PillarPicker > replaces the latest pick when a fifth nutrient is picked (ACC-F5-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > chooses pillars over the sheet: Done stores them and Home shows them (ACC-F5-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-F2-1",
+      "module": "src/features/home/DaySwipe.tsx",
+      "symbol": "DaySwipe",
+      "tests": [
+        "src/features/home/DaySwipe.test.tsx > DaySwipe > shows yesterday after a swipe of 100 px toward the right (ACC-F2-1)",
+        "src/features/home/DaySwipe.test.tsx > DaySwipe > never moves past today: a swipe toward the left on today does nothing (ACC-F2-1)",
+        "src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows yesterday after a swipe toward the right on the summary; toward the left on today does nothing (ACC-F2-1)",
+        "e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > swipes the summary to yesterday and back, never past today (ACC-F2-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G4-2",
+      "module": "src/features/progress/LogWeightSheet.tsx",
+      "symbol": "LogWeightSheet",
+      "tests": [
+        "src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G4-1",
+      "module": "src/services/progress.ts",
+      "symbol": "createProgressService",
+      "tests": [
+        "src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > logs a weight for last week on that day at the current clock time, keeping the current weight (ACC-G4-1)",
+        "src/services/progress.test.ts > logWeight > puts an earlier day at the current clock time and keeps the newer profile weight (ACC-G4-1)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G1-1",
+      "module": "src/features/progress/RangeBar.tsx",
+      "symbol": "RangeBar",
+      "tests": [
+        "src/features/progress/RangeBar.test.tsx > RangeBar > shows the previous 30 days and their dates after the back arrow on 1M (ACC-G1-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G6-1",
+      "module": "src/features/progress/HistorySheet.tsx",
+      "symbol": "HistorySheet",
+      "tests": [
+        "src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G7-1",
+      "module": "src/services/progress.ts",
+      "symbol": "createProgressService",
+      "tests": [
+        "src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > sets the profile weight to the previous reading when the latest is deleted (ACC-G7-1, R05.8)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G8-1",
+      "module": "src/features/progress/RecapCard.tsx",
+      "symbol": "RecapCard",
+      "tests": [
+        "src/features/progress/RecapCard.test.tsx > RecapCard > recaps the last week that ended: days logged of 7 with the change from the week before (ACC-G8-1, R05.19)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G9-1",
+      "module": "src/features/progress/ProgressPage.tsx",
+      "symbol": "ProgressPage",
+      "tests": [
+        "src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not",
+        "src/features/progress/NutritionCards.test.tsx > NutritionCards > takes out the partial today when Count today is turned off on the page (ACC-G9-1, R05.17)",
+        "e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G2-1",
+      "module": "src/features/progress/MetricSwitch.tsx",
+      "symbol": "MetricSwitch",
+      "tests": [
+        "src/features/progress/ProgressPage.test.tsx > ProgressPage > offers no Body fat without a reading, a profile value or a goal (ACC-G2-1)",
+        "src/features/progress/ProgressPage.test.tsx > ProgressPage > offers Body fat after Weight once only a body-fat goal exists (ACC-G2-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-G5-1",
+      "module": "src/features/progress/LogBodyFatSheet.tsx",
+      "symbol": "LogBodyFatSheet",
+      "tests": [
+        "src/features/progress/BodyFatCard.test.tsx > LogBodyFatSheet > saves 18.5 % stamped now and moves the profile body fat and the card to it (ACC-G5-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-I1-1",
+      "module": "src/features/coach/EmptyCoach.tsx",
+      "symbol": "EmptyCoach",
+      "tests": [
+        "src/features/coach/CoachPage.test.tsx > CoachPage: empty chat (P08-10) > shows the title, what the Coach can see and four cards in place of a conversation (ACC-I1-1)",
+        "src/features/coach/CoachPage.test.tsx > CoachPage: empty chat (P08-10) > sends a card’s words at once when it is tapped (ACC-I1-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-I7-1",
+      "module": "src/services/coach/tools.ts",
+      "symbol": "runCoachTool",
+      "tests": [
+        "e2e/coach.spec.ts > coach chat (Demo 5) > answers \"What did I eat yesterday?\" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-I10-2",
+      "module": "src/services/coach/session.ts",
+      "symbol": "createCoachSession",
+      "tests": [
+        "e2e/coach.spec.ts > coach chat (Demo 5) > answers \"What did I eat yesterday?\" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-I1-2",
+      "module": "src/features/coach/CoachPage.tsx",
+      "symbol": "CoachPage",
+      "tests": [
+        "src/features/coach/TypingDots.test.tsx > TypingDots (P08-10) > moves the lit dot on every 350 ms and back to the first after the third (ACC-I1-2)",
+        "src/features/coach/TypingDots.test.tsx > TypingDots (P08-10) > shows three dots with the first lit, and says the Coach is writing (ACC-I1-2)",
+        "src/features/coach/CoachPage.test.tsx > CoachPage: conversation > shows the typing dots while a reply is pending, the lit one moving every 350 ms (ACC-I1-2)",
+        "src/features/coach/MessageList.test.tsx > MessageList: typing dots > shows the dots after the last message only while a reply is pending (ACC-I1-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-I5-1",
+      "module": "src/services/coach/session.ts",
+      "symbol": "createCoachSession",
+      "tests": [
+        "src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)",
+        "e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)"
+      ]
+    },
+    {
+      "id": "PC-ACC-C12-1",
+      "module": "src/domain/units/energy.ts",
+      "symbol": "formatEnergy",
+      "tests": [
+        "src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-D2-2",
+      "module": "src/features/log/ManualSheet.tsx",
+      "symbol": "ManualSheet",
+      "tests": [
+        "src/features/log/ManualSheet.test.tsx > ManualSheet > saves 2 093 kJ as 500 kcal (ACC-D2-2)"
+      ]
+    },
+    {
+      "id": "PC-ACC-J3-1",
+      "module": "src/features/settings/app/UnitsSection.tsx",
+      "symbol": "UnitsSection",
+      "tests": [
+        "src/features/settings/app/UnitsSection.test.tsx > UnitsSection > combines weight in lb with height in cm (ACC-J3-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-A9-1",
+      "module": "src/features/settings/app/AppPage.tsx",
+      "symbol": "AppPage",
+      "tests": [
+        "src/features/settings/app/AppPage.test.tsx > AppPage > recolours every accent element at once when Ember is chosen (ACC-A9-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-A8-1",
+      "module": "src/features/settings/app/AppPage.tsx",
+      "symbol": "AppPage",
+      "tests": [
+        "src/app/ThemeProvider.test.tsx > ThemeProvider > keeps the light theme when Light is chosen, even when the device is or turns dark"
+      ]
+    },
+    {
+      "id": "PC-ACC-J8-2",
+      "module": "src/features/settings/ai/AiPage.tsx",
+      "symbol": "AiPage",
+      "tests": [
+        "src/features/settings/ai/AiPage.test.tsx > AiPage > says plainly that keys stay in this browser, which cannot fully shield them (ACC-J8-2, D-16.7)"
+      ]
+    },
+    {
+      "id": "PC-ACC-J8-1",
+      "module": "src/features/settings/ai/RoleCard.tsx",
+      "symbol": "RoleCard",
+      "tests": [
+        "src/features/settings/ai/AiPage.test.tsx > AiPage > makes photo requests fall back to the photo standby set here (ACC-J8-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-E14-1",
+      "module": "src/data/repos/secretsRepo.ts",
+      "symbol": "mask",
+      "tests": [
+        "src/data/repos/secretsRepo.test.ts > mask (ACC-E14-1) > shows the first four and the last four characters of a 40-character key",
+        "src/features/ai-setup/KeyField.test.tsx > KeyField > shows a saved key masked, never whole, and offers to replace it (ACC-E14-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-K4-2",
+      "module": "src/services/backup/restore.ts",
+      "symbol": "inspectBackup",
+      "tests": [
+        "src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a file is not a backup and changes nothing (ACC-K4-2)",
+        "src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a damaged file changed nothing (ACC-K4-2)",
+        "src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses a damaged file, changing nothing (ACC-K4-2, R06.6)"
+      ]
+    },
+    {
+      "id": "PC-ACC-K4-1",
+      "module": "src/features/settings/data/RestoreSheet.tsx",
+      "symbol": "RestoreSheet",
+      "tests": [
+        "src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)",
+        "src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-B10-1",
+      "module": "src/features/onboarding/RestoreFromFile.tsx",
+      "symbol": "RestoreFromFile",
+      "tests": [
+        "src/features/onboarding/RestoreFromFile.test.tsx > RestoreFromFile on Welcome > restores a complete backup after its preview and lands on Home with its entries, seeding nothing (ACC-B10-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-K1-1",
+      "module": "src/features/settings/data/ExportSheet.tsx",
+      "symbol": "ExportSheet",
+      "tests": [],
+      "review": ["P09-19"]
+    },
+    {
+      "id": "PC-ACC-K3-1",
+      "module": "src/features/settings/data/BackupSection.tsx",
+      "symbol": "BackupSection",
+      "tests": [
+        "src/services/backup/backup.test.ts > makeBackup > makes one file with the diary, its photos and the Coach chat (ACC-K3-1)",
+        "src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)"
+      ]
+    },
+    {
+      "id": "PC-ACC-K6-1",
+      "module": "src/data/wipe.ts",
+      "symbol": "eraseEverything",
+      "tests": [],
+      "review": ["P09-15"]
+    },
+    {
+      "id": "PC-ACC-D12-3",
+      "module": "src/features/home/EntryRow.tsx",
+      "symbol": "EntryRow",
+      "tests": [
+        "src/features/log/EntryEditor.test.tsx > EntryEditor: Saved and Delete > asks before deleting, and deletes on Delete (ACC-D12-3)"
+      ]
+    }
+  ]
+}

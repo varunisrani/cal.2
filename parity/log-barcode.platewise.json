@@ -1,0 +1,791 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "wizard.welcome",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"aiAccess\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.provider",
+      "action": "select_option",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.provider\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "custom"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.server",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.server\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "http://127.0.0.1:4320/v1"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.model",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.model.id\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "platewise-parity"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.terms",
+      "action": "check",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.terms\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]:enabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.kcal\"]:has-text(\"2,400\")"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "found.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.snapScan\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.barcode\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.scanner",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.digits",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "2 001234 567893"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.look-up",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits.submit\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.scanner-closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.review",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "found.barcode",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.product.barcode\"]:has-text(\"2001234567893\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.kcal",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.kcal\"]:text-is(\"105\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.photo",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.photo.1\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.allergens",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.product.allergens\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.allergen-bold",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.product.ingredients\"] strong"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "found.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Spelt Crackers\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.snapScan\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.barcode\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.scanner",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.digits",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "2009876543213"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.look-up",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits.submit\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.scanner-closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.failed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.failed\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "missing.scan-label",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.failed.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "missing.failed-closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.failed\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.capture",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"capture\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.add-photo",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"capture.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.photo-card",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"capture.card\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.analyse",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"capture.analyse\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.review",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "label.barcode",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.product.barcode\"]:has-text(\"2009876543213\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.not-saved-yet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.savedLabel\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "label.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Red lentil soup\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.snapScan\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.barcode\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.scanner",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.digits",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "2009876543213"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.look-up",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan.digits.submit\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.scanner-closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"scan\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.saved-label",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.savedLabel\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "again.kcal",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.kcal\"]:text-is(\"410\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.cancel",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.cancel\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

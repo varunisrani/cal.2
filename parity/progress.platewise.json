@@ -1,0 +1,1012 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "wizard.welcome",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.known",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.bodyFat.known.yes\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.wheel",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.bodyFat.value\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"aiAccess\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "lastweek.back-1",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-2",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-3",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-4",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-5",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-6",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.back-7",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.page\"]:not(:has([aria-current=\"date\"])) [data-ui=\"home.week.day\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Chicken curry"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "2300"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Chicken curry\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.to-today",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "lastweek.today-again",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.progress\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.weight-card",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.first-weigh-in",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.current\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "progress.week-range",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.range.week\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.kg",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.unit.kg\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.kg-on",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.unit.kg\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.wheel-70",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.wheel.whole\"]:has(option[value=\"70\"]:checked)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.whole-72",
+      "action": "select_option",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.wheel.whole\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "72"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.tenth-4",
+      "action": "select_option",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.wheel.tenth\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "4"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.month-back",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.date\"]"
+      },
+      "key": "ArrowDown",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logWeight\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "weight.current-stays",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.current\"]:has-text(\"70.0 kg\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "range.quarter",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.range.quarter\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "range.quarter-on",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.range.quarter\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "range.both-readings",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.chart\"] tbody tr:nth-child(2)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "range.latest-is-current",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.current\"]:has-text(\"70.0 kg\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "period.later-held",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.period.later\"]:disabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "period.earlier",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.period.earlier\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "period.later-open",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.period.later\"]:enabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "period.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.period.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "period.back-to-now",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.period.later\"]:disabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.sheet\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.two",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.row\"]:nth-child(2)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.delete-newest",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.row\"]:first-child [data-ui=\"progress.history.delete\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.asked",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.confirm\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.cancel",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.confirm.cancel\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.cancelled",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.confirm\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.still-two",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.row\"]:nth-child(2)"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.delete-again",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.row\"]:first-child [data-ui=\"progress.history.delete\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.confirm",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.confirm.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.deleted",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.row\"]:nth-child(2)"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.done",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.sheet.done\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.history.sheet\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "history.current-follows",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.weight.current\"]:has-text(\"72.4 kg\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.card",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.logged",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap.logged\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.earlier",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap.earlier\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.empty-week",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recap.back",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.recap.logged\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "count-today.off",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.countToday\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "count-today.is-off",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.countToday\"][aria-checked=\"false\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.metric",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.metric.bodyFat\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.card",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.bodyFat.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logBodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.value",
+      "action": "select_option",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logBodyFat.wheel\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "18.5"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logBodyFat.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.logBodyFat\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "bodyfat.current",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"progress.bodyFat.current\"]:has-text(\"18.5\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

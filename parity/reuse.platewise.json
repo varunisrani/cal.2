@@ -1,0 +1,927 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "wizard.welcome",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"aiAccess\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.formula-plan",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.kcal\"]:has-text(\"2,452\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.formula-note",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.aiUnavailable\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "day.yesterday",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "day.yesterday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"false\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Porridge with berries"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "310"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "yesterday.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Café latte"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "120"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "latte.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Café latte\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "day.today",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "day.today.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "today.empty",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.reuse\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.recent\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.recent\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.latte",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Café latte\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.search",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.search\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "cafe"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.search-finds",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Café latte\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.search-narrows",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.search-porridge",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.search\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "porridge"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.latte-out",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Café latte\")"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.pick",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row.pick\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.recent\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.review",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.kcal",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.kcal\"]:text-is(\"310\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.not-logged-yet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.logged",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.row-today",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "recent.gauge",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"310\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.heart",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row.saved\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.hearted",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row.saved\"][aria-pressed=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.reuse\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.saved\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.saved\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.pick",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row.pick\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.review",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review.log\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.logged",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"review\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "saved.gauge",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"620\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.reuse\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.often\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.often\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.close",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.often\"]"
+      },
+      "key": "Escape",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "often.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"reuse.often\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "check.yesterday",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"]"
+      },
+      "key": "ArrowLeft",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "check.yesterday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.week.day\"][aria-current=\"date\"][aria-checked=\"false\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "check.yesterday-kept",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Porridge with berries\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

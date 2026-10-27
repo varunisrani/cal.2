@@ -1,0 +1,1266 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/opt/pw-browsers/chromium-1243/chrome-linux64/chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 412,
+      "height": 839,
+      "device_scale_factor": 2.625
+    },
+    "locale": "en-US",
+    "timezone": "UTC",
+    "color_scheme": "light",
+    "reduced_motion": "reduce",
+    "service_workers": "block"
+  },
+  "actions": [
+    {
+      "step_id": "wizard.welcome",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.start\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"sex\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.sex.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"birthday\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.birthday.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"body\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"bodyFat\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.body-fat.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"activity\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.activity.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"goal\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.goal.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"target\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.target.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"pace\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.pace.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"reminders\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.reminders.continue",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.continue\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.onboarding\"][data-step=\"aiAccess\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.ai-access.later",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.ai.later\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.plan-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "wizard.formula-plan",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.kcal\"]:has-text(\"2,452\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.formula-note",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.aiUnavailable\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "wizard.finish",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"wizard.plan.finish\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "home.shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.diary.empty\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "nowater.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "nowater.no-water",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.water\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "nowater.close",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "key": "Escape",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.settings",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.settings\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.tracking",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"settings.category.tracking\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.page",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.settings.tracking\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.switch",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.tracking\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.switched",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.tracking\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.back",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"settings.back\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.home",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.home\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-on.home-shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.pillar",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.pillar.water\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.water\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.page",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.menu\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.glass",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.menu.amount.0\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.toast",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"toast.message\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.row\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.pillar-250",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.pillar.water\"]:has-text(\"250\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water.not-food",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.gauge\"] :text-is(\"0\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.open",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.water\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.amount",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.menu.custom\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.too-much",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom.amount\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "6000"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.refused",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom.add\"]:disabled"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.330",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom.amount\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "330"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.add",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.custom\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "custom.pillar-580",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.pillar.water\"]:has-text(\"580\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.ask",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.row\"]:has-text(\"330\") [data-ui=\"water.row.delete\"]"
+      },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.asked",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.delete\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.cancel",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.delete.cancel\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.cancelled",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.delete\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.ask-again",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.row\"]:has-text(\"330\") [data-ui=\"water.row.delete\"]"
+      },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.confirm",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.delete.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.done",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.delete\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.row-gone",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"water.row\"]:has-text(\"330\")"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "water-delete.pillar-250",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.pillar.water\"]:has-text(\"250\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Toast"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "250"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "toast.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.group",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.method",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.manual\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.name\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Coffee with milk"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.energy",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.energy\"]"
+      },
+      "value": {
+        "source": "literal",
+        "value": "60"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.save",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual.save\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"manual\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "coffee.row",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Coffee with milk\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.settings",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.settings\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.tracking",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"settings.category.tracking\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.page",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"screen.settings.tracking\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.switch",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.tracking\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.switched",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.tracking\"][aria-checked=\"true\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.back",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"settings.back\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.home",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"shell.tabbar.home\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fasting-on.home-shown",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.startFast\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.sheet",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.start\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.go",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.start.go\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.sheet-closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.start\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.running",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"][data-running]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.menu-while",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.menu-fasting",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.fasting\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.no-food",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.group.describe\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast.menu-close",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.fasting\"]"
+      },
+      "key": "Escape",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.select",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast\") [data-ui=\"entry.row.select\"]"
+      },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.pick-coffee",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Coffee with milk\") [data-ui=\"entry.row.open\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.combine",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection.combine\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.dialog",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.paused\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.cancel",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.paused.cancel\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.cancelled",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.paused\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.fast-runs-on",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"][data-running]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.still-picked",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.combine-again",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.selection.combine\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.end-and-log",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.paused.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.closed",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fasting.paused\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.combined",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"entry.row\"]:has-text(\"Toast + Coffee with milk\")"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "paused.fast-ended",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"]:not([data-running])"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.start",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.startFast\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.go",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.start.go\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "again.running",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"][data-running]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "cancel-fast.menu",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "cancel-fast.fasting",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.fasting\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "cancel-fast.cancel",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"home.add.cancelFast\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "cancel-fast.no-running",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"][data-running]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast-delete.ask",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row.delete\"]"
+      },
+      "key": "Enter",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast-delete.asked",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.delete\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast-delete.confirm",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.delete.confirm\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "fast-delete.gone",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "[data-ui=\"fast.row\"]"
+      },
+      "state": "detached",
+      "timeout_ms": 10000
+    }
+  ],
+  "capture": {
+    "after_each_step": ["screenshot", "accessibility", "url"],
+    "at_end": ["screenshot", "accessibility", "url"],
+    "events": ["page-errors", "network"],
+    "network": {
+      "request_body": false,
+      "response_body": false,
+      "header_values": false
+    }
+  }
+}

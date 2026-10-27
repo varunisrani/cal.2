@@ -347,6 +347,16 @@ describe('ReuseSheet: Saved', () => {
     expect(screen.getAllByRole('img', { name: words.row.saved })).toHaveLength(3);
   });
 
+  it('keeps the sheet hook for the sheet alone: each saved row has its own (P10-04 parity)', async () => {
+    await openSheet('saved', savedMeals('Porridge', 'Toast'));
+    await untilShown('[data-ui="reuse.list"]');
+
+    const sheets = document.querySelectorAll('[data-ui="reuse.saved"]');
+    expect(sheets).toHaveLength(1);
+    expect(sheets[0]).toBe(screen.getByRole('dialog', { name: words.title.saved }));
+    expect(document.querySelectorAll('[data-ui="reuse.saved.row"]')).toHaveLength(2);
+  });
+
   it('says how to save one when there are none', async () => {
     await openSheet('saved');
     await untilShown('[data-ui="reuse.empty"]');

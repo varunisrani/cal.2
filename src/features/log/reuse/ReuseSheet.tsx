@@ -222,7 +222,7 @@ function SavedFoods({ meals, query, energyUnit, onPick }: SavedFoodsProps) {
             <SwipeRow
               onRequestDelete={() => void remove(meal)}
               deleteLabel={t('reuse.row.remove', { name })}
-              data-ui="reuse.saved"
+              data-ui="reuse.saved.row"
             >
               <ReuseRow
                 food={meal}

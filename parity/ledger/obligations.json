@@ -1,0 +1,1295 @@
+{
+  "about": "Observable claims of the parity flows, one per ACC row (docs/internals/acceptance-map.md), in our words. A claim is verified when its steps complete on the product (the flow's REA capture) and the reference observation agrees or differs only where a D-id says so; blocked when no run here can show it. Divergences: intended (D-id), bug (fixed, with its test), reference-gap (why), unknown (lead decides). Report: docs/internals/parity-report-v1.0.md.",
+  "claims": [
+    {
+      "id": "PC-ACC-B1-1",
+      "acc": "ACC-B1-1",
+      "claim": "A fresh browser opens on Welcome with no Back button, and Get started opens the first question.",
+      "flow": "onboarding",
+      "steps": ["welcome.shown", "welcome.no-back", "welcome.start", "sex.shown"],
+      "spec": "01 §3.4",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.30",
+          "what": "Welcome links to restoring a backup file instead of the returning-user screen."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B2-1",
+      "acc": "ACC-B2-1",
+      "claim": "Each question starts on its default and Continue moves to the next one.",
+      "flow": "onboarding",
+      "steps": [
+        "sex.continue",
+        "birthday.continue",
+        "body.continue",
+        "body-fat.continue",
+        "activity.continue",
+        "pace.continue",
+        "reminders.continue"
+      ],
+      "spec": "01 §3.4",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.15",
+          "what": "No health-store question; an optional Reminders question takes its place."
+        },
+        {
+          "kind": "intended",
+          "ref": "D-16.63",
+          "what": "Thirteen steps in a fixed order."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B11-2",
+      "acc": "ACC-B11-2",
+      "claim": "In an en-US browser the height-and-weight question opens in pounds, 70 kg showing as 154.3 lb.",
+      "flow": "onboarding",
+      "steps": ["body.starts-in-lb", "body.starts-154-lb"],
+      "spec": "01 §3.2; 06 §3.3",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.10",
+          "what": "Unit defaults follow the browser locale; the reference fixes them per platform."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B3-1",
+      "acc": "ACC-B3-1",
+      "claim": "Switching metric to imperial and back keeps the weight at 70.0 kg.",
+      "flow": "onboarding",
+      "steps": [
+        "body.metric",
+        "body.metric.70-kg",
+        "body.imperial",
+        "body.imperial.154-lb",
+        "body.metric-again",
+        "body.metric-again.70-kg",
+        "body.metric-again.tenth-0"
+      ],
+      "spec": "01 §3.2, §3.4",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-B4-1",
+      "acc": "ACC-B4-1",
+      "claim": "With \"lose weight\", a target above the current weight shows why it cannot be used and holds Continue.",
+      "flow": "onboarding",
+      "steps": [
+        "goal.lose",
+        "target.above-current",
+        "target.refused",
+        "target.continue-held",
+        "target.back",
+        "goal.maintain",
+        "target.no-problem"
+      ],
+      "spec": "01 §3.4 (R01.6)",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.11",
+          "what": "The reference accepts a target on the wrong side of the current weight."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B6-1",
+      "acc": "ACC-B6-1",
+      "claim": "On the AI question Continue stays off until the provider, its address, a model and the terms are all given, and says what is missing.",
+      "flow": "onboarding",
+      "steps": [
+        "ai.continue-held",
+        "ai.provider",
+        "ai.server",
+        "ai.terms",
+        "ai.model-missing",
+        "ai.still-held",
+        "ai.model",
+        "ai.model-given",
+        "ai.ready"
+      ],
+      "spec": "01 §3.4; 03 §3.3",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.82",
+          "what": "The reference enables Continue with the terms and reports a missing key when it is tapped; here Continue opens only once the choice is complete and stored."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B7-2",
+      "acc": "ACC-B7-2",
+      "claim": "After the building animation the plan from the AI shows (2,400 kcal), with no fallback note and no Back while it builds.",
+      "flow": "onboarding",
+      "steps": [
+        "ai.continue",
+        "building.shown",
+        "building.no-back",
+        "plan.ai-plan",
+        "plan.no-fallback-note"
+      ],
+      "spec": "01 §3.4, §3.6",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.14",
+          "what": "An overall 60 s limit falls back to the formula plan; not reached here."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B8-1",
+      "acc": "ACC-B8-1",
+      "claim": "Raising protein to 150 g on the plan works carbs out again (315 g) and keeps the calories.",
+      "flow": "onboarding",
+      "steps": [
+        "plan.edit-protein",
+        "plan.edit.shown",
+        "plan.edit.protein-150",
+        "plan.edit.save",
+        "plan.carbs-follow",
+        "plan.kcal-stays"
+      ],
+      "spec": "01 §3.4 (R01.7)",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.12",
+          "what": "Edits keep the plan energy-consistent as the reference iOS app does (inventory B8, R01.7); its Android app lets the numbers drift apart."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B9-1",
+      "acc": "ACC-B9-1",
+      "claim": "After Start tracking, Home counts against the plan and Progress shows the first weigh-in.",
+      "flow": "onboarding",
+      "steps": [
+        "plan.finish",
+        "home.shown",
+        "home.goal",
+        "progress.open",
+        "progress.first-weigh-in"
+      ],
+      "spec": "01 §3.4 (completion)",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-B6-2",
+      "acc": "ACC-B6-2",
+      "claim": "Set up later skips the AI and the plan comes from the formulas (2,452 kcal for the defaults), with a note saying so.",
+      "flow": "log-manual",
+      "steps": [
+        "wizard.ai-access.later",
+        "wizard.plan-ready",
+        "wizard.formula-plan",
+        "wizard.formula-note"
+      ],
+      "spec": "01 §3.4, §3.6",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.82",
+          "what": "Set up later stores no provider; the reference chooses between its own access paths here."
+        },
+        {
+          "kind": "intended",
+          "ref": "D-16.49",
+          "what": "Onboarding finishes without an AI key."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F4-1",
+      "acc": "ACC-F4-1",
+      "claim": "Home opens with protein, carbs, fat and fibre pillars.",
+      "flow": "log-manual",
+      "steps": ["pillars.protein", "pillars.carbs", "pillars.fat", "pillars.fibre"],
+      "spec": "05 §3.2",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D3-2",
+      "acc": "ACC-D3-2",
+      "claim": "The + menu opens on three groups: snap and scan, describe, reuse.",
+      "flow": "log-manual",
+      "steps": ["menu.open", "menu.snap-scan", "menu.describe", "menu.reuse", "menu.close"],
+      "spec": "02 §3.18",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D3-1",
+      "acc": "ACC-D3-1",
+      "claim": "Enter manually is offered in the describe group of the + menu and opens the manual form.",
+      "flow": "log-manual",
+      "steps": ["manual.menu", "manual.group", "manual.method", "manual.sheet"],
+      "spec": "02 §3.18, §3.8",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D2-1",
+      "acc": "ACC-D2-1",
+      "claim": "A food typed by hand is logged at once under the meal picked, the gauge and pillars count it, Cancel logs nothing, and it is still there after a reload.",
+      "flow": "log-manual",
+      "steps": [
+        "manual.save-held-empty",
+        "manual.name",
+        "manual.energy",
+        "manual.protein-unreadable",
+        "manual.protein-refused",
+        "manual.save-held",
+        "manual.protein",
+        "manual.save",
+        "manual.closed",
+        "diary.under-dinner",
+        "gauge.410",
+        "pillar.protein-22",
+        "cancel.nothing-logged",
+        "reload.both-kept",
+        "reload.gauge-kept"
+      ],
+      "spec": "02 §3.8; 05 §3.3",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.79",
+          "what": "Unreadable macro text blocks Save with a field error; the reference saves it as 0."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F7-1",
+      "acc": "ACC-F7-1",
+      "claim": "An entry sits under its meal, whose header shows that meal's total.",
+      "flow": "log-manual",
+      "steps": ["diary.under-dinner", "diary.dinner-total"],
+      "spec": "05 §3.3",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D8-1",
+      "acc": "ACC-D8-1",
+      "claim": "A meal photo is analysed into a review with its photo; an amount typed as 1+0.5 becomes 1.5 and every value follows (410 to 615 kcal) before it is logged.",
+      "flow": "log-photo",
+      "steps": [
+        "capture.add-photo",
+        "capture.photo-card",
+        "capture.analyse",
+        "review.shown",
+        "review.photo",
+        "review.kcal-410",
+        "review.amount-sum",
+        "review.amount-done",
+        "review.amount-worked-out",
+        "review.kcal-615",
+        "review.log",
+        "diary.row",
+        "gauge.615"
+      ],
+      "spec": "02 §3.3, §3.5, §3.9",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.72",
+          "what": "The unit word turns plural (bowls) for 1.5."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D6-1",
+      "acc": "ACC-D6-1",
+      "claim": "Describing a meal in words opens the review with the AI's estimate and no photo.",
+      "flow": "log-describe",
+      "steps": [
+        "describe.shown",
+        "describe.analyse-held",
+        "describe.text",
+        "describe.analyse-ready",
+        "describe.analyse",
+        "review.shown",
+        "review.kcal-410",
+        "review.no-photo"
+      ],
+      "spec": "02 §3.11",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D25-1",
+      "acc": "ACC-D25-1",
+      "claim": "A reload while the review is open brings it back with the same values, without asking the AI again; once logged it is gone.",
+      "flow": "log-describe",
+      "steps": ["reload", "reload.review-back", "review.log", "diary.row", "gauge.410"],
+      "spec": "02 §3.10",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.46",
+          "what": "Drafts survive a reload on every platform; in the reference only Android keeps them."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D19-1",
+      "acc": "ACC-D19-1",
+      "claim": "Typing the barcode digits under the camera looks the product up.",
+      "flow": "log-barcode",
+      "steps": [
+        "found.scanner",
+        "found.digits",
+        "found.look-up",
+        "found.scanner-closed",
+        "found.review"
+      ],
+      "spec": "02 §3.12",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.18",
+          "what": "The reference scans with the camera only."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D20-1",
+      "acc": "ACC-D20-1",
+      "claim": "A product Open Food Facts knows opens in the review at one serving, with its photo, and logs.",
+      "flow": "log-barcode",
+      "steps": [
+        "found.review",
+        "found.barcode",
+        "found.kcal",
+        "found.photo",
+        "found.log",
+        "found.row"
+      ],
+      "spec": "02 §3.12",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D22-1",
+      "acc": "ACC-D22-1",
+      "claim": "The product block lists only the fields that have data (barcode, package, scores, allergens, categories).",
+      "flow": "log-barcode",
+      "steps": ["found.barcode", "found.allergens"],
+      "spec": "02 §3.13",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D23-1",
+      "acc": "ACC-D23-1",
+      "claim": "Allergens marked in the product's ingredient text are shown in bold.",
+      "flow": "log-barcode",
+      "steps": ["found.allergen-bold"],
+      "spec": "02 §3.13",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D20-2",
+      "acc": "ACC-D20-2",
+      "claim": "A product found nowhere offers Scan label, which takes a photo of the label to the AI and ties the result to the barcode.",
+      "flow": "log-barcode",
+      "steps": [
+        "missing.failed",
+        "missing.scan-label",
+        "missing.failed-closed",
+        "label.capture",
+        "label.add-photo",
+        "label.photo-card",
+        "label.analyse",
+        "label.review",
+        "label.barcode",
+        "label.not-saved-yet",
+        "label.log",
+        "label.row"
+      ],
+      "spec": "02 §3.12",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D21-1",
+      "acc": "ACC-D21-1",
+      "claim": "The same unknown barcode again opens the label saved for it, with a note saying where the values come from.",
+      "flow": "log-barcode",
+      "steps": ["again.saved-label", "again.kcal", "again.cancel"],
+      "spec": "02 §3.12",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D16-1",
+      "acc": "ACC-D16-1",
+      "claim": "Searching \"cafe\" finds \"Café latte\" and leaves the other foods out.",
+      "flow": "reuse",
+      "steps": [
+        "recent.latte",
+        "recent.search",
+        "recent.search-finds",
+        "recent.search-narrows",
+        "recent.search-porridge",
+        "recent.row",
+        "recent.latte-out"
+      ],
+      "spec": "02 §3.16",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.86",
+          "what": "Search ignores accents and case on every platform, as the reference iOS app does; its Android app matches accents exactly (spec 02 §3.16). Proposed to the lead for an id."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D16-2",
+      "acc": "ACC-D16-2",
+      "claim": "Picking yesterday's food from Recent opens the review instead of logging it, and logging it leaves yesterday's entry as it was.",
+      "flow": "reuse",
+      "steps": [
+        "recent.sheet",
+        "recent.pick",
+        "recent.closed",
+        "recent.review",
+        "recent.kcal",
+        "recent.not-logged-yet",
+        "recent.log",
+        "recent.row-today",
+        "check.yesterday-kept"
+      ],
+      "spec": "02 §3.16",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "bug",
+          "ref": "src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Saved > keeps the sheet hook for the sheet alone: each saved row has its own (P10-04 parity)",
+          "what": "The Saved sheet and each saved row shared the hook \"reuse.saved\", so a step on the sheet matched every row too (REA strict-mode refusal). Rows now carry \"reuse.saved.row\"."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D12-2",
+      "acc": "ACC-D12-2",
+      "claim": "Opening a logged entry and unlocking its nutrition lets its calories be changed; the row and gauge follow.",
+      "flow": "edit-combine-copy",
+      "steps": [
+        "edit.open",
+        "edit.editor",
+        "edit.unlock",
+        "edit.kcal",
+        "edit.save",
+        "edit.closed",
+        "edit.row-320",
+        "edit.gauge-380"
+      ],
+      "spec": "02 §3.7",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.19",
+          "what": "The reference does not let nutrition change after logging."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F12-1",
+      "acc": "ACC-F12-1",
+      "claim": "Picking a row for a combine shows the combine bar in place of the + button.",
+      "flow": "edit-combine-copy",
+      "steps": ["combine.select", "combine.bar", "combine.add-hidden", "combine.one-held"],
+      "spec": "05 §3.4; 02 §3.15",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.87",
+          "what": "A Select button, shown when a row has keyboard focus, starts the picking as the long-press does; the reference has the long-press only. Proposed to the lead for an id. The scenario uses it because REA has no long-press; the press itself is proven by e2e."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D15-1",
+      "acc": "ACC-D15-1",
+      "claim": "Combining two picked entries leaves one entry named after both, with their summed calories.",
+      "flow": "edit-combine-copy",
+      "steps": [
+        "combine.pick-coffee",
+        "combine.ready",
+        "combine.go",
+        "combine.bar-gone",
+        "combine.row",
+        "combine.gauge-380",
+        "combine.add-back"
+      ],
+      "spec": "02 §3.15",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.20",
+          "what": "Every nutrient both rows have is summed; the reference drops micronutrients and extras."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-D18-1",
+      "acc": "ACC-D18-1",
+      "claim": "Copy a day copies yesterday's food onto today and leaves yesterday unchanged.",
+      "flow": "edit-combine-copy",
+      "steps": [
+        "copy.sheet",
+        "copy.source-food",
+        "copy.all",
+        "copy.closed",
+        "copy.today-row",
+        "copy.gauge-900",
+        "copied.yesterday-kept",
+        "copied.yesterday-gauge"
+      ],
+      "spec": "02 §3.17",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.50",
+          "what": "Copies keep their meal (lunch); the reference files them under the current-time meal."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-H1-1",
+      "acc": "ACC-H1-1",
+      "claim": "Water tracking is off at first; switching it on adds the water pillar and a Water page to the + menu.",
+      "flow": "water-fasting",
+      "steps": [
+        "nowater.no-water",
+        "water-on.switch",
+        "water-on.switched",
+        "water.pillar",
+        "water.open",
+        "water.page"
+      ],
+      "spec": "05 §3.6",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F11-1",
+      "acc": "ACC-F11-1",
+      "claim": "A preset on the Water page logs at once, and water never counts as food.",
+      "flow": "water-fasting",
+      "steps": ["water.glass", "water.toast", "water.row", "water.not-food"],
+      "spec": "05 §3.4, §3.6",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-H4-1",
+      "acc": "ACC-H4-1",
+      "claim": "The water pillar shows the day's water against the goal.",
+      "flow": "water-fasting",
+      "steps": ["water.pillar-250", "custom.pillar-580", "water-delete.pillar-250"],
+      "spec": "05 §3.6",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-H3-1",
+      "acc": "ACC-H3-1",
+      "claim": "A custom amount of 6 000 ml is refused; 330 ml is added.",
+      "flow": "water-fasting",
+      "steps": ["custom.sheet", "custom.too-much", "custom.refused", "custom.330", "custom.add"],
+      "spec": "05 §3.6",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.39",
+          "what": "Custom water is capped at 5 000 ml; the reference allows up to 99 999 ml."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F9-1",
+      "acc": "ACC-F9-1",
+      "claim": "Deleting a water row asks first; Cancel keeps it and Delete removes it.",
+      "flow": "water-fasting",
+      "steps": [
+        "water-delete.ask",
+        "water-delete.asked",
+        "water-delete.cancel",
+        "water-delete.cancelled",
+        "water-delete.ask-again",
+        "water-delete.confirm",
+        "water-delete.done",
+        "water-delete.row-gone"
+      ],
+      "spec": "05 §3.3",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.75",
+          "what": "Driven through the row's keyboard delete button; REA has no drag. The swipe is proven by e2e."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-H6-1",
+      "acc": "ACC-H6-1",
+      "claim": "Switching fasting on offers Start fast in the + menu.",
+      "flow": "water-fasting",
+      "steps": [
+        "fasting-on.switch",
+        "fasting-on.switched",
+        "fast.menu",
+        "fast.start",
+        "fast.sheet"
+      ],
+      "spec": "05 §3.7",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-H7-1",
+      "acc": "ACC-H7-1",
+      "claim": "Start fast on the 16 h default shows a running fast; Cancel fast removes it.",
+      "flow": "water-fasting",
+      "steps": [
+        "fast.go",
+        "fast.running",
+        "again.go",
+        "again.running",
+        "cancel-fast.cancel",
+        "cancel-fast.no-running"
+      ],
+      "spec": "05 §3.7",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F11-2",
+      "acc": "ACC-F11-2",
+      "claim": "While a fast runs the + menu holds only water and fasting entries.",
+      "flow": "water-fasting",
+      "steps": ["fast.menu-while", "fast.menu-fasting", "fast.no-food"],
+      "spec": "05 §3.4",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D27-1",
+      "acc": "ACC-D27-1",
+      "claim": "Combining food during a fast shows the paused dialog: Cancel keeps fasting, End fast and log ends the fast and combines.",
+      "flow": "water-fasting",
+      "steps": [
+        "paused.select",
+        "paused.pick-coffee",
+        "paused.combine",
+        "paused.dialog",
+        "paused.cancel",
+        "paused.fast-runs-on",
+        "paused.still-picked",
+        "paused.combine-again",
+        "paused.end-and-log",
+        "paused.combined",
+        "paused.fast-ended"
+      ],
+      "spec": "02 §3.20; 05 §3.7",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.35",
+          "what": "The reference only refuses; \"End fast and log\" is ours."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F1-2",
+      "acc": "ACC-F1-2",
+      "claim": "No day after today can be picked in the week bar.",
+      "flow": "home-days",
+      "steps": ["week.today-picked", "week.future-closed"],
+      "spec": "05 §3.2.1",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.36",
+          "what": "The reference lets later days of the current week be picked."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-F1-1",
+      "acc": "ACC-F1-1",
+      "claim": "Picking an earlier day, last week included, shows that day's diary; food typed there stays on that day.",
+      "flow": "home-days",
+      "steps": [
+        "week.yesterday",
+        "week.yesterday.shown",
+        "week.yesterday-empty",
+        "yesterday.row",
+        "week.today-key",
+        "week.today-again",
+        "week.back-7",
+        "week.last-week",
+        "week.last-week-empty"
+      ],
+      "spec": "05 §3.2.1",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F10-1",
+      "acc": "ACC-F10-1",
+      "claim": "A day with nothing logged shows the empty-day message.",
+      "flow": "home-days",
+      "steps": ["week.yesterday-empty", "today.empty", "week.last-week-empty"],
+      "spec": "05 §3.3",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F6-1",
+      "acc": "ACC-F6-1",
+      "claim": "All nutrients lists the day's nutrients against their goals.",
+      "flow": "home-days",
+      "steps": ["nutrients.open", "nutrients.sheet", "nutrients.protein-row"],
+      "spec": "05 §3.2.4",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F5-1",
+      "acc": "ACC-F5-1",
+      "claim": "Choosing sodium as a fifth pillar replaces the latest choice (fibre), and the choice is kept after a reload.",
+      "flow": "home-days",
+      "steps": [
+        "nutrients.choose",
+        "picker.sheet",
+        "picker.sodium",
+        "picker.sodium-in",
+        "picker.fibre-out",
+        "picker.done",
+        "nutrients.done",
+        "pillars.sodium",
+        "reload.sodium-kept"
+      ],
+      "spec": "05 §3.2.4",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-F2-1",
+      "acc": "ACC-F2-1",
+      "claim": "Swiping the day summary moves to the day before or after, never past today.",
+      "flow": "home-days",
+      "steps": [],
+      "spec": "05 §3.2.2",
+      "status": "blocked",
+      "blockedBy": "REA cannot drag; covered by e2e/home-progress.spec.ts",
+      "divergences": [
+        {
+          "kind": "reference-gap",
+          "what": "REA has no drag action, so no parity run can swipe; the e2e spec drives the gesture."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-G4-2",
+      "acc": "ACC-G4-2",
+      "claim": "Choosing kg in the Log weight sheet switches the whole app to kg.",
+      "flow": "progress",
+      "steps": [
+        "weight.log",
+        "weight.sheet",
+        "weight.kg",
+        "weight.kg-on",
+        "weight.wheel-70",
+        "weight.current-stays"
+      ],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G4-1",
+      "acc": "ACC-G4-1",
+      "claim": "A weight logged for an earlier day lands on that day without replacing today's as Current.",
+      "flow": "progress",
+      "steps": [
+        "weight.whole-72",
+        "weight.tenth-4",
+        "weight.month-back",
+        "weight.save",
+        "weight.closed",
+        "weight.current-stays",
+        "range.quarter",
+        "range.both-readings",
+        "range.latest-is-current"
+      ],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G1-1",
+      "acc": "ACC-G1-1",
+      "claim": "The back arrow moves to the earlier period; the forward arrow returns and stops at the current one.",
+      "flow": "progress",
+      "steps": [
+        "progress.week-range",
+        "range.quarter-on",
+        "period.later-held",
+        "period.earlier",
+        "period.later-open",
+        "period.later",
+        "period.back-to-now"
+      ],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G6-1",
+      "acc": "ACC-G6-1",
+      "claim": "Deleting a weigh-in from the history asks first, and Delete takes it out of the list at once.",
+      "flow": "progress",
+      "steps": [
+        "history.open",
+        "history.sheet",
+        "history.two",
+        "history.delete-newest",
+        "history.asked",
+        "history.cancel",
+        "history.cancelled",
+        "history.still-two",
+        "history.delete-again",
+        "history.confirm",
+        "history.deleted"
+      ],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.38",
+          "what": "The reference Android app deletes on one tap."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-G7-1",
+      "acc": "ACC-G7-1",
+      "claim": "Deleting the latest weigh-in makes the previous one Current.",
+      "flow": "progress",
+      "steps": ["history.done", "history.closed", "history.current-follows"],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G8-1",
+      "acc": "ACC-G8-1",
+      "claim": "The weekly recap shows last week's logged days against the week before, and an empty week says so.",
+      "flow": "progress",
+      "steps": [
+        "recap.card",
+        "recap.logged",
+        "recap.earlier",
+        "recap.empty-week",
+        "recap.later",
+        "recap.back"
+      ],
+      "spec": "05 §3.5.6",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.84",
+          "what": "Four tiles, days counted by their stored day."
+        },
+        {
+          "kind": "intended",
+          "ref": "D-16.44",
+          "what": "No workout or burn tiles."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-G9-1",
+      "acc": "ACC-G9-1",
+      "claim": "Count today can be switched off on the nutrition cards.",
+      "flow": "progress",
+      "steps": ["count-today.off", "count-today.is-off"],
+      "spec": "05 §3.5.7",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G2-1",
+      "acc": "ACC-G2-1",
+      "claim": "With a body fat given in setup, Progress offers Body fat beside Weight.",
+      "flow": "progress",
+      "steps": ["wizard.body-fat.known", "wizard.body-fat.wheel", "bodyfat.metric", "bodyfat.card"],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-G5-1",
+      "acc": "ACC-G5-1",
+      "claim": "Logging 18.5 % shows on the body-fat card.",
+      "flow": "progress",
+      "steps": [
+        "bodyfat.log",
+        "bodyfat.sheet",
+        "bodyfat.value",
+        "bodyfat.save",
+        "bodyfat.closed",
+        "bodyfat.current"
+      ],
+      "spec": "05 §3.5",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.37",
+          "what": "Body fat in 0.5 % steps on every platform."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-I1-1",
+      "acc": "ACC-I1-1",
+      "claim": "An empty chat shows four suggested questions; tapping one sends it and the answer follows.",
+      "flow": "coach",
+      "steps": [
+        "coach.empty",
+        "coach.cards",
+        "coach.four-cards",
+        "coach.reset-held",
+        "fresh.card",
+        "fresh.asked",
+        "fresh.reply"
+      ],
+      "spec": "04 §3.1, §3.3",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-I7-1",
+      "acc": "ACC-I7-1",
+      "claim": "A question about past meals runs the food log tool and answers from it.",
+      "flow": "coach",
+      "steps": [
+        "tool.question",
+        "tool.send",
+        "tool.asked",
+        "tool.reply",
+        "tool.no-error",
+        "tool.done-typing",
+        "tool.chips",
+        "tool.reset-open"
+      ],
+      "spec": "04 §3.9, §3.11",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-I10-2",
+      "acc": "ACC-I10-2",
+      "claim": "The chat is still there after a reload.",
+      "flow": "coach",
+      "steps": ["reload", "reload.coach", "reload.kept"],
+      "spec": "04 §3.7",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-I1-2",
+      "acc": "ACC-I1-2",
+      "claim": "While a reply is pending the typing dots show and the suggested questions wait.",
+      "flow": "coach",
+      "steps": ["slow.send", "slow.typing", "slow.chips-held"],
+      "spec": "04 §3.6",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-I5-1",
+      "acc": "ACC-I5-1",
+      "claim": "Clear chat asks first; clearing while a reply is pending leaves an empty chat, and the late reply never lands.",
+      "flow": "coach",
+      "steps": [
+        "slow.reset",
+        "slow.reset-asked",
+        "slow.reset-cancel",
+        "slow.reset-kept",
+        "slow.still-typing",
+        "slow.reset-again",
+        "slow.reset-confirm",
+        "slow.cleared",
+        "slow.empty",
+        "slow.no-typing"
+      ],
+      "spec": "04 §3.5",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.34",
+          "what": "In the reference a reply that arrives after Reset lands in the new chat."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-C12-1",
+      "acc": "ACC-C12-1",
+      "claim": "With kJ chosen, the gauge shows the goal in kJ (10,259 kJ for 2,452 kcal) without changing it.",
+      "flow": "settings",
+      "steps": ["units.kj", "units.kj-on", "kj.gauge"],
+      "spec": "06 §3.3; 01 §3.2",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D2-2",
+      "acc": "ACC-D2-2",
+      "claim": "Energy typed in kJ comes back as the same kJ after a reload (it is stored as kcal).",
+      "flow": "settings",
+      "steps": ["kj.energy", "kj.save", "kj.row", "reload.kj-kept"],
+      "spec": "06 §3.3; 02 §3.8",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-J3-1",
+      "acc": "ACC-J3-1",
+      "claim": "Weight in kg can be chosen while height stays in feet and inches.",
+      "flow": "settings",
+      "steps": ["units.kg", "units.kg-on"],
+      "spec": "06 §3.3",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-A9-1",
+      "acc": "ACC-A9-1",
+      "claim": "Picking the Ember accent takes effect and is kept.",
+      "flow": "settings",
+      "steps": ["accent.ember", "accent.ember-on", "reload-ai.accent-kept"],
+      "spec": "06 §3.2",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.1",
+          "what": "Six solid accents of our own instead of eighteen named presets with gradients."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-A8-1",
+      "acc": "ACC-A8-1",
+      "claim": "A chosen appearance holds against the device's own (Dark on a light device) and is kept.",
+      "flow": "settings",
+      "steps": ["look.dark", "look.dark-on", "reload-ai.dark-kept"],
+      "spec": "06 §3.3",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-J8-2",
+      "acc": "ACC-J8-2",
+      "claim": "The AI providers page says plainly that keys stay in this browser.",
+      "flow": "settings",
+      "steps": ["ai.form", "ai.keys-stay-here"],
+      "spec": "03 §3.12",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.7",
+          "what": "Keys sit in IndexedDB with a warning instead of the platform keystore."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-J8-1",
+      "acc": "ACC-J8-1",
+      "claim": "An image standby set on the AI providers page is stored and comes back after a reload (the fallback itself is proven by the unit tests).",
+      "flow": "settings",
+      "steps": [
+        "ai.primary.provider",
+        "ai.primary.server",
+        "ai.primary.model",
+        "ai.standby.on",
+        "ai.standby.form",
+        "ai.standby.provider",
+        "ai.standby.key",
+        "ai.standby.on-kept",
+        "reload-ai.standby-on",
+        "reload-ai.standby-provider"
+      ],
+      "spec": "03 §3.3, §3.4",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-E14-1",
+      "acc": "ACC-E14-1",
+      "claim": "A saved key shows only as its first four and last four characters.",
+      "flow": "settings",
+      "steps": ["ai.standby.key-saved", "reload-ai.key-masked"],
+      "spec": "03 §3.12",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.78",
+          "what": "Keys of eight characters or fewer show as dots only (not exercised here)."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-K4-2",
+      "acc": "ACC-K4-2",
+      "claim": "A file that is not a backup is refused with the reason, and nothing changes.",
+      "flow": "data",
+      "steps": ["welcome.shown", "restore.pick-photo", "refused.problem", "refused.try-again"],
+      "spec": "06 §3.17; 01 §3.5",
+      "status": "verified",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-K4-1",
+      "acc": "ACC-K4-1",
+      "claim": "Restore first shows what the file holds and asks before replacing anything.",
+      "flow": "data",
+      "steps": ["restore.pick-backup", "restore.sheet", "restore.counts", "restore.confirm"],
+      "spec": "06 §3.17",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.42",
+          "what": "The reference restores at once."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-B10-1",
+      "acc": "ACC-B10-1",
+      "claim": "A backup with a finished setup, restored from Welcome, opens the app on Home with its entries and weigh-in.",
+      "flow": "data",
+      "steps": [
+        "restored.open",
+        "restored.go",
+        "home.restored-row",
+        "home.gauge",
+        "progress.restored-weight"
+      ],
+      "spec": "01 §3.5; 06 §3.17",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.30",
+          "what": "A local backup file instead of a cloud backup."
+        }
+      ]
+    },
+    {
+      "id": "PC-ACC-K1-1",
+      "acc": "ACC-K1-1",
+      "claim": "Exporting this week as CSV gives a file with food and water rows.",
+      "flow": "data",
+      "steps": [],
+      "spec": "06 §3.13",
+      "status": "blocked",
+      "blockedBy": "the Your data page (P09-15) is not on this base; the lead extends data.platewise.json when it lands",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-K3-1",
+      "acc": "ACC-K3-1",
+      "claim": "Back up now produces one file with the diary, photos and chat.",
+      "flow": "data",
+      "steps": [],
+      "spec": "06 §3.17",
+      "status": "blocked",
+      "blockedBy": "the Your data page (P09-15) is not on this base; the lead extends data.platewise.json when it lands",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-K6-1",
+      "acc": "ACC-K6-1",
+      "claim": "Erase everything empties the app and shows Welcome.",
+      "flow": "data",
+      "steps": [],
+      "spec": "06 §3.15",
+      "status": "blocked",
+      "blockedBy": "the Your data page (P09-15) is not on this base; the lead extends data.platewise.json when it lands",
+      "divergences": []
+    },
+    {
+      "id": "PC-ACC-D12-3",
+      "acc": "ACC-D12-3",
+      "claim": "Deleting an entry asks first; Cancel keeps it and Delete removes it.",
+      "flow": "walking-skeleton",
+      "steps": [
+        "delete.ask",
+        "delete.asked",
+        "delete.cancel",
+        "delete.cancelled",
+        "delete.entry-kept",
+        "delete.ask-again",
+        "delete.confirm",
+        "delete.entry-gone",
+        "delete.empty-diary"
+      ],
+      "spec": "05 §3.3",
+      "status": "verified",
+      "divergences": [
+        {
+          "kind": "intended",
+          "ref": "D-16.75",
+          "what": "Driven through the row's keyboard delete button; the swipe is proven by e2e."
+        }
+      ]
+    }
+  ]
+}

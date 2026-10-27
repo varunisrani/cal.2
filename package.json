@@ -27,7 +27,8 @@
     "check:traps": "tsx tooling/checks/runAll.ts --only traps",
     "check:acceptance": "tsx tooling/checks/runAll.ts --only acceptance",
     "check:bundle": "tsx scripts/bundle-budget.ts",
-    "probe:cors": "tsx scripts/ai-cors-probe.ts"
+    "probe:cors": "tsx scripts/ai-cors-probe.ts",
+    "parity": "tsx scripts/parity.ts"
   },
   "dependencies": {
     "dexie": "4.4.6",
