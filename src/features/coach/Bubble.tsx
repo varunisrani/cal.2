@@ -5,6 +5,7 @@ import { Icon } from '../../ui/icons';
 import styles from './coach.module.css';
 import { CopyButton } from './CopyButton';
 import { MarkdownReply } from './markdown';
+import { ReminderCard } from './ReminderCard';
 
 /** An address for showing `blob` in an image while it is mounted; null without a blob. */
 export function useBlobUrl(blob: Blob | null | undefined): string | null {
@@ -60,7 +61,8 @@ export interface BubbleProps {
 /**
  * One message of the conversation (P08-10). The person's sit on the right in the accent colour,
  * their words exactly as typed, under the photo they attached. The Coach's sit on the left behind
- * a small badge, drawn from Markdown, with a button that copies the reply as written.
+ * a small badge, drawn from Markdown, with a button that copies the reply as written, and under
+ * it a card for each reminder the reply proposed (P13), until the person dismisses it.
  */
 export function Bubble({ message }: BubbleProps) {
   if (message.role === 'user') {
@@ -76,9 +78,14 @@ export function Bubble({ message }: BubbleProps) {
   return (
     <div className={styles.assistantRow} data-ui="coach.message" data-role="assistant">
       <AssistantBadge />
-      <div className={styles.assistantBubble}>
-        <MarkdownReply text={message.text} />
-        <CopyButton text={message.text} className={styles.copy} />
+      <div className={styles.assistantColumn}>
+        <div className={styles.assistantBubble}>
+          <MarkdownReply text={message.text} />
+          <CopyButton text={message.text} className={styles.copy} />
+        </div>
+        {message.reminders?.map((card, index) => (
+          <ReminderCard key={index} messageId={message.id} index={index} card={card} />
+        ))}
       </div>
     </div>
   );

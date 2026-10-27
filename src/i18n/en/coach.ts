@@ -5,7 +5,8 @@ import type { MessageTree } from '../catalogue';
  * person's own message, four per goal (P08-12); the copy words belong to the button on each
  * reply (P08-13); `photoOnly` is the question a photo sent without words carries (P08-09); the
  * page, its empty state, the waiting dots and the error banner (P08-10) and the composer (P08-11)
- * have the rest.
+ * have the rest. P13 adds "Jump to latest" over the conversation and the card under a reply that
+ * proposes a reminder (D-16.93).
  */
 export const coach = {
   coach: {
@@ -34,8 +35,30 @@ export const coach = {
     photoOnly: 'Have a look at this photo.',
     copy: {
       label: 'Copy reply',
-      done: 'Reply copied',
+      done: 'Copied',
       failed: "Couldn't copy the reply",
+    },
+    jump: {
+      label: 'Jump to latest',
+      count: '{count, plural, one {# new} other {# new}}',
+      labelWithCount:
+        '{count, plural, one {Jump to latest, # new message} other {Jump to latest, # new messages}}',
+    },
+    reminder: {
+      label: 'Proposed reminder: {text}',
+      add: 'Add',
+      dismiss: 'Dismiss',
+      added: 'Added to your reminders',
+      settings: 'Settings › Tracking & reminders',
+      notificationsOff: 'It shows once notifications are on.',
+      failed: "The reminder couldn't be added. Try again.",
+      problems: {
+        past: 'That time has passed. Ask the Coach for one still ahead.',
+        full: 'You already have 20 reminders. Delete one in Settings to add this one.',
+        gone: 'This reminder is no longer in the chat.',
+        unavailable: "Reminders can't be added here.",
+        invalid: "This reminder can't be added as it is. Ask the Coach again.",
+      },
     },
     page: {
       conversation: 'Conversation',

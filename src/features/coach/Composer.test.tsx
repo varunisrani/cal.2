@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { coach } from '../../i18n/en/coach';
 import { Composer, EMPTY_DRAFT, canSend, type CoachDraft } from './Composer';
 
@@ -148,6 +148,27 @@ describe('Composer: Send (P08-11)', () => {
     const { onSend } = renderComposer({ draft: { text: 'What is this?', photo: photoB } });
     await user.click(sendButton());
     expect(onSend).toHaveBeenCalledWith('What is this?', photoB);
+  });
+
+  it('keeps the focus in the field after Send, so the keyboard stays up (P13)', async () => {
+    const user = userEvent.setup();
+    const { onSend } = renderComposer();
+    await user.click(field());
+    await user.type(field(), 'Lunch idea?');
+
+    await user.click(sendButton());
+    expect(onSend).toHaveBeenCalledWith('Lunch idea?');
+    expect(field()).toHaveFocus();
+  });
+
+  it('gives the focus back to the field after Send from the keyboard (P13)', async () => {
+    const user = userEvent.setup();
+    const { onSend } = renderComposer({ draft: { text: 'Snack?', photo: null } });
+
+    sendButton().focus();
+    await user.keyboard('{Enter}');
+    expect(onSend).toHaveBeenCalledWith('Snack?');
+    expect(field()).toHaveFocus();
   });
 });
 
@@ -303,7 +324,7 @@ describe('Composer: while a reply is pending', () => {
 });
 
 describe('Composer: growing with the text', () => {
-  it('sizes the field to its text (the stylesheet stops it at five lines)', async () => {
+  it('sizes the field to its text (the stylesheet stops it at six lines)', async () => {
     const user = userEvent.setup();
     renderComposer();
     Object.defineProperty(field(), 'scrollHeight', { configurable: true, value: 92 });
@@ -311,5 +332,23 @@ describe('Composer: growing with the text', () => {
     await user.type(field(), 'a{Shift>}{Enter}{/Shift}b');
     expect(field().style.height).toBe('92px');
     expect(field()).toHaveAttribute('rows', '1');
+  });
+
+  // Tests run in Node, but the app's tsconfig has no Node types: this is all we use of node:fs.
+  let stylesheet = '';
+  beforeAll(async () => {
+    const NODE_FS = 'node:fs';
+    const fs = (await import(/* @vite-ignore */ NODE_FS)) as {
+      readFileSync(path: string, encoding: 'utf8'): string;
+    };
+    const here = decodeURIComponent(new URL(import.meta.url).pathname);
+    stylesheet = fs.readFileSync(here.replace(/[^/]+$/, 'coach.module.css'), 'utf8');
+  });
+
+  it('grows with the text to six lines, then scrolls (P13)', () => {
+    const rule = /\.field \{([^}]*)\}/.exec(stylesheet)?.[1] ?? '';
+    expect(rule).toContain('max-block-size: calc(6lh + var(--space-3) * 2);');
+    expect(rule).toContain('overflow-y: auto;');
+    expect(rule).toContain('resize: none;');
   });
 });

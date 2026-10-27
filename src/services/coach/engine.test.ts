@@ -3,7 +3,13 @@ import type { ImageBackend } from '../../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings, type ProviderKeys } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
 import { openAiToolCalls } from '../../ai/testing/toolWire';
-import { anthropicAnswer, anthropicError, openAiAnswer, openAiError } from '../../ai/testing/wire';
+import {
+  anthropicAnswer,
+  anthropicError,
+  openAiAnswer,
+  openAiError,
+  type JsonObject,
+} from '../../ai/testing/wire';
 import { addDays } from '../../domain/dates/dayKey';
 import type { CoachMessage } from '../../domain/model';
 import { makeCoachMessage } from '../../test/factories';
@@ -19,6 +25,7 @@ import {
 } from './__fixtures__/snapshot';
 import { MAX_ROUNDS, runTurn, type TurnInput } from './engine';
 import { TOOL_RESULT_MAX_CHARS } from './limiter';
+import type { ReminderChecks } from './reminderTool';
 import { NUTRITION_TOOL_NAMES } from './toolSchemas';
 
 const MISTRAL = 'https://api.mistral.ai/v1/chat/completions';
@@ -66,6 +73,11 @@ function ask(fake: FakeFetch, changes: Partial<TurnInput> = {}, settings = SETTI
 
 type Json = Record<string, unknown>;
 
+/** A turn that answered `text` and proposed no reminder. */
+function answered(text: string) {
+  return { ok: true, value: { text, reminders: [] } };
+}
+
 function bodyOf(request: RecordedRequest | undefined): Json {
   return (request?.body ?? {}) as Json;
 }
@@ -105,10 +117,7 @@ describe('runTurn: rounds (04 §3.11, R04.19)', () => {
       { json: openAiAnswer('  Yesterday you had a matcha oat latte, 180 kcal.  ') },
     );
 
-    expect(await ask(fake)).toEqual({
-      ok: true,
-      value: 'Yesterday you had a matcha oat latte, 180 kcal.',
-    });
+    expect(await ask(fake)).toEqual(answered('Yesterday you had a matcha oat latte, 180 kcal.'));
     expect(fake.requests).toHaveLength(3);
     const [first, second, third] = fake.requests;
     expect(toolResults(first)).toEqual([]);
@@ -140,7 +149,7 @@ describe('runTurn: rounds (04 §3.11, R04.19)', () => {
     const rounds = Array.from({ length: MAX_ROUNDS - 1 }, (_, index) => toolRound(index + 1));
     const fake = fakeFetch().on(MISTRAL, ...rounds, { json: openAiAnswer('Steady at 70 kg.') });
 
-    expect(await ask(fake)).toEqual({ ok: true, value: 'Steady at 70 kg.' });
+    expect(await ask(fake)).toEqual(answered('Steady at 70 kg.'));
     expect(fake.requests).toHaveLength(MAX_ROUNDS);
   });
 
@@ -153,7 +162,7 @@ describe('runTurn: rounds (04 §3.11, R04.19)', () => {
       { json: openAiAnswer('Steady at 70 kg.') },
     );
 
-    expect(await ask(fake)).toEqual({ ok: true, value: 'Steady at 70 kg.' });
+    expect(await ask(fake)).toEqual(answered('Steady at 70 kg.'));
     expect(fake.requests).toHaveLength(MAX_ROUNDS + 1);
   });
 
@@ -178,7 +187,7 @@ describe('runTurn: the standby (R04.1, D-16.22)', () => {
 
     const result = await ask(fake, {}, WITH_STANDBY);
 
-    expect(result).toEqual({ ok: true, value: 'You had a latte and lasagne.' });
+    expect(result).toEqual(answered('You had a latte and lasagne.'));
     expect(fake.requests.map((request) => request.url)).toEqual([MISTRAL, MISTRAL, ANTHROPIC]);
     const standby = fake.requests[2];
     // From round one: the history and the question in Anthropic's own shape, nothing else.
@@ -230,10 +239,7 @@ describe('runTurn: the standby (R04.1, D-16.22)', () => {
       .on(MISTRAL, ...rounds)
       .on(ANTHROPIC, { json: anthropicAnswer('Your weight is steady.') });
 
-    expect(await ask(fake, {}, WITH_STANDBY)).toEqual({
-      ok: true,
-      value: 'Your weight is steady.',
-    });
+    expect(await ask(fake, {}, WITH_STANDBY)).toEqual(answered('Your weight is steady.'));
   });
 
   it('stops silently on Cancel and never starts the standby', async () => {
@@ -350,7 +356,7 @@ describe('runTurn: what a request carries', () => {
       imageBackend: backend,
     });
 
-    expect(result).toEqual({ ok: true, value: 'A bowl of ramen, about 600 kcal.' });
+    expect(result).toEqual(answered('A bowl of ramen, about 600 kcal.'));
     expect(drawn).toEqual([{ width: 1600, height: 1200, quality: 0.78 }]);
     const question = messagesOf(fake.requests[0]).at(-1);
     expect(question).toEqual({
@@ -369,7 +375,7 @@ describe('runTurn: what a request carries', () => {
       textRole: { on: true, provider: 'groq', model: 'openai/gpt-oss-120b' },
     };
 
-    expect(await ask(fake, {}, settings)).toEqual({ ok: true, value: 'About 1 900 kcal a day.' });
+    expect(await ask(fake, {}, settings)).toEqual(answered('About 1 900 kcal a day.'));
     expect(bodyOf(fake.requests[0]).model).toBe('openai/gpt-oss-120b');
   });
 
@@ -455,11 +461,11 @@ describe('runTurn: Health Connect activity (D-16.94)', () => {
       question: { id: 'q1', text: 'How active was I this week?' },
     });
 
-    expect(result).toEqual({
-      ok: true,
-      value:
+    expect(result).toEqual(
+      answered(
         'Your best day this week was Saturday: 14250 steps and a 95-minute walk that burned 402 kcal.',
-    });
+      ),
+    );
     expect(fake.requests).toHaveLength(2);
     const [activity] = toolResults(fake.requests[1]);
     expect(activity?.id).toBe('a1');
@@ -516,8 +522,107 @@ describe('runTurn: Health Connect activity (D-16.94)', () => {
       { json: openAiAnswer('I cannot see activity data here.') },
     );
 
-    expect(await ask(fake)).toEqual({ ok: true, value: 'I cannot see activity data here.' });
+    expect(await ask(fake)).toEqual(answered('I cannot see activity data here.'));
     const [stray] = toolResults(fake.requests[1]);
     expect(String(stray?.result.error)).toContain('needs Health Connect');
+  });
+});
+
+describe('runTurn: reminders the Coach proposes (P13, D-16.93)', () => {
+  /** Checks as the custom reminders service would, with the date 2026-10-26 already past noon. */
+  const checks: ReminderChecks = {
+    problemWith: (proposal) =>
+      proposal.date !== undefined && proposal.date < '2026-10-27' ? 'past' : null,
+  };
+  const DAILY = { text: 'Drink a glass of water', time: '10:00', days: 'daily' };
+
+  function remind(args: JsonObject, id = 'r1') {
+    return { json: openAiToolCalls([{ id, name: 'propose_reminder', args }]) };
+  }
+
+  it('offers propose_reminder and its rules only when the turn can take proposals', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiAnswer('Sure.') },
+      { json: openAiAnswer('Sure.') },
+    );
+
+    await ask(fake, { reminders: checks });
+    await ask(fake);
+
+    const [withDesk, without] = fake.requests.map((request) => ({
+      tools: (bodyOf(request).tools as { function: { name: string } }[]).map(
+        (tool) => tool.function.name,
+      ),
+      system: String(messagesOf(request)[0]?.content),
+    }));
+    expect(withDesk?.tools).toEqual([...NUTRITION_TOOL_NAMES, 'propose_reminder']);
+    expect(withDesk?.system).toContain('Reminders:');
+    expect(without?.tools).toEqual([...NUTRITION_TOOL_NAMES]);
+    expect(without?.system).not.toMatch(/propose_reminder|Reminders:/);
+  });
+
+  it('runs a propose_reminder call, tells the model it waits for Add, and ends with the proposal', async () => {
+    const fake = fakeFetch().on(MISTRAL, remind(DAILY), {
+      json: openAiAnswer('I have proposed a daily reminder at 10:00. Tap Add to set it.'),
+    });
+
+    const result = await ask(fake, { reminders: checks });
+
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        text: 'I have proposed a daily reminder at 10:00. Tap Add to set it.',
+        reminders: [
+          {
+            text: 'Drink a glass of water',
+            time: '10:00',
+            days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+          },
+        ],
+      },
+    });
+    const [proposed] = toolResults(fake.requests[1]);
+    expect(proposed?.id).toBe('r1');
+    expect(proposed?.result).toMatchObject({
+      proposed: true,
+      reminder: { text: 'Drink a glass of water', time: '10:00', days: 'daily' },
+    });
+    expect(String(proposed?.result.note)).toContain('Nothing is set until they tap Add');
+  });
+
+  it('answers a proposal that cannot be kept with its problem, so no card comes of it', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      remind({ text: 'Call the dietitian', time: '17:00', date: '2026-10-25' }),
+      { json: openAiAnswer('That day has passed. Which day should I use?') },
+    );
+
+    const result = await ask(fake, { reminders: checks });
+
+    expect(result).toEqual(answered('That day has passed. Which day should I use?'));
+    const [refused] = toolResults(fake.requests[1]);
+    expect(refused?.result).toMatchObject({ problem: 'past' });
+    expect(String(refused?.result.error)).toContain('already passed');
+  });
+
+  it('starts the standby with no proposals from the attempt that failed (R04.1)', async () => {
+    const fake = fakeFetch()
+      .on(MISTRAL, remind(DAILY), { status: 401, json: openAiError('Unauthorized') })
+      .on(ANTHROPIC, { json: anthropicAnswer('Here is a different answer.') });
+
+    const result = await ask(fake, { reminders: checks }, WITH_STANDBY);
+
+    expect(result).toEqual(answered('Here is a different answer.'));
+  });
+
+  it('answers a stray propose_reminder call with not available when the turn takes none', async () => {
+    const fake = fakeFetch().on(MISTRAL, remind(DAILY), {
+      json: openAiAnswer('I cannot set reminders here.'),
+    });
+
+    expect(await ask(fake)).toEqual(answered('I cannot set reminders here.'));
+    const [stray] = toolResults(fake.requests[1]);
+    expect(String(stray?.result.error)).toContain('is not available here');
   });
 });

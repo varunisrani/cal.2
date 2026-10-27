@@ -1,0 +1,63 @@
+{
+  "description": "A Coach turn that proposes a reminder: one propose_reminder call (every day at 10:00), then a text answer.",
+  "replies": [
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-reminder",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": null,
+              "tool_calls": [
+                {
+                  "id": "call_fake_propose_reminder_1",
+                  "type": "function",
+                  "function": {
+                    "name": "propose_reminder",
+                    "arguments": "{\"text\":\"Drink a glass of water\",\"time\":\"10:00\",\"days\":\"daily\"}"
+                  }
+                }
+              ]
+            },
+            "finish_reason": "tool_calls"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2350,
+          "completion_tokens": 41,
+          "total_tokens": 2391
+        }
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "id": "chatcmpl-fake-coach-reminder-answer",
+        "object": "chat.completion",
+        "created": 1793000000,
+        "model": "fake-model",
+        "choices": [
+          {
+            "index": 0,
+            "message": {
+              "role": "assistant",
+              "content": "I have proposed a reminder to drink a glass of water every day at 10:00. Tap Add under this reply to set it."
+            },
+            "finish_reason": "stop"
+          }
+        ],
+        "usage": {
+          "prompt_tokens": 2460,
+          "completion_tokens": 27,
+          "total_tokens": 2487
+        }
+      }
+    }
+  ]
+}

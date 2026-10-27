@@ -13,6 +13,7 @@ import {
   weighInOn,
   workoutOn,
 } from './__fixtures__/snapshot';
+import { createReminderDesk } from './reminderTool';
 import type { CoachSnapshot } from './snapshot';
 import { LATER_TOOL_NAMES, NUTRITION_TOOL_NAMES } from './toolSchemas';
 import { activityRange, runCoachTool } from './tools';
@@ -618,5 +619,49 @@ describe('runCoachTool: names and answers (R04.20)', () => {
     const before = structuredClone(snapshot);
     for (const name of NUTRITION_TOOL_NAMES) runCoachTool(name, WIDE, snapshot);
     expect(snapshot).toEqual(before);
+  });
+});
+
+describe('runCoachTool: propose_reminder (P13, D-16.93)', () => {
+  const daily = { text: 'Drink water', time: '10:00', days: 'daily' };
+
+  it('notes a proposal on the turn’s desk and answers that it waits for the person', () => {
+    const desk = createReminderDesk({ problemWith: () => null });
+    const result = JSON.parse(
+      runCoachTool('propose_reminder', daily, makeSnapshot(), desk),
+    ) as Json;
+
+    expect(result).toMatchObject({ proposed: true, reminder: daily });
+    expect(desk.proposals).toHaveLength(1);
+  });
+
+  it('says it is not available in a turn without a desk, naming the tools there are', () => {
+    expect(call('propose_reminder', daily, makeSnapshot())).toEqual({
+      error: `The tool "propose_reminder" is not available here. Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}.`,
+    });
+  });
+
+  it('names propose_reminder among the available tools only with a desk', () => {
+    const desk = createReminderDesk({ problemWith: () => null });
+    const unknown = JSON.parse(runCoachTool('meal_planner', {}, makeSnapshot(), desk)) as Json;
+    expect(String(unknown.error)).toContain(
+      `${NUTRITION_TOOL_NAMES.join(', ')}, propose_reminder.`,
+    );
+    expect(String(call('meal_planner', {}, makeSnapshot()).error)).not.toContain(
+      'propose_reminder',
+    );
+  });
+
+  it('answers {error} when the checks throw, and keeps nothing', () => {
+    const desk = createReminderDesk({
+      problemWith: () => {
+        throw new Error('broken');
+      },
+    });
+    const result = JSON.parse(
+      runCoachTool('propose_reminder', daily, makeSnapshot(), desk),
+    ) as Json;
+    expect(result).toEqual({ error: 'The reminder could not be checked, so it was not proposed.' });
+    expect(desk.proposals).toEqual([]);
   });
 });

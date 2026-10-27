@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { GoalKind } from '../../domain/model';
 import { coach } from '../../i18n/en/coach';
 import { makeProfile } from '../../test/factories';
@@ -143,5 +143,34 @@ describe('useCoachChips: chips follow the goal live', () => {
       words.gain.intake,
       words.gain.protein,
     ]);
+  });
+});
+
+describe('ChipRow: one sideways row (P13)', () => {
+  // Tests run in Node, but the app's tsconfig has no Node types: this is all we use of node:fs.
+  let stylesheet = '';
+  beforeAll(async () => {
+    const NODE_FS = 'node:fs';
+    const fs = (await import(/* @vite-ignore */ NODE_FS)) as {
+      readFileSync(path: string, encoding: 'utf8'): string;
+    };
+    const here = decodeURIComponent(new URL(import.meta.url).pathname);
+    stylesheet = fs.readFileSync(here.replace(/[^/]+$/, 'chips.module.css'), 'utf8');
+  });
+
+  const rule = (selector: string): string =>
+    new RegExp(`\\n${selector.replace('.', '\\.')} \\{([^}]*)\\}`).exec(stylesheet)?.[1] ?? '';
+
+  it('keeps the chips in one row that scrolls sideways when they do not fit', () => {
+    renderRow();
+    expect(screen.getByRole('group', { name: words.label })).toHaveAttribute(
+      'data-ui',
+      'coach.chips',
+    );
+    expect(rule('.row')).toContain('display: flex;');
+    expect(rule('.row')).toContain('overflow-x: auto;');
+    expect(rule('.row')).not.toContain('flex-wrap');
+    expect(rule('.chip')).toContain('flex: none;');
+    expect(rule('.chip')).toContain('white-space: nowrap;');
   });
 });

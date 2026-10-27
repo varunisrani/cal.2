@@ -3,14 +3,17 @@ import { COACH_THUMBNAIL, type ImageBackend } from '../../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
 import { openAiToolCalls } from '../../ai/testing/toolWire';
-import { anthropicError, openAiAnswer, openAiError } from '../../ai/testing/wire';
+import { anthropicError, openAiAnswer, openAiError, type JsonObject } from '../../ai/testing/wire';
 import { createHealthRepo } from '../../data/repos/healthRepo';
 import type { PlatewiseDb } from '../../data/schema';
+import { CUSTOM_REMINDER_LIMIT, WEEKDAYS } from '../../domain/reminders/custom';
+import { withIdSequence } from '../../lib/ids';
 import { makeProfile } from '../../test/factories';
 import { createFakeCodec, type FakeCodec } from '../../test/fakeImageCodec';
 import { SNAPSHOT_TODAY, activityOn, entryOn, fixtureDiary } from './__fixtures__/snapshot';
 import { closeAll, openCoachStores, type CoachStores } from './__fixtures__/stores';
 import type { StoredAiAccess } from '../aiAccess';
+import { createCustomRemindersService } from '../reminders/customReminders';
 import { COACH_THUMB, createCoachSession, type CoachSession } from './session';
 
 const MISTRAL = 'https://api.mistral.ai/v1/chat/completions';
@@ -98,6 +101,8 @@ interface SetUpOptions {
   readonly profile?: boolean;
   /** Give the session an activity copy, as the Android app does (none by default: the web). */
   readonly activityCopy?: boolean;
+  /** Give the session the custom reminders service, as the app does (none by default). */
+  readonly reminders?: boolean;
 }
 
 async function setUp(options: SetUpOptions = {}): Promise<Harness> {
@@ -125,6 +130,15 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
     photoOnlyText: () => PHOTO_ONLY,
     codec: codec.codec,
     imageBackend: backend,
+    ...(options.reminders
+      ? {
+          reminders: createCustomRemindersService({
+            settingsRepo: stores.settingsRepo,
+            clock: stores.clock,
+            newId: withIdSequence('reminder'),
+          }),
+        }
+      : {}),
   });
   let changes = 0;
   session.subscribe(() => {
@@ -477,5 +491,158 @@ describe('createCoachSession: Health Connect activity (D-16.94)', () => {
       expect(tools).not.toContain('activity_log');
       expect(String(messagesOf(h.fake.requests[0])[0]?.content)).not.toContain('Steps');
     }
+  });
+});
+
+describe('createCoachSession: reminders the Coach proposes (P13, D-16.93)', () => {
+  const DAILY = { text: 'Drink a glass of water', time: '10:00', days: 'daily' };
+  const ONCE = { text: 'Call the dietitian', time: '17:30', date: '2026-10-28' };
+
+  /** A turn in which the fake proposes `proposals`, then answers. */
+  async function proposed(h: Harness, ...proposals: JsonObject[]): Promise<string> {
+    h.fake.on(
+      MISTRAL,
+      {
+        json: openAiToolCalls(
+          proposals.map((args, index) => ({ id: `r${index}`, name: 'propose_reminder', args })),
+        ),
+      },
+      { json: openAiAnswer('I have proposed it. Tap Add to set it.') },
+    );
+    expect(await h.session.send('Remind me, please.')).toBe('answered');
+    const reply = (await h.stores.coachRepo.list()).at(-1);
+    expect(reply?.role).toBe('assistant');
+    return reply!.id;
+  }
+
+  async function cards(h: Harness) {
+    return (await h.stores.coachRepo.list()).at(-1)?.reminders;
+  }
+
+  const stored = (h: Harness) => h.stores.settingsRepo.get('remind.custom');
+
+  it('stores the reply with a card for each proposal, waiting for the person', async () => {
+    const h = await setUp({ reminders: true });
+    await proposed(h, DAILY, ONCE);
+
+    expect(await cards(h)).toEqual([
+      { text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, status: 'proposed' },
+      { text: 'Call the dietitian', time: '17:30', date: '2026-10-28', status: 'proposed' },
+    ]);
+    const tools = ((h.fake.requests[0]?.body as Json).tools as { function: { name: string } }[])
+      .map((tool) => tool.function.name)
+      .at(-1);
+    expect(tools).toBe('propose_reminder');
+    // Proposing stores no reminder.
+    expect(await stored(h)).toEqual([]);
+  });
+
+  it('adds a card’s reminder once, and marks the card added with its id', async () => {
+    const h = await setUp({ reminders: true });
+    const reply = await proposed(h, DAILY);
+
+    const [first, second] = await Promise.all([
+      h.session.addReminder(reply, 0, true),
+      h.session.addReminder(reply, 0, true),
+    ]);
+    const third = await h.session.addReminder(reply, 0, true);
+
+    expect(first).toEqual({ ok: true, reminderId: 'reminder-1' });
+    expect(second).toEqual(first);
+    expect(third).toEqual(first);
+    expect(await stored(h)).toEqual([
+      { id: 'reminder-1', text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, on: true },
+    ]);
+    expect(await cards(h)).toEqual([
+      {
+        text: 'Drink a glass of water',
+        time: '10:00',
+        days: WEEKDAYS,
+        status: 'added',
+        reminderId: 'reminder-1',
+      },
+    ]);
+  });
+
+  it('adds it switched off when notifications were refused', async () => {
+    const h = await setUp({ reminders: true });
+    const reply = await proposed(h, ONCE);
+
+    expect(await h.session.addReminder(reply, 0, false)).toEqual({
+      ok: true,
+      reminderId: 'reminder-1',
+    });
+    expect(await stored(h)).toEqual([
+      {
+        id: 'reminder-1',
+        text: 'Call the dietitian',
+        time: '17:30',
+        date: '2026-10-28',
+        on: false,
+      },
+    ]);
+  });
+
+  it('answers the service’s problem and leaves the card waiting', async () => {
+    const h = await setUp({ reminders: true });
+    const reply = await proposed(h, DAILY);
+    const full = Array.from({ length: CUSTOM_REMINDER_LIMIT }, (_, index) => ({
+      id: `kept-${index}`,
+      text: `Kept ${index}`,
+      time: '08:00',
+      days: ['mon' as const],
+      on: true,
+    }));
+    await h.stores.settingsRepo.set('remind.custom', full);
+
+    expect(await h.session.addReminder(reply, 0, true)).toEqual({ ok: false, problem: 'full' });
+    expect(await stored(h)).toHaveLength(CUSTOM_REMINDER_LIMIT);
+    expect((await cards(h))?.[0]?.status).toBe('proposed');
+  });
+
+  it('dismisses a waiting card for good: it can no longer be added', async () => {
+    const h = await setUp({ reminders: true });
+    const reply = await proposed(h, DAILY, ONCE);
+
+    await h.session.dismissReminder(reply, 1);
+
+    expect((await cards(h))?.map((card) => card.status)).toEqual(['proposed', 'dismissed']);
+    expect(await h.session.addReminder(reply, 1, true)).toEqual({ ok: false, problem: 'gone' });
+    expect(await h.session.addReminder('no-such-message', 0, true)).toEqual({
+      ok: false,
+      problem: 'gone',
+    });
+    expect(await stored(h)).toEqual([]);
+  });
+
+  it('never dismisses a card already added', async () => {
+    const h = await setUp({ reminders: true });
+    const reply = await proposed(h, DAILY);
+    await h.session.addReminder(reply, 0, true);
+
+    await h.session.dismissReminder(reply, 0);
+
+    expect((await cards(h))?.[0]?.status).toBe('added');
+  });
+
+  it('offers no reminder tool, and stores no card, without the service', async () => {
+    const h = await setUp();
+    h.fake.on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'r0', name: 'propose_reminder', args: DAILY }]) },
+      { json: openAiAnswer('I cannot set reminders here.') },
+    );
+
+    expect(await h.session.send('Remind me to drink water at 10.')).toBe('answered');
+
+    const tools = (
+      (h.fake.requests[0]?.body as Json).tools as { function: { name: string } }[]
+    ).map((tool) => tool.function.name);
+    expect(tools).not.toContain('propose_reminder');
+    expect(await cards(h)).toBeUndefined();
+    expect(await h.session.addReminder('message-2', 0, true)).toEqual({
+      ok: false,
+      problem: 'gone',
+    });
   });
 });

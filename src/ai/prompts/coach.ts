@@ -6,9 +6,11 @@
  * messages, which are never sent again (R04.2, D-16.48), and to ask for every tool it needs in
  * one round, because a question gets only a few rounds (R04.19). Only the six nutrition tools
  * are named (R04.20), and `activity_log` when the turn offers it: in the Android app while Health
- * Connect is connected, when the rules for its figures come too (D-16.94). The names are written
- * out here because the AI layer does not import the Coach service, and a test keeps them equal to
- * the tool schemas.
+ * Connect is connected, when the rules for its figures come too (D-16.94); and `propose_reminder`
+ * when the turn can take reminder proposals, with the rules that it only proposes, that nothing is
+ * set until the person taps Add, and that a missing time or day is asked for (D-16.93). The names
+ * are written out here because the AI layer does not import the Coach service, and a test keeps
+ * them equal to the tool schemas.
  */
 import { withNotes } from '../client';
 import { bullets, lines, paragraphs } from './shared';
@@ -23,6 +25,11 @@ export interface CoachPromptInput {
    * connected): the rules for reading it are added. Off by default.
    */
   readonly activity?: boolean;
+  /**
+   * `propose_reminder` is offered (the app can keep reminders the person adds): the rules for
+   * proposing one are added. Off by default.
+   */
+  readonly reminders?: boolean;
 }
 
 const ROLE = lines(
@@ -79,6 +86,21 @@ const ACTIVITY = lines(
   ]),
 );
 
+const REMINDERS = lines(
+  'Reminders:',
+  bullets([
+    'When they ask to be reminded of something, call propose_reminder with what it should say, ' +
+      'the time, and the days or the date. Besides reading their data, this is the one thing you ' +
+      'can do: it puts a card with Add and Dismiss under your reply, and the reminder is set only ' +
+      'when they tap Add.',
+    'Never say that a reminder is set, saved or scheduled. Say that you have proposed it and that ' +
+      'they can tap Add under your reply.',
+    'When the time, or the days or the date, are missing or unclear, ask them instead of ' +
+      'guessing. Work out a date or a time from today and the time now in the facts above.',
+    'When the tool reports a problem, say what it is in plain words and ask for what is needed.',
+  ]),
+);
+
 const SHAPES = lines(
   'Shaping answers:',
   bullets([
@@ -96,6 +118,7 @@ export function coachSystemPrompt(input: CoachPromptInput): string {
     lines('What you know about them, as of this message:', input.context),
     TOOLS,
     input.activity === true && ACTIVITY,
+    input.reminders === true && REMINDERS,
     SHAPES,
   );
   return withNotes(system, input.notes ?? '');

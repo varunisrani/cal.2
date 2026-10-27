@@ -4,6 +4,7 @@
 // cm, ml, body fat as a fraction); instants are epoch milliseconds.
 
 import type { DayKey } from './dates/dayKey';
+import type { Weekday } from './reminders/custom';
 
 /** Builds a guard that accepts exactly the members of `list` (case-sensitive, no trimming). */
 function guardFor<T extends string>(list: readonly T[]): (value: unknown) => value is T {
@@ -93,6 +94,11 @@ export const isGoalKind = guardFor(GOAL_KINDS);
 export const COACH_ROLES = ['user', 'assistant'] as const;
 export type CoachRole = (typeof COACH_ROLES)[number];
 export const isCoachRole = guardFor(COACH_ROLES);
+
+export const REMINDER_CARD_STATUSES = ['proposed', 'added', 'dismissed'] as const;
+/** What the person did with a reminder the Coach proposed: nothing yet, Add, or Dismiss. */
+export type ReminderCardStatus = (typeof REMINDER_CARD_STATUSES)[number];
+export const isReminderCardStatus = guardFor(REMINDER_CARD_STATUSES);
 
 // ---- Food -----------------------------------------------------------------------------------
 
@@ -324,6 +330,22 @@ export interface CoachMessageState {
   details?: string;
 }
 
+/**
+ * A reminder the Coach proposed under its reply (P13, D-16.93): the reminder's fields as the
+ * custom reminders service takes them (`days` or `date`), and what the person did with the card.
+ */
+export interface CoachReminderCard {
+  text: string;
+  /** Local wall-clock `HH:MM`. */
+  time: string;
+  /** The weekdays it repeats on, Monday first; or `date`. */
+  days?: Weekday[];
+  date?: DayKey;
+  status: ReminderCardStatus;
+  /** The stored reminder's id, once added. */
+  reminderId?: string;
+}
+
 export interface CoachMessage {
   id: string;
   role: CoachRole;
@@ -332,4 +354,6 @@ export interface CoachMessage {
   /** Small thumbnail of an attached photo. */
   thumb?: Blob;
   state?: CoachMessageState;
+  /** On a reply: the reminders the Coach proposed in it, in order (P13). */
+  reminders?: CoachReminderCard[];
 }

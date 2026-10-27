@@ -2,6 +2,8 @@
 // tools, and `activity_log` over Health Connect's activity copy while it is connected (D-16.94). A
 // call is answered from the turn's snapshot, never from the live stores, and always as the text of
 // one JSON object; a problem is an `{error}` object the model can read and correct, never a throw.
+// `propose_reminder` (D-16.93, reminderTool.ts) writes nothing either: it notes a proposal on the
+// turn's desk, and is answered "not available" in a turn without one.
 //
 // Ranges are local days, inclusive at both ends. A `to` that is missing or not a real
 // YYYY-MM-DD day means today, a `from` like that means 30 days before `to`, and the two swap when
@@ -29,6 +31,7 @@ import { EXTRA_KEYS, NUTRIENT_KEYS, type DiaryEntry, type Fast } from '../../dom
 import { NUTRIENT_UNITS, type MassUnit } from '../../domain/nutrients/catalogue';
 import { clampFastGoal, fastDuration, goalAt } from '../../domain/trackers/fasting';
 import { clamp } from '../../domain/units/numbers';
+import { proposeReminder, type ReminderDesk } from './reminderTool';
 import { snapshotDay, type CoachActivity, type CoachSnapshot } from './snapshot';
 import {
   ACTIVITY_DEFAULT_DAYS,
@@ -36,6 +39,7 @@ import {
   ACTIVITY_TOOL_NAME,
   DEFAULT_SPAN_DAYS,
   NUTRITION_TOOL_NAMES,
+  REMINDER_TOOL_NAME,
   ROW_LIMITS,
   isLaterToolName,
   isNutritionToolName,
@@ -57,10 +61,14 @@ export interface ToolRange {
 
 const MS_PER_MINUTE = 60_000;
 
-/** The sentence naming the tools this turn offers: activity_log only while it is connected. */
-function availableTools(snapshot: CoachSnapshot): string {
+/**
+ * The sentence naming the tools this turn offers: activity_log only while it is connected,
+ * propose_reminder only with a desk.
+ */
+function availableTools(snapshot: CoachSnapshot, desk: ReminderDesk | undefined): string {
   const names: string[] = [...NUTRITION_TOOL_NAMES];
   if (snapshot.activity !== null) names.push(ACTIVITY_TOOL_NAME);
+  if (desk !== undefined) names.push(REMINDER_TOOL_NAME);
   return `Available tools: ${names.join(', ')}.`;
 }
 
@@ -362,9 +370,15 @@ const UNREADABLE = 'The stored data for this tool could not be read.';
 
 /**
  * Runs one tool call against the turn's snapshot and answers with the text of one JSON object.
- * `args` is whatever the wire parsed; anything but a plain object counts as no arguments.
+ * `args` is whatever the wire parsed; anything but a plain object counts as no arguments. `desk`
+ * takes the turn's reminder proposals; without it `propose_reminder` is not available.
  */
-export function runCoachTool(name: string, args: unknown, snapshot: CoachSnapshot): string {
+export function runCoachTool(
+  name: string,
+  args: unknown,
+  snapshot: CoachSnapshot,
+  desk?: ReminderDesk,
+): string {
   if (isNutritionToolName(name)) {
     try {
       return JSON.stringify(TOOLS[name](argsOf(args), snapshot, snapshotDay(snapshot)));
@@ -379,7 +393,17 @@ export function runCoachTool(name: string, args: unknown, snapshot: CoachSnapsho
       return problem(UNREADABLE);
     }
   }
-  const available = availableTools(snapshot);
+  if (name === REMINDER_TOOL_NAME && desk !== undefined) {
+    try {
+      return proposeReminder(args, desk);
+    } catch {
+      return problem('The reminder could not be checked, so it was not proposed.');
+    }
+  }
+  const available = availableTools(snapshot, desk);
+  if (name === REMINDER_TOOL_NAME) {
+    return problem(`The tool "${name}" is not available here. ${available}`);
+  }
   if (name === ACTIVITY_TOOL_NAME) {
     return problem(
       `The tool "${name}" needs Health Connect, which is only in the Android app and is not ` +

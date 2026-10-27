@@ -1,6 +1,6 @@
 // The Coach conversation, one record per message (D-16.29, R04.8): the text, its time, an optional
-// small thumbnail of an attached photo and, on a question whose turn failed, the failure for Retry
-// (D-16.31). Storage is bounded: each append stores its message and, in the same transaction,
+// small thumbnail of an attached photo, on a question whose turn failed, the failure for Retry
+// (D-16.31), and on a reply the reminders it proposed with what became of them (P13). Storage is bounded: each append stores its message and, in the same transaction,
 // deletes the oldest readable messages beyond the newest 200, thumbnails with them.
 //
 // Writes from this tab run one after another through a queue, in call order, so a reply, a retry
@@ -15,7 +15,7 @@
 // in quarantine before it deletes it (R04.7).
 
 import { Dexie, type PromiseExtended } from 'dexie';
-import type { CoachMessage, CoachMessageState } from '../../domain/model';
+import type { CoachMessage, CoachMessageState, CoachReminderCard } from '../../domain/model';
 import { systemClock, type Clock } from '../../lib/clock';
 import { newId as randomId, type IdSource } from '../../lib/ids';
 import { decodeCoachMessage, type Codec } from '../codecs';
@@ -35,6 +35,8 @@ export interface CoachMessageChanges {
   text?: string;
   /** A failed turn's state, or null to clear it. */
   state?: CoachMessageState | null;
+  /** A reply's reminder cards, all of them (P13). */
+  reminders?: readonly CoachReminderCard[];
 }
 
 export interface CoachRepo {
@@ -198,6 +200,7 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
           if (changes.text !== undefined) next.text = changes.text;
           if (changes.state === null) delete next.state;
           else if (changes.state !== undefined) next.state = changes.state;
+          if (changes.reminders !== undefined) next.reminders = [...changes.reminders];
           const row = toRow(next, seqOf(raw));
           await writeOne(db, 'coachMessages', row, decodeCoachMessage, clock);
           return asMessage(row);

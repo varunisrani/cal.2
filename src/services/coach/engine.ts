@@ -3,8 +3,10 @@
 // provider that is not set up refuses before anything is sent. The system text is built once from
 // the snapshot taken when the person pressed Send, and the tools of the turn read only that
 // snapshot, so a meal logged while the reply runs shows up on the next question (R04.22). The
-// turn offers the six nutrition tools, and `activity_log` with its rules when the snapshot holds
-// Health Connect's activity (the Android app, connected: D-16.94).
+// turn offers the six nutrition tools, `activity_log` with its rules when the snapshot holds
+// Health Connect's activity (the Android app, connected: D-16.94), and `propose_reminder` with its
+// rules when the turn can take reminder proposals (D-16.93). The answer comes back with the
+// proposals of the attempt that gave it, for the cards under the reply.
 //
 // A turn is a short run of rounds on the provider's wire. Each round sends everything so far;
 // tool calls are answered locally, every result cut to the 60 000-character limit (D-16.32), and
@@ -17,7 +19,7 @@
 
 import { PROVIDERS } from '../../ai/catalog/providers';
 import { askRound, chatWireFor } from '../../ai/chat/round';
-import type { ChatSetup, RunTool, ToolSchema } from '../../ai/chat/types';
+import type { ChatSetup, RunTool, ToolCall, ToolSchema } from '../../ai/chat/types';
 import { withDeadline, type AiDeps } from '../../ai/client';
 import type { Deadline } from '../../ai/deadline';
 import { bothFailed, type AiFailure, type SingleFailure } from '../../ai/errors';
@@ -37,6 +39,12 @@ import { err, ok, type Result } from '../../lib/result';
 import { coachContext } from './context';
 import { coachHistory, type TurnQuestion } from './history';
 import { limitToolResult } from './limiter';
+import {
+  createReminderDesk,
+  type ReminderChecks,
+  type ReminderDesk,
+  type ReminderProposal,
+} from './reminderTool';
 import type { CoachSnapshot } from './snapshot';
 import { coachTools } from './toolSchemas';
 import { runCoachTool } from './tools';
@@ -53,6 +61,14 @@ export interface TurnInput {
   readonly image?: Blob;
   /** The data as it stood when the person pressed Send. */
   readonly snapshot: CoachSnapshot;
+  /** Checks reminder proposals; without it `propose_reminder` is not offered (D-16.93). */
+  readonly reminders?: ReminderChecks;
+}
+
+/** A turn's answer: the trimmed text, and the reminders it proposed, in order (none: empty). */
+export interface CoachAnswer {
+  readonly text: string;
+  readonly reminders: readonly ReminderProposal[];
 }
 
 /** What a role that is not set up fails with, before any request (as every AI request does). */
@@ -63,8 +79,8 @@ const NOT_SET_UP: Readonly<Record<Missing, SingleFailure['kind']>> = {
 };
 
 /** The tools a turn offers, in the shape the chat wires take. */
-function chatTools(activity: boolean): readonly ToolSchema[] {
-  return coachTools(activity).map((tool) => ({
+function chatTools(activity: boolean, reminders: boolean): readonly ToolSchema[] {
+  return coachTools(activity, reminders).map((tool) => ({
     name: tool.name,
     description: tool.description,
     parameters: { ...tool.parameters },
@@ -81,14 +97,18 @@ interface Turn {
   /** The prepared photo, base64 JPEG. */
   readonly photo?: string;
   readonly secrets: readonly string[];
-  readonly runTool: RunTool;
+  /** Runs one call; each attempt hands in its own reminder desk. */
+  readonly runTool: (call: ToolCall, desk: ReminderDesk | undefined) => string;
 }
 
 /**
- * Answers one question: the trimmed answer, or one failure whose detail (the provider's own
- * message, every stored key cut out) is for Details. Never rejects.
+ * Answers one question: the trimmed answer with its reminder proposals, or one failure whose
+ * detail (the provider's own message, every stored key cut out) is for Details. Never rejects.
  */
-export async function runTurn(input: TurnInput, deps: AiDeps): Promise<Result<string, AiFailure>> {
+export async function runTurn(
+  input: TurnInput,
+  deps: AiDeps,
+): Promise<Result<CoachAnswer, AiFailure>> {
   try {
     return await withDeadline(deps, (deadline) => turn(input, deps, deadline));
   } catch {
@@ -100,7 +120,7 @@ async function turn(
   input: TurnInput,
   deps: AiDeps,
   deadline: Deadline,
-): Promise<Result<string, AiFailure>> {
+): Promise<Result<CoachAnswer, AiFailure>> {
   if (deadline.stoppedBy() !== undefined) return err(stopFailure(deadline));
   const { settings, keys } = deps;
   const role = roleFor({ images: input.image === undefined ? [] : [input.image] }, settings);
@@ -115,6 +135,7 @@ async function turn(
   }
   const { snapshot } = input;
   const activity = snapshot.activity !== null;
+  const reminders = input.reminders !== undefined;
   const plan: Turn = {
     input,
     deps,
@@ -123,11 +144,12 @@ async function turn(
       context: coachContext(snapshot),
       notes: settings.instructions,
       activity,
+      reminders,
     }),
-    tools: chatTools(activity),
+    tools: chatTools(activity, reminders),
     photo,
     secrets: storedKeys(keys),
-    runTool: (call) => limitToolResult(runCoachTool(call.name, call.args, snapshot)),
+    runTool: (call, desk) => limitToolResult(runCoachTool(call.name, call.args, snapshot, desk)),
   };
 
   const first = await attempt(plan, role);
@@ -144,10 +166,16 @@ async function turn(
 
 /**
  * One provider's go at the turn, from its first round: its own wire, a conversation built from
- * the stored messages in its own format, and nothing from any earlier attempt.
+ * the stored messages in its own format, its own reminder desk, and nothing from any earlier
+ * attempt.
  */
-async function attempt(plan: Turn, target: RoleTarget): Promise<Result<string, SingleFailure>> {
+async function attempt(
+  plan: Turn,
+  target: RoleTarget,
+): Promise<Result<CoachAnswer, SingleFailure>> {
   const { input, deps, deadline } = plan;
+  const desk = input.reminders === undefined ? undefined : createReminderDesk(input.reminders);
+  const runTool: RunTool = (call) => plan.runTool(call, desk);
   try {
     const wire = chatWireFor(target.provider);
     const { turns, text } = coachHistory(
@@ -179,11 +207,12 @@ async function attempt(plan: Turn, target: RoleTarget): Promise<Result<string, S
       if (!reply.ok) return reply;
       if (reply.value.kind === 'answer') {
         const answer = reply.value.text.trim();
-        return answer === '' ? err({ kind: 'invalidResponse' }) : ok(answer);
+        if (answer === '') return err({ kind: 'invalidResponse' });
+        return ok({ text: answer, reminders: [...(desk?.proposals ?? [])] });
       }
       // The last round asked for more tools: their results could never be read (R04.11).
       if (round >= MAX_ROUNDS) return err({ kind: 'roundLimit' });
-      transcript = wire.continueWith(transcript, reply.value, plan.runTool);
+      transcript = wire.continueWith(transcript, reply.value, runTool);
     }
   } catch (error) {
     return err(thrownFailure(error, deadline));

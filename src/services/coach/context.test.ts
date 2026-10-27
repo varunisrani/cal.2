@@ -40,6 +40,12 @@ describe('coachContext: today', () => {
       'Today is Monday 2026-10-26 in the time zone America/New_York.',
     );
   });
+
+  it('gives the local time now, for reminders and words like tonight (P13)', () => {
+    expect(coachContext(makeSnapshot())).toContain(
+      'in the time zone America/New_York. The time there is 12:30.',
+    );
+  });
 });
 
 describe('coachContext: the person', () => {

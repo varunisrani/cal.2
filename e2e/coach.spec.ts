@@ -3,13 +3,15 @@
  * on its defaults (the goal is "maintain") with the AI as the Custom provider at the fake's
  * loopback address (`plan-ok`), and opens the Coach tab. Then it talks to the fake: a question it
  * answers after a `food_log` call on the person's own diary, a card and a chip (the chip with a
- * photo), a turn that fails and is retried, a slow reply cut off by Clear chat, and enough short
- * exchanges to pass the 200-message cap. As in the logging spec, every request off loopback is
- * aborted and fails the test.
+ * photo), a turn that fails and is retried, a slow reply cut off by Clear chat, enough short
+ * exchanges to pass the 200-message cap, and (P13) a reminder the fake proposes, added from its
+ * card and found in Settings › Tracking & reminders. As in the logging spec, every request off
+ * loopback is aborted and fails the test.
  */
+import { AxeBuilder } from '@axe-core/playwright';
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import { failureMessages } from '../src/ai/errors';
-import { NUTRITION_TOOL_NAMES } from '../src/services/coach/toolSchemas';
+import { NUTRITION_TOOL_NAMES, REMINDER_TOOL_NAME } from '../src/services/coach/toolSchemas';
 import { CHAT_PATH, readNamedScript, type RecordedRequest } from './fake-ai/server';
 import {
   FAKE_AI_BASE_URL,
@@ -70,6 +72,7 @@ const CHIPS = [
 ] as const;
 
 const COACH_TOOL = readNamedScript('coach-tool');
+const COACH_REMINDER = readNamedScript('coach-reminder');
 const FAIL_THEN_OK = readNamedScript('coach-fail-then-ok');
 const SLOW = readNamedScript('coach-slow');
 
@@ -95,6 +98,22 @@ test.afterEach(() => {
 });
 
 // ---- Getting there ----------------------------------------------------------------------------
+
+/**
+ * Makes the browser allow notifications from each document's start, as a person who pressed
+ * Allow: headless Chromium reads `denied` even after `grantPermissions` (as in the reminders spec).
+ */
+async function allowNotifications(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const prompt = window.Notification as typeof Notification | undefined;
+    if (prompt === undefined) return;
+    Object.defineProperty(prompt, 'permission', { configurable: true, get: () => 'granted' });
+    Object.defineProperty(prompt, 'requestPermission', {
+      configurable: true,
+      value: (): Promise<NotificationPermission> => Promise.resolve('granted'),
+    });
+  });
+}
 
 /** A fresh load → the wizard on its defaults, the fake AI as the Custom provider → Home. */
 async function onboard(page: Page): Promise<void> {
@@ -184,6 +203,25 @@ async function coachRequests(): Promise<RecordedRequest[]> {
   return (await fakeAi.requests()).filter((request) => toolsOffered(request).length > 0);
 }
 
+/**
+ * The conversation and the composer in both themes: no serious or critical axe finding (the
+ * rules and impacts of the a11y spec).
+ */
+async function expectAxeClean(page: Page): Promise<void> {
+  for (const theme of ['dark', 'light'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const results = await new AxeBuilder({ page })
+      .include('[data-ui="screen.coach"]')
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
+      .analyze();
+    const blocking = results.violations
+      .filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
+      .map((violation) => `${theme}: ${violation.id} ${violation.nodes.map((n) => n.target)}`);
+    expect(blocking).toEqual([]);
+  }
+}
+
 // ---- The flows --------------------------------------------------------------------------------
 
 test.describe('coach chat (Demo 5)', () => {
@@ -228,7 +266,7 @@ test.describe('coach chat (Demo 5)', () => {
       const asked = await coachRequests();
       expect(asked).toHaveLength(2);
       const [first, second] = asked as [RecordedRequest, RecordedRequest];
-      expect(toolsOffered(first)).toEqual([...NUTRITION_TOOL_NAMES]);
+      expect(toolsOffered(first)).toEqual([...NUTRITION_TOOL_NAMES, REMINDER_TOOL_NAME]);
       expect(questionsSent(first)).toEqual([question]);
       expect(toolResultsSent(first)).toEqual([]);
       // Food names reach the model only through a tool, never in the context.
@@ -533,6 +571,79 @@ test.describe('coach chat (Demo 5)', () => {
       await expect(shown).toHaveCount(200);
       await expectMessage(shown.first(), ['user', question(2)]);
       await expectMessage(shown.last(), ['assistant', answer(exchanges)]);
+    });
+  });
+});
+
+test.describe('reminders through the Coach (P13, D-16.93)', () => {
+  test('adds the reminder the Coach proposed from its card, and it is in Settings › Tracking & reminders', async ({
+    page,
+  }) => {
+    const question = 'Remind me to drink a glass of water every day at 10.';
+    const answer = answerOf(COACH_REMINDER.replies[1]);
+    const reminder = 'Drink a glass of water';
+    const when = words('reminders.yours.everyDay', { time: '10:00 AM' });
+    const card = ui(page, 'coach.reminderCard');
+    await allowNotifications(page);
+    await onboard(page);
+    await openEmptyCoach(page);
+
+    await test.step('the question → the fake proposes a reminder → a card under the answer', async () => {
+      await fakeAi.useScript('coach-reminder');
+      await ask(page, question);
+      await expectChat(page, [
+        ['user', question],
+        ['assistant', answer],
+      ]);
+      await expect(ui(messages(page).nth(1), 'coach.reminderCard')).toBeVisible();
+      await expect(card).toHaveAttribute('data-status', 'proposed');
+      await expect(ui(card, 'coach.reminderCard.text')).toHaveText(reminder);
+      await expect(ui(card, 'coach.reminderCard.when')).toHaveText(when);
+      await expect(ui(card, 'coach.reminderCard.dismiss')).toHaveText(
+        words('coach.reminder.dismiss'),
+      );
+      await expectAxeClean(page);
+    });
+
+    await test.step('the fake was offered propose_reminder and told the reminder waits for Add', async () => {
+      const asked = await coachRequests();
+      expect(asked).toHaveLength(2);
+      expect(toolsOffered(asked[0]!)).toContain(REMINDER_TOOL_NAME);
+      const [result] = toolResultsSent(asked[1]!) as [Record<string, unknown>];
+      expect(result.tool_call_id).toBe('call_fake_propose_reminder_1');
+      const told = JSON.parse(result.content as string) as Record<string, unknown>;
+      expect(told).toMatchObject({
+        proposed: true,
+        reminder: { text: reminder, time: '10:00', days: 'daily' },
+      });
+      expect(String(told.note)).toContain('Nothing is set until they tap Add');
+    });
+
+    await test.step('Add → the card says it was added, with the way to Settings', async () => {
+      await ui(card, 'coach.reminderCard.add').click();
+      await expect(card).toHaveAttribute('data-status', 'added');
+      await expect(ui(card, 'coach.reminderCard.added')).toHaveText(words('coach.reminder.added'));
+      await expect(ui(card, 'coach.reminderCard.add')).toHaveCount(0);
+      // The browser allowed notifications, so the reminder is on and nothing more is said.
+      await expect(ui(card, 'coach.reminderCard.off')).toHaveCount(0);
+      await expectAxeClean(page);
+    });
+
+    await test.step('after a reload the card still says added, with no Add', async () => {
+      await page.reload();
+      await expect(page).toHaveURL(/#\/coach$/);
+      await expect(card).toHaveAttribute('data-status', 'added');
+      await expect(ui(card, 'coach.reminderCard.add')).toHaveCount(0);
+    });
+
+    await test.step('the link opens Settings › Tracking & reminders › Your reminders with it, on', async () => {
+      await ui(card, 'coach.reminderCard.settings').click();
+      await expect(page).toHaveURL(/#\/settings\/tracking$/);
+      const yours = ui(ui(page, 'screen.settings.tracking'), 'reminders.yours');
+      const row = yours.getByRole('switch', { name: reminder });
+      await expect(row).toHaveAttribute('aria-checked', 'true');
+      await expect(row).toHaveAccessibleDescription(when);
+      await expect(ui(yours, 'reminders.yours.item')).toHaveCount(1);
     });
   });
 });

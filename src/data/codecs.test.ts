@@ -234,6 +234,39 @@ describe('coach and photo codecs', () => {
     ).toEqual({ ...message, state: { status: 'failed', kind: 'quota' } });
   });
 
+  it('reads the reminder cards of a reply and leaves out a card it cannot read in full (P13)', () => {
+    const message = makeCoachMessage({ role: 'assistant' });
+    const daily = { text: 'Drink water', time: '10:00', days: ['sun', 'mon'], status: 'proposed' };
+    const once = {
+      text: 'Call the dietitian',
+      time: '17:30',
+      date: '2026-10-28',
+      status: 'added',
+      reminderId: 'r1',
+    };
+    expect(decodeCoachMessage({ ...message, reminders: [daily, once] })).toEqual({
+      ...message,
+      // The days come back Monday first.
+      reminders: [{ ...daily, days: ['mon', 'sun'] }, once],
+    });
+    const unreadable = [
+      { ...daily, status: 'maybe' },
+      { ...daily, time: '25:00' },
+      { ...daily, text: '  ' },
+      { ...daily, days: [] },
+      { ...daily, days: ['someday'] },
+      { ...daily, date: '2026-10-28' },
+      { text: 'No timing', time: '10:00', status: 'proposed' },
+      'not a card',
+    ];
+    expect(decodeCoachMessage({ ...message, reminders: [...unreadable, once] })).toEqual({
+      ...message,
+      reminders: [once],
+    });
+    expect(decodeCoachMessage({ ...message, reminders: unreadable })).toEqual(message);
+    expect(decodeCoachMessage({ ...message, reminders: 'cards' })).toEqual(message);
+  });
+
   it('needs a blob to read a photo', () => {
     const photo = makePhoto();
     expect(decodePhoto(photo)).toEqual(photo);

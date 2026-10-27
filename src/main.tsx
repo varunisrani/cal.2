@@ -246,6 +246,9 @@ async function start(): Promise<void> {
     return undefined;
   });
 
+  // P13: the reminders the person writes; Settings and the Coach's reminder cards share it.
+  const customReminders = createCustomRemindersService({ settingsRepo, clock: systemClock });
+
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
     diary: createDiaryService({
@@ -326,7 +329,7 @@ async function start(): Promise<void> {
     notifier,
     trackingSettings: createTrackingSettingsService({ settingsRepo, notifications, reminders }),
     // P13: the reminders the person writes; also the Coach's way to add one (D-16.93).
-    customReminders: createCustomRemindersService({ settingsRepo, clock: systemClock }),
+    customReminders,
     coachSession: createCoachSession({
       coachRepo,
       data: {
@@ -344,6 +347,8 @@ async function start(): Promise<void> {
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
       fetch: browserFetch,
       photoOnlyText: () => t('coach.photoOnly'),
+      // P13: the Coach proposes reminders; a card's Add adds one (D-16.93).
+      reminders: customReminders,
     }),
     // Home's picked rows as one entry (P06-19); the name's words come from the catalogue.
     combine: createCombineService({

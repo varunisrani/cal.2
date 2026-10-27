@@ -18,7 +18,8 @@ import {
   type HarnessOptions,
 } from '../../test/screenHarness';
 import { advance } from '../../test/time';
-import { CoachPage, KEYBOARD_MIN_PX } from './CoachPage';
+import { CoachPage } from './CoachPage';
+import { KEYBOARD_MIN_PX } from './keyboard';
 import { TYPING_STEP_MS } from './TypingDots';
 
 const words = coach.coach;
@@ -40,6 +41,8 @@ function fakeSession() {
     send: vi.fn<(text: string, image?: Blob) => Promise<TurnOutcome>>(async () => 'answered'),
     retry: vi.fn<(id: string) => Promise<TurnOutcome>>(async () => 'answered'),
     reset: vi.fn<() => Promise<void>>(async () => undefined),
+    addReminder: vi.fn<CoachSession['addReminder']>(async () => ({ ok: true, reminderId: 'r' })),
+    dismissReminder: vi.fn<CoachSession['dismissReminder']>(async () => undefined),
   } satisfies CoachSession;
   const setPending = (pending: boolean): void => {
     act(() => {
@@ -412,6 +415,33 @@ describe('CoachPage: keyboard', () => {
     field().focus();
     fireEvent.touchMove(document.querySelector('[data-ui="coach.empty"]')!);
     expect(field()).not.toHaveFocus();
+  });
+
+  it('keeps the field focused when the person taps Jump to latest (P13)', async () => {
+    const saved = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight');
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.dataset.ui === 'coach.list' ? 1000 : 0;
+      },
+    });
+    try {
+      await openCoach({ messages: [asked('Hello'), answered('Hi.')] });
+      await untilMessages(2);
+      const list = document.querySelector('[data-ui="coach.list"]') as HTMLElement;
+      list.scrollTop = 0;
+      fireEvent.scroll(list);
+      const jump = screen.getByRole('button', { name: words.jump.label });
+      field().focus();
+
+      fireEvent.click(jump);
+      expect(field()).toHaveFocus();
+      expect(list.scrollTop).toBe(1000);
+      expect(screen.queryByRole('button', { name: words.jump.label })).toBeNull();
+    } finally {
+      if (saved) Object.defineProperty(HTMLElement.prototype, 'scrollHeight', saved);
+      else Reflect.deleteProperty(HTMLElement.prototype, 'scrollHeight');
+    }
   });
 
   it('keeps the field focused while the person uses the composer', async () => {

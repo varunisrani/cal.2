@@ -146,7 +146,7 @@ export async function run(check: LiveCheck): Promise<CheckResult> {
     deps,
   );
   if (!result.ok) return failed(result.error, facts());
-  return { ok: true, ...facts(), answerChars: result.value.length };
+  return { ok: true, ...facts(), answerChars: result.value.text.length };
 }
 
 function failed(

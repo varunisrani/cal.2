@@ -823,6 +823,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/coach/TypingDots.test.tsx > TypingDots (P08-10) > shows three dots with the first lit, and says the Coach is writing (ACC-I1-2)
   - Test: src/features/coach/CoachPage.test.tsx > CoachPage: conversation > shows the typing dots while a reply is pending, the lit one moving every 350 ms (ACC-I1-2)
   - Test: src/features/coach/MessageList.test.tsx > MessageList: typing dots > shows the dots after the last message only while a reply is pending (ACC-I1-2)
+- **ACC-I1-3** The conversation follows the newest message while the person is at the end; scrolled up, it stays and Jump to latest shows how many are new
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: following the end > follows a reply and the waiting dots while the person is at the end or within 80 px of it
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: following the end > stays where the person scrolled up to and counts the new messages on Jump to latest
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: following the end > glides to the newest on Jump to latest, at once with reduced motion
+- **ACC-I1-4** A reminder the Coach proposes is added only from its card, once, and then shows in Settings › Tracking & reminders (D-16.93)
+  - Test: e2e/coach.spec.ts > reminders through the Coach (P13, D-16.93) > adds the reminder the Coach proposed from its card, and it is in Settings › Tracking & reminders
+  - Test: src/features/coach/ReminderCard.test.tsx > ReminderCard: Add (P13, D-16.93) > adds once for two quick taps, and again never after a reload
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: reminders (P13, D-16.93) > never lets the model say a reminder is set before the person taps Add
 
 ### I2 · Composer (P1)
 
@@ -830,6 +838,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/coach/Composer.test.tsx > Composer: Send (P08-11) > turns Send on for a photo alone and sends it with no words (ACC-I2-1)
 - **ACC-I2-2** Shift+Enter adds a new line instead of sending
   - Test: src/features/coach/Composer.test.tsx > Composer: keys > adds a line on Shift+Enter instead of sending (ACC-I2-2)
+- **ACC-I2-3** The composer grows to six lines, keeps the focus after Send and stays above the keyboard
+  - Test: src/features/coach/Composer.test.tsx > Composer: growing with the text > grows with the text to six lines, then scrolls (P13)
+  - Test: src/features/coach/Composer.test.tsx > Composer: Send (P08-11) > keeps the focus in the field after Send, so the keyboard stays up (P13)
+  - Test: src/features/coach/keyboard.test.ts > useKeyboardInset (P13) > follows the viewport as the keyboard opens, the page scrolls under it, and it closes
 
 ### I3 · Goal-aware prompt chips (P1)
 
@@ -846,6 +858,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-I4-2** Copy puts the reply text on the clipboard
   - Test: src/features/coach/CopyButton.test.tsx > CopyButton > puts the raw reply text on the clipboard and confirms it briefly (ACC-I4-2)
   - Test: e2e/coach.spec.ts > coach chat (Demo 5) > answers "What did I eat yesterday?" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)
+- **ACC-I4-3** Copy works without the Clipboard API and says Copied
+  - Test: src/features/coach/CopyButton.test.tsx > CopyButton > copies with the copy command and says Copied when there is no Clipboard API (P13)
 
 ### I5 · Reset with confirmation (P1)
 

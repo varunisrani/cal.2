@@ -15,11 +15,13 @@ import {
   isGoalKind,
   isMacroKey,
   isMealKind,
+  isReminderCardStatus,
   isSex,
   type AnalysisDraft,
   type BodyFatReading,
   type CoachMessage,
   type CoachMessageState,
+  type CoachReminderCard,
   type DiaryEntry,
   type EntrySource,
   type Fast,
@@ -36,6 +38,7 @@ import {
   type WaterLog,
   type WeighIn,
 } from '../domain/model';
+import { WEEKDAYS, isTimeOfDay, isWeekday } from '../domain/reminders/custom';
 import type { PhotoRow } from './schema';
 
 /** Reads a raw stored value into a record, or returns null when it is unreadable. */
@@ -405,6 +408,38 @@ function decodeMessageState(raw: unknown): CoachMessageState | undefined {
   return state;
 }
 
+/**
+ * A reminder card under a reply (P13): words, a time, and either weekdays or a date, with a known
+ * status. A card missing any of them is left out rather than guessed, so it can never be added
+ * twice or with the wrong timing.
+ */
+function decodeReminderCard(raw: unknown): CoachReminderCard | null {
+  const fields = fieldsOf(raw);
+  const words = text(fields?.text)?.trim();
+  if (!fields || !words || !isTimeOfDay(fields.time) || !isReminderCardStatus(fields.status)) {
+    return null;
+  }
+  const card: CoachReminderCard = { text: words, time: fields.time, status: fields.status };
+  const { days, date } = fields;
+  if (Array.isArray(days) && date === undefined) {
+    if (days.length === 0 || !days.every(isWeekday)) return null;
+    card.days = WEEKDAYS.filter((day) => days.includes(day));
+  } else if (isDayKey(date) && days === undefined) {
+    card.date = date;
+  } else {
+    return null;
+  }
+  put(card, 'reminderId', id(fields.reminderId));
+  return card;
+}
+
+/** The readable cards of a stored list; absent when none can be read. */
+function decodeReminderCards(raw: unknown): CoachReminderCard[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const cards = raw.map(decodeReminderCard).filter((card) => card !== null);
+  return cards.length > 0 ? cards : undefined;
+}
+
 /** A message with an unknown role is unreadable: there is no safe side to show it on. */
 export const decodeCoachMessage: Codec<CoachMessage> = (raw) => {
   const fields = fieldsOf(raw);
@@ -414,6 +449,7 @@ export const decodeCoachMessage: Codec<CoachMessage> = (raw) => {
   const message: CoachMessage = { id: rowId, role: fields.role, text: text(fields.text) ?? '', at };
   put(message, 'thumb', isBlobLike(fields.thumb) ? fields.thumb : undefined);
   put(message, 'state', decodeMessageState(fields.state));
+  put(message, 'reminders', decodeReminderCards(fields.reminders));
   return message;
 };
 

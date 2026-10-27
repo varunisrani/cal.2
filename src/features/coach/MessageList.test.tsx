@@ -6,7 +6,8 @@ import { ai } from '../../i18n/en/ai';
 import { coach } from '../../i18n/en/coach';
 import { common } from '../../i18n/en/common';
 import { ToastProvider } from '../../ui/Toast';
-import { END_SLACK_PX, MessageList, type MessageListProps } from './MessageList';
+import { FOLLOW_SLACK_PX } from './followEnd';
+import { MessageList, type MessageListProps } from './MessageList';
 
 const AT = Date.parse('2026-10-26T12:30:00-04:00');
 const words = coach.coach;
@@ -15,9 +16,11 @@ const urlMethods = ['createObjectURL', 'revokeObjectURL'] as const;
 const savedUrlMethods = urlMethods.map((name) => Object.getOwnPropertyDescriptor(URL, name));
 let urls = new Map<string, Blob>();
 
-/** The list's content height, as the browser would report it. */
+/** The list's content height and its visible height, as the browser would report them. */
 let contentHeight = 0;
+let viewHeight = 0;
 const savedScrollHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollHeight');
+const savedClientHeight = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientHeight');
 
 beforeEach(() => {
   urls = new Map();
@@ -35,10 +38,17 @@ beforeEach(() => {
     value: (url: string) => void urls.delete(url),
   });
   contentHeight = 0;
+  viewHeight = 0;
   Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
     configurable: true,
     get(this: HTMLElement) {
       return this.dataset.ui === 'coach.list' ? contentHeight : 0;
+    },
+  });
+  Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.dataset.ui === 'coach.list' ? viewHeight : 0;
     },
   });
 });
@@ -52,6 +62,10 @@ afterEach(() => {
   if (savedScrollHeight)
     Object.defineProperty(HTMLElement.prototype, 'scrollHeight', savedScrollHeight);
   else Reflect.deleteProperty(HTMLElement.prototype, 'scrollHeight');
+  if (savedClientHeight)
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', savedClientHeight);
+  else Reflect.deleteProperty(HTMLElement.prototype, 'clientHeight');
+  vi.unstubAllGlobals();
 });
 
 let nextId = 0;
@@ -207,24 +221,140 @@ describe('MessageList: error banner', () => {
 });
 
 describe('MessageList: following the end', () => {
-  it('starts at the end, then follows new messages and a reply starting', () => {
+  /** The person scrolls the list to `top`, as a finger or a wheel would. */
+  const scrollTo = (top: number): void => {
+    list().scrollTop = top;
+    fireEvent.scroll(list());
+  };
+  const jumpButton = () => document.querySelector<HTMLElement>('[data-ui="coach.jumpLatest"]');
+
+  it('opens at the newest message, at once', () => {
     contentHeight = 400;
+    viewHeight = 300;
+    renderList({ messages: [message({ role: 'user', text: 'One' })] });
+
+    expect(list().scrollTop).toBe(400);
+    // Later moves glide (the stylesheet's, unless motion is reduced).
+    expect(list()).toHaveAttribute('data-settled');
+    expect(jumpButton()).toBeNull();
+  });
+
+  it('follows a reply and the waiting dots while the person is at the end or within 80 px of it', () => {
+    contentHeight = 700;
+    viewHeight = 300;
     const first = message({ role: 'user', text: 'One' });
     const { rerender } = renderList({ messages: [first] });
-    expect(list().scrollTop).toBe(400);
-    expect(list()).toHaveAttribute('data-settled');
-
-    // The person scrolls up to read; a new message brings the end back.
-    list().scrollTop = 120;
-    contentHeight = 700;
-    const second = message({ role: 'assistant', text: 'Two' });
-    rerender({ messages: [first, second] });
     expect(list().scrollTop).toBe(700);
 
-    list().scrollTop = 120;
-    contentHeight = 760;
-    rerender({ messages: [first, second], pending: true });
-    expect(list().scrollTop).toBe(760);
+    // 80 px above the end still reads the newest message.
+    scrollTo(700 - 300 - FOLLOW_SLACK_PX);
+    contentHeight = 900;
+    rerender({ messages: [first], pending: true });
+    expect(list().scrollTop).toBe(900);
+
+    contentHeight = 1100;
+    const reply = message({ role: 'assistant', text: 'Two' });
+    rerender({ messages: [first, reply], pending: false });
+    expect(list().scrollTop).toBe(1100);
+    expect(jumpButton()).toBeNull();
+  });
+
+  it('stays where the person scrolled up to and counts the new messages on Jump to latest', () => {
+    contentHeight = 700;
+    viewHeight = 300;
+    const first = message({ role: 'user', text: 'One' });
+    const { rerender } = renderList({ messages: [first] });
+
+    scrollTo(700 - 300 - FOLLOW_SLACK_PX - 1);
+    expect(screen.getByRole('button', { name: words.jump.label })).toBe(jumpButton());
+
+    contentHeight = 900;
+    rerender({ messages: [first], pending: true });
+    const reply = message({ role: 'assistant', text: 'Two' });
+    rerender({ messages: [first, reply], pending: false });
+    expect(list().scrollTop).toBe(700 - 300 - FOLLOW_SLACK_PX - 1);
+    expect(jumpButton()).toHaveAccessibleName('Jump to latest, 1 new message');
+    expect(jumpButton()).toHaveTextContent('1 new');
+
+    const more = message({ role: 'assistant', text: 'Three' });
+    rerender({ messages: [first, reply, more] });
+    expect(jumpButton()).toHaveAccessibleName('Jump to latest, 2 new messages');
+    // It floats over the list, outside the log, so it is never announced as a message.
+    expect(list().contains(jumpButton())).toBe(false);
+  });
+
+  it('glides to the newest on Jump to latest, at once with reduced motion', () => {
+    contentHeight = 700;
+    viewHeight = 300;
+    renderList({ messages: [message({ role: 'assistant', text: 'One' })] });
+    const glide = vi.fn();
+    list().scrollTo = glide as unknown as HTMLElement['scrollTo'];
+
+    scrollTo(100);
+    fireEvent.click(jumpButton()!);
+    expect(glide).toHaveBeenLastCalledWith({ top: 700, behavior: 'smooth' });
+    expect(jumpButton()).toBeNull();
+
+    vi.stubGlobal(
+      'matchMedia',
+      (query: string) =>
+        ({ matches: query === '(prefers-reduced-motion: reduce)' }) as MediaQueryList,
+    );
+    scrollTo(700 - 300);
+    scrollTo(50);
+    fireEvent.click(jumpButton()!);
+    expect(glide).toHaveBeenLastCalledWith({ top: 700, behavior: 'instant' });
+  });
+
+  it('brings the end back for the person’s own question, even when scrolled up', () => {
+    contentHeight = 700;
+    viewHeight = 300;
+    const first = message({ role: 'assistant', text: 'One' });
+    const { rerender } = renderList({ messages: [first] });
+    scrollTo(100);
+    expect(jumpButton()).not.toBeNull();
+
+    contentHeight = 800;
+    rerender({ messages: [first, message({ role: 'user', text: 'Two?' })] });
+    expect(list().scrollTop).toBe(800);
+    expect(jumpButton()).toBeNull();
+  });
+
+  it('takes Jump to latest away at the end, and counts afresh after the next scroll up', () => {
+    contentHeight = 700;
+    viewHeight = 300;
+    const first = message({ role: 'user', text: 'One' });
+    const { rerender } = renderList({ messages: [first] });
+    scrollTo(0);
+    const reply = message({ role: 'assistant', text: 'Two' });
+    rerender({ messages: [first, reply] });
+    expect(jumpButton()).toHaveAttribute('data-unseen', '1');
+
+    scrollTo(400);
+    expect(jumpButton()).toBeNull();
+
+    scrollTo(0);
+    expect(jumpButton()).toHaveAttribute('data-unseen', '0');
+    expect(jumpButton()).toHaveAccessibleName(words.jump.label);
+  });
+
+  it('does not take a glide on its way down for leaving the end', () => {
+    contentHeight = 2000;
+    viewHeight = 300;
+    const first = message({ role: 'user', text: 'One' });
+    const { rerender } = renderList({ messages: [first] });
+    // The browser glides by itself after the call: here the test moves the list.
+    list().scrollTo = vi.fn() as unknown as HTMLElement['scrollTo'];
+    scrollTo(0);
+    fireEvent.click(jumpButton()!);
+
+    // The glide passes far from the end on its way down.
+    scrollTo(600);
+    scrollTo(1200);
+    expect(jumpButton()).toBeNull();
+    contentHeight = 2200;
+    rerender({ messages: [first, message({ role: 'assistant', text: 'Two' })] });
+    expect(list().scrollTop).toBe(2200);
   });
 
   it('comes back to the end when the keyboard opens', () => {
@@ -242,8 +372,16 @@ describe('MessageList: following the end', () => {
     const { rerender } = renderList({ messages });
     list().scrollTop = 40;
 
-    rerender({ messages: [...messages] });
+    // A live read hands in new objects for the same messages.
+    rerender({ messages: messages.map((each) => ({ ...each })) });
     expect(list().scrollTop).toBe(40);
+  });
+
+  it('is a polite log of what is added, so a whole reply is announced once', () => {
+    renderList({ messages: [message({ role: 'assistant', text: 'One' })] });
+    expect(list()).toHaveAttribute('role', 'log');
+    expect(list()).toHaveAttribute('aria-live', 'polite');
+    expect(list()).toHaveAttribute('aria-relevant', 'additions');
   });
 });
 
@@ -291,7 +429,7 @@ describe('MessageList: staying at the end', () => {
     expect(list().scrollTop).toBe(620);
 
     // Near enough to the end still counts.
-    list().scrollTop = 620 - END_SLACK_PX;
+    list().scrollTop = 620 - FOLLOW_SLACK_PX;
     fireEvent.scroll(list());
     contentHeight = 700;
     resized();

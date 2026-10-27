@@ -378,6 +378,21 @@ describe('starter scripts', () => {
     expect(text.message.content).toEqual(expect.stringMatching(/\w/));
   });
 
+  it('coach-reminder calls propose_reminder with words, a time and days, then answers (P13)', () => {
+    const { replies } = readNamedScript('coach-reminder');
+    expect(replies.map((r) => r.status)).toEqual([200, 200]);
+    const round = firstChoice(replies[0]!.body);
+    expect(round.finish_reason).toBe('tool_calls');
+    const tool = round.message.tool_calls![0]!;
+    expect(tool.function.name).toBe('propose_reminder');
+    expect(JSON.parse(tool.function.arguments)).toEqual({
+      text: expect.any(String),
+      time: expect.stringMatching(/^\d\d:\d\d$/),
+      days: expect.any(String),
+    });
+    expect(firstChoice(replies[1]!.body).finish_reason).toBe('stop');
+  });
+
   it('garbage is a 200 whose body no JSON parser accepts', () => {
     const { replies } = readNamedScript('garbage');
     expect(replies.map((r) => r.status)).toEqual([200]);

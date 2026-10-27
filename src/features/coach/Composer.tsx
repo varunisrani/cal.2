@@ -48,10 +48,11 @@ export interface ComposerProps {
 }
 
 /**
- * Where the person writes to the Coach (P08-11): a rounded field that grows to five lines and
- * then scrolls, a button that adds one photo from the camera or the photo library (shown as a
- * thumbnail with a remove button; a new pick replaces it), and Send. With a physical keyboard
- * Enter sends and Shift+Enter starts a new line.
+ * Where the person writes to the Coach (P08-11): a rounded field that grows to six lines and
+ * then scrolls (P13), a button that adds one photo from the camera or the photo library (shown as
+ * a thumbnail with a remove button; a new pick replaces it), and Send. With a physical keyboard
+ * Enter sends and Shift+Enter starts a new line. Send leaves the focus in the field, so the
+ * on-screen keyboard stays up for the next question.
  */
 export function Composer({
   draft,
@@ -63,12 +64,13 @@ export function Composer({
 }: ComposerProps) {
   const ownFieldRef = useRef<HTMLTextAreaElement>(null);
   const field = fieldRef ?? ownFieldRef;
+  const sendRef = useRef<HTMLButtonElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const preview = useBlobUrl(draft.photo);
   const ready = canSend(draft, pending);
 
-  // The field is as tall as its text; the stylesheet caps it at five lines, then it scrolls.
+  // The field is as tall as its text; the stylesheet caps it at six lines, then it scrolls.
   useLayoutEffect(() => {
     const element = field.current;
     if (!element) return;
@@ -80,6 +82,14 @@ export function Composer({
     if (!ready) return;
     if (draft.photo) onSend(draft.text, draft.photo);
     else onSend(draft.text);
+  };
+
+  /** Send from the button: the focus goes back to the field it was in, or that pressed it. */
+  const sendPressed = (): void => {
+    const focused = document.activeElement;
+    const keep = focused === field.current || focused === sendRef.current;
+    send();
+    if (keep) field.current?.focus();
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
@@ -169,12 +179,15 @@ export function Composer({
             data-ui="coach.input"
           />
           <IconButton
+            ref={sendRef}
             variant="primary"
             className={styles.send}
             label={t('coach.composer.send')}
             icon={<Icon name="chevronUp" size={20} />}
             disabled={!ready}
-            onClick={send}
+            // A press does not take the focus from the field, so the keyboard stays up.
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={sendPressed}
             data-ui="coach.send"
           />
         </div>

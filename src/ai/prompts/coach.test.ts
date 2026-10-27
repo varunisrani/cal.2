@@ -17,6 +17,7 @@ import {
   ACTIVITY_MAX_DAYS,
   LATER_TOOL_NAMES,
   NUTRITION_TOOL_NAMES,
+  REMINDER_TOOL_NAME,
   coachTools,
 } from '../../services/coach/toolSchemas';
 import { coachSystemPrompt } from './coach';
@@ -223,6 +224,67 @@ describe('coachSystemPrompt: Health Connect activity (D-16.94)', () => {
       coachSystemPrompt({ context: CONTEXT, activity: false }),
     ]) {
       expect(text).not.toMatch(/Health Connect|activity_log|Count active calories|resting burn/);
+    }
+  });
+});
+
+describe('coachSystemPrompt: reminders (P13, D-16.93)', () => {
+  const withReminders = (activity = false) =>
+    coachSystemPrompt({ context: CONTEXT, reminders: true, activity });
+
+  it('says to use propose_reminder when the person asks to be reminded', () => {
+    const text = withReminders();
+    expect(text).toContain('Reminders:');
+    expect(text).toContain(
+      `When they ask to be reminded of something, call ${REMINDER_TOOL_NAME} with what it should say, the time, and the days or the date.`,
+    );
+    expect(text).toContain('it puts a card with Add and Dismiss under your reply');
+  });
+
+  it('never lets the model say a reminder is set before the person taps Add', () => {
+    const text = withReminders();
+    expect(text).toContain('the reminder is set only when they tap Add');
+    expect(text).toContain('Never say that a reminder is set, saved or scheduled.');
+    expect(text).toContain('Say that you have proposed it and that they can tap Add');
+  });
+
+  it('asks for a missing or unclear time or day instead of guessing', () => {
+    const text = withReminders();
+    expect(text).toContain(
+      'When the time, or the days or the date, are missing or unclear, ask them instead of guessing.',
+    );
+    expect(text).toContain(
+      'Work out a date or a time from today and the time now in the facts above.',
+    );
+    expect(text).toContain('When the tool reports a problem, say what it is in plain words');
+  });
+
+  it('names exactly the tools offered with it, and sits before the answer shapes, notes last', () => {
+    for (const activity of [false, true]) {
+      const text = coachSystemPrompt({
+        context: CONTEXT,
+        reminders: true,
+        activity,
+        notes: 'Keep it short.',
+      });
+      const named = new Set(text.match(/\b[a-z]+(?:_[a-z0-9]+)+\b/g));
+      expect([...named].sort()).toEqual(
+        coachTools(activity, true)
+          .map((tool) => tool.name)
+          .sort(),
+      );
+      expect(text.indexOf('Reminders:')).toBeGreaterThan(text.indexOf('Using the data tools:'));
+      expect(text.indexOf('Reminders:')).toBeLessThan(text.indexOf('Shaping answers:'));
+      expect(text.endsWith('Keep it short.')).toBe(true);
+    }
+  });
+
+  it('adds none of it without reminders', () => {
+    for (const text of [
+      coachSystemPrompt({ context: CONTEXT }),
+      coachSystemPrompt({ context: CONTEXT, reminders: false }),
+    ]) {
+      expect(text).not.toMatch(/propose_reminder|Reminders:|tap Add/);
     }
   });
 });

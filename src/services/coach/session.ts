@@ -12,13 +12,20 @@
 // its kind and the provider's message, every stored key already cut out, for Details; Retry asks
 // again without storing the question twice (R04.4, D-16.31). Nothing is logged: provider messages
 // can carry keys and addresses.
+//
+// With the custom reminders service the Coach may propose reminders (P13, D-16.93): the answer is
+// stored with one card per proposal, and Add and Dismiss on a card go through here, one at a time,
+// so a card is added at most once (`reminderCards.ts`, loaded on first use like the engine).
 
 import type { AiFailure } from '../../ai/errors';
 import type { ImageBackend } from '../../ai/image';
 import type { CoachRepo } from '../../data/repos/coachRepo';
-import type { CoachMessage, CoachMessageState } from '../../domain/model';
+import type { CoachMessage, CoachMessageState, CoachReminderCard } from '../../domain/model';
 import { browserImageCodec, type ImageCodec } from '../../lib/imageCodec';
 import type { StoredAiAccess } from '../aiAccess';
+import type { CustomRemindersService } from '../reminders/customReminders';
+import type { ReminderCardOutcome, ReminderCards } from './reminderCards';
+import type { ReminderProposal } from './reminderTool';
 import { takeSnapshot, type SnapshotSources } from './snapshot';
 
 /**
@@ -60,6 +67,13 @@ export interface CoachSession {
    * Rejects only when the stored conversation could not be cleared.
    */
   reset(): Promise<void>;
+  /**
+   * Adds the reminder of a reply's card (`index` in its `reminders`), switched on or off, and
+   * marks the card added; a card already added answers its reminder again, never adding twice.
+   */
+  addReminder(messageId: string, index: number, on: boolean): Promise<ReminderCardOutcome>;
+  /** Hides a reply's card for good; nothing is added. */
+  dismissReminder(messageId: string, index: number): Promise<void>;
 }
 
 export interface CoachSessionDeps {
@@ -76,6 +90,11 @@ export interface CoachSessionDeps {
   readonly codec?: ImageCodec;
   /** Prepares the model's copy of a photo; the browser's by default. */
   readonly imageBackend?: ImageBackend;
+  /**
+   * The reminders the person writes (P13): checks the Coach's proposals and adds a card's
+   * reminder. Without it the Coach proposes none.
+   */
+  readonly reminders?: Pick<CustomRemindersService, 'problemWith' | 'addCustomReminder'>;
 }
 
 /** One running send or retry. */
@@ -115,6 +134,15 @@ function isFailedQuestion(message: CoachMessage, id: string): boolean {
   return message.id === id && message.role === 'user' && message.state?.status === 'failed';
 }
 
+/** The cards for a reply's proposals, each waiting for the person. */
+function cardsOf(proposals: readonly ReminderProposal[]): CoachReminderCard[] {
+  return proposals.map(({ text, time, days, date }) =>
+    days === undefined
+      ? { text, time, date: date!, status: 'proposed' }
+      : { text, time, days: [...days], status: 'proposed' },
+  );
+}
+
 export function createCoachSession(deps: CoachSessionDeps): CoachSession {
   const { coachRepo } = deps;
   const { clock } = deps.data;
@@ -126,6 +154,15 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
   let cleared: Promise<unknown> = Promise.resolve();
   /** Photos of failed questions as they were picked, for Retry while the app stays open. */
   const photos = new Map<string, Blob>();
+  /** Add and Dismiss on the reminder cards, made on first use. */
+  let cards: Promise<ReminderCards> | null = null;
+
+  function reminderCards(): Promise<ReminderCards> {
+    cards ??= import('./reminderCards').then(({ createReminderCards }) =>
+      createReminderCards({ coachRepo, reminders: deps.reminders }),
+    );
+    return cards;
+  }
 
   function show(next: CoachSessionState): void {
     if (state === next) return;
@@ -195,6 +232,7 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
         question: { id: question.id, text: question.text },
         ...(image === undefined ? {} : { image }),
         snapshot,
+        ...(deps.reminders === undefined ? {} : { reminders: deps.reminders }),
       },
       {
         settings: access.settings,
@@ -210,8 +248,14 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
       if (result.error.kind === 'cancelled') return 'dropped';
       return markFailed(run, question, result.error, image);
     }
+    const { text, reminders } = result.value;
     const reply = await coachRepo.append(
-      { role: 'assistant', text: result.value, at: clock.now() },
+      {
+        role: 'assistant',
+        text,
+        at: clock.now(),
+        ...(reminders.length === 0 ? {} : { reminders: cardsOf(reminders) }),
+      },
       generation,
     );
     if (reply === null) return 'dropped';
@@ -296,5 +340,9 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
       cleared = done.catch(() => undefined);
       await done;
     },
+
+    addReminder: async (messageId, index, on) => (await reminderCards()).add(messageId, index, on),
+
+    dismissReminder: async (messageId, index) => (await reminderCards()).dismiss(messageId, index),
   };
 }

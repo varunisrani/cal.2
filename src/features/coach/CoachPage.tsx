@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
+import { useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { useCoachMessages } from '../../data/hooks';
 import { t } from '../../i18n/t';
 import type { CoachSession } from '../../services/coach/session';
@@ -12,10 +12,8 @@ import { useCoachChips } from './chips';
 import styles from './coach.module.css';
 import { Composer, EMPTY_DRAFT, type CoachDraft } from './Composer';
 import { EmptyCoach } from './EmptyCoach';
+import { useKeyboardInset } from './keyboard';
 import { MessageList } from './MessageList';
-
-/** Less than this between the window and the visible area is browser chrome, not a keyboard. */
-export const KEYBOARD_MIN_PX = 120;
 
 function useCoachSession(): CoachSession {
   const { coachSession } = useServices();
@@ -24,37 +22,12 @@ function useCoachSession(): CoachSession {
 }
 
 /**
- * How much of the window the on-screen keyboard covers at the bottom, in px; 0 while it is
- * closed or the browser cannot say (no `visualViewport`).
- */
-function useKeyboardInset(): number {
-  const [inset, setInset] = useState(0);
-
-  useEffect(() => {
-    const viewport = window.visualViewport;
-    if (!viewport) return undefined;
-    const measure = (): void => {
-      const covered = window.innerHeight - viewport.height - viewport.offsetTop;
-      setInset(covered >= KEYBOARD_MIN_PX ? Math.round(covered) : 0);
-    };
-    measure();
-    viewport.addEventListener('resize', measure);
-    viewport.addEventListener('scroll', measure);
-    return () => {
-      viewport.removeEventListener('resize', measure);
-      viewport.removeEventListener('scroll', measure);
-    };
-  }, []);
-
-  return inset;
-}
-
-/**
  * The Coach tab (P08-10, 04 §3.1): a heading with Clear chat, then the empty chat's suggested
  * questions or the conversation, the suggested questions in a row once there are messages, and
- * the composer (P08-11). Only the conversation scrolls; with the on-screen keyboard open the page
- * ends above it, so the composer stays in sight. The reply in flight lives in the app's coach
- * session, so it survives switching tabs; the messages come from storage, live.
+ * the composer (P08-11). Only the conversation scrolls: the heading and the composer stay put,
+ * the composer above the tab bar, or with the on-screen keyboard open just above it (P13). The
+ * reply in flight lives in the app's coach session, so it survives switching tabs; the messages
+ * come from storage, live.
  */
 export function CoachPage() {
   const session = useCoachSession();

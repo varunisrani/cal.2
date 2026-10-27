@@ -20,6 +20,7 @@ function stubClipboard(writeText: (text: string) => Promise<void>) {
 
 afterEach(() => {
   Reflect.deleteProperty(navigator, 'clipboard');
+  Reflect.deleteProperty(document, 'execCommand');
 });
 
 function renderButton() {
@@ -64,6 +65,25 @@ describe('CopyButton', () => {
     });
 
     expect(toastText()).toBe(words.failed);
+  });
+
+  it('copies with the copy command and says Copied when there is no Clipboard API (P13)', async () => {
+    const copied: string[] = [];
+    Object.defineProperty(document, 'execCommand', {
+      configurable: true,
+      value: (command: string) => {
+        copied.push(`${command}: ${(document.activeElement as HTMLTextAreaElement).value}`);
+        return true;
+      },
+    });
+    const button = renderButton();
+
+    await act(async () => {
+      fireEvent.click(button);
+    });
+
+    expect(copied).toEqual([`copy: ${REPLY}`]);
+    expect(toastText()).toBe('Copied');
   });
 
   it('says the copy failed when there is no clipboard at all', async () => {

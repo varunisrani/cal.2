@@ -1,6 +1,6 @@
 // The facts block every Coach turn starts from (04 §3.8, D-16.27). It is rebuilt from the turn's
 // snapshot on every question, so the model always sees the data as it stood when the person
-// pressed Send: the local day and zone, the profile in the person's own units, how the energy
+// pressed Send: the local day, time and zone, the profile in the person's own units, how the energy
 // numbers are worked out, the weight forecast (P01-18) or what it still needs, how much data is
 // stored, and today so far (eaten, left of each target, water). It holds counts and totals only:
 // no food name, note or ingredient ever enters it. In the Android app, while Health Connect is
@@ -110,10 +110,11 @@ function clockText(ms: number): string {
 
 // ---- Sections -------------------------------------------------------------------------------
 
-function todaySection(today: DayKey, timeZone: string): string {
+function todaySection(today: DayKey, timeZone: string, now: number): string {
   return (
-    `Today is ${weekdayOf(today)} ${today} in the time zone ${timeZone}. Work out dates the ` +
-    'person gives in relative terms (yesterday, last week, in March) from this day.'
+    `Today is ${weekdayOf(today)} ${today} in the time zone ${timeZone}. The time there is ` +
+    `${clockText(now)}. Work out dates the person gives in relative terms (yesterday, last week, ` +
+    'in March) from this day.'
   );
 }
 
@@ -395,7 +396,7 @@ export function coachContext(snapshot: CoachSnapshot): string {
   const counted = countedActiveKcal(targets.kcal, activity, day);
   const todayTargets = counted === null ? targets : { ...targets, kcal: targets.kcal + counted };
   return paragraphs(
-    todaySection(today, snapshot.timeZone),
+    todaySection(today, snapshot.timeZone, snapshot.now),
     profileSection(profile, today, snapshot.units),
     kilojouleRule(snapshot),
     energySection(profile, today, targets),

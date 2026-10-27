@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { CoachMessage } from '../../domain/model';
+import type { CoachMessage, CoachReminderCard } from '../../domain/model';
 import { fixedClock } from '../../lib/clock';
 import { withIdSequence, type IdSource } from '../../lib/ids';
 import { bytesOf, storableBlob } from '../../test/blobs';
@@ -301,6 +301,26 @@ describe('patch', () => {
       text: 'first, again',
     });
     expect(texts(await coach.list())).toEqual(['first, again', 'second']);
+    db.close();
+  });
+
+  it('replaces the reminder cards of a reply and keeps the rest of it (P13)', async () => {
+    const { db, coach } = await setUp(fallingIds());
+    const answered = await coach.append(reply('Here is a reminder for you.'));
+    const card: CoachReminderCard = {
+      text: 'Drink water',
+      time: '10:00',
+      days: ['mon'],
+      status: 'proposed',
+    };
+
+    expect(await coach.patch(answered.id, { reminders: [card] })).toEqual({
+      ...answered,
+      reminders: [card],
+    });
+    const added: CoachReminderCard = { ...card, status: 'added', reminderId: 'r1' };
+    await coach.patch(answered.id, { reminders: [added] });
+    expect(await coach.list()).toEqual([{ ...answered, reminders: [added] }]);
     db.close();
   });
 

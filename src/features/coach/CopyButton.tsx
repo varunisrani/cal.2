@@ -2,6 +2,7 @@ import { t } from '../../i18n/t';
 import { IconButton } from '../../ui/Button';
 import { Icon } from '../../ui/icons';
 import { useToast } from '../../ui/Toast';
+import { copyText } from './clipboard';
 
 /** How long the "copied" confirmation stays. */
 export const COPIED_TOAST_MS = 2000;
@@ -13,19 +14,16 @@ export interface CopyButtonProps {
 }
 
 /**
- * Puts a Coach reply on the clipboard and says so in a short toast (P08-13). A clipboard that is
- * missing (an insecure page) or refused gets a toast saying the copy failed; nothing throws.
+ * Puts a Coach reply on the clipboard and says so in a short toast (P08-13). Without the
+ * Clipboard API (an insecure page, an older WebView) the copy command does it; when both fail a
+ * toast says the copy failed. Nothing throws.
  */
 export function CopyButton({ text, className }: CopyButtonProps) {
   const toast = useToast();
 
   const copy = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.show(t('coach.copy.done'), { duration: COPIED_TOAST_MS });
-    } catch {
-      toast.show(t('coach.copy.failed'));
-    }
+    if (await copyText(text)) toast.show(t('coach.copy.done'), { duration: COPIED_TOAST_MS });
+    else toast.show(t('coach.copy.failed'));
   };
 
   return (

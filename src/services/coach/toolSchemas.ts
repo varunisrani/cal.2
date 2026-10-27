@@ -3,9 +3,12 @@
 // three chat wires wrap these unchanged (OpenAI `parameters`, Anthropic `input_schema`, Gemini
 // `functionDeclarations`), so the schemas use only the keywords all three accept: `type`,
 // `description`, `properties` and `required`. The six nutrition tools are always offered; in the
-// Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94). The
-// later workout and suggestion tools are named here so a stray call can be told they are not
-// available.
+// Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94); and
+// where the app can keep reminders, `propose_reminder` puts one forward for the person to add
+// (D-16.93): it sets nothing by itself. The later workout and suggestion tools are named here so
+// a stray call can be told they are not available.
+
+import { CUSTOM_TEXT_MAX } from '../../domain/reminders/custom';
 
 /** The tools v1 offers, in the order the model sees them. */
 export const NUTRITION_TOOL_NAMES = [
@@ -28,8 +31,12 @@ export function isNutritionToolName(value: unknown): value is NutritionToolName 
 export const ACTIVITY_TOOL_NAME = 'activity_log';
 export type ActivityToolName = typeof ACTIVITY_TOOL_NAME;
 
+/** The tool that proposes a reminder for the person to add (D-16.93). */
+export const REMINDER_TOOL_NAME = 'propose_reminder';
+export type ReminderToolName = typeof REMINDER_TOOL_NAME;
+
 /** Any tool the Coach can offer. */
-export type CoachToolName = NutritionToolName | ActivityToolName;
+export type CoachToolName = NutritionToolName | ActivityToolName | ReminderToolName;
 
 /** Workout and suggestion tools of a later phase (L3): never offered in v1. */
 export const LATER_TOOL_NAMES = [
@@ -71,6 +78,9 @@ export const ACTIVITY_MAX_DAYS = 90;
 
 /** The days, `to` included, an `activity_log` range without a readable `from` covers. */
 export const ACTIVITY_DEFAULT_DAYS = 7;
+
+/** The most reminders one reply can propose; more are refused with a reason. */
+export const MAX_PROPOSALS = 5;
 
 export interface SchemaProperty {
   readonly type: 'string' | 'integer';
@@ -208,7 +218,52 @@ export const ACTIVITY_TOOL: ToolSchema = {
   },
 };
 
-/** The tools one turn offers, in the order the model sees them: activity last, when connected. */
-export function coachTools(activity: boolean): readonly ToolSchema[] {
-  return activity ? [...NUTRITION_TOOLS, ACTIVITY_TOOL] : NUTRITION_TOOLS;
+/** The reminder tool (D-16.93): a proposal the person adds, or not, from a card in the chat. */
+export const REMINDER_TOOL: ToolSchema = {
+  name: REMINDER_TOOL_NAME,
+  description:
+    'Puts forward a reminder the person asked for: a notification at a local time of day, ' +
+    'repeating on some weekdays or coming once on one date. It sets nothing by itself. The app ' +
+    'shows it as a card under your reply, and it is set only when the person taps Add on that ' +
+    'card. Call it only when they asked to be reminded and you know what it should say, the ' +
+    'time, and the days or the date; when any of these is missing or unclear, ask them instead. ' +
+    'The result says that it is waiting for the person, or what is wrong with it so you can ask ' +
+    `again. At most ${MAX_PROPOSALS} per reply.`,
+  parameters: {
+    type: 'object',
+    properties: {
+      text: {
+        type: 'string',
+        description:
+          'What the notification says, short and in the language of the conversation, 1 to ' +
+          `${CUSTOM_TEXT_MAX} characters.`,
+      },
+      time: {
+        type: 'string',
+        description: 'The local time of day in 24 hours, HH:MM, such as 07:30 or 18:00.',
+      },
+      days: {
+        type: 'string',
+        description:
+          'For a reminder that repeats: the weekdays as three-letter English names joined by ' +
+          'commas (mon,wed,fri), or "daily" for every day. Leave it out for a one-time reminder.',
+      },
+      date: {
+        type: 'string',
+        description:
+          'For a one-time reminder: the local day, YYYY-MM-DD, today or later. Leave it out for ' +
+          'a reminder that repeats.',
+      },
+    },
+    required: ['text', 'time'],
+  },
+};
+
+/**
+ * The tools one turn offers, in the order the model sees them: activity after the six when Health
+ * Connect is connected, the reminder tool last when the turn can take proposals.
+ */
+export function coachTools(activity: boolean, reminders = false): readonly ToolSchema[] {
+  const tools = activity ? [...NUTRITION_TOOLS, ACTIVITY_TOOL] : NUTRITION_TOOLS;
+  return reminders ? [...tools, REMINDER_TOOL] : tools;
 }

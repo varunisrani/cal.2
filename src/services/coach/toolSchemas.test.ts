@@ -4,8 +4,11 @@ import {
   ACTIVITY_MAX_DAYS,
   ACTIVITY_TOOL,
   LATER_TOOL_NAMES,
+  MAX_PROPOSALS,
   NUTRITION_TOOLS,
   NUTRITION_TOOL_NAMES,
+  REMINDER_TOOL,
+  REMINDER_TOOL_NAME,
   ROW_LIMITS,
   coachTools,
   isLaterToolName,
@@ -187,5 +190,54 @@ describe('ACTIVITY_TOOL: Health Connect day by day (D-16.94)', () => {
     const { description } = ACTIVITY_TOOL;
     expect(description).toContain('left out, never 0');
     expect(description).toContain('has no row: that means no data, not a day without moving');
+  });
+});
+
+describe('REMINDER_TOOL: a reminder for the person to add (P13, D-16.93)', () => {
+  it('is offered last, after activity when there is one, only when the turn takes proposals', () => {
+    expect(coachTools(false)).toEqual(NUTRITION_TOOLS);
+    expect(coachTools(false, true).map((schema) => schema.name)).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'propose_reminder',
+    ]);
+    expect(coachTools(true, true).map((schema) => schema.name)).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'activity_log',
+      'propose_reminder',
+    ]);
+    expect(REMINDER_TOOL.name).toBe(REMINDER_TOOL_NAME);
+    expect(isNutritionToolName(REMINDER_TOOL_NAME)).toBe(false);
+    expect(isLaterToolName(REMINDER_TOOL_NAME)).toBe(false);
+  });
+
+  it('takes the words and a time, and days or a date, with portable keywords only', () => {
+    const { parameters } = REMINDER_TOOL;
+    expect(parameters.type).toBe('object');
+    expect(Object.keys(parameters.properties)).toEqual(['text', 'time', 'days', 'date']);
+    expect(parameters.required).toEqual(['text', 'time']);
+    for (const property of Object.values(parameters.properties)) {
+      expect(property.type).toBe('string');
+    }
+    for (const keyword of keywordsIn(parameters)) expect(PORTABLE_KEYWORDS.has(keyword)).toBe(true);
+  });
+
+  it('describes each field: 1 to 80 characters, HH:MM in 24 hours, weekday names or daily, YYYY-MM-DD', () => {
+    const { text, time, days, date } = REMINDER_TOOL.parameters.properties;
+    expect(text?.description).toContain('1 to 80 characters');
+    expect(time?.description).toContain('24 hours, HH:MM');
+    expect(days?.description).toContain('three-letter English names joined by commas');
+    expect(days?.description).toContain('"daily" for every day');
+    expect(days?.description).toContain('Leave it out for a one-time reminder');
+    expect(date?.description).toContain('YYYY-MM-DD, today or later');
+    expect(date?.description).toContain('Leave it out for a reminder that repeats');
+  });
+
+  it('says it only proposes: nothing is set until the person taps Add, and to ask rather than guess', () => {
+    const { description } = REMINDER_TOOL;
+    expect(description).toContain('It sets nothing by itself.');
+    expect(description).toContain('it is set only when the person taps Add on that card');
+    expect(description).toContain('when any of these is missing or unclear, ask them instead');
+    expect(description).toContain(`At most ${MAX_PROPOSALS} per reply.`);
+    expect(MAX_PROPOSALS).toBe(5);
   });
 });
