@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s1a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave A slice S1a = P07-01, P07-02 — the week bar; the selected day and day swipe. (P07-03/04, the full gauge, pillars, day nutrients sheet and pillar picker, follow in the next slice.) Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.2.1 and the selected-day parts; decision D-16.36. Traps and acceptance ids: every row whose Review line names P07-01 or P07-02.
+Task notes (each before its code): docs/notes/P07/week-bar.md, docs/notes/P07/selected-day-and-day-swipe.md.
+
+You own:
+- src/features/home/{WeekBar,DaySwipe}.tsx, src/features/home/useSelectedDay.ts (+ tests; css), your words in the `home` partition (src/i18n/en/home.ts)
+- src/features/home/HomePage.tsx: Home follows the selected day (the diary, the summary, the add menu's target day and copy a day's target) and shows the week bar; keep every landed behaviour (add menu, sheets, barcode, reuse) and its tests passing
+- the app state's `selectedDay` (src/app/appState.ts exists: use it rather than a second store) and whatever the review sheet needs to stamp a reuse pick on the viewed day (it uses the opening instant today: a pick on a past day must land on that day at the current clock time; the meal by D-16.16)
+
+Do not touch:
+- src/features/home/{DaySummary,PillarRow}.tsx and the pillar parts (the next slice), src/features/progress/** (another builder, now), src/features/log/review/{IngredientsCard,LineEditor,AddIngredientMenu}.tsx and FitCheckSheet.tsx (another builder, now), src/app/{Screen,App}.tsx (another builder is making screens lazy now; say so if you need a change there), src/services/** (import; say so if one needs a change), src/domain/** (import only: P01-02 weekPages, day keys), src/data/**, src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue. With fake timers over the test database, fake only setTimeout, setInterval and Date.
+- Week bar and selected day exactly as the two rows say (pages of 7 tiles from weekPages: the current week and the 52 before, never a future week, the first weekday from the setting; the selected day defaults to today and resets on a new Home visit after a cold start; swipes move a day with the row's limits; reduced motion respected).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/home src/features/log/review/ReviewSheet.test.tsx src/app/appState.test.ts src/i18n --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4185 PLATEWISE_FAKE_AI_PORT=4331 pnpm exec playwright test e2e/walking-skeleton.spec.ts --workers=1 (Demo 1 must still pass)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
