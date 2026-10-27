@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 11:46 IST (Agent 1, session 3). 141/176 tasks; P00–P05 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); wave 12 landed, wave 13 running.
+Updated: 2026-10-27 12:24 IST (Agent 1, session 3). 144/176 tasks; P00–P05 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landing.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -122,23 +122,28 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 12 | P07-05, P07-08 (diary sort, water and fast rows; the + menu's water and fasting entries; `panel` menu entries) | a1dd707 |
 | Wave 12 | P06-19 (selection bar and combine; row tap → entry editor; saved heart) | c068426 |
 | Wave 12 | P09-10, P09-11 (diary export and import; `transferRepo`) | d8b3864 |
+| Wave 12 | P08-10, P08-11 (Coach page and composer; `Menu` gains `disabled`) | 75bdb01 |
+| Lead fix | FastEditor "ended elsewhere" test waits for its toast (a loaded-machine flake) | 2ed6962 |
+| Wave 13 | P09-07 (AI providers page and the food-database key; `AiSettingsEdits`) | 27596b1 |
 
 ## In progress
 
-Landed at 11:46 IST: 419266c, 0695274, a1dd707, c068426, d8b3864 (full loop: unit 4500 passed + 2 expected-fail in
-307 files, check 6/6, bundle 226.44 kB, e2e 6/6). **Watch the bundle**: it grew 13 kB in this stack (the reminder
-engine and ports and the Coach session load at start; new catalogue partitions); load the reminder engine after
-first paint and keep new pages on demand.
-Builders running:
-- P08-10/11 Coach page and composer, `/root/wt/wt-p08s5` (base b8e5789 = branch head plus the P08-08/09 patch as a
-  local commit; extract its patch against that commit).
-- Wave 13 at 0130532 (prompts in `docs/handoff/wave13/`), started 11:41 IST: P09-02/04/06 App settings, units, tabs and
-  product fields (`/root/wt/wt-p09s02`); P09-07 AI providers page (`/root/wt/wt-p09s07`); P09-13 backup and restore
-  (`/root/wt/wt-p09s13`); P09-17/18 service worker, manifest, install prompt and CSP (`/root/wt/wt-p09s17`).
-Next: P09-05 menu editor (prompt ready: `w13-p09s05.txt`); P09-09 notifier and reminders section (after P09-08 lands);
-P09-01 hub and load gate, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data page, P09-16 About; the e2e
-tasks P06-20, P07-17, P08-14, P09-19; then P10.
-**Progress: 141/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 11/14, P09 4/19, P10 0/14).
+Landing (12:24 IST): three wave 13 slices stacked on `/root/wt/verify` over 27596b1 in one full loop: P09-02/04/06
+(6f36335, msg `w13-02`), P09-17/18 (8b8a34a, msg `w13-03`), P09-13 (606ca2a, msg `w13-04`). Push with
+`/root/wt/land-multi.sh 27596b1 6f36335 /root/wt/msgs/w13-02.txt 8b8a34a /root/wt/msgs/w13-03.txt 606ca2a
+/root/wt/msgs/w13-04.txt` once the loop log ends with ci=0 (ledger scripts already applied).
+Builder running: P06-20 logging e2e (`/root/wt/wt-p06s20`, base 085a9bb, prompt `docs/handoff/wave13/w13-p06s20.txt`).
+Usage 74 % at 12:14 IST: no new builders this window. Next window (15:20 IST): P09-05 menu editor (prompt ready),
+P09-09 notifier and reminders section, P09-01 hub, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data
+(mounts Export, Import, Backup and Restore; calls `reminders.stop()` and backup `invalidate()` before Erase
+everything), P09-16 About (reads `useAppUpdate`); the e2e tasks P07-17, P08-14, P09-19; then P10.
+Bundle: 228.34 kB gzip of 250 at 27596b1. Follow-ups from wave 13: the CSP's `http://[::1]:*` is not valid CSP
+(Chromium logs an error each load; kept because the plan names it); manifest shortcuts `#/log/*` open Home until
+L8; no inline theme script is possible under `script-src 'self'`; nothing else may use Cache Storage under the
+`platewise-` prefix; `appVersion` is '0.1.0' until P09-16's build constant; wire restore's `afterRestore` to
+`reminders.refresh()`; a Coach reply running during a restore can land in the restored chat.
+**Progress: 144/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 13/14, P09 5/19, P10 0/14); the stack above
+brings P09 to 11/19 (150).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
