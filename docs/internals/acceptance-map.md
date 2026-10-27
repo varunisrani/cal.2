@@ -52,7 +52,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### A9 · Six solid accent presets of our own (Basil default, Saffron, … (P1)
 
 - **ACC-A9-1** Picking Ember recolours every accent element at once
-  - Review: P09-02
+  - Test: src/features/settings/app/AppPage.test.tsx > AppPage > recolours every accent element at once when Ember is chosen (ACC-A9-1)
 - **ACC-A9-2** Every accent passes the contrast sweep in both themes
   - Test: src/ui/contrast.test.ts > token contrast sweep > meets every floor: $theme theme, $accent accent
 
@@ -245,7 +245,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### C12 · Energy unit kcal or kJ for every display and input, stored as kcal (P1)
 
 - **ACC-C12-1** Switching to kJ shows 8 368 kJ for a 2 000 kcal goal without changing it
-  - Review: P09-02
+  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)
 - **ACC-C12-2** Opening and saving the kJ goal wheel unchanged keeps 2 000 kcal
   - Review: P01-03
 
@@ -861,14 +861,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J2 · App settings (P1)
 
 - **ACC-J2-1** Choosing Sunday as the first weekday changes the week bar
-  - Review: P09-02
+  - Test: src/features/settings/app/AppPage.test.tsx > AppPage > starts the week bar on Sunday once Sunday is chosen (ACC-J2-1)
 - **ACC-J2-2** Grams first opens reviews in grams
   - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > opens in grams when grams come first, else in the unit the draft chose (ACC-J2-2)
 
 ### J3 · Height, weight and energy units as separate settings (P1)
 
 - **ACC-J3-1** Weight in lb and height in cm can be combined
-  - Review: P09-02
+  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > combines weight in lb with height in cm (ACC-J3-1)
 
 ### J4 · Meal times editor (P1)
 
@@ -883,12 +883,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J6 · Product information settings (P1)
 
 - **ACC-J6-1** Hiding the NOVA field removes it from product reviews
-  - Review: P09-06
+  - Test: src/features/settings/app/ProductFieldsPage.test.tsx > ProductFieldsPage > takes NOVA out of the review's product block and keeps the rest (ACC-J6-1)
 
 ### J7 · Tab bar settings page (P1)
 
 - **ACC-J7-1** Hiding Progress removes it from the bar and keeps Coach as it was
-  - Review: P09-04
+  - Test: src/features/settings/app/TabsPage.test.tsx > TabsPage > takes Progress out of the bar at once and keeps Coach as it was (ACC-J7-1)
 
 ### J8 · AI providers page (P1)
 

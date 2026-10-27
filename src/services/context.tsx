@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
+import type { AppSettingsService } from './appSettings';
 import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CoachSession } from './coach/session';
@@ -83,6 +84,8 @@ export interface Services {
   readonly combine?: CombineService;
   /** The diary file: export and import (P09-10, P09-11); optional for the same reason. */
   readonly transfer?: TransferService;
+  /** Settings › App settings, Tab bar, Product details (P09-02/04/06); optional likewise. */
+  readonly appSettings?: AppSettingsService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

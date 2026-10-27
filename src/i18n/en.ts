@@ -3,6 +3,7 @@ import { about } from './en/about';
 import { ai } from './en/ai';
 import { aiSetup } from './en/aiSetup';
 import { appearance } from './en/appearance';
+import { appSettings } from './en/appSettings';
 import { capture } from './en/capture';
 import { charts } from './en/charts';
 import { coach } from './en/coach';
@@ -61,6 +62,7 @@ export const enPartitions = {
   fasting,
   reminders,
   transfer,
+  appSettings,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

@@ -482,6 +482,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/app/TabBar.test.tsx > TabBar > moves to Home when Coach is hidden while on Coach, and the tab disappears
   - Test: src/app/TabBar.test.tsx > TabBar > goes to Home when the app opens on a hidden tab
   - Test: src/data/repos/settingsRepo.test.ts > toggleHiddenTab > hides Coach without undoing Progress hidden since the screen last read (R05.13)
+  - Test: src/features/settings/app/TabsPage.test.tsx > TabsPage > hides Coach without undoing Progress, hidden elsewhere after the page was read (R05.13)
+  - Test: src/services/appSettings.test.ts > setTabHidden > hides Coach and keeps Progress hidden by an earlier change (R05.13)
 - **R05.14** Today is recomputed at local midnight and on return to the foreground
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
@@ -611,6 +613,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/settingsRepo.test.ts > loaded > resolves with the first snapshot only after a write in flight has landed (R06.22)
   - Test: src/features/water/WaterSettings.test.tsx > WaterSettings > draws nothing until the settings are read (R06.22)
   - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > draws nothing until the settings are read (R06.22)
+  - Test: src/features/settings/app/AppPage.test.tsx > AppPage > draws nothing until the settings are read (R06.22)
+  - Test: src/features/settings/app/TabsPage.test.tsx > TabsPage > draws nothing until the settings are read (R06.22)
+  - Test: src/features/settings/app/ProductFieldsPage.test.tsx > ProductFieldsPage > draws nothing until the settings are read (R06.22)
   - Review: the settings screens owned by P09-01
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue

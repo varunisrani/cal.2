@@ -1,0 +1,157 @@
+/*
+ * Settings › App settings and the pages it links to (P09-02, P09-04, P09-06): cards of rows,
+ * labelled choices, the accent swatches and the notes under a card. Every value comes from
+ * tokens.css; logical properties throughout. A swatch is coloured by the token file itself: it
+ * carries `data-accent` (and `data-theme` on a light page), so `--accent` inside it is that preset.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.card > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.switchItem {
+  padding-inline: var(--space-4);
+}
+
+/* A setting's name over its choices. */
+.choice {
+  display: grid;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+}
+
+.choiceLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.note {
+  margin: 0;
+  padding-inline: var(--space-1);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---- Accent swatches ---------------------------------------------------------------------- */
+
+/* Two rows of three on a phone, one row of six where there is room. */
+.accents {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+@media (min-width: 30rem) {
+  .accents {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.accent {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-1);
+  padding-inline: 0;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: var(--type-caption);
+  cursor: pointer;
+}
+
+.accent[aria-checked='true'] {
+  color: var(--text);
+  font-weight: var(--weight-semibold);
+}
+
+.accent:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.swatch {
+  display: grid;
+  place-items: center;
+  inline-size: var(--space-8);
+  block-size: var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.accent[aria-checked='true'] .swatch {
+  box-shadow:
+    0 0 0 2px var(--card),
+    0 0 0 4px var(--text);
+}
+
+/* ---- Links to the pages under App settings ------------------------------------------------ */
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  text-align: start;
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.linkTitle {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.chevron:dir(rtl) {
+  transform: scaleX(-1);
+}

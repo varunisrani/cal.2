@@ -81,6 +81,32 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     page: onDemand(() => import('./ai/AiPage').then((module) => module.AiPage)),
   },
+  // Look, grams first, week start and units, with links to the pages below it (P09-02).
+  {
+    id: 'app',
+    titleKey: 'appSettings.title',
+    icon: 'gear',
+    group: 'prefs',
+    page: onDemand(() => import('./app/AppPage').then((module) => module.AppPage)),
+  },
+  // Opened from App settings: what the product block of a review shows (P09-06).
+  {
+    id: 'product-fields',
+    titleKey: 'appSettings.product.title',
+    icon: 'barcode',
+    group: 'prefs',
+    page: onDemand(() =>
+      import('./app/ProductFieldsPage').then((module) => module.ProductFieldsPage),
+    ),
+  },
+  // Opened from App settings: hide Progress or Coach (P09-04).
+  {
+    id: 'tab-bar',
+    titleKey: 'appSettings.tabBar.title',
+    icon: 'sort',
+    group: 'prefs',
+    page: onDemand(() => import('./app/TabsPage').then((module) => module.TabsPage)),
+  },
   // How the plan is worked out (P05-13); Plan ready opens the same page in a sheet.
   {
     id: 'methods',

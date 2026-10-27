@@ -30,6 +30,7 @@ import { t } from './i18n/t';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
+import { createAppSettingsService } from './services/appSettings';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
 import { createCoachSession } from './services/coach/session';
@@ -265,6 +266,7 @@ async function start(): Promise<void> {
     }),
     // The diary file (P09-10, P09-11): its modules load on first use.
     transfer: createTransferService({ transferRepo: createTransferRepo(db), photoRepo }),
+    appSettings: createAppSettingsService({ settingsRepo }),
     clock: systemClock,
   };
   const data: DataSources = {
