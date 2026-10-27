@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 15:24 IST (Agent 1, session 3). 152/176 tasks; P00–P06 complete; the app runs on the
-real database. Window reset 15:20 IST (next reset 20:20 IST); wave 14 running (7 builders).
+Updated: 2026-10-27 16:39 IST (Agent 1, session 3). 159/176 tasks; P00–P08 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); wave 14 landed but P09-15 (in its loop); P10 started.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -130,23 +130,32 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 13 | P09-13 (backup and restore; `backupRepo`; GIF/HEIC photos go in as JPEG copies) | d8fcdfc |
 | Wave 13 | P06-20 (logging e2e, Demo 3: nine scenarios, routed food databases, no stray network). P06 done | 73c3788 |
 | Wave 13 | P09-05 (Add-menu editor; `setMenuLayout`, `resetMenuLayout`) | 78db379 |
+| Wave 14 | P10-13 (user docs in `docs/user/`) | ec065f0 |
+| Wave 14 | P09-16 (About, licences and credits; `src/config/links.ts`; notices script and plugin) | 451dfa3 |
+| Wave 14 | P08-14 (Coach e2e, Demo 5). P08 done | c5ae25b |
+| Wave 14 | P09-09, P09-03 (notifications section and notifier; meal times editor) | 3072da8 |
+| Wave 14 | P09-01 (Settings hub and load gate; sub-pages nested; update dot) | d60ebb6 |
+| Wave 14 | P09-14 (restore from a backup file on Welcome) | 9055c15 |
+| Wave 14 | P07-17 (Home and Progress e2e, Demo 4). P07 done | e370445 |
 
 ## In progress
 
-Landing (16:17 IST): seven slices stacked on `/root/wt/verify` over 8b6fe57 in one full loop; when the loop log
-ends with ci=0 push with `/root/wt/land-multi.sh 8b6fe57 25bb8dc /root/wt/msgs/w15-01.txt dbbafcc
-/root/wt/msgs/w14-01.txt 8724512 /root/wt/msgs/w14-02.txt 8adf47f /root/wt/msgs/w14-03.txt fa7dba9
-/root/wt/msgs/w14-04.txt 5213fb5 /root/wt/msgs/w14-05.txt 4153a6e /root/wt/msgs/w14-06.txt` (P10-13 user docs,
-P09-16 About, P08-14 Coach e2e, P09-09/03 notifier and meal times, P09-01 hub, P09-14 Welcome restore, P07-17
-Home/Progress e2e; ledgers applied). At the hub merge the lead kept About's `links.ts`, nested Credits under
-About and set `waitForSettings: false` on About and Credits.
-Builder running: P09-15 Your data (`/root/wt/wt-p09s15`, base 1430e0b; approved an additive
-`photoRepo.clearThumbs()` with its test).
-Merges to expect: P09-01 and P09-15/16 all touch `registry.ts`; P09-09 and P09-01 both touch the Tracking page's
-registration only; P09-16 and P09-01 share `src/config/links.ts` (P09-16 owns it).
-Then P09-19 settings, data and offline e2e (after P09-14/15), then P10 (hardening and release: parity, ledgers
-with no Review lines left, security, docs). Bundle watch: 229 kB of 250.
-**Progress: 152/176 tasks** (P00–P06 complete, P07 16/17, P08 13/14, P09 12/19, P10 0/14).
+Landed at 16:45 IST: ec065f0 … e370445 (seven commits; full loop: unit 4967 passed + 2 expected-fail, check 6/6,
+bundle 232.64 kB, e2e 30/30).
+Landing (16:39 IST): P09-15 Your data on `/root/wt/verify` over e370445 (msg `w14-07`; push with
+`/root/wt/commit-landing.sh /root/wt/msgs/w14-07.txt` when ci=0). Then start `w15-p09s19` (settings, data and
+offline e2e) at the new head.
+Builders running at e370445 (prompts in `docs/handoff/wave15/`): P10-01..04 parity (`/root/wt/wt-p10s1`), P10-07/08/11
+accessibility, ship inventory and browser matrix (`/root/wt/wt-p10s3`; adds `@axe-core/playwright` 4.14.0 exactly),
+P10-09/10/12 security review, similarity report, gated live check (`/root/wt/wt-p10s4`).
+Left after these: P10-05/06 (acceptance strict pass and traps ledger completion, once every feature landed), P10-14
+release prep (CHANGELOG, version 1.0.0, notices, release checklist; no tag unless the user asks).
+Bundle: 232.64 kB of 250 (Your data adds about 2.8 kB). Follow-ups from wave 14: `sw.ts` has no `notificationclick`
+handler; onboarding still has its own notification ask; `diaryRepo.clear()` could replace Clear diary's full-range
+rewrite; nothing listens to `db.ts`'s reload-needed message for schema upgrades from another tab; zxing-wasm's
+bundled zxing-cpp (Apache-2.0) and zint (BSD-3) notices are not in Credits; a small stored photo keeps its own bytes
+(and any location data) in backups.
+**Progress: 159/176 tasks** (P00–P08 complete, P09 17/19, P10 1/14); P09-15 brings it to 160.
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
