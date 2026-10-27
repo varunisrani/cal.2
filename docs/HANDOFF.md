@@ -111,8 +111,9 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-No builders running. Wave 10 is fully landed (last: P07-03/04 at 630e227, full loop green). The
-next window starts at the 10:20 IST reset: launch the five wave 11 prompts in `docs/handoff/wave11/`
+Two wave 11 builders started early at 07:36 IST (usage 73 %), base e8a92c8: P07-15 (`/root/wt/wt-p07s4b`)
+and P07-16 (`/root/wt/wt-p07s4d`). Wave 10 is fully landed (last: P07-03/04 at 630e227, full loop green). The
+next window starts at the 10:20 IST reset: launch the other three wave 11 prompts in `docs/handoff/wave11/`
 at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2a,p07s2b,p07s4b,p07s4d}`):
 - P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
 - P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
