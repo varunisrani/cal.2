@@ -662,9 +662,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G8 · Weekly recap of the last completed week against the one before, … (P1)
 
 - **ACC-G8-1** The recap shows days logged out of 7 and the change from the week before
-  - Review: P07-15
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > recaps the last week that ended: days logged of 7 with the change from the week before (ACC-G8-1, R05.19)
 - **ACC-G8-2** At most three highlights appear, improvements only
-  - Review: P07-15
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > names a step forward and never a step back (ACC-G8-2)
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows at most three lines, the first three in their order (ACC-G8-2, R05.19)
+  - Test: src/domain/progress/recap.test.ts > highlightsFor > keeps the first three in their order when more improved (R05.19, ACC-G8-2)
+  - Test: src/domain/progress/recap.test.ts > highlightsFor > never names a step back (ACC-G8-2)
 
 ### G9 · Count-today switch for the nutrition charts (P1)
 

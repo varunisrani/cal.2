@@ -1,0 +1,169 @@
+/*
+ * The weekly recap card (P07-15): its heading and week row, four tiles (two across, four on a
+ * wide card), the weight row, the good-news lines, the note and the empty message. Every value
+ * comes from tokens.css; logical properties throughout.
+ */
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  container-type: inline-size;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+/* ---- Week row -------------------------------------------------------------------------------- */
+
+.week {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.weekLabel {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Tiles ----------------------------------------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@container (min-width: 32rem) {
+  .tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-control);
+  background-color: var(--accent-soft);
+  text-align: center;
+}
+
+.tileValue {
+  max-inline-size: 100%;
+  overflow: hidden;
+  font-size: var(--type-title);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Two lines kept for every label, so the change lines sit on one baseline. */
+.tileLabel {
+  display: -webkit-box;
+  min-block-size: calc(2em * var(--leading-tight));
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-tight);
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.tileDetail {
+  max-inline-size: 100%;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-tight);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.better {
+  color: var(--accent);
+}
+
+/* ---- Weight row and highlights --------------------------------------------------------------- */
+
+.lines {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.lineIcon {
+  flex: none;
+  color: var(--accent);
+}
+
+.lineText {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+}
+
+.lineValue {
+  flex: none;
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  line-height: var(--leading-snug);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--space-6);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  text-align: center;
+}
+
+/* ---- Loading --------------------------------------------------------------------------------- */
+
+.placeholder {
+  block-size: calc(var(--space-8) * 6);
+  border-radius: var(--radius-card);
+  background: var(--card);
+}

@@ -388,7 +388,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/meals/diary.test.ts > section totals > gives no totals to a section without food (R05.4)
   - Test: src/features/home/PillarRow.test.tsx > PillarRow > never counts food toward water, nor water toward food (R05.4)
   - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > counts food only: water and a fast on a day without food add no bar and change no average (R05.4)
-  - Review: the recap owned by P07-15
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows only the empty message for a week of water and fasts (R05.4)
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
@@ -429,6 +429,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
   - Test: src/features/home/useSelectedDay.test.ts > useSelectedDay > moves on with today at midnight when today is shown, and keeps a picked day
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > moves on to the week that just ended when the page is shown again after midnight (R05.14)
 - **R05.15** Dense calorie charts always fit so the newest day stays reachable
   - Test: src/domain/progress/chartMath.test.ts > barLayout > fits every bar inside the plot so the newest day stays reachable (R05.15)
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > fits a full year of bars inside a 360 px plot and inspects the last day (ACC-G10-1, R05.15)
@@ -452,7 +453,17 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
   - Review: owned by P07-03
 - **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights
-  - Review: owned by P07-15
+  - Test: src/domain/progress/recap.test.ts > recapWeek > recaps the last week that has ended, by the week start setting (R05.19)
+  - Test: src/domain/progress/recap.test.ts > recapWeek > never recaps the current week, even on its last day (R05.19)
+  - Test: src/domain/progress/recap.test.ts > nearCalorieGoal > takes 10 % either side of the goal: 1 800 and 2 200 count, 1 799 does not (R05.19)
+  - Test: src/domain/progress/recap.test.ts > tallyWeek > counts logged days, days near the goal and protein days, 149.6 g meeting 150 (R05.19)
+  - Test: src/domain/progress/recap.test.ts > buildRecap > puts a late-Sunday meal in different weeks for Monday and Sunday weeks (R05.19)
+  - Test: src/domain/progress/recap.test.ts > highlightsFor > needs three logged days for the average and a run of three (R05.19)
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows energy in kJ while every day is still measured in kcal (R05.19)
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > follows the week start setting: a late-Sunday meal leaves the recap for Sunday weeks (R05.19)
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > recaps the last week that ended: days logged of 7 with the change from the week before (ACC-G8-1, R05.19)
+  - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows at most three lines, the first three in their order (ACC-G8-2, R05.19)
+  - Test: src/domain/progress/recap.test.ts > highlightsFor > keeps the first three in their order when more improved (R05.19, ACC-G8-2)
 - **R05.20** The fasting goal alert is dropped on end, cancel and delete and re-evaluated after edits and on open
   - Review: owned by P09-08
 - **R05.21** Fasts show on the day they end; the active fast only on today

@@ -9,6 +9,49 @@ import type { MessageTree } from '../catalogue';
 export const progress = {
   progress: {
     loadFailed: "Your progress can't be shown right now. Reload the page to try again.",
+    recap: {
+      title: 'Weekly recap',
+      earlier: 'Earlier week',
+      later: 'Later week',
+      days: '{count}/{week}',
+      logged: 'Days logged',
+      nearGoal: {
+        kcal: 'Near calorie goal',
+        kJ: 'Near kilojoule goal',
+      },
+      protein: 'Protein goal met',
+      average: {
+        kcal: 'Average calories',
+        kJ: 'Average kilojoules',
+      },
+      noAverage: '—',
+      goal: 'Goal {amount}',
+      change: {
+        up: '+{amount}',
+        down: '−{amount}',
+        same: '{amount}',
+      },
+      weightChange: 'Weight change',
+      highlight: {
+        everyDay: 'Logged all seven days',
+        run: '{days, plural, one {# day} other {# days}} logged in a row',
+        moreNearGoal: {
+          kcal: '{more, plural, one {# more day} other {# more days}} near your calorie goal',
+          kJ: '{more, plural, one {# more day} other {# more days}} near your kilojoule goal',
+        },
+        moreProtein:
+          '{more, plural, one {# more day} other {# more days}} with your protein goal met',
+        averageNearGoal: {
+          kcal: 'Your average calories were near your goal',
+          kJ: 'Your average kilojoules were near your goal',
+        },
+        moreLogged:
+          '{more, plural, one {# more day} other {# more days}} logged than the week before',
+      },
+      note: '+ and − show the change from the week before.',
+      empty: 'No meals or weigh-ins in this week.',
+      loadFailed: "This week's recap can't be shown right now.",
+    },
     range: {
       label: 'Time range',
       week: '1W',

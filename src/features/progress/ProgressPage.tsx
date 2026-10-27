@@ -33,6 +33,7 @@ import { MetricSwitch } from './MetricSwitch';
 import { NutritionCards } from './NutritionCards';
 import styles from './progress.module.css';
 import { RangeBar } from './RangeBar';
+import { RecapCard } from './RecapCard';
 import { WeightCard } from './WeightCard';
 
 /** The Log weight sheet's place on the sheet stack. */
@@ -45,15 +46,6 @@ const SETTINGS = ['units.weight', 'progress.countToday'] as const;
 const NO_WEIGH_INS: readonly WeighIn[] = [];
 const NO_BODY_FAT: readonly BodyFatReading[] = [];
 const NO_HISTORY: readonly HistoryReading[] = [];
-
-// ---- Places the next slices fill; each renders nothing until its card exists --------------------
-
-/** P07-15: the weekly recap card, at the top of the page. */
-function RecapSlot(): null {
-  return null;
-}
-
-// -------------------------------------------------------------------------------------------------
 
 interface CountTodayProps {
   readonly on: boolean;
@@ -167,7 +159,7 @@ export function ProgressPage() {
     }
     body = (
       <>
-        <RecapSlot />
+        <RecapCard />
         <RangeBar view={view} today={today} onChange={setView} />
         <MetricSwitch metrics={metrics} value={metric} onChange={setChosen} />
         {metric === 'weight' ? (
