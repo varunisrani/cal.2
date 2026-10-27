@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s19 (detached at <BASE>, dependencies installed; do not install anything unless this prompt says so). Work only there.
+
+Task: P09 slice S19 = P09-19, the settings, data and offline e2e. Spec: that row in docs/plan/phases/P09-settings-data-platform.md; the landed specs in e2e/ and their helpers in e2e/support.ts (fakeAi, the food-database routes and stray list, the hook recorder). Traps and acceptance ids: every row whose Review line names P09-19.
+Task note (before its code): docs/notes/P09/settings-data-e2e.md.
+
+You own:
+- e2e/settings-data.spec.ts, a second Playwright project with service workers allowed for the offline test (playwright.config.ts: additive project only), additive helpers in e2e/support.ts, and fixtures under e2e/fixtures/ (our own diary JSON in our format)
+- data-ui hooks the spec needs, added to components only where one is missing (one attribute per line; say which)
+
+Do not touch:
+- other e2e specs, src/** beyond the data-ui attributes, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Scenarios from the row: change the accent and units; export CSV and check its header and a row; import our JSON with Replace and see a matched entry keep its photo; back up, erase everything, restore from Welcome and see the same diary, chat and settings; notifications with permission denied keep the switch off; with service workers allowed, load the built app, go offline, reload successfully, and an AI call offline shows the offline message. Also the keyed FoodData Central path the logging spec could not cover: store a key through Settings › AI providers and see one FDC request with the key in its header only.
+- No network outside loopback and the routed hosts; no real waits (page.clock where the flow waits); every scenario passes three times in a row (`--repeat-each=3`), one worker.
+
+Tests:
+- after pnpm build: PLATEWISE_E2E_PORT=4194 PLATEWISE_FAKE_AI_PORT=4340 pnpm exec playwright test e2e/settings-data.spec.ts --workers=1 --repeat-each=3, then the whole e2e folder once with --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name, and every document you wrote. Leave everything uncommitted.

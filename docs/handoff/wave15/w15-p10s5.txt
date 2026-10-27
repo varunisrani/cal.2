@@ -1,0 +1,20 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s5 (detached at <BASE>, dependencies installed; do not install anything unless this prompt says so). Work only there.
+
+Task: P10 slice S5 = P10-13, the user docs. Spec: that row in docs/plan/phases/P10-hardening-and-release.md; the research specs for what each feature does; D-16.26 (Ollama on the same device or behind HTTPS), D-16.5 (reminders), D-16.8 (persistence), D-16.30 (backups); the app itself (pnpm build && pnpm preview to look, in a throwaway script outside the repo).
+Task note (before its text): docs/notes/P10/user-docs.md.
+
+You own:
+- docs/user/{getting-started,ai-keys,privacy-and-storage,backup,logging-tips,coach}.md in our own words (plain, short sentences; no marketing), and the About page's link to them in src/config/links.ts (one line, additive) if About has a docs link slot
+
+Do not touch:
+- src/** beyond that one link, e2e/**, scripts/**, docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Describe what Platewise does, as built: check each statement against the code or the running app, not the plan. Where to get a key per provider, cost notes, Ollama on the same device or behind HTTPS; what stays on the device, persistence, backups and restore; logging tips; the Coach and what it can see. Never copy wording from the reference's README, store listings or help texts (the similarity check runs over docs/ too).
+
+Tests:
+- before you finish: fmt:check (markdown), check --require-ref (similarity runs over docs), lint.
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name, and every document you wrote. Leave everything uncommitted.

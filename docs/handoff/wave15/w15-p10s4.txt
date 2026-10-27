@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s4 (detached at <BASE>, dependencies installed; do not install anything unless this prompt says so). Work only there.
+
+Task: P10 slice S4 = P10-09, P10-10 and P10-12: the security review, the similarity report and the gated live provider check. Spec: those three rows in docs/plan/phases/P10-hardening-and-release.md; docs/plan/01-clean-room-protocol.md; the CSP in index.html; the landed backup, export, import, transfer and coach code.
+Task notes (each before its text): docs/notes/P10/security-review.md, docs/notes/P10/similarity-report.md, docs/notes/P10/live-provider-check.md.
+
+You own:
+- docs/internals/{security-review,similarity-report,provider-check}-v1.0.md, scripts/ai-live-check.ts (+ test where it has logic), and tests that search outputs for a planted key (export files, backup archives, error details, logs) in the modules that own those outputs (additive test files only)
+- fixes for any finding that is small and local (say each one); larger findings go in the review as open items with a proposed fix
+
+Do not touch:
+- src/** beyond the planted-key tests and small local fixes, e2e/** (other builders), docs/plan/**, pnpm-lock.yaml, package.json (pnpm audit is read-only: record its results and decisions)
+
+Decisions already made:
+- Security review: a threat model for a local-first bring-your-own-key web app; the CSP verified in the built app (note the `http://[::1]:*` source Chromium rejects: propose keeping or dropping it); no third-party scripts or fonts; keys never in logs, exports, backups or error details; loopback-only HTTP; import and restore path and size limits; Markdown link sanitising; user strings never injected as HTML; `pnpm audit` with decisions.
+- Similarity: run `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref` and `pnpm check --only similarity --closest 30`, plus the 9-word overlap tool over docs/; rewrite any region near a gate; list every allow-list entry with its reason. Earlier slices recorded near-misses in HANDOFF ("similarity findings"): include them.
+- Live provider check: only with real keys from environment variables; none are given now, so write the script and its dry run, and record "skipped: no keys" in the report.
+
+Tests:
+- unit: the new test files with --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name, and every document you wrote. Leave everything uncommitted.
