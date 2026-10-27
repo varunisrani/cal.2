@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s1b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave A slice S1b = P07-03, P07-04 — the gauge and pillars, full; the day nutrients sheet and pillar picker. Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.2.2–3.2.4. Traps and acceptance ids: every row whose Review line names P07-03 or P07-04 (the fill animation is P2: leave R05.18's review line as it is).
+Task notes (each before its code): docs/notes/P07/gauge-and-pillars-full.md, docs/notes/P07/day-nutrients-sheet-and-pillar-picker.md.
+
+You own:
+- src/features/home/{DaySummary,PillarRow,DayNutrientsSheet,PillarPicker}.tsx (+ tests; css) and your words in the home partition (src/i18n/en/home.ts)
+- the pillars' place in src/features/home/HomePage.tsx (Home follows the selected day already: use it), and the "All nutrients" link and the sheets on the router's sheet stack
+- a pillar-choice write in a service if none exists (src/services/homePrefs.ts or similar; additive in Services and main.tsx)
+
+Do not touch:
+- src/features/home/{WeekBar,DaySwipe,useSelectedDay}.ts(x) and the diary files (landed: import), src/features/progress/** (another builder, now), src/features/log/** (import), src/domain/** (import only: P01-07 pillar rules, nutrient keys and units, targets), src/data/**, src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` (see src/features/settings/registry.ts). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- Pillars and the sheet exactly as the rows: 1–4 chosen pillars then a fixed water pillar when water tracking is on; totals with one decimal only when not whole; "N g left / over", "Goal reached", "No goal" (goal 0) in the nutrient's unit; protein/carbs/fat goals from the targets, the others from the optional goals; the gauge for the selected day with the kJ heading when needed. The picker: all 32 nutrients, the P01-07 rules (1–4, the last cannot be removed, a fifth replaces the most recent), water locked when on, positions shown, Reset to default, Done saves, Cancel discards. A total of exactly 0 shows a dash in the sheet.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/home src/i18n --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4186 PLATEWISE_FAKE_AI_PORT=4332 pnpm exec playwright test e2e/walking-skeleton.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

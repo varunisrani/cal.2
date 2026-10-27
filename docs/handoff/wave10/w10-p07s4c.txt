@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s4c (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave B slice S4c = P07-13, P07-14 — the body-fat card and logging; the history sheets. They fill the landed Progress page's slots (`BodyFatSlot`, `HistorySlot` in src/features/progress/ProgressPage.tsx). Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.5.4, §3.5.5; decisions D-16.38 and Proposed D-16.56. Traps and acceptance ids: every row whose Review line names P07-13 or P07-14 (R05.22 among them).
+Task notes (each before its code): docs/notes/P07/body-fat-card-and-logging.md, docs/notes/P07/history-sheets.md.
+
+You own:
+- src/features/progress/{BodyFatCard,LogBodyFatSheet,HistorySheet}.tsx (+ tests) and filling the two slots in ProgressPage.tsx; your words in the progress partition (src/i18n/en/progress.ts)
+- src/services/progress.ts: add logBodyFat and the history deletes (+ tests)
+
+Do not touch:
+- src/features/progress/{WeightCard,LogWeightSheet,RangeBar,MetricSwitch}.tsx (landed: import), src/domain/progress/{ranges,chartMath}.ts (import: summarise and changeToTenth are ready for the body-fat card), src/ui/charts/** (import), src/features/home/** (another builder, now), src/features/log/**, src/data/** and other src/domain/** (import only), src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` (see src/features/settings/registry.ts). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- Body-fat card per the P07-13 row (shown when available; empty only with no readings in the window and no profile value; Current (latest, else the profile value), Goal, Net change and Average when the window has readings, one decimal %; chart floor 0 with % ticks). Log body fat: one wheel 3–60 % in 0.5 steps (Proposed D-16.56), seeded latest → profile → 20 %, stamped now, saved through bodyFatRepo.
+- History per the P07-14 row (D-16.38, R05.22): a link card under the metric card (count and a hint; hidden with no entries) opens all weigh-ins or body-fat readings newest first with a visible delete per row; delete asks naming the date and value, then removes the row from the open list at once; the repository re-syncs the profile.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/progress src/services/progress.test.ts src/i18n --maxWorkers=1
+- pnpm build && pnpm check:bundle (the Progress code stays in its lazy chunk)
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

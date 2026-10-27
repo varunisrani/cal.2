@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s18 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 slice = P06-18 — the product block, ingredient label and allergen line. They fill the landed review sheet's slots (`productBlock` and `allergenLine` in src/features/log/review/ReviewSheet.tsx's `ReviewSlots`, filled in `AnalysisReview`); also mount the landed SavedLabelNotice (src/features/log/scan/SavedLabelNotice.tsx) in the `savedLabelNotice` slot when the draft's `fromSavedLabel` is true. Spec: the P06-18 row in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.14 (the allergen ladder and alias table); D23 (v1-lite label text). Traps and acceptance ids: every row whose Review line names P06-18.
+Task note (before code): docs/notes/P06/product-block-ingredient-label-and-allergen-line.md.
+
+You own:
+- src/domain/food/{allergens,labelText}.ts (+ tests)
+- src/features/log/review/{ProductBlock,AllergenLine,LabelText}.tsx (+ tests; css) and their words in the review partition (src/i18n/en/review.ts)
+- filling the three slots in AnalysisReview (src/features/log/review/ReviewSheet.tsx, the slot wiring only)
+- carrying Open Food Facts' marked-up ingredients to the review: a field on the analysis draft's product info (src/domain/model, additive) set by the barcode lookup (src/services/barcode/lookup.ts, where the product becomes the draft); say in your report exactly what you added
+
+Do not touch:
+- the other review files (import), src/features/home/** and src/features/progress/** (other builders, now), src/services/** other than the lookup field hand-off, src/data/** (import only; the allergen list comes from the profile through src/data/hooks; the product-block setting from the settings rows), src/ai/**, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` (see src/features/settings/registry.ts). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- The allergen ladder and matching exactly as the row (declared → may contain → possible from ingredients text, then line names, then the food name → unable to assess, never "safe"; accent-folded, lower-case, xx: prefixes removed, token-based with simple plurals, multi-word sensitivities when all tokens appear; the alias groups of 02 §3.14). Label text v1-lite: OFF allergen spans become markers, entities decoded, the plain text when the words differ; one paragraph with bold allergen segments and a warning when a sensitivity matches. The product block's fields in the row's fixed order, only fields with data and not hidden; off when its setting is off.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/food src/features/log/review src/services/barcode src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
