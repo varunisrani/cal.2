@@ -386,8 +386,9 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/meals/diary.test.ts > section totals > does not change a section total for a water row in Breakfast (R05.4)
   - Test: src/domain/meals/diary.test.ts > section totals > does not change a section total for a fast that ended in it (R05.4)
   - Test: src/domain/meals/diary.test.ts > section totals > gives no totals to a section without food (R05.4)
-  - Review: averages and the recap owned by P07-16
   - Test: src/features/home/PillarRow.test.tsx > PillarRow > never counts food toward water, nor water toward food (R05.4)
+  - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > counts food only: water and a fast on a day without food add no bar and change no average (R05.4)
+  - Review: the recap owned by P07-15
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
@@ -442,7 +443,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > scrubs across the bars on a sideways drag and clears on release (R05.16)
 - **R05.17** Macro averages divide by logged days, the calorie average by days with energy; missing days are gaps; Count today shifts the window
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > draws no bar for a missing day or a day without food (R05.17)
-  - Review: owned by P07-16 (the averages)
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > calorie history (R05.17) > gives 1 800 and 2 200 with an empty day between two bars and Avg 2 000
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > calorie history (R05.17) > drops the remainder of the mean instead of rounding it up
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > calorie history (R05.17) > gives a day of 0 kcal food no bar and leaves it out of Avg, but counts it as logged
+  - Test: src/features/progress/CaloriesCard.test.tsx > CaloriesCard > shows Avg 2,000 kcal and two bars for 1 800 and 2 200 with a missing day between (R05.17)
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > averages per logged day (ACC-G11-1, R05.17) > divides the macros by the days with food, not by the days of the window
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not
 - **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
   - Review: owned by P07-03
 - **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights

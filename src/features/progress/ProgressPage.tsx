@@ -3,7 +3,6 @@ import { useToday } from '../../app/TodayProvider';
 import { useSheet } from '../../app/useRoute';
 import { useBodyFat, useProfile, useSettings, useWeighIns } from '../../data/hooks';
 import type { DayKey } from '../../domain/dates/dayKey';
-import type { DayWindow } from '../../domain/dates/ranges';
 import type { BodyFatReading, WeighIn } from '../../domain/model';
 import {
   availableMetrics,
@@ -31,6 +30,7 @@ import { HISTORY_SHEET, HistorySheet, type HistoryReading } from './HistorySheet
 import { LogBodyFatSheet, seedBodyFat } from './LogBodyFatSheet';
 import { LogWeightSheet, seedWeightKg } from './LogWeightSheet';
 import { MetricSwitch } from './MetricSwitch';
+import { NutritionCards } from './NutritionCards';
 import styles from './progress.module.css';
 import { RangeBar } from './RangeBar';
 import { WeightCard } from './WeightCard';
@@ -50,11 +50,6 @@ const NO_HISTORY: readonly HistoryReading[] = [];
 
 /** P07-15: the weekly recap card, at the top of the page. */
 function RecapSlot(): null {
-  return null;
-}
-
-/** P07-16: the calorie card and the averages, over the nutrition window. */
-function NutritionSlot(_props: { readonly window: DayWindow }): null {
   return null;
 }
 
@@ -198,7 +193,7 @@ export function ProgressPage() {
           onOpen={history.show}
         />
         <CountToday on={countToday} view={view} today={today} onChange={setCountToday} />
-        <NutritionSlot window={nutritionWindow(view, today, countToday)} />
+        <NutritionCards window={nutritionWindow(view, today, countToday)} />
         <LogWeightSheet
           open={logWeight.open}
           seedKg={seedWeightKg(latest?.kg, profile?.weightKg)}

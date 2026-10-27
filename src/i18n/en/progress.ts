@@ -34,6 +34,22 @@ export const progress = {
       offWindow: 'Calories and averages cover {period}.',
       failed: "That change wasn't saved. Please try again.",
     },
+    nutrition: {
+      loading: 'Adding up your meals…',
+      updating: 'Updating your averages',
+      loadFailed: "Your meals can't be shown right now. Reload the page to try again.",
+    },
+    calories: {
+      title: 'Calories',
+      average: 'Avg {amount}',
+      empty: 'No food logged in this period.',
+      chart: 'Calorie chart',
+    },
+    averages: {
+      macros: 'Macro averages',
+      nutrients: 'Nutrient averages',
+      ofGoal: '{average} / {goal}',
+    },
     weight: {
       title: 'Weight',
       log: 'Log weight',

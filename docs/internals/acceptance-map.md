@@ -669,7 +669,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G9 · Count-today switch for the nutrition charts (P1)
 
 - **ACC-G9-1** Turning off Count today removes today's partial day from the averages
-  - Review: P07-16
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not
+  - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > takes out the partial today when Count today is turned off on the page (ACC-G9-1, R05.17)
 
 ### G10 · Calorie history bars with a goal line and inspector (P1)
 
@@ -679,7 +680,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### G11 · Macro and nutrient averages per logged day (P1)
 
 - **ACC-G11-1** Averages divide by days with entries, not by every day in the range
-  - Review: P07-16
+  - Test: src/domain/progress/averages.test.ts > windowNutrition > averages per logged day (ACC-G11-1, R05.17) > divides the macros by the days with food, not by the days of the window
+  - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > divides the averages by the days with food, not by the days of the period (ACC-G11-1)
 
 ## H · Water and fasting
 
