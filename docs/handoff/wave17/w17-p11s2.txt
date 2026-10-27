@@ -1,0 +1,23 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p11s2 (detached at <BASE>, dependencies installed; the lead has run `pnpm add --save-exact @capacitor/core@7.6.9` there so you can import it: do not change package.json or pnpm-lock.yaml further; at landing the lead takes S1's copies of both). Work only there.
+
+Task: P11 slice S2 = P11-03 (health service and data) and P11-04 (health UI). Spec: docs/plan/phases/P11-android-and-health-connect.md (Goal, Decisions, the plugin contract, the two task rows); inventory row M11 in docs/plan/03-feature-inventory.md; docs/plan/research/05-home-progress.md and 01-profile-goals.md for the burn line and how the reference shows it (our words only); the landed data layer (src/data/**), settings registry (src/features/settings/registry.ts), Home (src/features/home/**), Progress (src/features/progress/**), the services context (src/services/context.tsx) and composition root (src/main.tsx).
+Task notes (each before its text): docs/notes/P11/health-service.md, docs/notes/P11/health-ui.md.
+
+You own:
+- src/services/health/** : the contract types exactly as in the phase file, `isHealthAvailable()` (true only when `globalThis.Capacitor?.getPlatform?.() === 'android'`), the native adapter (`registerPlugin` from @capacitor/core, loaded by dynamic import only when available, so the web bundle does not grow by more than about 1 kB gzip), a fake plugin for tests, and the sync service (last 30 days on start, on visibilitychange → visible, and on demand; per-day upsert; weigh-ins imported with their Health Connect id, no duplicates; write-back of entries and weigh-ins when the switch is on, through the contract's client ids)
+- the data layer pieces: an `activity` table keyed by day key with a schema-version migration and its tests (follow how the landed migrations are written), the health settings with their defaults (connected false, countActiveCalories true, writeBack false, importWeights true)
+- an optional `health` service in src/services/context.tsx and its wiring in src/main.tsx (only those lines)
+- UI: a Settings → Health Connect page registered in the registry, shown only when `isHealthAvailable()`; a Home activity card for the shown day (steps, active calories, workouts) and, when counting is on, the day's target as goal + active calories with the line "goal + N burned" (the stored goal never changes); Progress steps and active calories for 7 and 30 days. Strings through i18n (en; same keys in any other locale file), `data-ui` hooks, accessible names, kcal/kJ through the existing energy formatting.
+- tests for all of it, using the fake plugin; the two task notes
+
+Do not touch: android/**, capacitor.config.json, scripts/android/** (S1), package.json, pnpm-lock.yaml, e2e/** (the health UI is hidden on the web, so the e2e suites must pass unchanged), docs/plan/**.
+
+Decisions already made: as the phase file says. If the shown day has no Health Connect data, the card says so and the target stays the goal. Revoked permissions show on the Settings page with a button to grant again. Sync failures never block the diary.
+
+Tests:
+- unit: the files you add or touch with --maxWorkers=1, plus the folders whose components you change; then `pnpm test` once at the end
+- before you finish: lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`, `pnpm build`, `pnpm check:bundle` (report the size), and `pnpm e2e` once on ports PLATEWISE_E2E_PORT=4185 PLATEWISE_FAKE_AI_PORT=4335 (must pass unchanged).
+
+Final report as the rules file says: files, tests (file > describe > test name), acceptance rows you propose for M11 (text and the tests that cover them), the bundle size, anything you could not do. Leave everything uncommitted.

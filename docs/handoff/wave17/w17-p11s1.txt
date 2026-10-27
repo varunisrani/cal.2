@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p11s1 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P11 slice S1 = P11-01 (Android shell) and P11-02 (Health Connect plugin). Spec: docs/plan/phases/P11-android-and-health-connect.md (Goal, Decisions, the plugin contract, the two task rows); docs/plan/01-clean-room-protocol.md; inventory row M11 in docs/plan/03-feature-inventory.md; docs/plan/research/07-later-phases-and-web.md (the health-store notes); the reference's Android health sync code under $PLATEWISE_REF (A/ prefix in the phase file) for observable behaviour only (record types, day bucketing, telling own records apart). Write every line yourself; the similarity check compares android/** with the reference.
+Task notes (each before its text): docs/notes/P11/android-shell.md, docs/notes/P11/health-connect-plugin.md.
+
+Environment (already prepared by the lead):
+- Android SDK at /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/apk/sdk (platform-tools, platforms;android-35, build-tools;35.0.0; add packages with $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager if you need more). JDK 21 at $JAVA_HOME. Export ANDROID_HOME=/tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/apk/sdk. Never commit local.properties or anything under android/**/build.
+- Maven Central answers 429 through this network; Google's mirror https://maven-central.storage-download.googleapis.com/maven2/ works. The lead's working init script is /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/apk/mirror.init.gradle; put your own copy at scripts/android/mirror.init.gradle and use it from the build script (opt-in via an environment variable or always; say which).
+- A throwaway Capacitor 7.6.9 shell the lead built today (outside the repo, for reference only, it is not a template you must follow) is at /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/apk/shell: icons and splash from public/icons with PIL, CAMERA permission, the debug APK built with `./gradlew --init-script … assembleDebug`. Capacitor injects its bridge with WebViewCompat.addDocumentStartJavaScript on current WebViews, so our CSP stays as it is.
+- No emulator (no KVM): compile and JVM unit tests only.
+
+You own:
+- android/** (Capacitor 7.6.9 project: `pnpm exec cap add android` then your edits), capacitor.config.json (webDir dist), scripts/android/** (build-apk.sh, icons.py, mirror.init.gradle), .gitignore lines for Android build output
+- package.json: `pnpm add --save-exact @capacitor/core@7.6.9` (dependency) and `pnpm add -D --save-exact @capacitor/cli@7.6.9 @capacitor/android@7.6.9`, plus the scripts `android:sync` and `android:apk`; pnpm-lock.yaml from those commands only (approved)
+- the Kotlin plugin under android/app/src/main/java/app/platewise/android/health/** registered in MainActivity, its JVM tests under android/app/src/test/**, the manifest entries (health permissions for the contract's kinds, the queries entry, the rationale and permission-usage entries; they open a short privacy text of our own), minSdk 26, the Kotlin Gradle plugin, androidx.health.connect:connect-client at its latest stable version on Google Maven (say which)
+- versionName from package.json's version, versionCode from a build number env var or 1
+- the two task notes
+
+Do not touch: src/** (S2 is writing the web side against the same contract), e2e/**, docs/plan/**, docs/internals/** except your notes.
+
+Decisions already made: as the phase file says. Keep the plugin logic that does not need Android (day bucketing, mapping to the contract's shapes, own-record filtering, error codes) in plain Kotlin so JVM tests cover it. A contract test reads the TypeScript block in docs/plan/phases/P11-android-and-health-connect.md and checks every method name is a @PluginMethod.
+
+Tests and checks before you finish: `./gradlew testDebugUnitTest` and `pnpm android:apk` (report the APK path, size and `aapt dump badging` lines for package, version and permissions); lint, fmt:check, typecheck, `pnpm test` for any TS you touch (none expected), `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref` (the similarity and banned checks must pass with android/** in the tree; if the Capacitor template's own files trip a check, say which and propose an allow-list entry with its reason, do not edit the checker).
+
+Final report as the rules file says: files, the APK facts, test results, the connect-client version, notices the APK needs (Capacitor MIT, androidx Apache-2.0 and others you add), anything you could not do. Leave everything uncommitted.
