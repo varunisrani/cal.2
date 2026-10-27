@@ -52,8 +52,15 @@ export type Harness = Awaited<ReturnType<typeof openHarness>>;
 
 const closers: Array<() => Promise<void>> = [];
 
-/** Closes every database opened since the last call; call it after each test (after cleanup). */
+/** The stops of the `until` waits still open: a test that timed out leaves its wait here. */
+const openWaits = new Set<() => void>();
+
+/**
+ * Closes every database opened since the last call and stops any wait still open; call it after
+ * each test (after cleanup).
+ */
 export async function closeHarnesses(): Promise<void> {
+  for (const stop of [...openWaits]) stop();
   for (const close of closers.splice(0)) await close();
 }
 
@@ -118,18 +125,25 @@ export async function openHarness(options: HarnessOptions = {}) {
 }
 
 /**
- * Waits, inside act, until `check()` passes: checked now and after every change to the page.
- * Live reads land through IndexedDB callbacks, so no timer is involved.
+ * Waits until `check()` passes: checked now and after every change to the page; then lets React
+ * finish, inside act, what that change started. The wait itself is outside act: while an act
+ * scope is open React holds back every draw that is not urgent (one for a state set when a promise
+ * settles, say) until the scope ends, so a wait inside act for such a draw would never end. Live
+ * reads land through IndexedDB callbacks, so no timer is involved.
  */
 export async function until(check: () => boolean): Promise<void> {
-  await act(async () => {
-    if (check()) return;
+  if (!check()) {
     await new Promise<void>((resolve) => {
       const observer = new MutationObserver(() => {
         if (!check()) return;
-        observer.disconnect();
+        stop();
         resolve();
       });
+      const stop = (): void => {
+        observer.disconnect();
+        openWaits.delete(stop);
+      };
+      openWaits.add(stop);
       observer.observe(document.body, {
         attributes: true,
         characterData: true,
@@ -137,7 +151,8 @@ export async function until(check: () => boolean): Promise<void> {
         subtree: true,
       });
     });
-  });
+  }
+  await act(async () => undefined);
 }
 
 /** `until` for an element matching `selector`. */
