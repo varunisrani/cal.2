@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p05s5 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P05 wave C = P05-15 — the onboarding and goals e2e. Spec: the P05-15 row in docs/plan/phases/P05-onboarding-and-goals.md. No reference to read: the flows are ours. Acceptance ids: any row whose Review line names P05-15, plus the e2e halves the landed tests leave open (ACC-B9-1's "Home shows the targets"; ACC-B7-1 and ACC-B7-2 end to end).
+Task note (before code): docs/notes/P05/onboarding-and-goals-e2e.md.
+
+You own:
+- e2e/onboarding.spec.ts and e2e/fake-ai/scripts/plan-ok.json (our own plan reply in the reply keys of src/ai/parse/planReply.ts, a plausible plan that passes checkPlan for the profile you walk); a small shared e2e helper module under e2e/ if both specs can use it (do not change walking-skeleton.spec.ts beyond importing a helper)
+- data-ui hook attributes on existing elements if a step has no stable hook (a hook attribute only, no other change), listed in your report
+
+Do not touch:
+- src/** other than hook attributes, e2e/fake-ai/server.ts and the other scripts (read them: `startFakeAiServer()`, `POST /__script`, `/__reset`; the Custom provider base URL is `${url}/v1`; specs reach it at http://127.0.0.1:${PLATEWISE_FAKE_AI_PORT ?? 4320}), playwright.config.ts, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Four tests on the mobile project, each from a fresh profile: (1) the wizard with the fake AI as the Custom provider at loopback and script plan-ok → Plan ready shows the AI plan → edit protein → Finish → Home shows the targets; (2) script garbage → the formula plan with the AI-unavailable note (the 60 s cap is not hit: an unusable answer falls back at once after the standby); (3) "Set up later" → the formula plan; (4) after onboarding with plan-ok, Settings › Goals → Rebuild plan → the new-target message.
+- Words come from the catalogue (src/i18n/en via lookupMessage/parseMessage/renderMessage, as walking-skeleton.spec.ts does: t.ts reads import.meta.env, which Playwright lacks); locators are roles, accessible names and data-ui hooks; no fixed sleeps (wait on the UI; use page.clock only where a step needs time to pass).
+- The Custom provider's address must be loopback http (D-16.26 allows it); its key is optional and its model required (R03.20).
+
+Tests (one worker):
+- pnpm build, then: PLATEWISE_E2E_PORT=4183 PLATEWISE_FAKE_AI_PORT=4329 pnpm exec playwright test e2e/onboarding.spec.ts e2e/walking-skeleton.spec.ts --workers=1 --repeat-each=3
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
