@@ -118,9 +118,6 @@ export function HomePage() {
       case 'copyDay':
         copyDay.show();
         return;
-      case 'barcode':
-        // Its sheet is not built yet; the add menu leaves it off (METHODS_NOT_BUILT_YET).
-        return;
     }
   };
 
