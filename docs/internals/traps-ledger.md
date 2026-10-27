@@ -419,6 +419,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.14** Today is recomputed at local midnight and on return to the foreground
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > moves to the new day at 23:59:59 plus one second
   - Test: src/app/TodayProvider.test.tsx > TodayProvider > checks the date again when the page becomes visible after a date change
+  - Test: src/features/home/useSelectedDay.test.ts > useSelectedDay > moves on with today at midnight when today is shown, and keeps a picked day
 - **R05.15** Dense calorie charts always fit so the newest day stays reachable
   - Test: src/domain/progress/chartMath.test.ts > barLayout > fits every bar inside the plot so the newest day stays reachable (R05.15)
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > fits a full year of bars inside a 360 px plot and inspects the last day (ACC-G10-1, R05.15)

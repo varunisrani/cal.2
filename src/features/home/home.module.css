@@ -1,8 +1,9 @@
 /*
- * Home (P04-10..12; P07 adds the week bar and more rows): the page, the summary card with the
- * gauge and pillars, the diary's meal sections and rows, and the floating add button. Every value
- * comes from tokens.css; logical properties throughout. The tab bar's size comes from the shell
- * (`--tabbar-height`, `--tabbar-gap`), with fallbacks for a page drawn without it.
+ * Home (P04-10..12; P07 adds more rows): the page, the summary card with the gauge and pillars,
+ * the diary's meal sections and rows, and the floating add button (the week bar and the day
+ * swipe have week.module.css). Every value comes from tokens.css; logical properties throughout.
+ * The tab bar's size comes from the shell (`--tabbar-height`, `--tabbar-gap`), with fallbacks for
+ * a page drawn without it.
  */
 
 .page {
@@ -230,10 +231,16 @@
   gap: var(--space-4);
 }
 
+.placeholderWeek,
 .placeholderSummary,
 .placeholderRow {
   border-radius: var(--radius-card);
   background: var(--card);
+}
+
+/* As tall as the week bar: a weekday letter over a day circle. */
+.placeholderWeek {
+  block-size: calc(var(--space-8) * 2);
 }
 
 .placeholderSummary {

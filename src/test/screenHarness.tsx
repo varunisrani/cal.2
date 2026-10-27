@@ -1,10 +1,11 @@
 // A harness for screen tests (Home and the sheets it opens, the onboarding wizard): real
 // repositories over a fresh test database, the real diary, onboarding and AI setup services (a
 // test may pass its own diary, onboarding and plan builder), a router over an in-memory history,
-// and the providers the app puts around a tab screen.
+// its own shared UI state, and the providers the app puts around a tab screen.
 
 import { act, render } from '@testing-library/react';
 import type { ReactNode } from 'react';
+import { AppStateContext, createAppState } from '../app/appState';
 import { createRouter } from '../app/router';
 import { memoryHost } from '../app/testing/memoryHost';
 import { TodayProvider } from '../app/TodayProvider';
@@ -90,6 +91,8 @@ export async function openHarness(options: HarnessOptions = {}) {
   };
   const host = memoryHost(options.hash ?? '#/home');
   const router = createRouter(host);
+  // A fresh start of the app: no day picked (Home's selected day lives here).
+  const appState = createAppState();
   closers.push(async () => {
     await settleQuarantine(test.db);
     test.db.close();
@@ -100,16 +103,18 @@ export async function openHarness(options: HarnessOptions = {}) {
     render(
       <ServicesProvider services={services}>
         <DataProvider sources={sources}>
-          <ToastProvider>
-            <RouterProvider router={router}>
-              <TodayProvider clock={clock}>{ui}</TodayProvider>
-            </RouterProvider>
-          </ToastProvider>
+          <AppStateContext value={appState}>
+            <ToastProvider>
+              <RouterProvider router={router}>
+                <TodayProvider clock={clock}>{ui}</TodayProvider>
+              </RouterProvider>
+            </ToastProvider>
+          </AppStateContext>
         </DataProvider>
       </ServicesProvider>,
     );
 
-  return { db: test.db, repos, sources, services, clock, host, router, mount };
+  return { db: test.db, repos, sources, services, clock, host, router, appState, mount };
 }
 
 /**

@@ -11,16 +11,23 @@ import { log } from '../../i18n/en/log';
 import { menu } from '../../i18n/en/menu';
 import { scan } from '../../i18n/en/scan';
 import { err } from '../../lib/result';
-import type { AnalysisService, AnalysisState } from '../../services/analysis';
+import {
+  createAnalysisService,
+  type AnalysisService,
+  type AnalysisState,
+} from '../../services/analysis';
 import type { Scanner } from '../../services/barcode/decoder';
 import { createBarcodeService } from '../../services/barcode/lookup';
 import { OFF_PRODUCT_URL } from '../../services/barcode/off';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
 import { createCopyDayService } from '../../services/copyDay';
+import { formatDay } from '../../i18n/format';
 import type { PhotoService } from '../../services/photos';
 import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
 import { reuse } from '../../i18n/en/reuse';
+import { review } from '../../i18n/en/review';
+import { AnalysisReview } from '../log/review/ReviewSheet';
 import {
   CAPTURE_SHEET,
   COPY_DAY_SHEET,
@@ -208,6 +215,179 @@ describe('HomePage', () => {
 
     expect(textOf('home.error')).toBe(words.loadFailed);
     expect(document.querySelector('[data-ui="home.gauge"]')).toBeNull();
+  });
+});
+
+// ---- The selected day (P07-01, P07-02) ---------------------------------------------------------
+
+const weekBar = () => screen.getByRole('radiogroup', { name: words.week.label });
+const dayTile = (day: string) => within(weekBar()).getByRole('radio', { name: dayName(day) });
+/** A tile's accessible name: the full date, as the week bar reads it. */
+const dayName = (day: string) => formatDay(day, 'long');
+
+/** Presses on the element `hook` names, moves `dx` px sideways in four steps, and lets go. */
+function swipeOn(hook: string, dx: number) {
+  const region = document.querySelector<HTMLElement>(`[data-ui="${hook}"]`);
+  if (!region) throw new Error(`Nothing to swipe: ${hook}`);
+  fireEvent.pointerDown(region, { pointerId: 1, clientX: 200, clientY: 100, button: 0 });
+  for (let step = 1; step <= 4; step++) {
+    fireEvent.pointerMove(region, { pointerId: 1, clientX: 200 + (dx * step) / 4, clientY: 100 });
+  }
+  fireEvent.pointerUp(region, { pointerId: 1, clientX: 200 + dx, clientY: 100, button: 0 });
+}
+
+/** Home over the harness with one entry on each named day. */
+async function openWithDays(days: Readonly<Record<string, string>>) {
+  const h = await openHarness();
+  await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+  await h.repos.diaryRepo.addMany(
+    Object.entries(days).map(([day, name], index) =>
+      makeEntry({ name, kcal: 100 * (index + 2), loggedAt: Date.parse(`${day}T13:00:00-04:00`) }),
+    ),
+  );
+  return h;
+}
+
+describe('HomePage: the selected day (P07-01, P07-02)', () => {
+  it("shows the week bar on today, and last Monday's diary and summary once it is selected (ACC-F1-1)", async () => {
+    const h = await openWithDays({ '2026-10-26': 'Porridge', '2026-10-19': 'Pasta' });
+    h.mount(<HomePage />);
+    await untilShown('[data-ui="home.week"]');
+    await until(() => screen.queryByText('Porridge') !== null);
+    expect(dayTile('2026-10-26')).toHaveAttribute('aria-checked', 'true');
+    expect(dayTile('2026-10-27')).toBeDisabled();
+    const bar = weekBar();
+
+    fireEvent.click(dayTile('2026-10-19'));
+    await until(() => screen.queryByText('Pasta') !== null);
+
+    expect(screen.queryByText('Porridge')).toBeNull();
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}3001,700 left`);
+    expect(screen.getByRole('heading', { level: 2, name: words.diary.day })).toBeVisible();
+    expect(dayTile('2026-10-19')).toHaveAttribute('aria-checked', 'true');
+    expect(dayTile('2026-10-26')).toHaveAttribute('aria-current', 'date');
+    expect(h.appState.getSnapshot().selectedDay).toBe('2026-10-19');
+    // The page stayed while the day was read: the bar was not drawn again.
+    expect(weekBar()).toBe(bar);
+  });
+
+  it('shows yesterday after a swipe toward the right on the summary; toward the left on today does nothing (ACC-F2-1)', async () => {
+    const h = await openWithDays({ '2026-10-26': 'Porridge', '2026-10-25': 'Pizza' });
+    h.mount(<HomePage />);
+    await until(() => screen.queryByText('Porridge') !== null);
+
+    swipeOn('home.swipe', -120);
+    // The diary is not part of the swipe.
+    swipeOn('home.diary', 120);
+    await act(async () => undefined);
+    expect(h.appState.getSnapshot().selectedDay).toBeNull();
+    expect(screen.getByText('Porridge')).toBeVisible();
+
+    swipeOn('home.swipe', 120);
+    await until(() => screen.queryByText('Pizza') !== null);
+    expect(screen.queryByText('Porridge')).toBeNull();
+    expect(dayTile('2026-10-25')).toHaveAttribute('aria-checked', 'true');
+
+    swipeOn('home.swipe', -120);
+    await until(() => screen.queryByText('Porridge') !== null);
+    expect(h.appState.getSnapshot().selectedDay).toBeNull();
+  });
+
+  it('logs a manual entry on yesterday at the current clock time while yesterday is shown', async () => {
+    const h = await openWithDays({ '2026-10-25': 'Pizza' });
+    h.mount(<HomePage />);
+    await untilShown('[data-ui="home.week"]');
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => screen.queryByText('Pizza') !== null);
+
+    fireEvent.click(screen.getByRole('button', { name: words.add.label }));
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.group.describe }));
+    fireEvent.click(screen.getByRole('menuitem', { name: menuWords.method.manual }));
+    await untilShown('[data-ui="manual.name"]');
+    const sheet = within(screen.getByRole('dialog', { name: log.log.manual.title }));
+    fireEvent.change(sheet.getByLabelText(log.log.manual.name), { target: { value: 'Toast' } });
+    fireEvent.change(sheet.getByLabelText(log.log.manual.energy.kcal), {
+      target: { value: '250' },
+    });
+    fireEvent.click(sheet.getByRole('button', { name: common.common.save }));
+    await until(() => screen.queryByText('Toast') !== null);
+
+    expect(await h.repos.diaryRepo.byDay('2026-10-26')).toEqual([]);
+    // Newest first: Pizza was logged at 13:00 that day.
+    expect(await h.repos.diaryRepo.byDay('2026-10-25')).toEqual([
+      expect.objectContaining({ name: 'Pizza' }),
+      expect.objectContaining({
+        name: 'Toast',
+        meal: 'lunch',
+        loggedAt: Date.parse('2026-10-25T12:30:00-04:00'),
+      }),
+    ]);
+  });
+
+  it('logs a pick from Recent on the day shown, at the current clock time (P06-12)', async () => {
+    const h = await openWithDays({ '2026-10-23': 'Lentil soup' });
+    const analysis = createAnalysisService({
+      draftsRepo: createDraftsRepo(h.db),
+      photoRepo: createPhotoRepo(h.db),
+      settingsRepo: h.repos.settingsRepo,
+      secretsRepo: createSecretsRepo(h.db),
+      overlay: h.appState,
+      fetch: () => Promise.reject(new Error('No request is expected here')),
+      clock: h.clock,
+    });
+    h.mount(
+      <ServicesProvider services={{ ...h.services, analysis, photos }}>
+        <HomePage />
+        <AnalysisReview />
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.week"]');
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => dayTile('2026-10-25').getAttribute('aria-checked') === 'true');
+    await untilShown('[data-ui="home.diary.empty"]');
+    chooseFromMenu('reuse', menuWords.method.recent);
+    await untilShown('[data-ui="reuse.row.pick"]');
+
+    fireEvent.click(document.querySelector('[data-ui="reuse.row.pick"]') as HTMLElement);
+    await untilShown('[data-ui="review.amount"]');
+    expect(document.querySelector('[data-ui="review.when.date"]')).toHaveValue('2026-10-25');
+    fireEvent.click(screen.getByRole('button', { name: review.review.log }));
+    await untilGone('[data-ui="home.diary.empty"]');
+
+    expect(await h.repos.diaryRepo.byDay('2026-10-25')).toEqual([
+      expect.objectContaining({
+        name: 'Lentil soup',
+        meal: 'lunch',
+        loggedAt: Date.parse('2026-10-25T12:30:00-04:00'),
+      }),
+    ]);
+    expect(await h.repos.diaryRepo.byDay('2026-10-26')).toEqual([]);
+  });
+
+  it('copies a day onto the day shown, starting from the day before it', async () => {
+    const h = await openWithDays({ '2026-10-24': 'Lentil soup', '2026-10-25': 'Pizza' });
+    const services: Services = {
+      ...h.services,
+      copyDay: createCopyDayService({ diaryRepo: h.repos.diaryRepo, clock: h.clock }),
+    };
+    h.mount(
+      <ServicesProvider services={services}>
+        <HomePage />
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.week"]');
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => screen.queryByText('Pizza') !== null);
+    chooseFromMenu('reuse', menuWords.method.copyDay);
+    await untilShown('[data-ui="copyDay.all"]');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy 1 food' }));
+    await until(() => screen.queryByText('Lentil soup') !== null);
+
+    expect(await h.repos.diaryRepo.byDay('2026-10-26')).toEqual([]);
+    expect(await h.repos.diaryRepo.byDay('2026-10-25')).toEqual(
+      expect.arrayContaining([expect.objectContaining({ name: 'Lentil soup' })]),
+    );
   });
 });
 

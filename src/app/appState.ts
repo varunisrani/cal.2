@@ -5,8 +5,16 @@ import type { DayKey } from '../domain/dates/dayKey';
 export interface AppState {
   /** A food analysis covers the screen (P06-04); the tab bar hides meanwhile. */
   readonly analysisOverlay: boolean;
-  /** The day Home shows; `null` is today. P07 builds the day picker on it. */
+  /** The day Home shows; `null` follows today, across midnight too (P07-02). */
   readonly selectedDay: DayKey | null;
+}
+
+/**
+ * The day shown for a stored selection on `today`: the selected day, or today when none is
+ * selected or the selection is after today (the clock was moved back since).
+ */
+export function viewedDay(selectedDay: DayKey | null, today: DayKey): DayKey {
+  return selectedDay === null || selectedDay > today ? today : selectedDay;
 }
 
 export interface AppStateStore {

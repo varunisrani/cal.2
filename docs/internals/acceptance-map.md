@@ -539,14 +539,16 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### F1 · Week bar of 53 weeks starting on the chosen weekday (P1)
 
 - **ACC-F1-1** Selecting last Monday shows that day's diary
-  - Review: P07-01
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows the week bar on today, and last Monday's diary and summary once it is selected (ACC-F1-1)
 - **ACC-F1-2** Tomorrow cannot be selected
-  - Review: P07-01
+  - Test: src/features/home/WeekBar.test.tsx > WeekBar > shows the days after today but never selects them: tomorrow is disabled (ACC-F1-2, D-16.36)
 
 ### F2 · Swipe the day summary to change day, never past today (P1)
 
 - **ACC-F2-1** Swiping right shows yesterday; swiping left on today does nothing
-  - Review: P07-02
+  - Test: src/features/home/DaySwipe.test.tsx > DaySwipe > shows yesterday after a swipe of 100 px toward the right (ACC-F2-1)
+  - Test: src/features/home/DaySwipe.test.tsx > DaySwipe > never moves past today: a swipe toward the left on today does nothing (ACC-F2-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows yesterday after a swipe toward the right on the summary; toward the left on today does nothing (ACC-F2-1)
 
 ### F3 · Energy gauge with the eaten amount and left, over, goal reached or … (P0)
 

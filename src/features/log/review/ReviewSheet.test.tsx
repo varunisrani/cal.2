@@ -206,6 +206,23 @@ describe('ReviewSheet', () => {
     expect(logged(diary).ctx.loggedAt).toBe(Date.parse('2026-10-24T18:45:00-04:00'));
   });
 
+  it('opens on the day Home shows: an earlier day at the current clock time, with the meal for it (P07-02, D-16.16)', async () => {
+    const diary = recordingDiary();
+    const h = await openHarness({ clock: fixedClock(EVENING + 41_250, 'America/New_York'), diary });
+    // Home shows Saturday; a reuse pick, a typed meal or a photo opens its review now.
+    h.appState.selectDay('2026-10-24');
+    h.mount(<ReviewSheet review={makeAnalysisDraft()} onClose={vi.fn()} />);
+    await untilShown('[data-ui="review.amount"]');
+
+    expect(hooked('review.when.date')).toHaveValue('2026-10-24');
+    expect(hooked('review.when.time')).toHaveValue('21:00');
+    expect(mealShown()).toContain(meals.dinner);
+    await pressLog(within(screen.getByRole('dialog', { name: words.title })));
+    const { ctx } = logged(diary);
+    expect(ctx.loggedAt).toBe(Date.parse('2026-10-24T21:00:41.250-04:00'));
+    expect(ctx.meal).toBe('dinner');
+  });
+
   it('writes one entry when Log is pressed twice (ACC-D7-2, R02.11)', async () => {
     const { sheet, onClose, db } = await openReview();
     await act(async () => {

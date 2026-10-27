@@ -1,12 +1,15 @@
 import type { MessageTree } from '../catalogue';
 
 /**
- * Words of Home (src/features/home): the energy gauge, the pillars, the diary and its rows, and
- * the add button. Meal names are logging words, in `log.meal`.
+ * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the diary and
+ * its rows, and the add button. Meal names are logging words, in `log.meal`.
  */
 export const home = {
   home: {
-    loadFailed: "Today's diary can't be shown right now. Reload the page to try again.",
+    loadFailed: "This day's diary can't be shown right now. Reload the page to try again.",
+    week: {
+      label: 'Choose a day',
+    },
     unit: {
       kcal: 'kcal',
       kJ: 'kJ',

@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { createElement, type ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { AppStateContext, createAppState, useAppState } from './appState';
+import { AppStateContext, createAppState, useAppState, viewedDay } from './appState';
 
 describe('createAppState', () => {
   it('starts with no overlay and today selected', () => {
@@ -45,6 +45,16 @@ describe('createAppState', () => {
     stop();
     store.setAnalysisOverlay(true);
     expect(listener).not.toHaveBeenCalled();
+  });
+});
+
+describe('viewedDay', () => {
+  it('shows today without a selection, the selected day before today, and today for a later one', () => {
+    expect(viewedDay(null, '2026-10-26')).toBe('2026-10-26');
+    expect(viewedDay('2026-10-19', '2026-10-26')).toBe('2026-10-19');
+    expect(viewedDay('2026-10-26', '2026-10-26')).toBe('2026-10-26');
+    // The clock was moved back after the day was chosen.
+    expect(viewedDay('2026-10-27', '2026-10-26')).toBe('2026-10-26');
   });
 });
 

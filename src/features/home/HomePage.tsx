@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useToday } from '../../app/TodayProvider';
 import { useRouter, useSheet } from '../../app/useRoute';
-import { useDayEntries, useSettings, useTargets } from '../../data/hooks';
+import { useDayEntries, useSettings, useTargets, type LiveState } from '../../data/hooks';
 import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
 import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
@@ -14,9 +14,12 @@ import { ReuseSheet } from '../log/reuse/ReuseSheet';
 import { LookupOverlay } from '../log/scan/LookupOverlay';
 import { ScanSheet } from '../log/scan/ScanSheet';
 import { DaySummary } from './DaySummary';
+import { DaySwipe } from './DaySwipe';
 import { Diary } from './Diary';
 import styles from './home.module.css';
 import { tx } from './text';
+import { useSelectedDay } from './useSelectedDay';
+import { oldestDay, WeekBar } from './WeekBar';
 
 /** The manual entry sheet's place on the sheet stack. */
 export const MANUAL_SHEET = 'manual';
@@ -33,20 +36,40 @@ export const COPY_DAY_SHEET = 'copyDay';
 /** The barcode scanner's place on the sheet stack. */
 export const SCAN_SHEET = 'scan';
 
-const SETTINGS = ['units.energy', 'meals.times', 'goals.nutrients', 'menu.layout'] as const;
+const SETTINGS = [
+  'units.energy',
+  'meals.times',
+  'goals.nutrients',
+  'menu.layout',
+  'display.weekStart',
+] as const;
 
 /**
- * Home for today (the week bar and the day swipe come in P07): the gauge and pillars, the diary
- * by meal, and the "+" button with the add menu of the stored layout. Nothing with a number is
- * drawn until the profile, the settings and the day's entries have been read, so a fallback goal
- * never flashes (R05.12); the "+" waits too, since its menu depends on what is stored. Photos
- * gathered for a meal before a reload bring their sheet back when Home opens (D-16.46).
+ * `read`, except that while a new read is on its way the last one that arrived stays on screen:
+ * moving to another day keeps the page, and the week bar under the person's finger, until that
+ * day has been read.
+ */
+function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
+  const [arrived, setArrived] = useState(read);
+  if (read.status !== 'loading' && read !== arrived) setArrived(read);
+  return read.status === 'loading' ? arrived : read;
+}
+
+/**
+ * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
+ * pillars (a sideways swipe over them changes the day), the diary by meal, and the "+" button with
+ * the add menu of the stored layout. What is logged from here goes to the day shown. Nothing with
+ * a number is drawn until the profile, the settings and the day's entries have been read, so a
+ * fallback goal never flashes (R05.12); the "+" waits too, since its menu depends on what is
+ * stored. Photos gathered for a meal before a reload bring their sheet back when Home opens
+ * (D-16.46).
  */
 export function HomePage() {
   const today = useToday();
-  // The viewed day; P07 lets the person pick another one.
-  const dayKey = today;
-  const entries = useDayEntries(dayKey);
+  const selection = useSelectedDay();
+  const dayKey = selection.day;
+  const dayRead = useDayEntries(dayKey);
+  const entries = useSteadyRead(dayRead);
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
@@ -141,7 +164,7 @@ export function HomePage() {
     capture.show();
   };
 
-  const reads = [entries, targets, settings];
+  const reads = [dayRead, targets, settings];
   const failed = reads.some((read) => read.status === 'error');
   let body;
   if (failed) {
@@ -156,20 +179,34 @@ export function HomePage() {
     settings.status === 'ready'
   ) {
     const unit = settings.value['units.energy'];
+    const weekStart = settings.value['display.weekStart'];
     const read = targets.value;
     body = (
       <>
-        <DaySummary
-          entries={entries.value}
-          targets={read.kind === 'ok' ? read.targets : null}
-          goals={settings.value['goals.nutrients']}
-          energyUnit={unit}
+        <WeekBar
+          today={today}
+          selected={dayKey}
+          weekStart={weekStart}
+          onSelect={selection.select}
         />
+        <DaySwipe
+          day={dayKey}
+          latest={today}
+          earliest={oldestDay(today, weekStart)}
+          onChange={selection.select}
+        >
+          <DaySummary
+            entries={entries.value}
+            targets={read.kind === 'ok' ? read.targets : null}
+            goals={settings.value['goals.nutrients']}
+            energyUnit={unit}
+          />
+        </DaySwipe>
         <Diary
           entries={entries.value}
           energyUnit={unit}
           times={settings.value['meals.times']}
-          isToday={dayKey === today}
+          isToday={selection.isToday}
         />
         <div className={styles.fabSlot}>
           <AddMenu
@@ -186,6 +223,7 @@ export function HomePage() {
   } else {
     body = (
       <div className={styles.placeholder} aria-hidden="true" data-ui="home.loading">
+        <div className={styles.placeholderWeek} />
         <div className={styles.placeholderSummary} />
         <div className={styles.placeholderRow} />
       </div>
