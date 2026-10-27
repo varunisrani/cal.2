@@ -162,6 +162,11 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**03:35 IST:** landed 705f448 P13 S2 (Coach reads Health Connect), 61f16d7 P13 S1 (kg only), fbe4a70 P12-01..04 (orange
+redesign) after one stacked loop (unit 5337 + 2 expected-fail, strict 6/6, bundle 237.55 kB, e2e 47 + 1 skipped). P13 S3
+(notifications + your own reminders) is in the loop in `/root/wt/verify`; S4 (Coach chat UI + propose_reminder) builds
+in `/root/wt/wt-p13s4` on a local base (073c8e4) holding everything else. Under heavy builder load HomePage tests time
+out at 5 s (they pass alone): run the loop when builders are quiet, or stack slices.
 **P13 (the user asked 01:45 IST):** kg only (D-16.91), Coach reads Health Connect (D-16.94), reminders as Android
 notifications plus custom reminders made by hand or through the Coach (D-16.92, D-16.93), and an easier Coach chat.
 Plan `docs/plan/phases/P13-kg-coach-health-reminders.md`. Wave A builders running at b9a3f7a: S1 kg only
