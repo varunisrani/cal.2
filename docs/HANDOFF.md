@@ -162,6 +162,13 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**04:45 IST:** 1bee232 P13 S3 (notifications + your own reminders) landed. The final stack sits in `/root/wt/verify`:
+c0cd493 P13 S4 (Coach chat + reminders through the Coach) and efaaf8a the 1.1.0 release (package.json 1.1.0, CHANGELOG
+1.1.0 dated, checklist section, P12/P13 done); messages `/root/wt/msgs/w19-04.txt` and `w19-05.txt`. Its loop failed only on
+an intermittent hang in `src/features/coach/ReminderCard.test.tsx` (its last three tests, under load, about one run in
+two); a debugging agent is fixing the root cause in `/root/wt/wt-p13fix` (at efaaf8a). After the fix: fold it into the
+S4 commit, re-run the loop, `land-multi.sh 78f0ad8 <s4> w19-04.txt <release> w19-05.txt`, then the APK with
+`PLATEWISE_BUILD_NUMBER=2` and fill the checklist's 1.1.0 rows.
 **03:35 IST:** landed 705f448 P13 S2 (Coach reads Health Connect), 61f16d7 P13 S1 (kg only), fbe4a70 P12-01..04 (orange
 redesign) after one stacked loop (unit 5337 + 2 expected-fail, strict 6/6, bundle 237.55 kB, e2e 47 + 1 skipped). P13 S3
 (notifications + your own reminders) is in the loop in `/root/wt/verify`; S4 (Coach chat UI + propose_reminder) builds
