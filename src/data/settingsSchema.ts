@@ -69,8 +69,8 @@ function setting<T>(
 export const APPEARANCES = ['system', 'light', 'dark'] as const;
 export type AppearanceSetting = (typeof APPEARANCES)[number];
 
-/** Accent presets (D-16.1), the ids `src/ui/tokens.ts` styles; Basil first and by default. */
-export const ACCENTS = ['basil', 'saffron', 'lagoon', 'beet', 'ember', 'ink'] as const;
+/** Accent presets (D-16.1, D-16.90), the ids `src/ui/tokens.ts` styles; Orange first and by default. */
+export const ACCENTS = ['orange', 'basil', 'saffron', 'lagoon', 'beet', 'ember', 'ink'] as const;
 export type AccentSetting = (typeof ACCENTS)[number];
 
 export const WEEK_STARTS = ['mon', 'sun'] as const satisfies readonly WeekStart[];
@@ -240,7 +240,7 @@ const none = () => null;
 export const SETTING_SPECS = {
   // Display and units
   'display.appearance': setting<AppearanceSetting>(() => 'system', oneOf(APPEARANCES)),
-  'display.accent': setting<AccentSetting>(() => 'basil', oneOf(ACCENTS)),
+  'display.accent': setting<AccentSetting>(() => 'orange', oneOf(ACCENTS)),
   'display.weekStart': setting<WeekStart>(() => 'mon', oneOf(WEEK_STARTS)),
   'units.energy': setting<EnergyDisplayUnit>(
     () => DEFAULT_ENERGY_UNIT,

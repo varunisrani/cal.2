@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
   <title>Platewise</title>
-  <!-- Maskable: a full-bleed basil square; the plate and leaf stay inside the central safe circle
+  <!-- Maskable: a full-bleed orange square; the plate and leaf stay inside the central safe circle
        (radius 40 % = 204.8), so any launcher mask keeps the whole drawing. -->
-  <rect width="512" height="512" fill="#1d7647" />
-  <circle cx="256" cy="256" r="172" fill="#fcfefc" />
-  <circle cx="256" cy="256" r="128" fill="#d1e4d8" />
+  <rect width="512" height="512" fill="#e85a0c" />
+  <circle cx="256" cy="256" r="172" fill="#fff6ee" />
+  <circle cx="256" cy="256" r="128" fill="#ffe2cc" />
   <g transform="translate(262 250) rotate(-38)">
-    <path d="M -72 0 C -44 -44 22 -54 76 0 C 22 54 -44 44 -72 0 Z" fill="#1d7647" />
-    <path d="M -58 0 L 54 0" stroke="#d1e4d8" stroke-width="7" stroke-linecap="round" />
-    <path d="M -72 0 Q -86 6 -96 18" fill="none" stroke="#1d7647" stroke-width="9" stroke-linecap="round" />
+    <path d="M -72 0 C -44 -44 22 -54 76 0 C 22 54 -44 44 -72 0 Z" fill="#cc4e00" />
+    <path d="M -58 0 L 54 0" stroke="#ffe2cc" stroke-width="7" stroke-linecap="round" />
+    <path d="M -72 0 Q -86 6 -96 18" fill="none" stroke="#cc4e00" stroke-width="9" stroke-linecap="round" />
   </g>
 </svg>

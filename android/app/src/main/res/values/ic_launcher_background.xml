@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Written by scripts/android/icons.py from public/icons; run it again instead of editing. -->
 <resources>
-    <color name="ic_launcher_background">#1D7647</color>
+    <color name="ic_launcher_background">#E85A0C</color>
 </resources>

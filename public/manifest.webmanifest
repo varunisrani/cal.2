@@ -8,8 +8,8 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "theme_color": "#09120d",
-  "background_color": "#09120d",
+  "theme_color": "#131313",
+  "background_color": "#131313",
   "categories": ["food", "health", "lifestyle"],
   "icons": [
     {

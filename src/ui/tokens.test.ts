@@ -22,21 +22,21 @@ const px = (value: string | undefined): number => {
 };
 
 describe('accent presets', () => {
-  it('has the six presets of D-16.1 in picker order, Basil first and default', () => {
-    expect(ACCENT_IDS).toEqual(['basil', 'saffron', 'lagoon', 'beet', 'ember', 'ink']);
-    expect(new Set(ACCENT_IDS).size).toBe(6);
-    expect(DEFAULT_ACCENT).toBe('basil');
+  it('has Orange (D-16.90) and the six presets of D-16.1 in picker order, Orange first and default', () => {
+    expect(ACCENT_IDS).toEqual(['orange', 'basil', 'saffron', 'lagoon', 'beet', 'ember', 'ink']);
+    expect(new Set(ACCENT_IDS).size).toBe(7);
+    expect(DEFAULT_ACCENT).toBe('orange');
   });
 
   it('names every preset through the catalogue, each name distinct', () => {
     expect(Object.keys(ACCENT_LABEL_KEYS)).toEqual([...ACCENT_IDS]);
     const names = ACCENT_IDS.map((id) => t(ACCENT_LABEL_KEYS[id]));
-    expect(names).toEqual(['Basil', 'Saffron', 'Lagoon', 'Beet', 'Ember', 'Ink']);
+    expect(names).toEqual(['Orange', 'Basil', 'Saffron', 'Lagoon', 'Beet', 'Ember', 'Ink']);
   });
 
   it('tells preset ids from other values', () => {
     for (const id of ACCENT_IDS) expect(isAccentId(id)).toBe(true);
-    for (const other of ['', 'Basil', 'pink', 'toString', undefined, 3]) {
+    for (const other of ['', 'Orange', 'Basil', 'pink', 'toString', undefined, 3]) {
       expect(isAccentId(other)).toBe(false);
     }
   });
@@ -60,26 +60,34 @@ describe('accent presets', () => {
 });
 
 describe('tokens.css', () => {
-  it('defaults to the dark theme with the Basil accent when the root has no attributes', () => {
+  it('defaults to the dark theme with the Orange accent when the root has no attributes', () => {
     const bare = Object.fromEntries(rootTokens());
     expect(bare).toEqual(
-      Object.fromEntries(rootTokens({ 'data-theme': 'dark', 'data-accent': 'basil' })),
+      Object.fromEntries(rootTokens({ 'data-theme': 'dark', 'data-accent': 'orange' })),
     );
     expect(bare['color-scheme']).toBe('dark');
     expect(rootTokens({ 'data-theme': 'light' }).get('color-scheme')).toBe('light');
   });
 
-  it('shows Basil on the light theme when no accent is set', () => {
+  it('shows Orange on the light theme when no accent is set', () => {
     expect(Object.fromEntries(rootTokens({ 'data-theme': 'light' }))).toEqual(
-      Object.fromEntries(rootTokens({ 'data-theme': 'light', 'data-accent': 'basil' })),
+      Object.fromEntries(rootTokens({ 'data-theme': 'light', 'data-accent': 'orange' })),
     );
   });
 
-  it('has the radii 12, 18, 24 and 999', () => {
+  it('keeps every light surface white, so the light orange holds 4.5:1 on all of them', () => {
+    const light = rootTokens({ 'data-theme': 'light' });
+    for (const surface of ['--page', '--card', '--raised', '--sheet']) {
+      expect(light.get(surface), surface).toBe('#ffffff');
+    }
+    expect(light.get('--accent-ink')).toBe('#ffffff');
+  });
+
+  it('has the radii 14, 22, 28 and 999', () => {
     const tokens = rootTokens();
     expect(
       ['control', 'card', 'sheet', 'pill'].map((r) => px(tokens.get(`--radius-${r}`))),
-    ).toEqual([12, 18, 24, 999]);
+    ).toEqual([14, 22, 28, 999]);
   });
 
   it('has the spacing steps 4 to 32', () => {

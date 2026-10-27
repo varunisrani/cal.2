@@ -56,9 +56,10 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* A chosen chip is a solid accent pill: its ink is made for that fill, not for the wash (P12-04). */
 .chipOn {
   border-color: var(--accent);
-  background: var(--accent-soft);
+  background: var(--accent);
   color: var(--accent-ink);
 }
 

@@ -34,7 +34,7 @@ export interface ShellPorts {
   readonly boot: ReadStore<BootState>;
 }
 
-/** The shell settings of a new install: follow the device, Basil, every tab shown. */
+/** The shell settings of a new install: follow the device, Orange, every tab shown. */
 export const DEFAULT_SHELL_SETTINGS: ShellSettings = {
   appearance: DEFAULT_THEME.appearance,
   accent: DEFAULT_THEME.accent,

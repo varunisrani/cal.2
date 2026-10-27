@@ -147,7 +147,7 @@ describe('applyTheme', () => {
     const junk = { appearance: 'sepia', accent: 'pink' } as unknown as ThemeChoice;
     const device = new FakeSchemeQuery(false);
     applyTheme(junk, root, device);
-    expect(root.dataset.accent).toBe('basil');
+    expect(root.dataset.accent).toBe('orange');
     expect(root.dataset.theme).toBe('light');
     expect(device.listenerCount).toBe(1);
   });
@@ -156,7 +156,7 @@ describe('applyTheme', () => {
     // jsdom has no matchMedia, so the default is the no-preference path.
     applyTheme(DEFAULT_THEME);
     expect(root.dataset.theme).toBe('dark');
-    expect(root.dataset.accent).toBe('basil');
+    expect(root.dataset.accent).toBe('orange');
   });
 });
 
@@ -177,7 +177,7 @@ describe('resolveTheme', () => {
 describe('appearance choices', () => {
   it('offers System, Light and Dark, System first and by default', () => {
     expect(APPEARANCES).toEqual(['system', 'light', 'dark']);
-    expect(DEFAULT_THEME).toEqual({ appearance: 'system', accent: 'basil' });
+    expect(DEFAULT_THEME).toEqual({ appearance: 'system', accent: 'orange' });
     expect(APPEARANCES.map((a) => t(APPEARANCE_LABEL_KEYS[a]))).toEqual([
       'System',
       'Light',

@@ -125,7 +125,7 @@ describe('SETTING_SPECS', () => {
     expect(defaultSettings(metric)).toEqual({
       ...defaultSettings(metric),
       'display.appearance': 'system',
-      'display.accent': 'basil',
+      'display.accent': 'orange',
       'display.weekStart': 'mon',
       'log.gramsFirst': false,
       'meals.times': { breakfast: 300, lunch: 720, dinner: 1_080, lateSnack: 1_380 },

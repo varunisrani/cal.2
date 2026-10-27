@@ -333,11 +333,11 @@ test.describe('settings and data (Demo 6)', () => {
 
     await test.step('Settings › App settings: Ember is drawn at once', async () => {
       const screen = await openSettings(page, 'app');
-      await expect(html).toHaveAttribute('data-accent', 'basil');
+      await expect(html).toHaveAttribute('data-accent', 'orange');
       const accents = ui(screen, 'appSettings.accent');
       const ember = choice(accents, words('appearance.accent.ember'));
       await expect(ember).toHaveAttribute('data-ui', 'appSettings.accent.ember');
-      await expect(choice(accents, words('appearance.accent.basil'))).toHaveAttribute(
+      await expect(choice(accents, words('appearance.accent.orange'))).toHaveAttribute(
         'aria-checked',
         'true',
       );
@@ -602,7 +602,7 @@ test.describe('settings and data (Demo 6)', () => {
       const wizard = ui(page, 'screen.onboarding');
       await expect(wizard).toHaveAttribute('data-step', 'welcome');
       await expect(page).toHaveURL(/#\/onboarding$/);
-      await expect(html).toHaveAttribute('data-accent', 'basil');
+      await expect(html).toHaveAttribute('data-accent', 'orange');
     });
 
     const asked = (await fakeAi.requests()).length;

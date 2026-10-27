@@ -177,7 +177,7 @@ interface AccentChoiceProps {
 }
 
 /**
- * The six accents as swatches with their names: a radio group with one tab stop, where the arrow
+ * The accents as swatches with their names: a radio group with one tab stop, where the arrow
  * keys move to the next or previous swatch and choose it, Home and End go to the ends. Each swatch
  * shows its preset as the current theme draws it.
  */

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The adaptive launcher icon (minSdk 26 has them everywhere): the basil back layer and the
+<!-- The adaptive launcher icon (minSdk 26 has them everywhere): the orange back layer and the
      plate mark, both drawn by scripts/android/icons.py from public/icons. -->
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <foreground android:drawable="@mipmap/ic_launcher_foreground" />

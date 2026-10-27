@@ -5,8 +5,10 @@
  * var(--space-3).
  */
 
+/* One column as wide as the sheet: no field may widen it past the screen (P12-04). */
 .body {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
 }
 
@@ -245,6 +247,8 @@
 
 .amountInput {
   flex: 1 1 auto;
+  /* No width of its own (a text input asks for about 20 characters): it fills what is left. */
+  inline-size: 0;
   min-inline-size: 0;
   padding-block: var(--space-2);
   padding-inline: 0;

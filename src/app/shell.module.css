@@ -1,7 +1,7 @@
 /*
- * The app shell (P04-04..07): the page frame, the tab screens' content area, the floating tab
- * bar, the start-up skeleton and the full-page notice cards. Every value comes from tokens.css;
- * the one endless animation (the skeleton's pulse) stops under reduced motion.
+ * The app shell (P04-04..07; the P12-02 look): the page frame, the tab screens' content area, the
+ * floating tab bar, the start-up skeleton and the full-page notice cards. Every value comes from
+ * tokens.css; the one endless animation (the skeleton's pulse) stops under reduced motion.
  */
 
 /* The shell draws the page edge to edge; safe areas are padded where they matter. */
@@ -13,7 +13,7 @@
 
 .shell {
   /* The bar's size and its gap to the screen edge; the content keeps that much room free. */
-  --tabbar-height: calc(var(--space-8) * 2);
+  --tabbar-height: calc(var(--space-8) * 2 + var(--space-1));
   --tabbar-gap: var(--space-3);
   min-block-size: 100dvh;
 }
@@ -33,6 +33,7 @@
   font-size: var(--type-heading);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+  letter-spacing: -0.01em;
 }
 
 .onboarding {
@@ -52,6 +53,11 @@
 
 .tabBar {
   --tab-inset: var(--space-1);
+  /* Each tab's column, the icon's distance from the tab's top, and the capsule behind it. */
+  --tab-column: calc((100% - var(--tab-inset) * 2) / var(--tab-count));
+  --tab-icon-top: var(--space-2);
+  --tab-capsule-inline: min(calc(var(--space-8) + var(--space-6)), var(--tab-column));
+  --tab-capsule-block: var(--space-8);
   position: fixed;
   z-index: var(--z-tabbar);
   inset-block-end: calc(var(--safe-bottom) + var(--tabbar-gap));
@@ -68,14 +74,21 @@
   box-shadow: var(--shadow-raised);
 }
 
-/* The soft pill behind the selected tab; it slides when the selection moves. */
+/*
+ * The orange capsule behind the selected tab's icon; it slides when the selection moves. It sits
+ * behind the icon only: the tab's name below it stays on the bar's own surface, where orange
+ * words keep their contrast.
+ */
 .tabPill {
   position: absolute;
-  inset-block: var(--tab-inset);
-  inset-inline-start: calc(
-    var(--tab-inset) + (100% - var(--tab-inset) * 2) / var(--tab-count) * var(--tab-index)
+  inset-block-start: calc(
+    var(--tab-inset) + var(--tab-icon-top) - (var(--tab-capsule-block) - var(--space-6)) / 2
   );
-  inline-size: calc((100% - var(--tab-inset) * 2) / var(--tab-count));
+  inset-inline-start: calc(
+    var(--tab-inset) + var(--tab-column) * (var(--tab-index) + 0.5) - var(--tab-capsule-inline) / 2
+  );
+  inline-size: var(--tab-capsule-inline);
+  block-size: var(--tab-capsule-block);
   border-radius: var(--radius-pill);
   background: var(--accent-soft);
   transition: inset-inline-start var(--motion-base) var(--ease-move);
@@ -86,10 +99,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: var(--space-1);
+  /* The icon keeps its place under the capsule whatever the name's text size. */
+  justify-content: flex-start;
+  gap: calc(var(--space-1) + 2px);
   min-inline-size: 0;
-  padding: 0;
+  padding: var(--tab-icon-top) 0 0;
   border: 0;
   border-radius: var(--radius-pill);
   background: none;
@@ -131,7 +145,7 @@
 /* A new version is waiting (P09-01): a small accent dot at the top corner of the icon. */
 .tabDot {
   position: absolute;
-  inset-block-start: calc(50% - var(--space-5));
+  inset-block-start: calc(var(--tab-icon-top) - var(--space-1));
   inset-inline-start: calc(50% + var(--space-2));
   inline-size: var(--space-2);
   block-size: var(--space-2);

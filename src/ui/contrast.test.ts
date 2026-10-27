@@ -75,6 +75,9 @@ const COLOUR_ROLES = [
   '--danger',
   '--success',
   '--focus',
+  '--well',
+  '--track',
+  '--knob',
   '--accent',
   '--accent-ink',
   '--accent-soft',
@@ -139,6 +142,12 @@ describe('token contrast sweep', () => {
         ['--focus', '--card', NON_TEXT],
         ['--success', '--card', NON_TEXT],
         ['--accent', '--accent-soft-on-card', NON_TEXT],
+        // A segmented control's unchosen words on its well (P12-02).
+        ['--text', '--well', TEXT],
+        ['--text-muted', '--well', MUTED],
+        // A switch (P12-02): an off track stands out from its card, and the knob from the track.
+        ['--track', '--card', NON_TEXT],
+        ['--knob', '--track', NON_TEXT],
       ]),
     ).toEqual([]);
   });

@@ -1,6 +1,7 @@
 /*
- * Display primitives: gauge, pillar, progress bar, stat badge, menu and swipe row. Colours,
- * radii, spacing and timings come from tokens.css; the motion tokens drop to 1 ms under
+ * Display primitives: gauge, pillar, progress bar, stat badge, menu and swipe row (P04; the
+ * P12-02 look: orange marks, numbers in the text colour). Colours, radii, spacing and timings
+ * come from tokens.css; the motion tokens drop to 1 ms under
  * prefers-reduced-motion, so every transition here follows that setting.
  */
 
@@ -67,7 +68,8 @@
 .gaugeValue {
   max-width: 100%;
   overflow: hidden;
-  color: var(--accent);
+  /* The arc carries the orange; the number reads in the text colour. */
+  color: var(--text);
   font-size: min(var(--type-display), 18cqi);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
@@ -97,7 +99,7 @@
 }
 
 .pillarValue {
-  color: var(--accent);
+  color: var(--text);
   font-size: var(--type-lead);
   font-weight: var(--weight-bold);
   font-variant-numeric: tabular-nums;
@@ -153,7 +155,7 @@
 .progress {
   display: block;
   width: 100%;
-  height: 4px;
+  height: 6px;
   overflow: hidden;
   border-radius: var(--radius-pill);
   background-color: var(--accent-soft);
@@ -290,7 +292,7 @@
 .menuRowIcon {
   display: inline-flex;
   flex: none;
-  color: var(--text-muted);
+  color: var(--accent);
 }
 
 .menuRowLabel {

@@ -96,6 +96,7 @@ describe('AppPage', () => {
         .getAllByRole('radio')
         .map((choice) => choice.textContent),
     ).toEqual([
+      accents.orange,
       accents.basil,
       accents.saffron,
       accents.lagoon,
@@ -142,7 +143,7 @@ describe('AppPage', () => {
     const h = await openAppSettings();
     h.mount(<AppPage />);
     await untilShown(PAGE);
-    await settle(() => h.themeRoot.dataset.accent === 'basil');
+    await settle(() => h.themeRoot.dataset.accent === 'orange');
 
     fireEvent.click(radio(words.look.accent, accents.ember));
 
@@ -174,15 +175,15 @@ describe('AppPage', () => {
     const h = await openAppSettings();
     h.mount(<AppPage />);
     await untilShown(PAGE);
-    const basil = radio(words.look.accent, accents.basil);
-    expect(basil).toHaveAttribute('tabindex', '0');
+    const orange = radio(words.look.accent, accents.orange);
+    expect(orange).toHaveAttribute('tabindex', '0');
 
-    fireEvent.keyDown(basil, { key: 'ArrowLeft' });
+    fireEvent.keyDown(orange, { key: 'ArrowLeft' });
     expect(radio(words.look.accent, accents.ink)).toHaveFocus();
     await settle(() => h.themeRoot.dataset.accent === 'ink');
 
     fireEvent.keyDown(radio(words.look.accent, accents.ink), { key: 'Home' });
-    await settle(() => h.themeRoot.dataset.accent === 'basil');
+    await settle(() => h.themeRoot.dataset.accent === 'orange');
   });
 
   it('turns the page light at once when Light is chosen', async () => {
@@ -258,9 +259,9 @@ describe('AppPage', () => {
     await settle(() => document.querySelector('[data-ui="toast.message"]') !== null);
     expect(screen.getByText(words.saveFailed)).toBeVisible();
     expect(logged).toHaveBeenCalledOnce();
-    expect(checkedIn(words.look.accent)).toEqual([accents.basil]);
-    expect(h.themeRoot.dataset.accent).toBe('basil');
-    expect(await h.repos.settingsRepo.get('display.accent')).toBe('basil');
+    expect(checkedIn(words.look.accent)).toEqual([accents.orange]);
+    expect(h.themeRoot.dataset.accent).toBe('orange');
+    expect(await h.repos.settingsRepo.get('display.accent')).toBe('orange');
   });
 
   it('opens the pages under it, with Add menu first once that page is registered', async () => {

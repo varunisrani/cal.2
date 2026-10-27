@@ -18,7 +18,7 @@ export interface ThemeChoice {
   accent: AccentId;
 }
 
-/** What a new install shows: follow the device, Basil accent. */
+/** What a new install shows: follow the device, Orange accent. */
 export const DEFAULT_THEME: Readonly<ThemeChoice> = {
   appearance: 'system',
   accent: DEFAULT_ACCENT,

@@ -1,6 +1,6 @@
 # P12 · Orange redesign and the 1.1 release
 
-**Weeks:** 1 · **Tracks:** design system, brand assets, release · **Depends on:** P00–P11 · **Status:** 📋 planned (2026-10-28, at the owner's request)
+**Weeks:** 1 · **Tracks:** design system, brand assets, release · **Depends on:** P00–P11 · **Status:** 🔨 in progress: P12-01..04 landed (4/5, 2026-10-28); P12-05 (the 1.1.0 release) after P13
 
 ## Goal
 

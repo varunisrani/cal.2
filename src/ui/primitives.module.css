@@ -1,7 +1,8 @@
 /*
- * Buttons, cards, sheets, dialogs and toasts (P04-01). Every value comes from tokens.css; the
- * motion tokens drop to 1 ms under reduced motion, and the one endless animation (the busy
- * spinner) stops there instead.
+ * Buttons, cards, sheets, dialogs and toasts (P04-01; the P12-02 look: pill buttons, round cards
+ * with a soft shadow over a hairline). Every value comes from tokens.css; the motion tokens drop
+ * to 1 ms under reduced motion, and the one endless animation (the busy spinner) stops there
+ * instead.
  */
 
 /* ---- Buttons ------------------------------------------------------------------------------ */
@@ -15,9 +16,9 @@
   min-block-size: calc(var(--space-8) + var(--space-3));
   min-inline-size: calc(var(--space-8) + var(--space-3));
   padding-block: var(--space-2);
-  padding-inline: var(--space-4);
+  padding-inline: var(--space-5);
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-pill);
   background: var(--raised);
   color: var(--text);
   font: inherit;
@@ -52,9 +53,11 @@
   cursor: progress;
 }
 
+/* The orange pill: the one action a screen asks for. */
 .primary {
   border-color: var(--accent);
   background: var(--accent);
+  box-shadow: var(--shadow-card);
   color: var(--accent-ink);
 }
 
@@ -67,6 +70,7 @@
 .quiet {
   border-width: 0;
   background: none;
+  box-shadow: none;
   color: var(--accent);
   padding-inline: var(--space-3);
 }
@@ -77,9 +81,11 @@
   color: var(--text-inverse);
 }
 
+/* A full-width button is the screen's main action: a little taller. */
 .block {
   display: flex;
   inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-4));
 }
 
 .buttonLabel {
@@ -233,16 +239,22 @@
 
 .grabber {
   display: block;
-  inline-size: var(--space-8);
+  inline-size: calc(var(--space-8) + var(--space-2));
   block-size: var(--space-1);
-  margin: 0 auto var(--space-1);
+  margin: var(--space-1) auto var(--space-2);
   border-radius: var(--radius-pill);
-  background: var(--line);
+  background: var(--track);
+  opacity: 0.45;
 }
 
+/*
+ * The title stays centred while both sides fit; when the actions need more room (Cancel against
+ * Fit check and Log), each side keeps its whole width and the title moves over, so no button
+ * breaks its word.
+ */
 .sheetBar {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
   align-items: center;
   gap: var(--space-2);
 }
@@ -258,7 +270,7 @@
 .sheetTitle {
   margin: 0;
   font-size: var(--type-lead);
-  font-weight: var(--weight-semibold);
+  font-weight: var(--weight-bold);
   line-height: var(--leading-snug);
   text-align: center;
 }

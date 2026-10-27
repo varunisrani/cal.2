@@ -63,16 +63,16 @@
 
 /* ---- Accent swatches ---------------------------------------------------------------------- */
 
-/* Two rows of three on a phone, one row of six where there is room. */
+/* Two rows (four, then three) on a phone, one row of seven where there is room. */
 .accents {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
 @media (min-width: 30rem) {
   .accents {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(7, minmax(0, 1fr));
   }
 }
 

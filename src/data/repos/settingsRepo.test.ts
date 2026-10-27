@@ -47,7 +47,7 @@ describe('get and set', () => {
     const { db } = await openTestDb();
     const repo = await repoOn(db);
     expect(await repo.snapshot()).toEqual(defaultSettings(env));
-    expect(await repo.get('display.accent')).toBe('basil');
+    expect(await repo.get('display.accent')).toBe('orange');
     expect(await repo.get('tuneUp.on')).toBe(true);
     expect(await repo.get('remind.dinner')).toEqual({ on: false, at: '19:00' });
     expect(await db.settings.count()).toBe(0);
@@ -100,8 +100,8 @@ describe('unusable stored values', () => {
     await plant(db, [bad]);
     const repo = await repoOn(db);
 
-    expect(await repo.get('display.accent')).toBe('basil');
-    expect(await repo.get('display.accent')).toBe('basil');
+    expect(await repo.get('display.accent')).toBe('orange');
+    expect(await repo.get('display.accent')).toBe('orange');
     await settleQuarantine(db);
 
     expect(await db.settings.get('display.accent')).toEqual(bad);
@@ -382,10 +382,10 @@ describe('snapshot', () => {
       });
     stops.push(source.subscribe(() => onChange(source.getSnapshot())));
 
-    await until('basil');
+    await until('orange');
     await elsewhere.set('display.accent', 'ember');
     await until('ember');
-    expect(accents.at(0)).toBe('basil');
+    expect(accents.at(0)).toBe('orange');
     expect(accents.at(-1)).toBe('ember');
     await finish(other.db);
     await finish(db);

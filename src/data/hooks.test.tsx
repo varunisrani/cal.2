@@ -166,7 +166,7 @@ describe('each hook renders loading, then the stored data, and follows a write a
     const view = track(sources, () => useSettings(['water.on', 'display.accent']), null);
     expect(view.renders[0]).toEqual({ status: 'loading' });
     await view.until(ready());
-    expect(view.value()).toEqual({ 'water.on': false, 'display.accent': 'basil' });
+    expect(view.value()).toEqual({ 'water.on': false, 'display.accent': 'orange' });
 
     await act(() => repos.settingsRepo.set('display.accent', 'ink'));
     await view.until(ready((value) => value['display.accent'] === 'ink'));

@@ -100,7 +100,7 @@ describe('ThemeProvider', () => {
     const device = new DeviceScheme(false);
     const { root, settings } = renderTheme(undefined, device);
     expect(root.dataset.theme).toBe('light');
-    expect(root.dataset.accent).toBe('basil');
+    expect(root.dataset.accent).toBe('orange');
 
     act(() => settings.set(choose({ appearance: 'dark', accent: 'lagoon' })));
     expect(root.dataset.theme).toBe('dark');

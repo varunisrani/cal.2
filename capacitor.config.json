@@ -2,6 +2,7 @@
   "appId": "app.platewise.android",
   "appName": "Platewise",
   "webDir": "dist",
+  "backgroundColor": "#131313",
   "android": {
     "adjustMarginsForEdgeToEdge": "auto"
   }

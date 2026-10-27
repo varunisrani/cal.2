@@ -4,8 +4,11 @@
  *
  * The theme runtime (theme.ts) sets two attributes on <html>:
  *   data-theme  = dark | light   (no attribute: dark, the default)
- *   data-accent = basil | saffron | lagoon | beet | ember | ink   (no attribute: basil)
+ *   data-accent = orange | basil | saffron | lagoon | beet | ember | ink   (no attribute: orange)
  *
+ * Orange is the brand and the default accent (D-16.90). The light theme is white on every surface
+ * a person reads on, so the brightest orange that carries white text at 4.5:1 also reads at 4.5:1
+ * on all of them; the dark theme is a neutral charcoal with a vivid orange and dark ink on it.
  * Every accent has a dark and a light variant. A light variant is written with both attributes,
  * so it outranks the one-attribute blocks by specificity, not by its place in the file.
  * Colours under test are hex (#rrggbb, or #rrggbbaa for a wash): src/ui/contrast.test.ts resolves
@@ -15,9 +18,9 @@
 /* Theme-independent scales. */
 :root {
   /* Corner radii. */
-  --radius-control: 12px;
-  --radius-card: 18px;
-  --radius-sheet: 24px;
+  --radius-control: 14px;
+  --radius-card: 22px;
+  --radius-sheet: 28px;
   --radius-pill: 999px;
 
   /* Spacing, named by multiples of 4 px. */
@@ -84,49 +87,63 @@
   }
 }
 
-/* Dark neutrals: the default. A deep green-black base. */
+/* Dark neutrals: the default. A neutral charcoal, each layer a step lighter than the one below. */
 :root,
 [data-theme='dark'] {
   color-scheme: dark;
-  --page: #09120d;
-  --card: #121c17;
-  --raised: #1a2620;
-  --sheet: #16211b;
-  --line: #283731;
-  --text: #ebf4ee;
-  --text-muted: #94a59b;
-  --text-inverse: #09120d;
-  --danger: #ff8f7e;
-  --success: #9fdc7a;
-  --focus: #9ad4ff;
-  --scrim: rgb(3 6 4 / 0.64);
-  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-raised: 0 6px 18px rgb(0 0 0 / 0.45);
-  --shadow-sheet: 0 -8px 32px rgb(0 0 0 / 0.5);
+  --page: #131313;
+  --card: #1c1c1c;
+  --raised: #252525;
+  --sheet: #1f1f1f;
+  --line: #313131;
+  --text: #f5f4f2;
+  --text-muted: #a8a5a1;
+  --text-inverse: #131313;
+  --danger: #ff7b86;
+  --success: #6fd48f;
+  --focus: #8cb8ff;
+  /* A recessed fill under a segmented control's choices. */
+  --well: #0c0c0c;
+  /* A switch: the track when off, and the knob in both states. */
+  --track: #74716d;
+  --knob: #f5f4f2;
+  --scrim: rgb(0 0 0 / 0.6);
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.32), 0 4px 14px rgb(0 0 0 / 0.22);
+  --shadow-raised: 0 10px 28px rgb(0 0 0 / 0.45);
+  --shadow-sheet: 0 -10px 36px rgb(0 0 0 / 0.5);
 }
 
-/* Light neutrals. */
+/* Light neutrals: white surfaces, warm grey hairlines and a warm near-black ink. */
 [data-theme='light'] {
   color-scheme: light;
-  --page: #eff6f0;
-  --card: #fcfefc;
-  --raised: #fcfefc;
-  --sheet: #f6faf6;
-  --line: #d1ddd4;
-  --text: #0f1b15;
-  --text-muted: #4c5b52;
-  --text-inverse: #eff6f0;
-  --danger: #b0301c;
-  --success: #2f6d1a;
-  --focus: #1858c4;
-  --scrim: rgb(17 26 21 / 0.36);
-  --shadow-card: 0 1px 2px rgb(17 26 21 / 0.06), 0 2px 8px rgb(17 26 21 / 0.05);
-  --shadow-raised: 0 8px 24px rgb(17 26 21 / 0.12);
-  --shadow-sheet: 0 -6px 28px rgb(17 26 21 / 0.14);
+  --page: #ffffff;
+  --card: #ffffff;
+  --raised: #ffffff;
+  --sheet: #ffffff;
+  --line: #e9e4de;
+  --text: #1d1a17;
+  --text-muted: #665f58;
+  --text-inverse: #ffffff;
+  --danger: #be1e3a;
+  --success: #1f7a3f;
+  --focus: #2a62d8;
+  --well: #f3efea;
+  --track: #8a827a;
+  --knob: #ffffff;
+  --scrim: rgb(29 26 23 / 0.4);
+  --shadow-card: 0 1px 2px rgb(41 33 26 / 0.05), 0 4px 16px rgb(41 33 26 / 0.06);
+  --shadow-raised: 0 10px 30px rgb(41 33 26 / 0.14);
+  --shadow-sheet: 0 -8px 32px rgb(41 33 26 / 0.14);
 }
 
-/* Accents on the dark theme. Basil is the default. */
+/* Accents on the dark theme. Orange is the default. */
 :root,
+[data-accent='orange'] {
+  --accent: #ff8c3a;
+  --accent-ink: #241204;
+  --accent-soft: #ff8c3a26;
+}
+
 [data-accent='basil'] {
   --accent: #6fd494;
   --accent-ink: #06130c;
@@ -163,8 +180,17 @@
   --accent-soft: #9fb2f22e;
 }
 
-/* Accents on the light theme: deeper, with light ink. Basil is the default here too. */
+/*
+ * Accents on the light theme: deeper, with light ink. Orange is the default here too: the
+ * brightest orange that keeps white text on it, and itself on white, at 4.5:1.
+ */
 [data-theme='light'],
+[data-theme='light'][data-accent='orange'] {
+  --accent: #cc4e00;
+  --accent-ink: #ffffff;
+  --accent-soft: #cc4e001f;
+}
+
 [data-theme='light'][data-accent='basil'] {
   --accent: #1d7647;
   --accent-ink: #fbfefc;

@@ -151,8 +151,9 @@
   inline-size: 1.5rem;
   block-size: 1.5rem;
   border-radius: var(--radius-pill);
-  background: var(--accent-soft);
-  color: var(--accent);
+  /* Solid, with the accent's own ink: an accent number on the wash would be too faint (P12-04). */
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: var(--type-caption);
   font-weight: var(--weight-semibold);
   font-variant-numeric: tabular-nums;

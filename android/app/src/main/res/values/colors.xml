@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Platewise's basil and night green, in place of the Capacitor library's default colours. -->
+<!-- Platewise's brand orange and charcoal page (D-16.90), in place of the Capacitor library's default colours. -->
 <resources>
-    <color name="colorPrimary">#1D7647</color>
-    <color name="colorPrimaryDark">#09120D</color>
-    <color name="colorAccent">#1D7647</color>
+    <color name="colorPrimary">#CC4E00</color>
+    <color name="colorPrimaryDark">#131313</color>
+    <color name="colorAccent">#CC4E00</color>
 </resources>

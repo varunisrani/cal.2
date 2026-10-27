@@ -9,6 +9,7 @@ export const appearance = {
       dark: 'Dark',
     },
     accent: {
+      orange: 'Orange',
       basil: 'Basil',
       saffron: 'Saffron',
       lagoon: 'Lagoon',
