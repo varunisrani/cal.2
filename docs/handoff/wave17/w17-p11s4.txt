@@ -1,0 +1,17 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p11s4 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P11 follow-ups (no new task id), three small fixes found after P11-03/04 landed. Spec: docs/plan/phases/P11-android-and-health-connect.md (Decisions, the plugin contract: writes of a future-dated record are refused with `invalidInput`); docs/notes/P11/*.md; src/services/health/**; src/features/home/ActivityCard.tsx; the reminders and onboarding notification copy.
+Task note (before its text): docs/notes/P11/follow-ups.md.
+
+1. Future-dated write-back (bug). `writeBackPlan` in src/services/health/records.ts sends every entry and weigh-in of the 30-day window, but the plugin refuses a record dated after now, and one such record fails the whole `writeNutrition` call on every pass until its time arrives. Fix: the plan takes `now` and leaves out (defers, does not forget) entries and weigh-ins whose time is after now; they are sent by the first pass after their time. A test that fails first: an entry for later today is not sent, the other entries are; after the clock passes its time, it is sent.
+2. Total calories and distance are read and stored but never shown, while the phase's decision says total burn is shown (never added). Show them on the Home activity card under steps and active calories (total calories through the existing energy formatting, distance in km or mi following the person's distance or weight unit setting, whichever the app already uses for lengths; if none fits, km for metric and mi for imperial weight units), only when present. Strings through i18n, accessible names, tests.
+3. In the Android app (isHealthAvailable()), the reminders and onboarding copy say adding Platewise to the home screen may make notifications available; inside the app that cannot help (the WebView has no Notification API). There, say instead that reminders are not available in the Android app yet. Tests for both places.
+
+You own: the files these need under src/** (records.ts, service.ts if needed, ActivityCard and its CSS, the reminders and onboarding notification copy and their components, src/i18n/en/*.ts lines for these strings), their tests, the task note.
+Do not touch: docs/** except the note (the lead updates the user page and CHANGELOG), android/**, package.json, pnpm-lock.yaml, e2e/**, CreditsPage and scripts/notices* (another slice is landing them).
+
+Tests: the files you touch and their folders with --maxWorkers=1; then lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref --strict`, `pnpm build`, `pnpm check:bundle` (report the size). No full `pnpm test`, no e2e.
+
+Final report as the rules file says (tests as file > describe > test name, and any acceptance row a test should be added to). Leave everything uncommitted.
