@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 07:31 IST (Agent 1, session 3). 119/176 tasks; P00–P05 complete; the app runs on the
-real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 prompts ready.
+Updated: 2026-10-27 08:01 IST (Agent 1, session 3). 121/176 tasks; P00–P05 complete; the app runs on the
+real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 two of five landed.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -108,24 +108,25 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 10 | P07-13, P07-14 (body-fat card and logging; history sheets) | 2b1a1c3 |
 | Wave 10 | P06-18 (product block, ingredient label with bold allergens, allergen line; lead: the draft codec keeps `markedIngredients`) | c447eaf |
 | Wave 10 | P07-03, P07-04 (gauge and pillars in full; the day's nutrients sheet and pillar picker; `homePrefs` service) | 630e227 |
+| Wave 11 | P07-16 (calories card and averages; cancellable sliced computation) | b2f9de2 |
+| Wave 11 | P07-15 (weekly recap; D-16.84; plan cell corrected: 1 799 kcal is outside ±10 % of 2 000) | dc6c909 |
 
 ## In progress
 
-Two wave 11 builders started early at 07:36 IST (usage 73 %), base e8a92c8: P07-15 (`/root/wt/wt-p07s4b`)
-and P07-16 (`/root/wt/wt-p07s4d`). Wave 10 is fully landed (last: P07-03/04 at 630e227, full loop green). The
+No builders running. Wave 11's P07-16 (b2f9de2) and P07-15 (dc6c909) were started early and landed
+(full loop green: unit 3807 passed + 2 expected-fail, bundle 209.22 kB, e2e 6/6). Wave 10 is fully landed. The
 next window starts at the 10:20 IST reset: launch the other three wave 11 prompts in `docs/handoff/wave11/`
-at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2a,p07s2b,p07s4b,p07s4d}`):
+at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2a,p07s2b}`):
 - P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
 - P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
 - P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse
   (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page.
-- P07-15 weekly recap; P07-16 calories card and averages (both mount on `ProgressPage`: merge by hand).
 Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
 water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
 `PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.
 Landed this window (05:20–10:20 IST): 9a83eee, d855e53, c69fd91, d9ae5fc, 289332c, 1e3db66, 26e1c99 +
-cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227. **Progress:
-119/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 10/17,
+cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227, b2f9de2, dc6c909. **Progress:
+121/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 12/17,
 P08 0/14, P09 0/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
