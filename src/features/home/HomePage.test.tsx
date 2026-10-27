@@ -1,11 +1,12 @@
-import { act, fireEvent, screen, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeFetch } from '../../ai/testing/fakeFetch';
 import { createDraftsRepo } from '../../data/repos/draftsRepo';
 import { createPhotoRepo } from '../../data/repos/photoRepo';
 import { createSecretsRepo } from '../../data/repos/secretsRepo';
 import { capture } from '../../i18n/en/capture';
 import { common } from '../../i18n/en/common';
+import { fasting as fastingWords } from '../../i18n/en/fasting';
 import { home } from '../../i18n/en/home';
 import { log } from '../../i18n/en/log';
 import { menu } from '../../i18n/en/menu';
@@ -22,17 +23,21 @@ import { OFF_PRODUCT_URL } from '../../services/barcode/off';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
 import { createCopyDayService } from '../../services/copyDay';
+import { createFastingService } from '../../services/fasting';
 import { createHomePrefsService } from '../../services/homePrefs';
 import { formatDay } from '../../i18n/format';
 import type { PhotoService } from '../../services/photos';
-import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
+import { FACTORY_NOW, makeEntry, makeFast, makeProfile } from '../../test/factories';
 import { reuse } from '../../i18n/en/reuse';
 import { review } from '../../i18n/en/review';
+import { trackers } from '../../i18n/en/trackers';
+import { createWaterService } from '../../services/water';
 import { AnalysisReview } from '../log/review/ReviewSheet';
 import {
   CAPTURE_SHEET,
   COPY_DAY_SHEET,
   DESCRIBE_SHEET,
+  FAST_SHEET,
   HomePage,
   MANUAL_SHEET,
   OFTEN_SHEET,
@@ -944,5 +949,212 @@ describe('HomePage: barcodes (P06-14, P06-17)', () => {
     await untilShown('[data-ui="describe.text"]');
 
     expect(barcode.takeArmedLabel()).toBeNull();
+  });
+});
+
+// ---- Water and fasts in the diary and the + menu (P07-05, P07-08) -------------------------------
+
+/** Home over the harness with the sort, water and fasting services wired in, as `main.tsx` does. */
+async function openWithTrackers(setup: { water?: boolean; fasting?: boolean } = {}) {
+  const h = await openHarness();
+  const { settingsRepo, waterRepo, fastRepo, diaryRepo } = h.repos;
+  await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+  if (setup.water !== undefined) await settingsRepo.set('water.on', setup.water);
+  if (setup.fasting !== undefined) await settingsRepo.set('fasting.on', setup.fasting);
+  const services: Services = {
+    ...h.services,
+    homePrefs: createHomePrefsService({ settingsRepo }),
+    water: createWaterService({ waterRepo, settingsRepo, clock: h.clock }),
+    fasting: createFastingService({ fastRepo, diaryRepo, settingsRepo, clock: h.clock }),
+  };
+  const mount = async () => {
+    h.mount(
+      <ServicesProvider services={services}>
+        <HomePage />
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.diary"]');
+  };
+  return { h, mount };
+}
+
+/** 26 October 2026 (or `day`) at `hh:mm` in the test zone. */
+const atTime = (time: string, day = '2026-10-26') => Date.parse(`${day}T${time}:00-04:00`);
+
+/** Each meal section's name and its rows' names (food, Water, a fast's title), top to bottom. */
+function diaryLayout(): string[][] {
+  return Array.from(document.querySelectorAll<HTMLElement>('section[data-ui^="home.meal."]')).map(
+    (section) => [
+      section.querySelector('h3')?.textContent ?? '',
+      ...Array.from(section.querySelectorAll('li')).map(
+        (item) => item.querySelector('[id$="-name"], [id$="-title"]')?.textContent ?? '',
+      ),
+    ],
+  );
+}
+
+/**
+ * Waits for a sheet fetched on first open, with Testing Library's `waitFor`: a wait held inside
+ * act would hold back the lazy sheet's first draw (see src/test/lazy.ts).
+ */
+async function untilDrawn(selector: string): Promise<void> {
+  await waitFor(() => {
+    if (document.querySelector(selector) === null) throw new Error(`${selector} not drawn yet`);
+  });
+}
+
+const addButton = () => screen.getByRole('button', { name: words.add.label });
+const menuRows = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
+const meals = log.log.meal;
+const tracker = menuWords.tracker;
+
+describe('HomePage: water and fasts (P07-05, P07-08)', () => {
+  // The water page and the trackers' sheets are fetched on first open: load them before any wait.
+  beforeAll(async () => {
+    await Promise.all([
+      import('../water/WaterMenuPage'),
+      import('../water/CustomWaterSheet'),
+      import('../fasting/StartFastSheet'),
+      import('../fasting/FastEditor'),
+    ]);
+  });
+
+  it("shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)", async () => {
+    const { h, mount } = await openWithTrackers();
+    await h.repos.waterRepo.add({ at: atTime('10:00'), ml: 500 });
+    await h.repos.waterRepo.add({ at: atTime('13:00', '2026-10-25'), ml: 1_000 });
+    await h.db.fasts.bulkPut([
+      // Over midnight: on the day it ended only (R05.21).
+      makeFast({ start: atTime('18:00', '2026-10-25'), end: atTime('10:30'), goalMin: 960 }),
+      makeFast({ start: atTime('20:00', '2026-10-24'), end: atTime('12:00', '2026-10-25') }),
+    ]);
+    await mount();
+
+    expect(diaryLayout()).toEqual([[meals.breakfast, '16h 30m fast', words.water.title]]);
+    expect(document.querySelector('[data-ui="home.meal.breakfast.totals"]')).toBeNull();
+    fireEvent.click(addButton());
+    expect(menuRows()).toEqual([
+      menuWords.group.snapScan,
+      menuWords.group.describe,
+      menuWords.group.reuse,
+    ]);
+    fireEvent.click(addButton());
+
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => diaryLayout()[0]?.[1] === words.water.title);
+    expect(diaryLayout()).toEqual([[meals.lunch, words.water.title, '16h fast']]);
+  });
+
+  it('stores the sort order from the first header; newest first shows a meal again (ACC-F7-2)', async () => {
+    const { h, mount } = await openWithTrackers();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ name: 'Toast', meal: 'breakfast', loggedAt: atTime('08:00') }),
+      makeEntry({ name: 'Soup', meal: 'lunch', loggedAt: atTime('12:00') }),
+      makeEntry({ name: 'Apple', meal: 'breakfast', loggedAt: atTime('12:20') }),
+    ]);
+    await mount();
+    expect(diaryLayout()).toEqual([
+      [meals.breakfast, 'Apple', 'Toast'],
+      [meals.lunch, 'Soup'],
+    ]);
+
+    const sort = screen.getAllByRole('button', { name: words.sort.label });
+    expect(sort).toHaveLength(1);
+    fireEvent.click(sort[0] as HTMLElement);
+    fireEvent.click(screen.getByRole('menuitemradio', { name: words.sort.newestFirst }));
+
+    await until(() => diaryLayout().length === 3);
+    expect(diaryLayout()).toEqual([
+      [meals.breakfast, 'Apple'],
+      [meals.lunch, 'Soup'],
+      [meals.breakfast, 'Toast'],
+    ]);
+    expect(await h.repos.settingsRepo.get('home.sort')).toBe('newestFirst');
+  });
+
+  it("opens the fast editor over Home from a fast's row", async () => {
+    const { h, mount } = await openWithTrackers();
+    await h.db.fasts.put(makeFast({ start: atTime('00:00'), end: atTime('09:00'), goalMin: 540 }));
+    await mount();
+
+    fireEvent.click(screen.getByRole('button', { name: '9h fast' }));
+    await untilDrawn('[data-ui="fast.editor"]');
+
+    expect(
+      screen.getByRole('dialog', { name: fastingWords.fasting.editor.titleDone }),
+    ).toBeVisible();
+    expect(h.router.current().sheets).toEqual([FAST_SHEET]);
+    fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="fast.editor"]');
+    expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it('asks before deleting a water row and removes it once confirmed (ACC-F9-1)', async () => {
+    const { h, mount } = await openWithTrackers({ water: true });
+    await h.repos.waterRepo.add({ at: atTime('09:00'), ml: 500 });
+    await mount();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete 500 ml of water' }));
+    const dialog = screen.getByRole('alertdialog', { name: words.water.deleteTitle });
+    fireEvent.click(within(dialog).getByRole('button', { name: common.common.delete }));
+
+    await untilShown('[data-ui="home.diary.empty"]');
+    expect(await h.repos.waterRepo.byDay('2026-10-26')).toEqual([]);
+  });
+
+  it('starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)', async () => {
+    const { h, mount } = await openWithTrackers({ fasting: true });
+    await mount();
+
+    fireEvent.click(addButton());
+    expect(menuRows()).toEqual([
+      menuWords.group.snapScan,
+      menuWords.group.describe,
+      menuWords.group.reuse,
+      tracker.startFast,
+    ]);
+    fireEvent.click(screen.getByRole('menuitem', { name: tracker.startFast }));
+    // The sheet draws its goal once the default goal is read; Start waits for it.
+    await untilDrawn('[data-ui="fast.start.goal"]');
+    fireEvent.click(screen.getByRole('button', { name: fastingWords.fasting.start.start }));
+
+    await untilShown('[data-ui="fast.row"][data-running]');
+    expect(diaryLayout()).toEqual([[meals.lunch, words.fast.running]]);
+    fireEvent.click(addButton());
+    expect(menuRows()).toEqual([tracker.fasting]);
+    fireEvent.click(screen.getByRole('menuitem', { name: tracker.fasting }));
+    fireEvent.click(screen.getByRole('menuitem', { name: tracker.endFast }));
+
+    await untilGone('[data-ui="fast.row"][data-running]');
+    expect(diaryLayout()).toEqual([[meals.lunch, '0m fast']]);
+    expect(await h.repos.fastRepo.list()).toEqual([
+      expect.objectContaining({ start: FACTORY_NOW, end: FACTORY_NOW, goalMin: 960 }),
+    ]);
+  });
+
+  it("logs a custom amount from the + menu's water page on the sheet over Home (ACC-H1-1)", async () => {
+    const { h, mount } = await openWithTrackers({ water: true });
+    await mount();
+
+    fireEvent.click(addButton());
+    fireEvent.click(screen.getByRole('menuitem', { name: tracker.water }));
+    await untilDrawn('[data-ui="water.menu"]');
+    fireEvent.click(screen.getByRole('button', { name: trackers.trackers.water.menu.custom }));
+    expect(screen.queryByRole('menu')).toBeNull();
+    await untilDrawn('[data-ui="water.custom"]');
+
+    const sheet = within(
+      screen.getByRole('dialog', { name: trackers.trackers.water.custom.title }),
+    );
+    fireEvent.change(sheet.getByLabelText(trackers.trackers.water.custom.field), {
+      target: { value: '300' },
+    });
+    fireEvent.click(sheet.getByRole('button', { name: common.common.add }));
+    await untilShown('[data-ui="water.row"]');
+    expect(diaryLayout()).toEqual([[meals.lunch, words.water.title]]);
+    expect(screen.getByRole('group', { name: `${words.water.title} 300 ml` })).toBeVisible();
+    expect(await h.repos.waterRepo.byDay('2026-10-26')).toEqual([
+      expect.objectContaining({ ml: 300, at: FACTORY_NOW }),
+    ]);
   });
 });

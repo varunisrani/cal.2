@@ -69,6 +69,19 @@ describe('logWater', () => {
   });
 });
 
+describe('deleteLog', () => {
+  it('deletes one log and keeps the others; a log already gone does nothing', async () => {
+    const h = await setUp();
+    const first = await h.service.logWater(250, '2026-10-26');
+    const second = await h.service.logWater(500, '2026-10-26');
+
+    await h.service.deleteLog(first.id);
+    await h.service.deleteLog(first.id);
+
+    expect(await h.waterRepo.byDay('2026-10-26')).toEqual([second]);
+  });
+});
+
 describe('settings', () => {
   it('turns the water reminder off with tracking, keeping its time and the logs', async () => {
     const h = await setUp();

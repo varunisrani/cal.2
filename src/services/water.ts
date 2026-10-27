@@ -1,8 +1,8 @@
-// Water's writes (P07-06): a log for the day Home shows, and the water settings. A log is stamped
-// by the selected-day rule (now for today, an earlier day at the current clock time) and must be
-// a whole 1–5 000 ml, the most the entry sheets accept (D-16.39), so no path stores more. Turning
-// tracking off also switches the water reminder off and keeps its time; it never touches the logs,
-// which stay in the diary (R05.9). The reminder itself is P09's.
+// Water's writes (P07-06): a log for the day Home shows, its delete from the diary (P07-05) and the
+// water settings. A log is stamped by the selected-day rule (now for today, an earlier day at the
+// current clock time) and must be a whole 1–5 000 ml, the most the entry sheets accept (D-16.39),
+// so no path stores more. Turning tracking off also switches the water reminder off and keeps its
+// time; it never touches the logs, which stay in the diary (R05.9). The reminder itself is P09's.
 
 import { dayKeyOf, isDayKey, type DayKey } from '../domain/dates/dayKey';
 import { stampForDay } from '../domain/dates/ranges';
@@ -22,6 +22,8 @@ export interface WaterService {
    * clock time on that day. A day after today is taken as today.
    */
   logWater(ml: number, day: DayKey): Promise<WaterLog>;
+  /** Deletes the log `id` (the diary's swipe delete, P07-05); a log already gone does nothing. */
+  deleteLog(id: string): Promise<void>;
   /** Water tracking on or off (setting `water.on`); off also turns the water reminder off. */
   setTracking(on: boolean): Promise<void>;
   /** The daily goal in ml (setting `water.goalMl`, 50–10 000). */
@@ -36,7 +38,7 @@ export interface WaterService {
 }
 
 export interface WaterDeps {
-  readonly waterRepo: Pick<WaterRepo, 'add'>;
+  readonly waterRepo: Pick<WaterRepo, 'add' | 'remove'>;
   readonly settingsRepo: Pick<SettingsRepo, 'set' | 'update'>;
   /** Stamps the logs. */
   readonly clock: Clock;
@@ -61,6 +63,8 @@ export function createWaterService({ waterRepo, settingsRepo, clock }: WaterDeps
       const onDay = day > today ? today : day;
       return waterRepo.add({ at: stampForDay(onDay, now), ml });
     },
+
+    deleteLog: (id) => waterRepo.remove(id),
 
     async setTracking(on) {
       await settingsRepo.set('water.on', on);

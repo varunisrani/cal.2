@@ -585,19 +585,23 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-F7-1** Entries appear under their meal with that meal's total
   - Test: src/features/home/Diary.test.tsx > Diary > shows a 300 kcal breakfast under Breakfast with the section total 300 (ACC-F7-1)
 - **ACC-F7-2** Newest first shows repeated meal sections in time order
-  - Review: P07-05
+  - Test: src/features/home/Diary.test.tsx > Diary: water, fasts and the sort order (P07-05) > shows repeated meal sections in time order when sorted newest first (ACC-F7-2)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > stores the sort order from the first header; newest first shows a meal again (ACC-F7-2)
 
 ### F8 · Water and fast rows in the diary (P1)
 
 - **ACC-F8-1** A fast from 20:00 to 12:00 shows on the second day only
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
 - **ACC-F8-2** The active fast row counts up every second
-  - Review: P07-05
+  - Test: src/features/home/FastRow.test.tsx > FastRow > advances by one second with fake timers (ACC-F8-2)
 
 ### F9 · Swipe to delete diary rows, always with a confirmation (P1)
 
 - **ACC-F9-1** Swiping a water row asks before deleting it
-  - Review: P07-05
+  - Test: src/features/home/WaterRow.test.tsx > WaterRow > asks before deleting on a swipe, and keeps the log on Cancel (ACC-F9-1)
+  - Test: src/features/home/WaterRow.test.tsx > WaterRow > deletes the log once Delete is confirmed (ACC-F9-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > asks before deleting a water row and removes it once confirmed (ACC-F9-1)
 
 ### F10 · Empty-day message (P0)
 
@@ -609,9 +613,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-F11-1** With water tracking on, the + menu has a Water page that logs a preset at once
   - Test: src/features/water/WaterMenuPage.test.tsx > WaterMenuPage > logs 500 ml on the selected day at once, confirms it and is done (ACC-F11-1)
-  - Review: P07-08
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > opens the water page inside the menu, where a preset logs on the day shown at once (ACC-F11-1, ACC-H1-1)
 - **ACC-F11-2** During a fast the + menu shows only water and fasting entries
-  - Review: P07-08
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > shows only Water and Fasting while a fast runs: no food group or method (ACC-F11-2)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)
 
 ### F12 · Long-press multi-select with a combine bar (P1)
 
@@ -695,7 +700,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-H1-1** Turning water tracking on adds the water pillar and the Water page in the + menu
   - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > adds the water pillar on Home once water is turned on, and a log from the water page fills it (ACC-H1-1)
-  - Review: P07-08
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > logs a custom amount from the + menu's water page on the sheet over Home (ACC-H1-1)
 
 ### H2 · Three quick-add amounts (1–5 000 ml) that keep exact values … (P1)
 
@@ -725,7 +731,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-H6-1** Turning fasting on offers Start fast in the + menu
   - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > shows the default goal of 16 hours once fasting is on (ACC-J10-1, ACC-H6-1)
-  - Review: P07-08
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)
 
 ### H7 · Start, end and cancel a fast from the + menu (P1)
 

@@ -1,0 +1,133 @@
+/*
+ * The diary's tracker rows and its sort control (P07-05): water and fast rows, the meal header's
+ * title line with Sort in the first section. Food rows and the sections themselves are in
+ * home.module.css. Every value comes from tokens.css; logical properties throughout.
+ */
+
+/* ---- Meal header: the name, then Sort at the trailing edge (first section only) ----------- */
+
+.titleLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+/* The sort button keeps the header's height: no extra block padding around it. */
+.titleLine > :last-child:not(:first-child) {
+  margin-block: calc(-1 * var(--space-2));
+}
+
+/* ---- Rows -------------------------------------------------------------------------------- */
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+}
+
+.tile {
+  display: grid;
+  place-items: center;
+  inline-size: 2.75rem;
+  block-size: 2.75rem;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.text {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.title {
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.detail {
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The amount (water) or the time so far (a running fast), in the accent. */
+.figure {
+  color: var(--accent);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.trailing {
+  display: grid;
+  justify-items: end;
+  gap: var(--space-1);
+}
+
+.goal {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+}
+
+/* ---- Fast rows: the whole card opens the editor ----------------------------------------- */
+
+.fast {
+  position: relative;
+  display: grid;
+}
+
+.open {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3);
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+/* The button's hit area covers the progress bar under it too. */
+.open::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.open:focus-visible::after {
+  border-radius: inherit;
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.chevron {
+  color: var(--text-muted);
+}
+
+.bar {
+  padding-inline: var(--space-3);
+  padding-block-end: var(--space-3);
+  margin-block-start: calc(-1 * var(--space-1));
+}

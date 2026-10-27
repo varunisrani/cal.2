@@ -2,8 +2,8 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the all-nutrients
- * sheet and the pillar picker, the diary and its rows, and the add button. Meal names are logging
- * words, in `log.meal`.
+ * sheet and the pillar picker, the diary with its sort control and its food, water and fast rows,
+ * and the add button. Meal names are logging words, in `log.meal`.
  */
 export const home = {
   home: {
@@ -126,6 +126,32 @@ export const home = {
       day: 'Diary',
       empty: 'Nothing logged yet. Tap + to add what you ate.',
       totals: 'P {protein} g · C {carbs} g · F {fat} g',
+    },
+    sort: {
+      label: 'Sort',
+      byMeal: 'By meal',
+      newestFirst: 'Newest first',
+      saveFailed: "Your sort order couldn't be saved. Please try again.",
+    },
+    water: {
+      title: 'Water',
+      deleteLabel: 'Delete {amount} of water',
+      deleteTitle: 'Delete this water log?',
+      deleteMessage: '{amount} of water will be removed from your diary.',
+      deleteFailed: "That water log couldn't be deleted. Please try again.",
+    },
+    fast: {
+      running: 'Fasting now',
+      started: 'Started {time}',
+      done: '{length} fast',
+      times: '{start} – {end}',
+      goal: '{length} goal',
+      progress: 'Time fasted',
+      progressValue: '{elapsed} of {goal}',
+      deleteLabel: 'Delete the {length} fast',
+      deleteTitle: 'Delete this fast?',
+      deleteMessage: 'The {length} fast will be removed from your diary.',
+      deleteFailed: "That fast couldn't be deleted. Please try again.",
     },
     entry: {
       macros: 'P {protein} · C {carbs} · F {fat}',

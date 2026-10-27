@@ -38,3 +38,14 @@ describe('setPillars', () => {
     expect(await h.settingsRepo.get('home.pillars')).toEqual(['iron']);
   });
 });
+
+describe('setSort', () => {
+  it('stores how the diary forms its sections', async () => {
+    const h = await setUp();
+    expect(await h.settingsRepo.get('home.sort')).toBe('byMeal');
+
+    await h.service.setSort('newestFirst');
+
+    expect(await h.settingsRepo.get('home.sort')).toBe('newestFirst');
+  });
+});

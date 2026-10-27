@@ -414,6 +414,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > keeps the switch as it was when ending the fast fails: one transaction (R05.2)
   - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > ends the running fast when switched off, keeps it, says so, and food logs again (ACC-H10-1, R05.2)
   - Test: src/services/fasting.test.ts > settings > ends the running fast when fasting is switched off, keeping it and the water logs (R05.2)
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > keeps Fasting while a fast runs with fasting switched off, and never offers Start fast then (R05.2)
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
   - Test: src/domain/trackers/fasting.test.ts > checkEdit (R05.3) > refuses editing a completed fast into another's span and changes nothing (R05.3)
   - Test: src/domain/trackers/fasting.test.ts > canStart (R05.3) > refuses a start while one is active (R05.3)
@@ -433,6 +434,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/home/PillarRow.test.tsx > PillarRow > never counts food toward water, nor water toward food (R05.4)
   - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > counts food only: water and a fast on a day without food add no bar and change no average (R05.4)
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows only the empty message for a week of water and fasts (R05.4)
+  - Test: src/features/home/Diary.test.tsx > Diary: water, fasts and the sort order (P07-05) > puts water in the meal of its time and a fast in the meal it ended in, never in the totals (R05.4)
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
@@ -453,7 +455,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > moves the profile weight to the one before when the newest weigh-in is deleted (R05.8)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > lists body-fat readings in percent and deletes them; the profile follows the newest left (R05.8)
 - **R05.9** Tracker switches hide entry controls, not history
-  - Review: owned by P07-05
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
   - Test: src/domain/units/water.test.ts > quickAddFromFields > keeps the exact ml of a field left untouched in fl oz (R05.10)
   - Test: src/domain/units/water.test.ts > amountToMl > caps a custom amount at 5 000 ml (R05.10, D-16.39)
@@ -520,6 +522,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.21** Fasts show on the day they end; the active fast only on today
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows the running fast on today and not on the day it started (R05.21)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
 - **R05.22** History rows have a visible delete with a confirmation and vanish at once (D-16.38)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > asks first, naming the date and the value, and keeps the row on Cancel (R05.22)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)

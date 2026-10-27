@@ -1,17 +1,23 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { onDemand } from '../../app/onDemand';
 import { useToday } from '../../app/TodayProvider';
 import { useRouter, useSheet } from '../../app/useRoute';
 import {
+  useActiveFast,
   useDayEntries,
   useDayWater,
+  useFasts,
   useSettings,
   useTargets,
   type LiveState,
 } from '../../data/hooks';
 import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
+import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
+import type { Fast } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
+import { useToast } from '../../ui/Toast';
 import { AddMenu } from '../log/AddMenu';
 import { CaptureSheet, type CapturePicker, type CaptureRequest } from '../log/capture/CaptureSheet';
 import { CopyDaySheet } from '../log/CopyDaySheet';
@@ -48,6 +54,21 @@ export const SCAN_SHEET = 'scan';
 /** The selected day's nutrients, and the pillar picker that opens over them (P07-04). */
 export const NUTRIENTS_SHEET = 'nutrients';
 export const PILLAR_PICKER_SHEET = 'pillars';
+/** The trackers' sheets (P07-05, P07-08): a custom water amount, start a fast, the fast editor. */
+export const WATER_SHEET = 'water';
+export const START_FAST_SHEET = 'startFast';
+export const FAST_SHEET = 'fast';
+
+// The trackers' sheets are their features' own; each is fetched the first time it opens.
+const CustomWaterSheet = onDemand(() =>
+  import('../water/CustomWaterSheet').then((module) => module.CustomWaterSheet),
+);
+const StartFastSheet = onDemand(() =>
+  import('../fasting/StartFastSheet').then((module) => module.StartFastSheet),
+);
+const FastEditor = onDemand(() =>
+  import('../fasting/FastEditor').then((module) => module.FastEditor),
+);
 
 const SETTINGS = [
   'units.energy',
@@ -59,6 +80,8 @@ const SETTINGS = [
   'water.on',
   'water.goalMl',
   'water.unit',
+  'home.sort',
+  'fasting.on',
 ] as const;
 
 /**
@@ -76,11 +99,13 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
  * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
  * the chosen pillars with water after them (a sideways swipe over them changes the day; "All
  * nutrients" under them opens the day's nutrient sheet and, from it, the pillar picker), the
- * diary by meal, and the "+" button with the add menu of the stored layout. What is logged from
- * here goes to the day shown. Nothing with a number is drawn until the profile, the settings and
- * the day's entries and water have been read, so a fallback goal never flashes (R05.12); the "+"
- * waits too, since its menu depends on what is stored. Photos gathered for a meal before a reload
- * bring their sheet back when Home opens (D-16.46).
+ * diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
+ * editor, P07-05), and the "+" button with the add menu of the stored layout and the water and
+ * fasting rows (P07-08). What is logged from here goes to the day shown. Nothing with a number is
+ * drawn until the profile, the settings and the day's entries, water and fasts have been read, so
+ * a fallback goal never flashes (R05.12); the "+" waits too, since its menu depends on what is
+ * stored. Photos gathered for a meal before a reload bring their sheet back when Home opens
+ * (D-16.46).
  */
 export function HomePage() {
   const today = useToday();
@@ -90,10 +115,14 @@ export function HomePage() {
   const entries = useSteadyRead(dayRead);
   const waterRead = useDayWater(dayKey);
   const waterLogs = useSteadyRead(waterRead);
+  const fastsRead = useFasts(dayKey, dayKey);
+  const fasts = useSteadyRead(fastsRead);
+  const activeFast = useActiveFast();
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
   const { captureDrafts, analysis, barcode, homePrefs } = useServices();
+  const toast = useToast();
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
   const describe = useSheet(DESCRIBE_SHEET);
@@ -104,6 +133,11 @@ export function HomePage() {
   const scan = useSheet(SCAN_SHEET);
   const nutrients = useSheet(NUTRIENTS_SHEET);
   const pillarPicker = useSheet(PILLAR_PICKER_SHEET);
+  const waterSheet = useSheet(WATER_SHEET);
+  const startFast = useSheet(START_FAST_SHEET);
+  const fastSheet = useSheet(FAST_SHEET);
+  // The fast the editor opened on, as it was stored when its row was tapped.
+  const [editing, setEditing] = useState<Fast | null>(null);
   // What the capture sheet's "Add photo" opens; a sheet brought back after a reload uses the library.
   const [picker, setPicker] = useState<CapturePicker>('library');
 
@@ -191,7 +225,24 @@ export function HomePage() {
     await homePrefs.setPillars(keys);
   };
 
-  const reads = [dayRead, waterRead, targets, settings];
+  const storeSort = (mode: DiarySortMode): void => {
+    if (!homePrefs) {
+      console.error('HomePage: no homePrefs service to store the sort order');
+      toast.show(tx('home.sort.saveFailed'));
+      return;
+    }
+    homePrefs.setSort(mode).catch((error: unknown) => {
+      console.error('Storing the sort order failed', error);
+      toast.show(tx('home.sort.saveFailed'));
+    });
+  };
+
+  const openFast = (fast: Fast): void => {
+    setEditing(fast);
+    fastSheet.show();
+  };
+
+  const reads = [dayRead, waterRead, fastsRead, activeFast, targets, settings];
   const failed = reads.some((read) => read.status === 'error');
   let body;
   if (failed) {
@@ -203,6 +254,8 @@ export function HomePage() {
   } else if (
     entries.status === 'ready' &&
     waterLogs.status === 'ready' &&
+    fasts.status === 'ready' &&
+    activeFast.status === 'ready' &&
     targets.status === 'ready' &&
     settings.status === 'ready'
   ) {
@@ -213,12 +266,13 @@ export function HomePage() {
     const goals = settings.value['goals.nutrients'];
     const pillars = settings.value['home.pillars'];
     const waterOn = settings.value['water.on'];
+    const waterUnit = settings.value['water.unit'];
     // Water counts only its own logs, and only while it is tracked (R05.4).
     const water: WaterDay | null = waterOn
       ? {
           totalMl: waterLogs.value.reduce((sum, log) => sum + log.ml, 0),
           goalMl: settings.value['water.goalMl'],
-          unit: settings.value['water.unit'],
+          unit: waterUnit,
         }
       : null;
     body = (
@@ -250,6 +304,12 @@ export function HomePage() {
           energyUnit={unit}
           times={settings.value['meals.times']}
           isToday={selection.isToday}
+          water={waterLogs.value}
+          waterUnit={waterUnit}
+          fasts={fastsOnDay(fasts.value, dayKey, today)}
+          sort={settings.value['home.sort']}
+          onSortChange={storeSort}
+          onOpenFast={openFast}
         />
         <div className={styles.fabSlot}>
           <AddMenu
@@ -257,6 +317,14 @@ export function HomePage() {
             layout={decodeLayout(settings.value['menu.layout'])}
             clearArmedLabelScan={clearArmedLabelScan}
             onChoose={choose}
+            trackers={{
+              day: dayKey,
+              waterOn,
+              fastingOn: settings.value['fasting.on'],
+              activeFast: activeFast.value,
+              onCustomWater: waterSheet.show,
+              onStartFast: startFast.show,
+            }}
             triggerClassName={styles.fab}
             data-ui="home.add"
           />
@@ -281,6 +349,19 @@ export function HomePage() {
           onSave={savePillars}
           onClose={pillarPicker.close}
         />
+        <Suspense fallback={null}>
+          {waterSheet.open ? (
+            <CustomWaterSheet open day={dayKey} unit={waterUnit} onClose={waterSheet.close} />
+          ) : null}
+        </Suspense>
+        <Suspense fallback={null}>
+          {startFast.open ? <StartFastSheet open onClose={startFast.close} /> : null}
+        </Suspense>
+        <Suspense fallback={null}>
+          {fastSheet.open && editing ? (
+            <FastEditor open fast={editing} onClose={fastSheet.close} />
+          ) : null}
+        </Suspense>
       </>
     );
   } else {

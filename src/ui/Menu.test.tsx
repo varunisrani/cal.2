@@ -299,3 +299,119 @@ describe('Menu', () => {
     );
   });
 });
+
+describe('Menu: a panel drawn by its owner', () => {
+  /** A menu with one action and a panel of three plain buttons, the last one its own Back. */
+  function renderPanel() {
+    const picked = vi.fn<(what: string) => void>();
+    const entries: MenuEntry[] = [
+      { kind: 'action', id: 'manual', label: 'Enter manually', onSelect: () => picked('manual') },
+      {
+        kind: 'panel',
+        id: 'water',
+        label: 'Water',
+        icon: <Icon name="drop" />,
+        render: ({ close, back }) => (
+          <div role="group" aria-label="Water amounts">
+            <button
+              type="button"
+              onClick={() => {
+                picked('250');
+                close();
+              }}
+            >
+              250 ml
+            </button>
+            <button type="button" onClick={() => picked('note')}>
+              Note
+            </button>
+            <button type="button" onClick={back}>
+              Go back
+            </button>
+          </div>
+        ),
+      },
+    ];
+    render(
+      <>
+        <Menu label="Add" entries={entries} data-ui="add-menu" />
+        <button type="button">After</button>
+      </>,
+    );
+    return { picked, trigger: screen.getByRole('button', { name: 'Add' }) };
+  }
+
+  it('opens the panel inside the menu from a row with a chevron; a press on it keeps the menu open', async () => {
+    const user = setup();
+    const { trigger, picked } = renderPanel();
+    await user.click(trigger);
+    const row = screen.getByRole('menuitem', { name: 'Water' });
+    expect(row).toHaveAttribute('aria-haspopup', 'menu');
+    expect(row).toHaveAttribute('data-ui', 'add-menu.water');
+
+    await user.click(row);
+    const menu = screen.getByRole('menu', { name: 'Water' });
+    expect(within(menu).getByRole('group', { name: 'Water amounts' })).toBeInTheDocument();
+    // The panel draws its own Back: the menu adds no row of its own.
+    expect(within(menu).queryByRole('menuitem')).toBeNull();
+    expect(screen.getByRole('button', { name: '250 ml' })).toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Note' }));
+    expect(picked).toHaveBeenCalledWith('note');
+    expect(screen.getByRole('menu', { name: 'Water' })).toBeInTheDocument();
+  });
+
+  it("goes back to the opening page with the panel's back, and closes with its close", async () => {
+    const user = setup();
+    const { trigger, picked } = renderPanel();
+    await user.click(trigger);
+    await user.click(screen.getByRole('menuitem', { name: 'Water' }));
+
+    await user.click(screen.getByRole('button', { name: 'Go back' }));
+    expect(screen.getByRole('menu', { name: 'Add' })).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Water' })).toHaveFocus();
+
+    await user.click(screen.getByRole('menuitem', { name: 'Water' }));
+    await user.click(screen.getByRole('button', { name: '250 ml' }));
+    expect(picked).toHaveBeenCalledWith('250');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("moves over the panel's buttons with the arrow keys, and goes back with Escape or Left", async () => {
+    const user = setup();
+    const { trigger } = renderPanel();
+    trigger.focus();
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowRight}');
+    expect(focusedName()).toBe('250 ml');
+
+    await user.keyboard('{ArrowDown}');
+    expect(focusedName()).toBe('Note');
+    await user.keyboard('{ArrowDown}{ArrowDown}');
+    expect(focusedName()).toBe('250 ml');
+    await user.keyboard('{ArrowUp}');
+    expect(focusedName()).toBe('Go back');
+    await user.keyboard('{Home}');
+    expect(focusedName()).toBe('250 ml');
+    await user.keyboard('{End}');
+    expect(focusedName()).toBe('Go back');
+
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('menu', { name: 'Add' })).toBeInTheDocument();
+    expect(focusedName()).toBe('Water');
+    await user.keyboard('{Enter}');
+    expect(focusedName()).toBe('250 ml');
+    await user.keyboard('{ArrowLeft}');
+    expect(focusedName()).toBe('Water');
+  });
+
+  it('closes from a panel on a press outside', async () => {
+    const user = setup();
+    const { trigger } = renderPanel();
+    await user.click(trigger);
+    await user.click(screen.getByRole('menuitem', { name: 'Water' }));
+
+    await user.click(screen.getByRole('button', { name: 'After' }));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+});

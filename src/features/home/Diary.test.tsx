@@ -1,16 +1,17 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import type { DiarySortMode } from '../../domain/meals/diary';
 import { DEFAULT_MEAL_TIMES } from '../../domain/meals/times';
-import type { DiaryEntry } from '../../domain/model';
+import type { DiaryEntry, Fast } from '../../domain/model';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { home } from '../../i18n/en/home';
 import { log } from '../../i18n/en/log';
 import { fixedClock } from '../../lib/clock';
 import { ServicesProvider, type Services } from '../../services/context';
-import { FACTORY_NOW, makeEntry } from '../../test/factories';
+import { FACTORY_NOW, makeEntry, makeFast, makeWater } from '../../test/factories';
 import { ToastProvider } from '../../ui/Toast';
-import { Diary } from './Diary';
+import { Diary, type DiaryProps } from './Diary';
 
 const words = home.home;
 const meals = log.log.meal;
@@ -44,6 +45,34 @@ function renderDiary(entries: DiaryEntry[], unit: EnergyDisplayUnit = 'kcal', is
     <Diary entries={entries} energyUnit={unit} times={DEFAULT_MEAL_TIMES} isToday={isToday} />,
     { wrapper: Providers },
   );
+}
+
+/** The diary with its tracker rows and sort control: today, kcal, the default meal times. */
+function renderWith(props: Partial<DiaryProps>) {
+  return render(
+    <Diary
+      entries={[]}
+      energyUnit="kcal"
+      times={DEFAULT_MEAL_TIMES}
+      isToday
+      onSortChange={vi.fn()}
+      {...props}
+    />,
+    { wrapper: Providers },
+  );
+}
+
+/** Each section's meal name with the names of its rows (food, Water, a fast's title), top to bottom. */
+function layout(): string[][] {
+  return Array.from(document.querySelectorAll<HTMLElement>('[data-ui^="home.meal."]'))
+    .filter((section) => section.tagName === 'SECTION')
+    .map((section) => [
+      section.querySelector('h3')?.textContent ?? '',
+      ...Array.from(section.querySelectorAll('li')).map(
+        (row) =>
+          row.querySelector('[id$="-name"], [id$="-title"]')?.textContent ?? row.textContent ?? '',
+      ),
+    ]);
 }
 
 /** The meal sections' names, top to bottom. */
@@ -115,5 +144,103 @@ describe('Diary', () => {
   it('heads the list Today on today and Diary on another day', () => {
     renderDiary([], 'kcal', false);
     expect(screen.getByRole('heading', { level: 2, name: words.diary.day })).toBeVisible();
+  });
+});
+
+describe('Diary: water, fasts and the sort order (P07-05)', () => {
+  it('puts water in the meal of its time and a fast in the meal it ended in, never in the totals (R05.4)', () => {
+    renderWith({
+      entries: [
+        makeEntry({
+          name: 'Porridge',
+          kcal: 300,
+          protein: 11,
+          meal: 'breakfast',
+          loggedAt: at('08:00'),
+        }),
+      ],
+      water: [makeWater({ at: at('09:00'), ml: 500 }), makeWater({ at: at('19:30'), ml: 250 })],
+      fasts: [makeFast({ start: at('12:15') - 16 * 3_600_000, end: at('12:15') })],
+    });
+
+    expect(layout()).toEqual([
+      [meals.breakfast, words.water.title, 'Porridge'],
+      [meals.lunch, '16h fast'],
+      [meals.dinner, words.water.title],
+    ]);
+    // Water beside the porridge leaves its totals alone; a section of water or a fast has none.
+    expect(document.querySelector('[data-ui="home.meal.breakfast.totals"]')).toHaveTextContent(
+      '300 kcalP 11 g',
+    );
+    expect(document.querySelector('[data-ui="home.meal.lunch.totals"]')).toBeNull();
+    expect(document.querySelector('[data-ui="home.meal.dinner.totals"]')).toBeNull();
+  });
+
+  it('places a running fast where it started and shows it as fasting now', () => {
+    renderWith({ fasts: [makeFast({ start: at('06:30'), end: null })] });
+
+    expect(layout()).toEqual([[meals.breakfast, words.fast.running]]);
+  });
+
+  it('shows repeated meal sections in time order when sorted newest first (ACC-F7-2)', () => {
+    const entries = [
+      makeEntry({ name: 'Toast', meal: 'breakfast', loggedAt: at('08:00') }),
+      makeEntry({ name: 'Soup', meal: 'lunch', loggedAt: at('12:30') }),
+      makeEntry({ name: 'Apple', meal: 'snack', loggedAt: at('15:00') }),
+      makeEntry({ name: 'Sandwich', meal: 'lunch', loggedAt: at('16:00') }),
+    ];
+    const water = [makeWater({ at: at('12:45') })];
+    const byMeal = renderWith({ entries, water, sort: 'byMeal' });
+    expect(layout()).toEqual([
+      [meals.breakfast, 'Toast'],
+      [meals.lunch, 'Sandwich', words.water.title, 'Soup'],
+      [meals.snack, 'Apple'],
+    ]);
+    byMeal.unmount();
+
+    renderWith({ entries, water, sort: 'newestFirst' });
+    expect(layout()).toEqual([
+      [meals.lunch, 'Sandwich'],
+      [meals.snack, 'Apple'],
+      [meals.lunch, words.water.title, 'Soup'],
+      [meals.breakfast, 'Toast'],
+    ]);
+  });
+
+  it('draws the sort control in the first header only, and hands on the mode chosen', () => {
+    const onSortChange = vi.fn<(mode: DiarySortMode) => void>();
+    renderWith({
+      entries: [
+        makeEntry({ name: 'Toast', meal: 'breakfast', loggedAt: at('08:00') }),
+        makeEntry({ name: 'Soup', meal: 'lunch', loggedAt: at('12:30') }),
+      ],
+      water: [makeWater({ at: at('19:00') })],
+      sort: 'byMeal',
+      onSortChange,
+    });
+
+    const sort = screen.getAllByRole('button', { name: words.sort.label });
+    expect(sort).toHaveLength(1);
+    const first = screen.getByRole('region', { name: meals.breakfast });
+    expect(within(first).getByRole('button', { name: words.sort.label })).toBe(sort[0]);
+
+    fireEvent.click(sort[0] as HTMLElement);
+    fireEvent.click(screen.getByRole('menuitemradio', { name: words.sort.newestFirst }));
+    expect(onSortChange).toHaveBeenCalledWith('newestFirst');
+  });
+
+  it('has no sort control on an empty day', () => {
+    renderWith({});
+
+    expect(screen.queryByRole('button', { name: words.sort.label })).toBeNull();
+  });
+
+  it('hands a tapped fast to its editor', () => {
+    const onOpenFast = vi.fn<(fast: Fast) => void>();
+    const fast = makeFast({ start: at('00:00'), end: at('10:00'), goalMin: 600 });
+    renderWith({ fasts: [fast], onOpenFast });
+
+    fireEvent.click(screen.getByRole('button', { name: '10h fast' }));
+    expect(onOpenFast).toHaveBeenCalledWith(fast);
   });
 });
