@@ -3,16 +3,21 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { ImageBackend } from '../../../ai/image';
 import { DEFAULT_AI_SETTINGS } from '../../../ai/settings';
 import { createPhotoRepo } from '../../../data/repos/photoRepo';
+import { createSecretsRepo } from '../../../data/repos/secretsRepo';
 import type { AnalysisDraft, IngredientLine, NutritionDraft } from '../../../domain/model';
 import { mergePartitions } from '../../../i18n/catalogue';
 import { enPartitions } from '../../../i18n/en';
 import { ai } from '../../../i18n/en/ai';
 import { common } from '../../../i18n/en/common';
 import { ingredients } from '../../../i18n/en/ingredients';
+import { reuse } from '../../../i18n/en/reuse';
 import { review } from '../../../i18n/en/review';
+import { scan } from '../../../i18n/en/scan';
 import { lintCatalogue } from '../../../i18n/lint';
 import type { AnalysisService, AnalysisState } from '../../../services/analysis';
-import { ServicesProvider } from '../../../services/context';
+import type { Scanner } from '../../../services/barcode/decoder';
+import type { BarcodeService } from '../../../services/barcode/lookup';
+import { ServicesProvider, type Services } from '../../../services/context';
 import type { DiaryService, LogContext, LogResult } from '../../../services/diary';
 import {
   createIngredientIntake,
@@ -22,8 +27,22 @@ import {
 } from '../../../services/ingredientIntake';
 import { createPhotoService } from '../../../services/photos';
 import { createFakeCodec } from '../../../test/fakeImageCodec';
-import { makeAnalysisDraft, makeDraft, makeEntry, makeLine } from '../../../test/factories';
-import { closeHarnesses, openHarness, until, untilShown } from '../../../test/screenHarness';
+import {
+  FACTORY_NOW,
+  makeAnalysisDraft,
+  makeDraft,
+  makeEntry,
+  makeLine,
+  makeSavedMeal,
+} from '../../../test/factories';
+import {
+  closeHarnesses,
+  openHarness,
+  until,
+  untilGone,
+  untilShown,
+  type Harness,
+} from '../../../test/screenHarness';
 import { SOURCES_NOT_BUILT_YET } from './AddIngredientMenu';
 import { IngredientsCard } from './IngredientsCard';
 import { AnalysisReview, ReviewSheet, type ReviewSlots } from './ReviewSheet';
@@ -60,6 +79,7 @@ function standInIntake() {
   const session = {
     photo: vi.fn<IntakeSession['photo']>(ask),
     describe: vi.fn<IntakeSession['describe']>(ask),
+    barcode: vi.fn<IntakeSession['barcode']>(ask),
     close: vi.fn<IntakeSession['close']>(async () => undefined),
   };
   const service: IngredientIntakeService = { open: () => session };
@@ -69,20 +89,39 @@ function standInIntake() {
   return { service, session, settle };
 }
 
+/**
+ * The barcode service as far as the scanner goes: its camera never opens, so the typed digits are
+ * the way in. Lookups go through the intake session, never through this service.
+ */
+function scannerOnly(): BarcodeService {
+  const scanner: Scanner = {
+    openCamera: () => new Promise(() => undefined),
+    watch: () => () => undefined,
+  };
+  return { scanner } as unknown as BarcodeService;
+}
+
 interface Setup {
   readonly draft?: NutritionDraft;
   readonly intake?: IngredientIntakeService;
+  /** Services added for this test (a scanner, an analysis service). */
+  readonly services?: Partial<Services>;
+  /** Runs on the harness before the review opens (to store entries or saved meals). */
+  readonly before?: (h: Harness) => Promise<unknown>;
 }
 
 /** The review with the real ingredients card over a test database, logging into a recorder. */
 async function openCard({
   draft = makeDraft({ lines: [RICE, DAL], units: [] }),
   intake,
+  services,
+  before,
 }: Setup = {}) {
   const diary = recordingDiary();
   const h = await openHarness({ diary });
+  await before?.(h);
   const view = h.mount(
-    <ServicesProvider services={{ ...h.services, ingredientIntake: intake }}>
+    <ServicesProvider services={{ ...h.services, ...services, ingredientIntake: intake }}>
       <ReviewSheet review={makeAnalysisDraft({ draft })} onClose={vi.fn()} slots={SLOTS} />
     </ServicesProvider>,
   );
@@ -111,6 +150,19 @@ function editor() {
       fireEvent.change(scope.getByRole('textbox', { name: label }), { target: { value } }),
     click: (label: string) => fireEvent.click(scope.getByRole('button', { name: label })),
   };
+}
+
+/** Barcode from the menu, then `code` typed into the scanner's digits and looked up. */
+async function lookUp(code: string): Promise<void> {
+  openMenu();
+  choose(words.add.barcode);
+  await untilShown('[data-ui="scan"]');
+  const scanner = within(screen.getByRole('dialog', { name: scan.scan.title }));
+  fireEvent.change(scanner.getByRole('textbox', { name: scan.scan.digits.label }), {
+    target: { value: code },
+  });
+  fireEvent.click(scanner.getByRole('button', { name: scan.scan.digits.submit }));
+  await untilGone('[data-ui="scan"]');
 }
 
 async function addManually(fields: Readonly<Record<string, string>>): Promise<void> {
@@ -333,29 +385,45 @@ describe('IngredientsCard: parts from the AI', () => {
     fat: 13.5,
   });
 
-  it('offers camera, photo, describe and manual, and leaves the sources not built yet off', async () => {
+  const offered = () => screen.getAllByRole('menuitem').map((item) => item.textContent);
+
+  it('offers every source with an intake session and a scanner; none is left unbuilt', async () => {
     const { service } = standInIntake();
-    await openCard({ intake: service });
+    await openCard({ intake: service, services: { barcode: scannerOnly() } });
     openMenu();
-    const offered = screen.getAllByRole('menuitem').map((item) => item.textContent);
-    expect(offered).toEqual([
+    expect(offered()).toEqual([
       words.add.camera,
       words.add.library,
+      words.add.barcode,
       words.add.describe,
       words.add.manual,
+      words.add.recent,
+      words.add.often,
+      words.add.saved,
     ]);
-    expect(SOURCES_NOT_BUILT_YET).toEqual(['barcode', 'recent', 'often', 'saved']);
+    expect(SOURCES_NOT_BUILT_YET).toEqual([]);
 
     const camera = hooked('ingredients.camera') as HTMLInputElement;
     expect(camera).toHaveAttribute('capture', 'environment');
     expect((hooked('ingredients.library') as HTMLInputElement).multiple).toBe(false);
   });
 
-  it('offers manual only without an intake service', async () => {
-    await openCard();
+  it('leaves barcode off without a scanner', async () => {
+    const { service } = standInIntake();
+    await openCard({ intake: service });
     openMenu();
-    expect(screen.getAllByRole('menuitem').map((item) => item.textContent)).toEqual([
+    expect(offered()).not.toContain(words.add.barcode);
+    expect(offered()).toContain(words.add.camera);
+  });
+
+  it('offers manual and the reuse lists without an intake service', async () => {
+    await openCard({ services: { barcode: scannerOnly() } });
+    openMenu();
+    expect(offered()).toEqual([
       words.add.manual,
+      words.add.recent,
+      words.add.often,
+      words.add.saved,
     ]);
   });
 
@@ -418,6 +486,55 @@ describe('IngredientsCard: parts from the AI', () => {
     expect(hooked('ingredients.line.2')).toBeNull();
   });
 
+  it('looks a typed code up through the session, busy meanwhile, and adds the product as one part', async () => {
+    const { service, session, settle } = standInIntake();
+    const { sheet, diary } = await openCard({
+      intake: service,
+      services: { barcode: scannerOnly() },
+    });
+    await lookUp('4006381333931');
+
+    expect(session.barcode).toHaveBeenCalledWith('4006381333931');
+    expect(hooked('ingredients.busy')).toHaveTextContent(scan.scan.looking);
+    expect(screen.queryByRole('button', { name: words.add.label })).toBeNull();
+
+    const bar = makeLine({
+      name: 'Fernbrook Oat Bar',
+      grams: 40,
+      kcal: 180,
+      protein: 3.2,
+      carbs: 24,
+      fat: 8,
+      photoIds: ['photo-oat-bar'],
+      emoji: '🏷️',
+    });
+    await settle({ kind: 'line', line: bar });
+    expect(hooked('ingredients.busy')).toBeNull();
+    expect(textOf('ingredients.line.2')).toContain('Fernbrook Oat Bar');
+    expect(textOf('ingredients.line.2.amount')).toBe('40 g · 180 kcal');
+    expect(textOf('review.kcal')).toBe('578');
+
+    await pressLog(sheet);
+    expect(logged(diary).draft.lines[2]?.photoIds).toEqual(['photo-oat-bar']);
+  });
+
+  it("says why a code found nothing: its own words for a refused key, the scanner's otherwise", async () => {
+    const { service, settle } = standInIntake();
+    await openCard({ intake: service, services: { barcode: scannerOnly() } });
+    const cases = [
+      ['keyRefused', words.keyRefused],
+      ['notFound', scan.scan.failure.notFound],
+      ['rateLimited', scan.scan.failure.rateLimited],
+    ] as const;
+    for (const [failure, message] of cases) {
+      await lookUp('4006381333931');
+      await settle({ kind: 'missed', failure });
+      expect(screen.getByRole('alert')).toHaveTextContent(message);
+      fireEvent.click(screen.getByRole('button', { name: words.dismiss }));
+    }
+    expect(hooked('ingredients.line.2')).toBeNull();
+  });
+
   it('closes its session when the review goes', async () => {
     const { service, session } = standInIntake();
     const h = await openHarness({ diary: recordingDiary() });
@@ -430,6 +547,88 @@ describe('IngredientsCard: parts from the AI', () => {
     expect(session.close).not.toHaveBeenCalled();
     view.unmount();
     expect(session.close).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('IngredientsCard: parts from the reuse lists', () => {
+  const HOUR = 60 * 60 * 1000;
+
+  /** An analysis service that records reviews it is asked to open (a pick must open none). */
+  function reviewRecorder() {
+    const openForReview = vi.fn<NonNullable<AnalysisService['openForReview']>>(async () => true);
+    return { ...waitingAnalysis(makeAnalysisDraft()), openForReview };
+  }
+
+  it('adds a saved meal as one part: its parts not expanded, its photos carried, no review opened', async () => {
+    const analysis = reviewRecorder();
+    const { sheet, diary } = await openCard({
+      services: { analysis },
+      before: (h) =>
+        h.db.savedMeals.add(
+          makeSavedMeal({
+            name: 'Granola bowl',
+            kcal: 320,
+            protein: 11,
+            carbs: 52,
+            fat: 7,
+            basis: { kind: 'grams', grams: 250 },
+            units: [],
+            photoIds: ['photo-bowl'],
+            lines: [
+              makeLine({ name: 'Granola', grams: 60, photoIds: ['photo-granola'] }),
+              makeLine({ name: 'Yoghurt', grams: 190, photoIds: ['photo-bowl'] }),
+            ],
+          }),
+        ),
+    });
+    openMenu();
+    choose(words.add.saved);
+    await untilShown('[data-ui="reuse.row.pick"]');
+    expect(screen.getByRole('dialog', { name: reuse.reuse.title.saved })).toBeInTheDocument();
+    fireEvent.click(hooked('reuse.row.pick') as HTMLElement);
+
+    await untilGone('[data-ui="reuse.list"]');
+    expect(textOf('ingredients.line.2')).toContain('Granola bowl');
+    expect(textOf('ingredients.line.2.amount')).toBe('250 g · 320 kcal');
+    expect(hooked('ingredients.line.3')).toBeNull();
+    expect(textOf('review.kcal')).toBe('718');
+    expect(analysis.openForReview).not.toHaveBeenCalled();
+
+    await pressLog(sheet);
+    const { draft } = logged(diary);
+    expect(draft.lines).toHaveLength(3);
+    expect(draft.lines[2]?.photoIds).toEqual(['photo-bowl', 'photo-granola']);
+  });
+
+  it.each(['recent', 'often'] as const)('adds a food picked from %s as one part', async (list) => {
+    const analysis = reviewRecorder();
+    await openCard({
+      services: { analysis },
+      before: (h) =>
+        h.repos.diaryRepo.add(
+          makeEntry({
+            name: 'Boiled egg',
+            kcal: 78,
+            protein: 6.3,
+            carbs: 0.6,
+            fat: 5.3,
+            basis: { kind: 'grams', grams: 50 },
+            units: [],
+            emoji: '🥚',
+            loggedAt: FACTORY_NOW - HOUR,
+          }),
+        ),
+    });
+    openMenu();
+    choose(words.add[list]);
+    await untilShown('[data-ui="reuse.row.pick"]');
+    fireEvent.click(hooked('reuse.row.pick') as HTMLElement);
+
+    await untilGone('[data-ui="reuse.list"]');
+    expect(textOf('ingredients.line.2')).toContain('🥚');
+    expect(textOf('ingredients.line.2.amount')).toBe('50 g · 78 kcal');
+    expect(textOf('review.kcal')).toBe('476');
+    expect(analysis.openForReview).not.toHaveBeenCalled();
   });
 });
 
@@ -467,7 +666,11 @@ describe('AnalysisReview: the ingredients card', () => {
       }),
   };
 
-  it('stops a part analysis when the review is cancelled, and keeps no photo of it', async () => {
+  /**
+   * The real intake over the harness, whose requests never answer (only Cancel ends them), and the
+   * analysis review with it, a waiting draft and a scanner.
+   */
+  async function openWithHangingIntake() {
     const h = await openHarness();
     await h.repos.settingsRepo.set('ai.settings', DEFAULT_AI_SETTINGS);
     const photoRepo = createPhotoRepo(h.db);
@@ -481,7 +684,6 @@ describe('AnalysisReview: the ingredients card', () => {
         keys: { gemini: 'gm-card-key-4410' },
         configured: true,
       }),
-      // The request never answers; only Cancel ends it.
       fetch: (_input, init) =>
         new Promise<Response>((_, reject) => {
           const signal = init?.signal;
@@ -491,14 +693,26 @@ describe('AnalysisReview: the ingredients card', () => {
           }
         }),
       imageBackend: backend,
+      lookup: {
+        secrets: createSecretsRepo(h.db),
+        labels: h.repos.diaryRepo,
+        unnamed: (code) => code,
+      },
     });
     const analysis = waitingAnalysis(makeAnalysisDraft());
     h.mount(
-      <ServicesProvider services={{ ...h.services, analysis, ingredientIntake: intake }}>
+      <ServicesProvider
+        services={{ ...h.services, analysis, ingredientIntake: intake, barcode: scannerOnly() }}
+      >
         <AnalysisReview />
       </ServicesProvider>,
     );
     await untilShown('[data-ui="ingredients"]');
+    return { h, codec, signals, analysis };
+  }
+
+  it('stops a part analysis when the review is cancelled, and keeps no photo of it', async () => {
+    const { h, codec, signals, analysis } = await openWithHangingIntake();
     await act(async () => {
       fireEvent.change(hooked('ingredients.camera') as HTMLInputElement, {
         target: { files: [await codec.photo(1600, 1200)] },
@@ -506,6 +720,20 @@ describe('AnalysisReview: the ingredients card', () => {
     });
     await until(() => signals.length === 1);
     expect(hooked('ingredients.busy')).toHaveTextContent(words.busy);
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));
+    });
+    expect(analysis.closeReview).toHaveBeenCalledTimes(1);
+    await until(() => signals[0]?.aborted === true);
+    expect(await h.db.photos.count()).toBe(0);
+  });
+
+  it('stops a barcode lookup when the review is cancelled', async () => {
+    const { h, signals, analysis } = await openWithHangingIntake();
+    await lookUp('4006381333931');
+    await until(() => signals.length === 1);
+    expect(hooked('ingredients.busy')).toHaveTextContent(scan.scan.looking);
 
     await act(async () => {
       fireEvent.click(screen.getByRole('button', { name: common.common.cancel }));

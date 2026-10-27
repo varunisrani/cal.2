@@ -5,6 +5,9 @@ import { Button } from '../../../ui/Button';
 import { Icon, type IconName } from '../../../ui/icons';
 import { Menu, type MenuAction } from '../../../ui/Menu';
 import { Sheet } from '../../../ui/Sheet';
+import type { ReusableFood } from '../reuse/ReuseRow';
+import { ReuseSheet, type ReuseList } from '../reuse/ReuseSheet';
+import { ScanSheet } from '../scan/ScanSheet';
 import styles from './ingredients.module.css';
 
 /** Where a new part can come from, in menu order (02 §3.15; voice is a later phase). */
@@ -20,16 +23,8 @@ export const INGREDIENT_SOURCES = [
 ] as const;
 export type IngredientSource = (typeof INGREDIENT_SOURCES)[number];
 
-/**
- * Sources whose flows are not built yet: left off the menu until their slice lands and deletes
- * them here: barcode (P06-14, P06-17), recent, often and saved (P06-12).
- */
-export const SOURCES_NOT_BUILT_YET: readonly IngredientSource[] = [
-  'barcode',
-  'recent',
-  'often',
-  'saved',
-];
+/** Sources whose flows are not built yet: left off the menu until their slice lands. */
+export const SOURCES_NOT_BUILT_YET: readonly IngredientSource[] = [];
 
 /** The sources the AI serves: offered only when there is an intake session. */
 export const AI_SOURCES: readonly IngredientSource[] = ['camera', 'library', 'describe'];
@@ -47,45 +42,82 @@ const SOURCE_LOOKS: Record<IngredientSource, { readonly label: TKey; readonly ic
 
 /** The describe sheet's place on the sheet stack, above the review. */
 export const DESCRIBE_INGREDIENT_SHEET = 'review-ingredient-describe';
+/** The scanner's place on the sheet stack, above the review. */
+export const SCAN_INGREDIENT_SHEET = 'review-ingredient-scan';
+/** The reuse lists' places on the sheet stack, above the review. */
+export const REUSE_INGREDIENT_SHEETS: Readonly<Record<ReuseList, string>> = {
+  recent: 'review-ingredient-recent',
+  often: 'review-ingredient-often',
+  saved: 'review-ingredient-saved',
+};
+
+const REUSE_LISTS: readonly ReuseList[] = ['recent', 'often', 'saved'];
+
+function isReuseList(source: IngredientSource): source is ReuseList {
+  return (REUSE_LISTS as readonly string[]).includes(source);
+}
 
 export interface AddIngredientMenuProps {
   /** Whether the AI sources can be offered (an intake session exists). */
   readonly canAnalyse: boolean;
+  /** Whether barcode can be offered (a scanner, and an intake session to look codes up). */
+  readonly canScan: boolean;
   /** One photo from the camera or the library. */
   readonly onPhoto: (file: Blob) => void;
   /** A typed description, trimmed and not blank. */
   readonly onDescribe: (text: string) => void;
   /** Opens an empty part editor. */
   readonly onManual: () => void;
+  /** A scanned or typed code, once the scanner has closed. */
+  readonly onCode: (code: string) => void;
+  /** A food picked from Recent, Often eaten or Saved, once its list has closed. */
+  readonly onPick: (food: ReusableFood) => void;
   /** Sources to leave off; the ones not built yet by default. */
   readonly withheld?: readonly IngredientSource[];
 }
 
 /**
  * "Add ingredient" (02 §3.15): a menu of the sources a new part can come from. Camera and photo
- * open the device's picker for one photo; describe opens a short text sheet; manual opens the
- * part editor. Sources not built yet, and the AI ones without an intake session, are left off.
+ * open the device's picker for one photo; barcode opens the scanner; describe opens a short text
+ * sheet; manual opens the part editor; Recent, Often eaten and Saved open their lists, where a tap
+ * hands the food back instead of opening its review. Sources not built yet, the AI ones without an
+ * intake session and barcode without a scanner are left off.
  */
 export function AddIngredientMenu({
   canAnalyse,
+  canScan,
   onPhoto,
   onDescribe,
   onManual,
+  onCode,
+  onPick,
   withheld = SOURCES_NOT_BUILT_YET,
 }: AddIngredientMenuProps) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const libraryRef = useRef<HTMLInputElement>(null);
   const describeSheet = useSheet(DESCRIBE_INGREDIENT_SHEET);
+  const scanSheet = useSheet(SCAN_INGREDIENT_SHEET);
+  const reuseSheets = {
+    recent: useSheet(REUSE_INGREDIENT_SHEETS.recent),
+    often: useSheet(REUSE_INGREDIENT_SHEETS.often),
+    saved: useSheet(REUSE_INGREDIENT_SHEETS.saved),
+  };
 
   const choose = (source: IngredientSource): void => {
     if (source === 'camera') cameraRef.current?.click();
     else if (source === 'library') libraryRef.current?.click();
+    else if (source === 'barcode') scanSheet.show();
     else if (source === 'describe') describeSheet.show();
     else if (source === 'manual') onManual();
+    else if (isReuseList(source)) reuseSheets[source].show();
   };
 
+  const available = (source: IngredientSource): boolean => {
+    if (AI_SOURCES.includes(source)) return canAnalyse;
+    return source === 'barcode' ? canScan : true;
+  };
   const offered = INGREDIENT_SOURCES.filter(
-    (source) => !withheld.includes(source) && (canAnalyse || !AI_SOURCES.includes(source)),
+    (source) => !withheld.includes(source) && available(source),
   );
   const entries = offered.map((source): MenuAction => ({
     kind: 'action',
@@ -134,6 +166,23 @@ export function AddIngredientMenu({
         onClose={describeSheet.close}
         onDescribe={onDescribe}
       />
+      <ScanSheet
+        open={scanSheet.open && canScan}
+        onCode={(code) => {
+          scanSheet.close();
+          onCode(code);
+        }}
+        onClose={scanSheet.close}
+      />
+      {REUSE_LISTS.map((list) => (
+        <ReuseSheet
+          key={list}
+          list={list}
+          open={reuseSheets[list].open}
+          onClose={reuseSheets[list].close}
+          onPick={onPick}
+        />
+      ))}
     </>
   );
 }

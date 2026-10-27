@@ -46,6 +46,11 @@ export interface ReuseSheetProps {
   readonly open: boolean;
   /** Done, and after a pick (the review takes over). */
   readonly onClose: () => void;
+  /**
+   * Pick mode: a tap closes the sheet and hands the food here instead of opening its review (the
+   * add-ingredient menu adds it as one part).
+   */
+  readonly onPick?: (food: ReusableFood) => void;
 }
 
 /**
@@ -61,7 +66,7 @@ export function ReuseSheet(props: ReuseSheetProps) {
   return props.open ? <OpenReuseSheet {...props} /> : null;
 }
 
-function OpenReuseSheet({ list, onClose }: ReuseSheetProps) {
+function OpenReuseSheet({ list, onClose, onPick }: ReuseSheetProps) {
   const { analysis, clock } = useServices();
   const toast = useToast();
   const settings = useSettings(SETTINGS);
@@ -72,6 +77,10 @@ function OpenReuseSheet({ list, onClose }: ReuseSheetProps) {
 
   const pick = (food: ReusableFood): void => {
     onClose();
+    if (onPick) {
+      onPick(food);
+      return;
+    }
     const opening = analysis?.openForReview?.(reuseDraft(food), {
       photoIds: food.photoIds,
       source: food.source,

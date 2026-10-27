@@ -1,19 +1,27 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ImageBackend } from '../ai/image';
 import { DEFAULT_AI_SETTINGS } from '../ai/settings';
-import { fakeFetch, type FakeFetch, type RecordedRequest } from '../ai/testing/fakeFetch';
+import {
+  fakeFetch,
+  type FakeFetch,
+  type FakeStep,
+  type RecordedRequest,
+} from '../ai/testing/fakeFetch';
 import { geminiAnswer, geminiError } from '../ai/testing/wire';
 import { createDiaryRepo } from '../data/repos/diaryRepo';
 import { createPhotoRepo, type PhotoRepo } from '../data/repos/photoRepo';
-import { createSecretsRepo } from '../data/repos/secretsRepo';
+import { createSecretsRepo, FDC_SLOT } from '../data/repos/secretsRepo';
 import { createSettingsRepo } from '../data/repos/settingsRepo';
 import type { PlatewiseDb } from '../data/schema';
 import type { IngredientLine } from '../domain/model';
 import { withIdSequence } from '../lib/ids';
+import { bytesOf, storableBlob } from '../test/blobs';
 import { openTestDb } from '../test/db';
 import { createFakeCodec } from '../test/fakeImageCodec';
-import { makeEntry } from '../test/factories';
+import { FACTORY_NOW, makeEntry, makeProduct } from '../test/factories';
 import { createAiAccess, type StoredAiAccess } from './aiAccess';
+import { FDC_SEARCH_URL } from './barcode/fdc';
+import { OFF_PRODUCT_URL } from './barcode/off';
 import { MAX_PICK_BYTES } from './captureDrafts';
 import {
   createIngredientIntake,
@@ -44,6 +52,63 @@ const CURRY = {
 const OIL = { name: 'Olive oil', kcal: 119, protein: 0, carbs: 0, fat: 13.5, servingGrams: 13.5 };
 
 const answer = (food: object) => ({ json: geminiAnswer(JSON.stringify(food)) });
+
+// ---- Barcode replies (our own fixtures) ------------------------------------------------------
+
+/** One product: its 13-digit EAN form, and the same code as a 12-digit UPC-A. */
+const CODE = '0490071830027';
+const UPC = '490071830027';
+const PHOTO_URL =
+  'https://images.openfoodfacts.org/images/products/049/007/183/0027/front_en.3.400.jpg';
+const FDC_KEY = 'fdc-intake-key-5120';
+const unnamed = (code: string): string => `Unnamed ${code}`;
+
+/** Open Food Facts knows the oat bar, 40 g a serving, with a front photo. */
+const OFF_OAT_BAR: FakeStep = {
+  json: {
+    status: 1,
+    product: {
+      product_name: 'Oat Bar',
+      brands: 'Fernbrook',
+      serving_quantity: 40,
+      image_front_url: PHOTO_URL,
+      nutriments: {
+        'energy-kcal_100g': 450,
+        proteins_100g: 8,
+        carbohydrates_100g: 60,
+        fat_100g: 20,
+      },
+    },
+  },
+};
+const OFF_NOT_FOUND: FakeStep = { status: 404, json: { status: 0 } };
+
+/** FoodData Central has one Branded food with this GTIN: per 100 g, 40 g a serving. */
+const FDC_SESAME_BAR: FakeStep = {
+  json: {
+    foods: [
+      {
+        fdcId: 70511,
+        description: 'TOASTED SESAME BAR',
+        dataType: 'Branded',
+        gtinUpc: UPC,
+        brandName: 'RIVERSIDE',
+        servingSize: 40,
+        servingSizeUnit: 'g',
+        foodNutrients: [
+          { nutrientId: 1008, unitName: 'KCAL', value: 500 },
+          { nutrientId: 1003, unitName: 'G', value: 10 },
+          { nutrientId: 1005, unitName: 'G', value: 55 },
+          { nutrientId: 1004, unitName: 'G', value: 25 },
+        ],
+      },
+    ],
+  },
+};
+const FDC_REFUSED: FakeStep = { status: 403, json: { error: { code: 'API_KEY_INVALID' } } };
+
+const fdcRequests = (fake: FakeFetch) =>
+  fake.requests.filter((request) => request.url.startsWith(FDC_SEARCH_URL));
 
 /** Every photo decodes for the AI into the same small JPEG. */
 const backend: ImageBackend = {
@@ -98,6 +163,13 @@ let connections = 0;
 interface SetUpOptions {
   readonly fetch?: (fake: FakeFetch) => typeof globalThis.fetch;
   readonly aiAccess?: () => Promise<StoredAiAccess>;
+  /** A FoodData Central key to store. */
+  readonly fdcKey?: string;
+  /**
+   * Store photos through a recorder that keeps a small stand-in for each (a downloaded photo is a
+   * jsdom blob, which the test database cannot keep).
+   */
+  readonly recordPhotos?: boolean;
 }
 
 /** The intake over a test database with a Gemini key stored and AI set up. */
@@ -106,22 +178,33 @@ async function setUp(options: SetUpOptions = {}) {
   opened.push(db);
   const settingsRepo = createSettingsRepo(db, { locale: 'en-GB', bus });
   const secretsRepo = createSecretsRepo(db);
+  const diaryRepo = createDiaryRepo(db);
   await settingsRepo.set('ai.settings', DEFAULT_AI_SETTINGS);
   await secretsRepo.set('gemini', GEMINI_KEY);
+  if (options.fdcKey !== undefined) await secretsRepo.set(FDC_SLOT, options.fdcKey);
   const photoRepo: PhotoRepo = createPhotoRepo(db, {
     newId: withIdSequence(`photo-${++connections}-`),
   });
   const codec = createFakeCodec();
   const fake = fakeFetch();
+  const received: Blob[] = [];
+  const recorder: IngredientIntakeDeps['photos'] = {
+    store: async (blob) => {
+      received.push(blob);
+      const id = await photoRepo.put(await storableBlob(32), { width: 8, height: 8 });
+      return { kind: 'stored', id };
+    },
+  };
   const deps: IngredientIntakeDeps = {
-    photos: createPhotoService({ photoRepo, codec: codec.codec }),
+    photos: options.recordPhotos ? recorder : createPhotoService({ photoRepo, codec: codec.codec }),
     photoRepo,
     aiAccess: options.aiAccess ?? createAiAccess({ settingsRepo, secretsRepo }),
     fetch: options.fetch ? options.fetch(fake) : fake.fetch,
     imageBackend: backend,
+    lookup: { secrets: secretsRepo, labels: diaryRepo, unnamed, language: 'en' },
   };
   const intake = createIngredientIntake(deps);
-  return { db, photoRepo, codec, fake, intake, session: intake.open() };
+  return { db, diaryRepo, photoRepo, codec, fake, received, intake, session: intake.open() };
 }
 
 function lineOf(outcome: IntakeOutcome): IngredientLine {
@@ -274,5 +357,128 @@ describe('IntakeSession: the sheet goes', () => {
 
     expect((await photoRepo.get(keptId))?.id).toBe(keptId);
     expect(await photoRepo.get(droppedId)).toBeNull();
+  });
+});
+
+describe('IntakeSession: a part from a barcode (R02.15)', () => {
+  /** The product photo Open Food Facts serves. */
+  const PHOTO: FakeStep = { text: 'oat-bar-photo', headers: { 'content-type': 'image/jpeg' } };
+
+  it('turns an Open Food Facts product into one part of one serving, keeping its photo', async () => {
+    const { fake, session, photoRepo, received } = await setUp({
+      fdcKey: FDC_KEY,
+      recordPhotos: true,
+    });
+    fake.on(OFF_PRODUCT_URL, OFF_OAT_BAR).on(PHOTO_URL, PHOTO);
+
+    const line = lineOf(await session.barcode(CODE));
+
+    expect(line).toMatchObject({
+      name: 'Fernbrook Oat Bar',
+      grams: 40,
+      kcal: 180,
+      protein: 3.2,
+      carbs: 24,
+      fat: 8,
+    });
+    expect(line.emoji).toBeDefined();
+    expect(line.photoIds).toHaveLength(1);
+    expect((await photoRepo.get(line.photoIds[0] ?? ''))?.id).toBe(line.photoIds[0]);
+    expect(received).toHaveLength(1);
+    expect(await bytesOf(received[0] as Blob)).toEqual([
+      ...new TextEncoder().encode('oat-bar-photo'),
+    ]);
+    // Open Food Facts had it: neither the saved labels nor FoodData Central were asked.
+    expect(fake.requests.map((request) => request.url.split('?')[0])).toEqual([
+      `${OFF_PRODUCT_URL}${CODE}.json`,
+      PHOTO_URL,
+    ]);
+  });
+
+  it('takes a label saved for the code before FoodData Central, as one part without a photo', async () => {
+    const { fake, session, diaryRepo, db } = await setUp({ fdcKey: FDC_KEY });
+    await diaryRepo.add(
+      makeEntry({
+        name: 'My oat bar label',
+        kcal: 190,
+        protein: 4,
+        carbs: 25,
+        fat: 8.5,
+        basis: { kind: 'grams', grams: 42 },
+        source: 'label',
+        loggedAt: FACTORY_NOW - 60_000,
+        product: makeProduct({ barcode: UPC }),
+        photoIds: ['photo-of-the-label'],
+      }),
+    );
+    fake.on(OFF_PRODUCT_URL, OFF_NOT_FOUND);
+
+    const line = lineOf(await session.barcode(CODE));
+
+    expect(line).toMatchObject({ name: 'My oat bar label', grams: 42, kcal: 190, photoIds: [] });
+    expect(fdcRequests(fake)).toHaveLength(0);
+    expect(await db.photos.count()).toBe(0);
+  });
+
+  it('asks FoodData Central after an Open Food Facts miss, with the stored key', async () => {
+    const { fake, session } = await setUp({ fdcKey: FDC_KEY });
+    fake.on(OFF_PRODUCT_URL, OFF_NOT_FOUND).on(FDC_SEARCH_URL, FDC_SESAME_BAR);
+
+    const line = lineOf(await session.barcode(CODE));
+
+    expect(line).toMatchObject({ name: 'Riverside Toasted Sesame Bar', grams: 40, photoIds: [] });
+    expect(fdcRequests(fake)[0]?.headers['x-api-key']).toBe(FDC_KEY);
+  });
+
+  it('reports a refused FoodData Central key as its own miss, and other misses by kind', async () => {
+    const refused = await setUp({ fdcKey: FDC_KEY });
+    refused.fake.on(OFF_PRODUCT_URL, OFF_NOT_FOUND).on(FDC_SEARCH_URL, FDC_REFUSED);
+    expect(await refused.session.barcode(CODE)).toEqual({
+      kind: 'missed',
+      failure: 'keyRefused',
+    });
+
+    // Without a key nothing goes to FoodData Central, and Open Food Facts' answer stands.
+    const noKey = await setUp();
+    noKey.fake.on(OFF_PRODUCT_URL, OFF_NOT_FOUND);
+    expect(await noKey.session.barcode(CODE)).toEqual({ kind: 'missed', failure: 'notFound' });
+    expect(fdcRequests(noKey.fake)).toHaveLength(0);
+  });
+
+  it('stops at an Open Food Facts outage without asking further (R02.15)', async () => {
+    const { fake, session } = await setUp({ fdcKey: FDC_KEY });
+    fake.on(OFF_PRODUCT_URL, { status: 429, json: { status: 0 } });
+
+    expect(await session.barcode(CODE)).toEqual({ kind: 'missed', failure: 'rateLimited' });
+    expect(fake.requests).toHaveLength(1);
+  });
+
+  it('stops a lookup in flight when the sheet goes, storing nothing', async () => {
+    const gate = { current: null as ReturnType<typeof held> | null };
+    const { fake, session, db } = await setUp({
+      fetch: (fake) => {
+        gate.current = held(fake);
+        return gate.current.fetch;
+      },
+    });
+    fake.on(OFF_PRODUCT_URL, OFF_OAT_BAR);
+    const looking = session.barcode(CODE);
+    await gate.current?.arrived;
+
+    expect(await session.describe('a slice of bread')).toEqual({ kind: 'busy' });
+    await session.close();
+    expect(await looking).toEqual({ kind: 'stopped' });
+    expect(gate.current?.signals.every((signal) => signal.aborted)).toBe(true);
+    expect(await db.photos.count()).toBe(0);
+  });
+
+  it('lets go of a product photo nothing names when the sheet goes', async () => {
+    const { fake, session, photoRepo } = await setUp({ recordPhotos: true });
+    fake.on(OFF_PRODUCT_URL, OFF_OAT_BAR).on(PHOTO_URL, PHOTO);
+    const [photoId = ''] = lineOf(await session.barcode(CODE)).photoIds;
+    expect((await photoRepo.get(photoId))?.id).toBe(photoId);
+
+    await session.close();
+    expect(await photoRepo.get(photoId)).toBeNull();
   });
 });

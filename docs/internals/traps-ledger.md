@@ -174,6 +174,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > keeps Open Food Facts’ own miss when FoodData Central is down or has no exact match
   - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > reports a key FoodData Central refuses as its own failure, which offers a label scan
   - Test: src/services/barcode/lookup.test.ts > lookupBarcode: the order (R02.15) > sends nothing to FoodData Central without a key or with a blank one, and keeps Open Food Facts’ not-found
+  - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > turns an Open Food Facts product into one part of one serving, keeping its photo
+  - Test: src/services/ingredientIntake.test.ts > IntakeSession: a part from a barcode (R02.15) > takes a label saved for the code before FoodData Central, as one part without a photo
 - **R02.16** Per-serving values first, else scaled per-100 g; FDC label and per-100 g sets never mixed when the weight is unknown
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > reads our fixture per serving, preferring per-serving values to scaled per-100 g ones
   - Test: src/services/barcode/off.test.ts > lookupOff: one serving (R02.16) > scales per-100 g values by 0.3 for a 30 g serving

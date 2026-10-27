@@ -7,13 +7,14 @@ import { canSplit, SPLIT_MAX, SPLIT_MIN, splitRecipe } from '../../../domain/ser
 import { scaleLine } from '../../../domain/servings/scale';
 import { formatEnergy, type EnergyDisplayUnit } from '../../../domain/units/energy';
 import { currentLocale } from '../../../i18n/locale';
-import { t } from '../../../i18n/t';
+import { t, type TKey } from '../../../i18n/t';
 import { useServices } from '../../../services/context';
 import type { IntakeOutcome, IntakeSession } from '../../../services/ingredientIntake';
 import { Button } from '../../../ui/Button';
 import { Card } from '../../../ui/Card';
 import { Icon } from '../../../ui/icons';
 import { Stepper } from '../../../ui/Stepper';
+import type { ReusableFood } from '../reuse/ReuseRow';
 import { AddIngredientMenu } from './AddIngredientMenu';
 import styles from './ingredients.module.css';
 import { LineEditor } from './LineEditor';
@@ -46,6 +47,16 @@ export function withMealAsPart(working: ReviewWorking): ReviewWorking {
   return { ...working, draft: { ...working.draft, lines: [draftAsLine(working.draft, [])] } };
 }
 
+/**
+ * A food picked from a reuse list as one part: its own parts are not expanded, and its photos
+ * come along (its own, then its parts', without repeats). They stay named by the entry or saved
+ * meal they belong to.
+ */
+function foodAsPart(food: ReusableFood): IngredientLine {
+  const photoIds = [...new Set([...food.photoIds, ...food.lines.flatMap((line) => line.photoIds)])];
+  return draftAsLine(food, photoIds);
+}
+
 /** Whether the split stepper shows: the domain's rule, the portion check on the opened draft. */
 function splitOffered({ working, opened }: IngredientsSlot): boolean {
   const { basis, lines } = working.draft;
@@ -69,10 +80,10 @@ function useIntakeSession(): IntakeSession | null {
   return session;
 }
 
-/** The card's state of an AI part request: idle, running, or the lines of its problem. */
+/** The card's state of a part request: idle, running (and what it says), or its problem. */
 type Request =
   | { readonly kind: 'idle' }
-  | { readonly kind: 'busy' }
+  | { readonly kind: 'busy'; readonly label: TKey }
   | { readonly kind: 'problem'; readonly lines: readonly string[] };
 
 const IDLE: Request = { kind: 'idle' };
@@ -81,13 +92,19 @@ const IDLE: Request = { kind: 'idle' };
 function problemOf(outcome: IntakeOutcome): readonly string[] | null {
   if (outcome.kind === 'failed') return outcome.messages.map(({ key, params }) => t(key, params));
   if (outcome.kind === 'refused') return [t(`ingredients.refused.${outcome.reason}`)];
+  if (outcome.kind === 'missed') {
+    // A refused key has its own words here: the scanner's point to a label scan, not offered here.
+    const { failure } = outcome;
+    return [t(failure === 'keyRefused' ? 'ingredients.keyRefused' : `scan.failure.${failure}`)];
+  }
   return null;
 }
 
 /**
  * The meal's parts on the review (02 §3.15): each with its photo or emoji, name, weight and
  * energy, and macros; a tap opens the part editor. "Add ingredient" offers the sources; an AI
- * part shows a busy line while it is worked out, and a problem with a dismiss when it fails.
+ * part or a barcode shows a busy line while it is worked out or looked up, and a problem with a
+ * dismiss when it fails. A food picked from a reuse list is added at once as one part.
  * Every change goes to the sheet as the parts it shows (`onLinesChange`), so the header becomes
  * their sums (R02.4, R02.5). With two parts or more, a known weight and a draft that is not
  * already one portion of a split dish, "Servings in recipe" divides the dish (R02.6).
@@ -95,6 +112,7 @@ function problemOf(outcome: IntakeOutcome): readonly string[] | null {
 export function IngredientsCard(slot: IngredientsSlot) {
   const { working, lines } = slot;
   const settings = useSettings(SETTINGS);
+  const { barcode } = useServices();
   const session = useIntakeSession();
   const editorSheet = useSheet(LINE_EDITOR_SHEET);
   const [target, setTarget] = useState<{ readonly index: number | null } | null>(null);
@@ -127,8 +145,8 @@ export function IngredientsCard(slot: IngredientsSlot) {
     onLinesChange(shown.filter((_, at) => at !== index));
   };
 
-  const ask = (pending: Promise<IntakeOutcome>): void => {
-    setRequest({ kind: 'busy' });
+  const ask = (pending: Promise<IntakeOutcome>, label: TKey = 'ingredients.busy'): void => {
+    setRequest({ kind: 'busy', label });
     pending.then(
       (outcome) => {
         if (outcome.kind === 'stopped') return;
@@ -174,14 +192,17 @@ export function IngredientsCard(slot: IngredientsSlot) {
       {request.kind === 'busy' ? (
         <p className={styles.busy} role="status" data-ui="ingredients.busy">
           <span className={styles.spinner} aria-hidden="true" />
-          {t('ingredients.busy')}
+          {t(request.label)}
         </p>
       ) : (
         <AddIngredientMenu
           canAnalyse={session !== null}
+          canScan={session !== null && barcode !== undefined}
           onPhoto={(file) => session && ask(session.photo(file))}
           onDescribe={(text) => session && ask(session.describe(text))}
           onManual={() => edit(null)}
+          onCode={(code) => session && ask(session.barcode(code), 'scan.looking')}
+          onPick={(food) => add(foodAsPart(food))}
         />
       )}
       {request.kind === 'problem' ? (

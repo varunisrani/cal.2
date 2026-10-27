@@ -180,6 +180,12 @@ async function start(): Promise<void> {
       photoRepo,
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
       fetch: browserFetch,
+      // An ingredient scan looks codes up like Home's scans (R02.15).
+      lookup: {
+        secrets: secretsRepo,
+        labels: diaryRepo,
+        unnamed: (code) => t('scan.unnamed', { code }),
+      },
     }),
     fitCheck: createFitCheckService({
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
