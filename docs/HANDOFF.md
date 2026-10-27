@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 10:24 IST (Agent 1, session 3). 122/176 tasks; P00–P05 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); five wave 11 builders running.
+Updated: 2026-10-27 11:01 IST (Agent 1, session 3). 133/176 tasks; P00–P05 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); wave 11 landed, wave 12 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -111,28 +111,25 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 11 | P07-16 (calories card and averages; cancellable sliced computation) | b2f9de2 |
 | Wave 11 | P07-15 (weekly recap; D-16.84; plan cell corrected: 1 799 kcal is outside ±10 % of 2 000) | dc6c909 |
 | Wave 11 | P07-06 (water menu page, custom amount, water settings and presets editor; Settings › Tracking & reminders; `water` service) | c3b9f43 |
+| Wave 11 | P08-04, P08-12, P08-13 (coach history, prompt chips, Markdown replies and copy; D-16.85) | d18dd7a |
+| Wave 11 | P08-05..07 (chat wires with tool calling: OpenAI-compatible, Anthropic, Gemini; `askRound`) | 29d15b9 |
+| Wave 11 | P08-01..03 (coach context and system prompt, six nutrition tools, tool-result limiter) | 0a3cbdb |
+| Wave 11 | P07-07 (fasting service, start sheet, editor, settings; paused dialog in review, manual, copy a day) | 3458a92 |
+| Wave 11 | P06-11 (entry editor; `updateEntry`, `toggleSaved`, `reprocess` service) | 9357cad |
 
 ## In progress
 
-Window reset at 10:20 IST (next reset 15:20 IST). Five builders started at 10:24 IST, all at base d24514e (prompts
-in `docs/handoff/wave11/`, filled copies in `/root/wt/prompt-<slice>.txt`):
-- P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`, `/root/wt/wt-p06s11`.
-- P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse; mounts
-  `FastingSettings` on the landed Tracking page (`fasting` partition), `/root/wt/wt-p07s2b`.
-- P08 S1 (P08-01..03 context, tools, limiter), `/root/wt/wt-p08s1`.
-- P08 S2 (P08-05..07 chat wires; tool schemas passed in), `/root/wt/wt-p08s2`.
-- P08 S3 (P08-04 history, P08-12 chips, P08-13 Markdown; `coach` partition), `/root/wt/wt-p08s3`.
-Expected merges: P06-11 and P07-07 both touch `src/features/log/review/ReviewSheet.tsx` and maybe
-`src/services/diary.ts`; S1 and S3 both add to `src/services/coach/`; en.ts gets three partitions.
-Earlier in wave 11: P07-16 (b2f9de2), P07-15 (dc6c909), P07-06 (c3b9f43). Then P08 wave B: P08-08 engine + P08-09
-session; P08-10 page + P08-11 composer; P08-14 e2e.
-Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
-water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
-`PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.
-Landed this window (05:20–10:20 IST): 9a83eee, d855e53, c69fd91, d9ae5fc, 289332c, 1e3db66, 26e1c99 +
-cfd46c7, d72f291 + d78c140, ff6e147, 63a79c7, cad5f93, 2b1a1c3, c447eaf, 630e227, b2f9de2, dc6c909, a37c20d, c3b9f43. **Progress:
-122/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 17/20, P07 13/17,
-P08 0/14, P09 0/19, P10 0/14).
+Three wave 12 builders started at 11:01 IST, base 9357cad (prompts in `docs/handoff/wave12/`, filled copies in
+`/root/wt/prompt-<slice>.txt`):
+- P07-05 + P07-08 (diary sort, water and fast rows; the + menu's Water page and fasting rows), `/root/wt/wt-p07s2c`.
+- P06-19 (selection bar and combine; row tap → `EntryEditor`; saved heart; `PausedDialog` on combine), `/root/wt/wt-p06s19`.
+- P08-08 + P08-09 (chat engine; Coach session with the `CoachSession` shape), `/root/wt/wt-p08s4`.
+Expected merges: P07-05/08 and P06-19 both edit `Diary.tsx` and `HomePage.tsx` (each keeps to its own parts).
+Next: P08-10 + P08-11 (Coach page and composer, against `CoachSession`) once P08-08/09 land; then the e2e
+tasks P06-20 (logging), P07-17 (Home and Progress), P08-14 (Coach); then P09 and P10.
+Landed this window (10:20–15:20 IST): d18dd7a, 29d15b9, 0a3cbdb, 3458a92, 9357cad (latest full loop: unit 4162
+passed + 2 expected-fail, bundle 213.07 kB, e2e 6/6). **Progress: 133/176 tasks** (P00 10/10, P01 19/19, P02
+15/15, P03 19/19, P04 14/14, P05 15/15, P06 18/20, P07 14/17, P08 9/14, P09 0/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -140,9 +137,15 @@ whether to fast-forward `main` to the work branch.
 
 ## Next
 
-1. After the 10:20 IST reset: wave 11 (above), landing each slice as it returns.
-2. Wave 12, then wave 13 (above); then P08 (Coach), P09 (settings, data, platform), P10 (hardening).
-3. Follow-ups noted by builders, not yet done (the shared list formatter landed in a37c20d): the
+1. Land wave 12 as it returns; then P08-10/11; then the three e2e tasks; then P09 (settings, data, platform)
+   and P10 (hardening and release).
+2. Landing helpers: `/root/wt/commit-landing.sh <msg>` (one slice) and `/root/wt/land-multi.sh <base> <sha>
+   <msg> ...` (several stacked slices from one loop, one commit each); both refuse unless the loop log ends
+   with `ci=0` and check fmt, check and lint again before pushing.
+3. Follow-ups noted by builders, not yet done (the shared list formatter landed in a37c20d): unused
+   catalogue keys `log.manual.paused` and `reuse.copyDay.paused.*` (the paused dialog replaced them);
+   `diaryRepo.update` does not refuse an edit during a fast (check against R05.1's intent); copy a day's
+   End fast and log is two writes (a list-taking `endFastAndAdd` would make it one); the
    gauge says "No goal set" while the pillars say "No goal"; energy and nutrient unit words used from
    the `home` partition by Progress (a shared units partition); unify the three AI-setup readers; lazy onboarding and Home sheets; a shared nutrients
    partition; `data/barcodeKey` re-exporting the domain barcode key; the water service has no delete
