@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s3 (detached at <BASE>, dependencies installed; do not install anything unless this prompt says so). Work only there.
+
+Task: P10 slice S3 = P10-07, P10-08 and P10-11: the accessibility pass, the bundle budget with the shipped inventory, and the browser matrix. Spec: those three rows in docs/plan/phases/P10-hardening-and-release.md; L9 (values as text); the bundle budget script; REA `analyze-javascript-application` through `~/rea-lab/rea`.
+Task notes (each before its work): docs/notes/P10/accessibility-pass.md, docs/notes/P10/ship-inventory.md, docs/notes/P10/browser-matrix.md.
+
+You own:
+- the dev dependency `@axe-core/playwright` at an exact version: `pnpm add -D --save-exact @axe-core/playwright@4.14.0` (the only install allowed; check its licence passes the licences check; the lockfile change is part of your patch)
+- e2e/a11y.spec.ts (Home, review, Progress, Coach, Settings pages and the wizard, in both themes; a keyboard-only walk logging a manual entry and a weight), and fixes for every serious or critical finding in the owning components (small and local; name each)
+- docs/internals/{ship-inventory,browser-matrix}-v1.0.md; WebKit and Firefox projects in playwright.config.ts for a smoke subset, gated behind an environment variable because only Chromium is installed here (do not run `playwright install`); the matrix records what was run here and what needs a manual check on real devices
+- the banned check over dist/ as a one-off (record the result; do not change the check)
+
+Do not touch:
+- other e2e specs (another builder may add one), docs/plan/**, scripts/** except reading
+
+Decisions already made:
+- Gauge, pillars and charts expose their values as text (L9); focus visible everywhere; reduced motion respected. Initial JS ≤ 250 kB gzip with the barcode decoder, charts and Markdown lazy (it is about 230 now): record the chunk table.
+- The inventory lists routes, storage (IndexedDB stores, localStorage keys, Cache Storage), network endpoints (only the providers, Open Food Facts and FoodData Central) and workers.
+
+Tests:
+- after pnpm build: the a11y spec (Chromium) with --workers=1 --repeat-each=2, then the whole e2e folder once with --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, check:bundle (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name, and every document you wrote. Leave everything uncommitted.

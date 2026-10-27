@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s1 (detached at <BASE>, dependencies installed; do not install anything unless this prompt says so). Work only there.
+
+Task: P10 slice S1 = P10-01, P10-02, P10-03 and P10-04: the parity scenarios, the parity runner, the obligations ledger and the parity report. Spec: those four rows in docs/plan/phases/P10-hardening-and-release.md; docs/plan/02-rea-workflow.md (§4 for scenario inputs); the landed parity/walking-skeleton.platewise.json and how it was run (docs/HANDOFF.md, Demo 1's REA runs).
+Task notes (each before its work): docs/notes/P10/parity-scenarios.md, docs/notes/P10/parity-runner.md, docs/notes/P10/obligations-and-parity-report.md.
+
+You own:
+- parity/*.platewise.json (the scenario files the rows list), parity/ledger/{obligations,manifest}.json, scripts/parity.ts (+ a test for its pure parts), the `parity` script in package.json (one line), docs/internals/parity-report-v1.0.md
+- data-ui hooks a scenario needs, added to components only where one is missing (one attribute per line; say which)
+- any bug a divergence shows: fixed with a failing-first test in the owning module, small and local, each one named in the report; anything larger goes to the report as a bug with a proposal
+
+Do not touch:
+- e2e/** (other builders), docs/plan/** except adding a new intended difference to docs/plan/16-what-we-change.md (the lead numbers it at landing: write it as D-16.NEW), pnpm-lock.yaml
+
+Decisions already made:
+- REA runs through the wrapper `~/rea-lab/rea` (rea-agents 6.8.0 on Node 24 in /root/rea-lab/node24); the app is served by `vite preview --host 127.0.0.1 --port <fixed> --strictPort` from a fresh build, the fake AI from e2e/fake-ai on its own port; captures go under ~/rea-lab/parity/platewise/; the runner stops only the processes it started, by PID. Every step has a timeout_ms; scenarios use data-ui hooks only.
+- Classify every divergence: intended (a D-id), bug (fixed with a failing-first test), reference gap (why), or unknown (the lead decides). Our words in the obligations; the reference is evidence, not text to copy.
+
+Tests:
+- the runner over every scenario: all steps complete, no uncaught page error; unit tests of the runner's pure parts with --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name, and every document you wrote. Leave everything uncommitted.
