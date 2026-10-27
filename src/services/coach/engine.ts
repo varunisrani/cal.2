@@ -2,7 +2,9 @@
 // with a photo the primary, without one the text provider when it is on, else the primary. A
 // provider that is not set up refuses before anything is sent. The system text is built once from
 // the snapshot taken when the person pressed Send, and the tools of the turn read only that
-// snapshot, so a meal logged while the reply runs shows up on the next question (R04.22).
+// snapshot, so a meal logged while the reply runs shows up on the next question (R04.22). The
+// turn offers the six nutrition tools, and `activity_log` with its rules when the snapshot holds
+// Health Connect's activity (the Android app, connected: D-16.94).
 //
 // A turn is a short run of rounds on the provider's wire. Each round sends everything so far;
 // tool calls are answered locally, every result cut to the 60 000-character limit (D-16.32), and
@@ -36,7 +38,7 @@ import { coachContext } from './context';
 import { coachHistory, type TurnQuestion } from './history';
 import { limitToolResult } from './limiter';
 import type { CoachSnapshot } from './snapshot';
-import { NUTRITION_TOOLS } from './toolSchemas';
+import { coachTools } from './toolSchemas';
 import { runCoachTool } from './tools';
 
 /** Requests one attempt may send, the one that brings the answer included (R04.19). */
@@ -60,12 +62,14 @@ const NOT_SET_UP: Readonly<Record<Missing, SingleFailure['kind']>> = {
   server: 'invalidUrl',
 };
 
-/** The six tools in the shape the chat wires take. */
-const CHAT_TOOLS: readonly ToolSchema[] = NUTRITION_TOOLS.map((tool) => ({
-  name: tool.name,
-  description: tool.description,
-  parameters: { ...tool.parameters },
-}));
+/** The tools a turn offers, in the shape the chat wires take. */
+function chatTools(activity: boolean): readonly ToolSchema[] {
+  return coachTools(activity).map((tool) => ({
+    name: tool.name,
+    description: tool.description,
+    parameters: { ...tool.parameters },
+  }));
+}
 
 /** What both attempts of one turn share. */
 interface Turn {
@@ -73,6 +77,7 @@ interface Turn {
   readonly deps: AiDeps;
   readonly deadline: Deadline;
   readonly system: string;
+  readonly tools: readonly ToolSchema[];
   /** The prepared photo, base64 JPEG. */
   readonly photo?: string;
   readonly secrets: readonly string[];
@@ -109,11 +114,17 @@ async function turn(
     photo = prepared.value.base64;
   }
   const { snapshot } = input;
+  const activity = snapshot.activity !== null;
   const plan: Turn = {
     input,
     deps,
     deadline,
-    system: coachSystemPrompt({ context: coachContext(snapshot), notes: settings.instructions }),
+    system: coachSystemPrompt({
+      context: coachContext(snapshot),
+      notes: settings.instructions,
+      activity,
+    }),
+    tools: chatTools(activity),
     photo,
     secrets: storedKeys(keys),
     runTool: (call) => limitToolResult(runCoachTool(call.name, call.args, snapshot)),
@@ -150,7 +161,7 @@ async function attempt(plan: Turn, target: RoleTarget): Promise<Result<string, S
       model: target.model,
       key: keyFor(target.provider, deps.keys),
       system: plan.system,
-      tools: CHAT_TOOLS,
+      tools: plan.tools,
       maxTokens: deps.settings.maxTokens,
       openRouterEffort: deps.settings.openRouterEffort,
     };

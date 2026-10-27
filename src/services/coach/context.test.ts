@@ -1,16 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { defaultProfile, profileWith } from '../../domain/goals/__fixtures__/profiles';
+import { countedBurn } from '../../features/home/burn';
 import { makeBodyFat, makeProfile, makeWater } from '../../test/factories';
 import {
   FIXTURE_FOOD_NAMES,
+  SNAPSHOT_TODAY,
+  activityOn,
   at,
+  connectedActivity,
   entryOn,
   fastFrom,
   fixtureDiary,
   makeSnapshot,
   weighInOn,
+  workoutOn,
 } from './__fixtures__/snapshot';
-import { coachContext } from './context';
+import { coachContext, countedActiveKcal } from './context';
 import type { CoachSnapshot } from './snapshot';
 
 /** Words that would point the model at workouts, which v1 does not have. */
@@ -49,15 +54,15 @@ describe('coachContext: the person', () => {
     expect(text).toContain('- Goal weight: 60.0 kg');
   });
 
-  it('gives the profile in lb and feet and inches for a person who reads those', () => {
+  it('gives the height in feet and inches to a person who reads them, every weight in kg (D-16.91)', () => {
     const text = coachContext(
-      makeSnapshot({ units: { energy: 'kcal', weight: 'lb', height: 'ftIn' } }),
+      makeSnapshot({ units: { energy: 'kcal', weight: 'kg', height: 'ftIn' } }),
     );
     expect(text).toContain('- Height: 5 ft 6 in');
-    expect(text).toContain('- Weight: 141.1 lb');
-    expect(text).toContain('- Goal: lose weight at 1.1 lb a week');
-    expect(text).toContain('- Goal weight: 132.3 lb');
-    expect(text).not.toMatch(/\d kg/);
+    expect(text).toContain('- Weight: 64.0 kg');
+    expect(text).toContain('- Goal: lose weight at 0.5 kg a week');
+    expect(text).toContain('- Goal weight: 60.0 kg');
+    expect(text).not.toMatch(/\d lb/);
   });
 
   it('gives body fat and goal body fat to one decimal only when they are set (D-16.64)', () => {
@@ -170,11 +175,10 @@ describe('coachContext: the weight forecast (P01-18)', () => {
     );
   });
 
-  it('gives the days to the goal weight in lb for a person losing toward it', () => {
+  it('gives the days to the goal weight in kg for a person losing toward it (D-16.91)', () => {
     const text = coachContext(
       makeSnapshot({
         profile: profileWith({ goal: 'lose', goalWeightKg: 68, weeklyKg: 0.5 }),
-        units: { energy: 'kcal', weight: 'lb', height: 'cm' },
         entries: [
           entryOn('2026-10-24', '13:00', { kcal: 1902 }),
           entryOn('2026-10-25', '13:00', { kcal: 1902 }),
@@ -183,9 +187,9 @@ describe('coachContext: the weight forecast (P01-18)', () => {
       }),
     );
     // 1 902 against a 2 452 burn: 550 kcal a day short, 0.5 kg a week, 2 kg in 28 days.
-    expect(text).toContain('- Pace the food log points to: -1.10 lb a week');
+    expect(text).toContain('- Pace the food log points to: -0.50 kg a week');
     expect(text).toContain(
-      '- Goal weight of 149.9 lb reached in about 28 days at this pace (around 2026-11-23)',
+      '- Goal weight of 68.0 kg reached in about 28 days at this pace (around 2026-11-23)',
     );
     expect(text).not.toContain('unlogged');
   });
@@ -276,6 +280,119 @@ describe('coachContext: today so far (D-16.27)', () => {
     expect(ounces).toContain(
       '- Water: 750 ml of a 2000 ml goal (they read fl oz: 25.4 of 67.6 fl oz)',
     );
+  });
+});
+
+/** Today's Health Connect day: a run in the morning and a gym session in the evening. */
+function activeToday() {
+  return activityOn(SNAPSHOT_TODAY, {
+    steps: 8412,
+    activeKcal: 420.4,
+    totalKcal: 2310.6,
+    distanceM: 6234,
+    sessions: [
+      workoutOn(SNAPSHOT_TODAY, '18:00', 45, { type: 'strengthTraining' }),
+      workoutOn(SNAPSHOT_TODAY, '07:10', 35, { activeKcal: 310.2, title: 'Run with Anna' }),
+    ],
+  });
+}
+
+/** The default profile (a 2452 kcal target) with the fixture diary and Health Connect. */
+function withActivity(activity: CoachSnapshot['activity'], changes: Partial<CoachSnapshot> = {}) {
+  return coachContext(
+    makeSnapshot({ profile: defaultProfile, entries: fixtureDiary(), activity, ...changes }),
+  );
+}
+
+describe('coachContext: Health Connect activity (D-16.94)', () => {
+  it("gives today's figures and workouts, and the target with today's active calories counted in", () => {
+    const yesterday = activityOn('2026-10-25', { steps: 15_001, activeKcal: 777 });
+    const text = withActivity(connectedActivity([yesterday, activeToday()]));
+    expect(text).toContain(
+      [
+        'Activity today, from Health Connect on their phone:',
+        '- Steps: 8412',
+        '- Active calories, burned by moving: 420 kcal',
+        '- Total calories burned, resting burn included: 2311 kcal',
+        '- Distance: 6.2 km',
+        '- Workouts: running at 07:10 for 35 min (310 kcal active); strength training at 18:00 for 45 min',
+        '- "Count active calories" is on, so today\'s energy target is the 2452 kcal goal + 420 kcal active = 2872 kcal',
+      ].join('\n'),
+    );
+    // What is left is worked out from today's target, as Home shows it; the goal stays the goal.
+    expect(text).toContain(
+      "- Left of today's targets, active calories counted in: 1722 kcal, protein 63 g, carbs 266 g, fat 1.5 g",
+    );
+    expect(text).toContain('- Daily targets in effect: 2452 kcal,');
+    expect(text).not.toContain('15001');
+    expect(text).not.toContain('777');
+  });
+
+  it('keeps the target at the goal when counting is off, saying active calories are not added', () => {
+    const text = withActivity(connectedActivity([activeToday()], { countActive: false }));
+    expect(text).toContain(
+      '- "Count active calories" is off, so today\'s energy target is the 2452 kcal goal; active calories are not added to it',
+    );
+    expect(text).toContain('- Left of the daily targets: 1302 kcal,');
+    expect(text).toContain('- Active calories, burned by moving: 420 kcal');
+  });
+
+  it('adds nothing when counting is on but today has no active calories, and says each missing figure', () => {
+    const text = withActivity(connectedActivity([activityOn(SNAPSHOT_TODAY, { steps: 2000 })]));
+    expect(text).toContain('- Steps: 2000');
+    expect(text).toContain('- Active calories, burned by moving: none recorded');
+    expect(text).toContain('- Total calories burned, resting burn included: none recorded');
+    expect(text).toContain('- Distance: none recorded');
+    expect(text).toContain('- Workouts: none recorded');
+    expect(text).toContain(
+      '- "Count active calories" is on, but there are no active calories to add yet, so today\'s energy target is the 2452 kcal goal',
+    );
+    expect(text).toContain('- Left of the daily targets: 1302 kcal,');
+  });
+
+  it('says nothing is recorded yet today when Health Connect has no figure for today', () => {
+    const text = withActivity(connectedActivity([activityOn('2026-10-25', { steps: 9000 })]));
+    expect(text).toContain(
+      'Activity today, from Health Connect on their phone:\n- Nothing recorded yet today\n- "Count active calories" is on, but there are no active calories to add yet',
+    );
+    expect(text).not.toContain('Steps:');
+  });
+
+  it('gives miles beside km to a person who reads feet and inches', () => {
+    const text = withActivity(connectedActivity([activeToday()]), {
+      units: { energy: 'kcal', weight: 'kg', height: 'ftIn' },
+    });
+    expect(text).toContain('- Distance: 6.2 km (they read miles: 3.9 mi)');
+  });
+
+  it('never carries a workout title or the app that recorded it', () => {
+    const text = withActivity(connectedActivity([activeToday()]));
+    expect(text).not.toContain('Run with Anna');
+    expect(text).not.toContain('com.example.watch');
+  });
+
+  it('has no activity lines on the web or while Health Connect is not connected', () => {
+    const text = withActivity(null);
+    expect(text).not.toMatch(/Health Connect|Count active calories|Steps|Activity today/);
+    expect(text).toContain('- Left of the daily targets: 1302 kcal,');
+  });
+
+  it("counts today's active calories in the target the way Home does (P11-04)", () => {
+    const on = connectedActivity([]);
+    const days = [
+      null,
+      activityOn(SNAPSHOT_TODAY),
+      activityOn(SNAPSHOT_TODAY, { activeKcal: 0.4 }),
+      activityOn(SNAPSHOT_TODAY, { activeKcal: 0.5 }),
+      activityOn(SNAPSHOT_TODAY, { activeKcal: 420.6 }),
+    ];
+    for (const goal of [0, 1800]) {
+      for (const day of days) {
+        expect(countedActiveKcal(goal, on, day)).toBe(countedBurn(goal, day));
+        expect(countedActiveKcal(goal, { ...on, countActive: false }, day)).toBeNull();
+        expect(countedActiveKcal(goal, null, day)).toBeNull();
+      }
+    }
   });
 });
 

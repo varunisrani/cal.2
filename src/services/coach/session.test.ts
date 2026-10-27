@@ -4,10 +4,11 @@ import { DEFAULT_AI_SETTINGS, type AiSettings } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
 import { openAiToolCalls } from '../../ai/testing/toolWire';
 import { anthropicError, openAiAnswer, openAiError } from '../../ai/testing/wire';
+import { createHealthRepo } from '../../data/repos/healthRepo';
 import type { PlatewiseDb } from '../../data/schema';
 import { makeProfile } from '../../test/factories';
 import { createFakeCodec, type FakeCodec } from '../../test/fakeImageCodec';
-import { entryOn, fixtureDiary } from './__fixtures__/snapshot';
+import { SNAPSHOT_TODAY, activityOn, entryOn, fixtureDiary } from './__fixtures__/snapshot';
 import { closeAll, openCoachStores, type CoachStores } from './__fixtures__/stores';
 import type { StoredAiAccess } from '../aiAccess';
 import { COACH_THUMB, createCoachSession, type CoachSession } from './session';
@@ -80,6 +81,8 @@ interface Harness {
   readonly codec: FakeCodec;
   readonly drawn: { width: number; height: number; quality: number }[];
   readonly hold?: ReturnType<typeof heldFetch>;
+  /** The activity copy, when `activityCopy` asked for one. */
+  readonly activityRepo?: ReturnType<typeof createHealthRepo>;
   /** How often subscribers heard a change. */
   changes(): number;
 }
@@ -93,6 +96,8 @@ interface SetUpOptions {
   readonly hold?: boolean;
   /** Store the profile (true by default). */
   readonly profile?: boolean;
+  /** Give the session an activity copy, as the Android app does (none by default: the web). */
+  readonly activityCopy?: boolean;
 }
 
 async function setUp(options: SetUpOptions = {}): Promise<Harness> {
@@ -109,9 +114,12 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
     keys: { mistral: MISTRAL_KEY, anthropic: ANTHROPIC_KEY },
     configured: true,
   };
+  const activityRepo = options.activityCopy
+    ? createHealthRepo(stores.db, { clock: stores.clock })
+    : undefined;
   const session = createCoachSession({
     coachRepo: stores.coachRepo,
-    data: stores.sources,
+    data: activityRepo === undefined ? stores.sources : { ...stores.sources, activityRepo },
     aiAccess: () => Promise.resolve(access),
     fetch: hold?.fetch ?? fake.fetch,
     photoOnlyText: () => PHOTO_ONLY,
@@ -122,7 +130,7 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
   session.subscribe(() => {
     changes += 1;
   });
-  return { stores, session, fake, codec, drawn, hold, changes: () => changes };
+  return { stores, session, fake, codec, drawn, hold, activityRepo, changes: () => changes };
 }
 
 /** The stored conversation as side, words and failure mark. */
@@ -419,5 +427,55 @@ describe('createCoachSession: Reset (R04.6, D-16.34)', () => {
 
     expect(await chat(h.stores)).toEqual([]);
     expect(h.session.getState()).toEqual({ pending: false });
+  });
+});
+
+describe('createCoachSession: Health Connect activity (D-16.94)', () => {
+  const TODAY = activityOn(SNAPSHOT_TODAY, { steps: 5120, activeKcal: 240 });
+
+  it('reads the activity copy at Send and offers activity_log while Health Connect is connected', async () => {
+    const h = await setUp({ activityCopy: true });
+    await h.activityRepo?.putDays([TODAY]);
+    await h.stores.settingsRepo.set('health.connected', true);
+    h.fake.on(
+      MISTRAL,
+      {
+        json: openAiToolCalls([
+          { id: 'a1', name: 'activity_log', args: { from: SNAPSHOT_TODAY, to: SNAPSHOT_TODAY } },
+        ]),
+      },
+      { json: openAiAnswer('5120 steps and 240 active kcal so far today.') },
+    );
+
+    expect(await h.session.send('How active am I today?')).toBe('answered');
+
+    const [first, second] = h.fake.requests;
+    const tools = ((first?.body as Json).tools as { function: { name: string } }[]).map(
+      (tool) => tool.function.name,
+    );
+    expect(tools.at(-1)).toBe('activity_log');
+    expect(String(messagesOf(first)[0]?.content)).toContain('- Steps: 5120');
+    const result = messagesOf(second).find((message) => message.role === 'tool');
+    expect(JSON.parse(String(result?.content))).toMatchObject({
+      daysWithData: 1,
+      items: [{ date: SNAPSHOT_TODAY, steps: 5120, activeKcal: 240 }],
+    });
+  });
+
+  it('offers no activity tool while Health Connect is not connected, or without a copy', async () => {
+    for (const activityCopy of [true, false]) {
+      const h = await setUp({ activityCopy });
+      await h.activityRepo?.putDays([TODAY]);
+      h.fake.on(MISTRAL, { json: openAiAnswer('About 1 650 kcal so far today.') });
+
+      expect(await h.session.send('How am I doing today?')).toBe('answered');
+
+      const body = h.fake.requests[0]?.body as Json;
+      const tools = (body.tools as { function: { name: string } }[]).map(
+        (tool) => tool.function.name,
+      );
+      expect(tools).not.toContain('activity_log');
+      expect(String(messagesOf(h.fake.requests[0])[0]?.content)).not.toContain('Steps');
+    }
   });
 });

@@ -412,7 +412,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.19** Six requests per turn include the answer; the prompt asks the model to batch tool calls
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > asks for every needed tool in the same round (R04.19)
   - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > counts the answer round among the six: five tool rounds and the answer fit (R04.19)
-- **R04.20** v1 offers and mentions only the six nutrition tools; a stray workout call gets not available
+- **R04.20** v1 offers and mentions only the six nutrition tools, plus `activity_log` in the Android app while Health Connect is connected (D-16.94); a stray workout call gets not available
   - Test: src/services/coach/tools.test.ts > runCoachTool: names and answers (R04.20) > answers our later-phase workout_log, and every other later tool, with not available
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > names exactly the six nutrition tools of the schemas, and no later one (R04.20)
   - Test: src/services/coach/context.test.ts > coachContext: what never enters it > holds no workout words (R04.20)

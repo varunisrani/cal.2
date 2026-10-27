@@ -3,16 +3,19 @@ import { addDays } from '../../domain/dates/dayKey';
 import { makeBodyFat, makeEntry } from '../../test/factories';
 import {
   SNAPSHOT_TODAY,
+  activityOn,
   at,
+  connectedActivity,
   entryOn,
   fastFrom,
   fixtureDiary,
   makeSnapshot,
   weighInOn,
+  workoutOn,
 } from './__fixtures__/snapshot';
 import type { CoachSnapshot } from './snapshot';
 import { LATER_TOOL_NAMES, NUTRITION_TOOL_NAMES } from './toolSchemas';
-import { runCoachTool } from './tools';
+import { activityRange, runCoachTool } from './tools';
 
 type Json = Record<string, unknown>;
 
@@ -274,7 +277,7 @@ describe('runCoachTool: food_log', () => {
 });
 
 describe('runCoachTool: weight_log and body_fat_log', () => {
-  it("gives each weigh-in's day with kg and lb to one decimal, oldest first", () => {
+  it("gives each weigh-in's day with its weight in kg to one decimal, oldest first (D-16.91)", () => {
     const snapshot = makeSnapshot({
       weighIns: [weighInOn('2026-10-25', 70.04), weighInOn('2026-10-18', 70.96)],
     });
@@ -283,8 +286,8 @@ describe('runCoachTool: weight_log and body_fat_log', () => {
       to: '2026-10-26',
       count: 2,
       items: [
-        { date: '2026-10-18', kg: 71, lb: 156.4 },
-        { date: '2026-10-25', kg: 70, lb: 154.4 },
+        { date: '2026-10-18', kg: 71 },
+        { date: '2026-10-25', kg: 70 },
       ],
     });
   });
@@ -392,6 +395,175 @@ describe('runCoachTool: data_overview', () => {
       foodEntries: { count: 0, firstDate: null, lastDate: null },
       fasts: { count: 0, active: false },
     });
+  });
+});
+
+/** A week of Health Connect days around a running morning, as the activity copy stores them. */
+function activityWeek(): CoachSnapshot {
+  return makeSnapshot({
+    activity: connectedActivity([
+      activityOn('2026-10-26', {
+        steps: 4210.4,
+        activeKcal: 182.6,
+        totalKcal: 1240.2,
+        distanceM: 3105.7,
+      }),
+      activityOn('2026-10-24', {
+        steps: 11_874,
+        activeKcal: 512.4,
+        totalKcal: 2318.9,
+        distanceM: 9204.2,
+        sessions: [
+          workoutOn('2026-10-24', '17:30', 22, { type: 'walking' }),
+          workoutOn('2026-10-24', '07:10', 35.4, {
+            activeKcal: 311.7,
+            title: 'Run with Anna',
+          }),
+        ],
+      }),
+      // Stored, but Health Connect gave the day nothing.
+      activityOn('2026-10-23'),
+      activityOn('2026-10-22', { steps: 6020, activeKcal: null }),
+      // Outside the default week.
+      activityOn('2026-10-19', { steps: 9000 }),
+    ]),
+  });
+}
+
+describe('runCoachTool: activity_log (D-16.94)', () => {
+  it('gives the stored days of the last 7 by default, oldest first, with their figures and workouts', () => {
+    expect(call('activity_log', {}, activityWeek())).toEqual({
+      from: '2026-10-20',
+      to: '2026-10-26',
+      daysWithData: 3,
+      items: [
+        { date: '2026-10-22', steps: 6020, workouts: [] },
+        {
+          date: '2026-10-24',
+          steps: 11_874,
+          activeKcal: 512,
+          totalKcal: 2319,
+          distanceM: 9204,
+          workouts: [
+            {
+              type: 'running',
+              start: '2026-10-24T07:10:00-04:00',
+              minutes: 35,
+              activeKcal: 312,
+            },
+            { type: 'walking', start: '2026-10-24T17:30:00-04:00', minutes: 22 },
+          ],
+        },
+        {
+          date: '2026-10-26',
+          steps: 4210,
+          activeKcal: 183,
+          totalKcal: 1240,
+          distanceM: 3106,
+          workouts: [],
+        },
+      ],
+    });
+  });
+
+  it('leaves out days with no row and days Health Connect gave nothing, never writing 0', () => {
+    const result = call('activity_log', { from: '2026-10-19', to: '2026-10-23' }, activityWeek());
+    expect(result).toMatchObject({ from: '2026-10-19', to: '2026-10-23', daysWithData: 2 });
+    const rows = items(result);
+    expect(rows.map((row) => row.date)).toEqual(['2026-10-19', '2026-10-22']);
+    expect(rows[1]).toEqual({ date: '2026-10-22', steps: 6020, workouts: [] });
+    expect(JSON.stringify(result)).not.toContain('null');
+  });
+
+  it('sends no workout title or source app, and names an untyped workout "other"', () => {
+    const snapshot = makeSnapshot({
+      activity: connectedActivity([
+        activityOn(SNAPSHOT_TODAY, {
+          sessions: [workoutOn(SNAPSHOT_TODAY, '06:00', 30, { type: '', title: 'Hill reps' })],
+        }),
+      ]),
+    });
+    const text = runCoachTool('activity_log', {}, snapshot);
+    expect(items(JSON.parse(text) as Json)[0]?.workouts).toEqual([
+      { type: 'other', start: '2026-10-26T06:00:00-04:00', minutes: 30 },
+    ]);
+    expect(text).not.toContain('Hill reps');
+    expect(text).not.toContain('com.example.watch');
+    expect(runCoachTool('activity_log', {}, activityWeek())).not.toContain('Run with Anna');
+  });
+
+  it('holds a range to its newest 90 days and says how many older days it left out', () => {
+    const result = call('activity_log', { from: '2026-01-01', to: SNAPSHOT_TODAY }, activityWeek());
+    expect(result).toMatchObject({
+      from: '2026-07-29',
+      to: '2026-10-26',
+      daysWithData: 4,
+      limited: true,
+      omittedOlderDays: 209,
+    });
+    expect(activityRange({ from: '2026-07-29', to: SNAPSHOT_TODAY }, SNAPSHOT_TODAY)).toEqual({
+      from: '2026-07-29',
+      to: '2026-10-26',
+      omittedOlderDays: 0,
+    });
+    expect(activityRange({ from: '2026-07-28', to: SNAPSHOT_TODAY }, SNAPSHOT_TODAY)).toEqual({
+      from: '2026-07-29',
+      to: '2026-10-26',
+      omittedOlderDays: 1,
+    });
+    expect(
+      call('activity_log', { from: '2026-10-20', to: SNAPSHOT_TODAY }, activityWeek()),
+    ).not.toHaveProperty('limited');
+  });
+
+  it('reads bad days as missing, defaults to the 7 days ending on to, and swaps a reversed range', () => {
+    expect(
+      call('activity_log', { from: 'last week', to: '2026-10-24' }, activityWeek()),
+    ).toMatchObject({ from: '2026-10-18', to: '2026-10-24', daysWithData: 3 });
+    expect(
+      call('activity_log', { from: '2026-10-24', to: '2026-10-22' }, activityWeek()),
+    ).toMatchObject({ from: '2026-10-22', to: '2026-10-24', daysWithData: 2 });
+    expect(call('activity_log', 'yesterday', activityWeek())).toMatchObject({
+      from: '2026-10-20',
+      to: '2026-10-26',
+    });
+  });
+
+  it('answers an empty copy with no rows', () => {
+    const snapshot = makeSnapshot({ activity: connectedActivity([]) });
+    expect(call('activity_log', {}, snapshot)).toEqual({
+      from: '2026-10-20',
+      to: '2026-10-26',
+      daysWithData: 0,
+      items: [],
+    });
+  });
+
+  it('says it needs Health Connect when the snapshot has no activity (the web, or not connected)', () => {
+    expect(call('activity_log', {}, makeSnapshot())).toEqual({
+      error:
+        'The tool "activity_log" needs Health Connect, which is only in the Android app and is ' +
+        `not connected here. Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}.`,
+    });
+  });
+
+  it('names activity_log among the available tools only while it is connected', () => {
+    const offered = `Available tools: ${[...NUTRITION_TOOL_NAMES, 'activity_log'].join(', ')}.`;
+    expect(call('meal_planner', {}, activityWeek()).error).toContain(offered);
+    expect(call('meal_planner', {}, makeSnapshot()).error).not.toContain('activity_log');
+  });
+
+  it('answers {error} instead of throwing when the copy cannot be read, and leaves it as it was', () => {
+    const broken = makeSnapshot({
+      activity: { countActive: true, days: undefined } as unknown as CoachSnapshot['activity'],
+    });
+    expect(call('activity_log', {}, broken)).toEqual({
+      error: 'The stored data for this tool could not be read.',
+    });
+    const snapshot = activityWeek();
+    const before = structuredClone(snapshot);
+    runCoachTool('activity_log', { from: '2026-01-01' }, snapshot);
+    expect(snapshot).toEqual(before);
   });
 });
 

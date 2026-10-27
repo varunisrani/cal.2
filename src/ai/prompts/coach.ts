@@ -5,8 +5,10 @@
  * of the person's message (D-16.28). The model is told it cannot see photos from earlier
  * messages, which are never sent again (R04.2, D-16.48), and to ask for every tool it needs in
  * one round, because a question gets only a few rounds (R04.19). Only the six nutrition tools
- * are named (R04.20); the names are written out here because the AI layer does not import the
- * Coach service, and a test keeps them equal to the tool schemas.
+ * are named (R04.20), and `activity_log` when the turn offers it: in the Android app while Health
+ * Connect is connected, when the rules for its figures come too (D-16.94). The names are written
+ * out here because the AI layer does not import the Coach service, and a test keeps them equal to
+ * the tool schemas.
  */
 import { withNotes } from '../client';
 import { bullets, lines, paragraphs } from './shared';
@@ -16,6 +18,11 @@ export interface CoachPromptInput {
   readonly context: string;
   /** The person's notes for the AI; blank adds nothing. */
   readonly notes?: string;
+  /**
+   * Health Connect's activity is in the facts and `activity_log` is offered (the Android app,
+   * connected): the rules for reading it are added. Off by default.
+   */
+  readonly activity?: boolean;
 }
 
 const ROLE = lines(
@@ -53,6 +60,25 @@ const TOOLS = lines(
   ]),
 );
 
+const ACTIVITY = lines(
+  'Activity from Health Connect:',
+  bullets([
+    'Their phone shares Health Connect with Platewise: the steps, active calories, total ' +
+      'calories burned, distance and workouts that their phone, watch and fitness apps ' +
+      "recorded. Today's figures are in the facts above; activity_log gives them day by day.",
+    'Active calories are the energy burned by moving, on top of resting burn. Total calories ' +
+      "burned are the whole day's burn, resting burn included, so they are never extra food to " +
+      'eat back and never go on top of the target or the daily burn.',
+    'When "Count active calories" is on, the energy target in the facts already includes ' +
+      "today's active calories, and so does what is left of it. Never add them a second time. " +
+      "On any day it is on, that day's target is the goal plus that day's active calories. " +
+      'When it is off, the target is the goal alone.',
+    'For questions about steps, workouts, calories burned or how active they have been over ' +
+      'time, call activity_log (up to 90 days per call). A day without a row means Health ' +
+      'Connect had no data for it, not that they did not move.',
+  ]),
+);
+
 const SHAPES = lines(
   'Shaping answers:',
   bullets([
@@ -69,6 +95,7 @@ export function coachSystemPrompt(input: CoachPromptInput): string {
     ROLE,
     lines('What you know about them, as of this message:', input.context),
     TOOLS,
+    input.activity === true && ACTIVITY,
     SHAPES,
   );
   return withNotes(system, input.notes ?? '');

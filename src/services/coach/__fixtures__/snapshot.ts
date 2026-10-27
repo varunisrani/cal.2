@@ -1,6 +1,8 @@
 // Snapshots for the Coach context, prompt and tool tests. The test zone is New York; "now" is the
-// factory instant, Monday 26 October 2026 at 12:30, so today is 2026-10-26.
+// factory instant, Monday 26 October 2026 at 12:30, so today is 2026-10-26. A snapshot has no
+// Health Connect activity (the web) unless a test gives it some.
 
+import type { ActivityRow, ActivitySession } from '../../../data/schema';
 import type { DayKey } from '../../../domain/dates/dayKey';
 import type { DiaryEntry, Fast, WeighIn } from '../../../domain/model';
 import {
@@ -10,7 +12,7 @@ import {
   makeProfile,
   makeWeighIn,
 } from '../../../test/factories';
-import type { CoachSnapshot } from '../snapshot';
+import type { CoachActivity, CoachSnapshot } from '../snapshot';
 
 export const SNAPSHOT_NOW = FACTORY_NOW;
 export const SNAPSHOT_TODAY: DayKey = '2026-10-26';
@@ -53,6 +55,48 @@ export function fixtureDiary(): DiaryEntry[] {
   ];
 }
 
+/** A workout on `day` from `time`, `minutes` long, as Health Connect's copy holds it. */
+export function workoutOn(
+  day: DayKey,
+  time: string,
+  minutes: number,
+  changes: Partial<ActivitySession> = {},
+): ActivitySession {
+  const start = at(day, time);
+  return {
+    id: `hc-${day}-${time}`,
+    start,
+    end: start + minutes * 60_000,
+    type: 'running',
+    title: null,
+    activeKcal: null,
+    source: 'com.example.watch',
+    ...changes,
+  };
+}
+
+/** A stored activity day with nothing in it; `changes` fill it. */
+export function activityOn(day: DayKey, changes: Partial<ActivityRow> = {}): ActivityRow {
+  return {
+    day,
+    steps: null,
+    activeKcal: null,
+    totalKcal: null,
+    distanceM: null,
+    sessions: [],
+    syncedAt: SNAPSHOT_NOW,
+    ...changes,
+  };
+}
+
+/** Health Connect connected, counting on unless `changes` say otherwise. */
+export function connectedActivity(
+  days: readonly ActivityRow[],
+  changes: Partial<CoachActivity> = {},
+): CoachActivity {
+  return { countActive: true, days, ...changes };
+}
+
 /** A snapshot of an empty diary for the factory profile, read in kcal, kg and cm. */
 export function makeSnapshot(changes: Partial<CoachSnapshot> = {}): CoachSnapshot {
   return {
@@ -65,6 +109,7 @@ export function makeSnapshot(changes: Partial<CoachSnapshot> = {}): CoachSnapsho
     bodyFat: [],
     fasts: [],
     water: { on: true, goalMl: 2000, unit: 'ml', logs: [] },
+    activity: null,
     ...changes,
   };
 }

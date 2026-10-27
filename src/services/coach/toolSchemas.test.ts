@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  ACTIVITY_DEFAULT_DAYS,
+  ACTIVITY_MAX_DAYS,
+  ACTIVITY_TOOL,
   LATER_TOOL_NAMES,
   NUTRITION_TOOLS,
   NUTRITION_TOOL_NAMES,
   ROW_LIMITS,
+  coachTools,
   isLaterToolName,
   isNutritionToolName,
   type ToolSchema,
@@ -132,5 +136,56 @@ describe('NUTRITION_TOOLS: a missing log is not a fast (R04.16)', () => {
     const { description } = tool('daily_energy_totals');
     expect(description).toContain('A day without entries has no row.');
     expect(description).toContain('never read it as 0 kcal or as a fast');
+  });
+});
+
+describe('ACTIVITY_TOOL: Health Connect day by day (D-16.94)', () => {
+  it('is offered after the six only when the turn has Health Connect activity', () => {
+    expect(coachTools(false)).toEqual(NUTRITION_TOOLS);
+    expect(coachTools(true).map((schema) => schema.name)).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'activity_log',
+    ]);
+    expect(isNutritionToolName('activity_log')).toBe(false);
+    expect(isLaterToolName('activity_log')).toBe(false);
+  });
+
+  it('takes a from and to day range like the other range tools, with portable keywords only', () => {
+    const { parameters } = ACTIVITY_TOOL;
+    expect(parameters.type).toBe('object');
+    expect(parameters.required).toEqual(['from', 'to']);
+    expect(Object.keys(parameters.properties)).toEqual(['from', 'to']);
+    expect(parameters.properties.from?.type).toBe('string');
+    expect(parameters.properties.to).toEqual(tool('food_log').parameters.properties.to);
+    for (const keyword of keywordsIn(parameters)) expect(PORTABLE_KEYWORDS.has(keyword)).toBe(true);
+  });
+
+  it('keeps the range limits: the last 7 days by default, at most 90', () => {
+    expect([ACTIVITY_DEFAULT_DAYS, ACTIVITY_MAX_DAYS]).toEqual([7, 90]);
+    expect(ACTIVITY_TOOL.parameters.properties.from?.description).toContain(
+      'gives the 7 days ending on "to"',
+    );
+    expect(ACTIVITY_TOOL.description).toContain('At most 90 days');
+    expect(ACTIVITY_TOOL.description).toContain('keeps its newest days');
+    expect(ACTIVITY_TOOL.description).toContain('"omittedOlderDays"');
+  });
+
+  it('says what a row holds, in kcal and metres, and that resting burn is in the total', () => {
+    const { description } = ACTIVITY_TOOL;
+    for (const words of [
+      'steps',
+      'activeKcal (burned by moving, on top of resting burn)',
+      "totalKcal (the whole day's burn, resting burn included)",
+      'distanceM in metres',
+      'workouts with their type, start, minutes and activeKcal',
+    ]) {
+      expect(description).toContain(words);
+    }
+  });
+
+  it('says a missing value or day means no data, never 0', () => {
+    const { description } = ACTIVITY_TOOL;
+    expect(description).toContain('left out, never 0');
+    expect(description).toContain('has no row: that means no data, not a day without moving');
   });
 });

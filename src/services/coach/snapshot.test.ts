@@ -1,8 +1,17 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { createHealthRepo } from '../../data/repos/healthRepo';
 import type { PlatewiseDb } from '../../data/schema';
 import { makeProfile } from '../../test/factories';
-import { SNAPSHOT_NOW, SNAPSHOT_TODAY, at, entryOn, fixtureDiary } from './__fixtures__/snapshot';
-import { STORES_ZONE, closeAll, openCoachStores } from './__fixtures__/stores';
+import {
+  SNAPSHOT_NOW,
+  SNAPSHOT_TODAY,
+  activityOn,
+  at,
+  entryOn,
+  fixtureDiary,
+  workoutOn,
+} from './__fixtures__/snapshot';
+import { STORES_ZONE, closeAll, openCoachStores, type CoachStores } from './__fixtures__/stores';
 import { takeSnapshot } from './snapshot';
 
 const opened: PlatewiseDb[] = [];
@@ -40,7 +49,8 @@ describe('takeSnapshot (R04.22)', () => {
     expect(snapshot).not.toBeNull();
     expect(snapshot?.now).toBe(SNAPSHOT_NOW);
     expect(snapshot?.timeZone).toBe(STORES_ZONE);
-    expect(snapshot?.units).toEqual({ energy: 'kJ', weight: 'lb', height: 'ftIn' });
+    // Weights in the Coach are kg, whatever was chosen before (D-16.91).
+    expect(snapshot?.units).toEqual({ energy: 'kJ', weight: 'kg', height: 'ftIn' });
     expect(snapshot?.entries.map((entry) => entry.name).sort()).toEqual(
       [old, ...fixtureDiary()].map((entry) => entry.name).sort(),
     );
@@ -58,6 +68,8 @@ describe('takeSnapshot (R04.22)', () => {
     expect(snapshot?.water.logs.map((log) => [log.dayKey, log.ml])).toEqual([
       [SNAPSHOT_TODAY, 500],
     ]);
+    // No activity copy is given: the web.
+    expect(snapshot?.activity).toBeNull();
   });
 
   it('is a copy: data stored after it was taken is not in it', async () => {
@@ -72,5 +84,70 @@ describe('takeSnapshot (R04.22)', () => {
   it('gives null without a readable profile', async () => {
     const s = await stores();
     expect(await takeSnapshot(s.sources)).toBeNull();
+  });
+});
+
+describe('takeSnapshot: Health Connect activity (D-16.94)', () => {
+  const today = activityOn(SNAPSHOT_TODAY, {
+    steps: 8412,
+    activeKcal: 420,
+    sessions: [workoutOn(SNAPSHOT_TODAY, '07:10', 35)],
+  });
+  const older = activityOn('2026-06-02', { steps: 3000 });
+
+  /** The stores with a profile and an activity copy holding two days. */
+  async function withCopy(): Promise<
+    CoachStores & { activityRepo: ReturnType<typeof createHealthRepo> }
+  > {
+    const s = await stores();
+    await s.profileRepo.save(makeProfile());
+    const activityRepo = createHealthRepo(s.db, { clock: s.clock });
+    await activityRepo.putDays([older, today]);
+    return { ...s, activityRepo };
+  }
+
+  it('copies every stored day and the counting switch while Health Connect is connected', async () => {
+    const s = await withCopy();
+    await s.settingsRepo.set('health.connected', true);
+    await s.settingsRepo.set('health.countActiveCalories', false);
+
+    const snapshot = await takeSnapshot({ ...s.sources, activityRepo: s.activityRepo });
+
+    expect(snapshot?.activity).toEqual({ countActive: false, days: [older, today] });
+  });
+
+  it('counts active calories by default once connected', async () => {
+    const s = await withCopy();
+    await s.settingsRepo.set('health.connected', true);
+
+    const snapshot = await takeSnapshot({ ...s.sources, activityRepo: s.activityRepo });
+
+    expect(snapshot?.activity?.countActive).toBe(true);
+  });
+
+  it('has no activity while Health Connect is not connected, though days are stored', async () => {
+    const s = await withCopy();
+    const snapshot = await takeSnapshot({ ...s.sources, activityRepo: s.activityRepo });
+    expect(snapshot).not.toBeNull();
+    expect(snapshot?.activity).toBeNull();
+  });
+
+  it('has no activity without an activity copy (the web), whatever the setting says', async () => {
+    const s = await withCopy();
+    await s.settingsRepo.set('health.connected', true);
+    expect((await takeSnapshot(s.sources))?.activity).toBeNull();
+  });
+
+  it('still answers, without activity, when the copy cannot be read', async () => {
+    const s = await withCopy();
+    await s.settingsRepo.set('health.connected', true);
+    const broken = {
+      between: () => Promise.reject(new Error('the activity table is gone')),
+    } as unknown as typeof s.activityRepo;
+
+    const snapshot = await takeSnapshot({ ...s.sources, activityRepo: broken });
+
+    expect(snapshot?.profile).toBeDefined();
+    expect(snapshot?.activity).toBeNull();
   });
 });

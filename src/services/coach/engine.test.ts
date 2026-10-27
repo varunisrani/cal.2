@@ -8,7 +8,15 @@ import { addDays } from '../../domain/dates/dayKey';
 import type { CoachMessage } from '../../domain/model';
 import { makeCoachMessage } from '../../test/factories';
 import { advanceAsync, useFakeTime } from '../../test/time';
-import { SNAPSHOT_TODAY, entryOn, fixtureDiary, makeSnapshot } from './__fixtures__/snapshot';
+import {
+  SNAPSHOT_TODAY,
+  activityOn,
+  connectedActivity,
+  entryOn,
+  fixtureDiary,
+  makeSnapshot,
+  workoutOn,
+} from './__fixtures__/snapshot';
 import { MAX_ROUNDS, runTurn, type TurnInput } from './engine';
 import { TOOL_RESULT_MAX_CHARS } from './limiter';
 import { NUTRITION_TOOL_NAMES } from './toolSchemas';
@@ -406,5 +414,110 @@ describe('runTurn: what a request carries', () => {
     const content = String(tool?.content);
     expect(content.length).toBeLessThanOrEqual(TOOL_RESULT_MAX_CHARS);
     expect(JSON.parse(content)).toMatchObject({ count: 365, truncated: true });
+  });
+});
+
+describe('runTurn: Health Connect activity (D-16.94)', () => {
+  /** An Android turn with Health Connect connected: a week with a long walk on Saturday. */
+  function connected(): Partial<TurnInput> {
+    return {
+      snapshot: makeSnapshot({
+        entries: fixtureDiary(),
+        activity: connectedActivity([
+          activityOn('2026-10-24', {
+            steps: 14_250,
+            activeKcal: 610,
+            totalKcal: 2480,
+            distanceM: 10_420,
+            sessions: [workoutOn('2026-10-24', '09:00', 95, { type: 'walking', activeKcal: 402 })],
+          }),
+          activityOn(SNAPSHOT_TODAY, { steps: 3100, activeKcal: 120 }),
+        ]),
+      }),
+    };
+  }
+
+  const WEEK = { from: '2026-10-20', to: SNAPSHOT_TODAY };
+
+  it('runs an activity_log call on the snapshot and answers with what it returned', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'a1', name: 'activity_log', args: WEEK }]) },
+      {
+        json: openAiAnswer(
+          'Your best day this week was Saturday: 14250 steps and a 95-minute walk that burned 402 kcal.',
+        ),
+      },
+    );
+
+    const result = await ask(fake, {
+      ...connected(),
+      question: { id: 'q1', text: 'How active was I this week?' },
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      value:
+        'Your best day this week was Saturday: 14250 steps and a 95-minute walk that burned 402 kcal.',
+    });
+    expect(fake.requests).toHaveLength(2);
+    const [activity] = toolResults(fake.requests[1]);
+    expect(activity?.id).toBe('a1');
+    expect(activity?.result).toEqual({
+      from: '2026-10-20',
+      to: '2026-10-26',
+      daysWithData: 2,
+      items: [
+        {
+          date: '2026-10-24',
+          steps: 14_250,
+          activeKcal: 610,
+          totalKcal: 2480,
+          distanceM: 10_420,
+          workouts: [
+            { type: 'walking', start: '2026-10-24T09:00:00-04:00', minutes: 95, activeKcal: 402 },
+          ],
+        },
+        { date: '2026-10-26', steps: 3100, activeKcal: 120, workouts: [] },
+      ],
+    });
+  });
+
+  it('offers activity_log and sends its rules and today’s activity only when the snapshot has activity', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiAnswer('You are on 3100 steps so far.') },
+      { json: openAiAnswer('Noted.') },
+    );
+
+    await ask(fake, connected());
+    await ask(fake);
+
+    const [android, web] = fake.requests.map((request) => ({
+      tools: (bodyOf(request).tools as { function: { name: string } }[]).map(
+        (tool) => tool.function.name,
+      ),
+      system: String(messagesOf(request)[0]?.content),
+    }));
+    expect(android?.tools).toEqual([...NUTRITION_TOOL_NAMES, 'activity_log']);
+    expect(android?.system).toContain('Activity from Health Connect:');
+    expect(android?.system).toContain('- Steps: 3100');
+    expect(android?.system).toContain(
+      '"Count active calories" is on, so today\'s energy target is the',
+    );
+    expect(web?.tools).toEqual([...NUTRITION_TOOL_NAMES]);
+    expect(web?.system).not.toMatch(/Health Connect|activity_log|Steps/);
+  });
+
+  it('answers a stray activity_log call on the web with an error and still finishes the turn', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'a1', name: 'activity_log', args: WEEK }]) },
+      { json: openAiAnswer('I cannot see activity data here.') },
+    );
+
+    expect(await ask(fake)).toEqual({ ok: true, value: 'I cannot see activity data here.' });
+    const [stray] = toolResults(fake.requests[1]);
+    expect(String(stray?.result.error)).toContain('needs Health Connect');
   });
 });

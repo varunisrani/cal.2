@@ -305,6 +305,8 @@ async function start(): Promise<void> {
         bodyFatRepo,
         fastRepo,
         waterRepo: createWaterRepo(db),
+        // P13: the Coach reads Health Connect's activity copy in the Android app (D-16.94).
+        activityRepo: health?.activityRepo,
         clock: systemClock,
       },
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),

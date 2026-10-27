@@ -1,6 +1,7 @@
-// The Coach's six read-only data tools (04 §3.9, R04.10, R04.16, R04.17, R04.20). A call is
-// answered from the turn's snapshot, never from the live stores, and always as the text of one
-// JSON object; a problem is an `{error}` object the model can read and correct, never a throw.
+// The Coach's read-only data tools (04 §3.9, R04.10, R04.16, R04.17, R04.20): the six nutrition
+// tools, and `activity_log` over Health Connect's activity copy while it is connected (D-16.94). A
+// call is answered from the turn's snapshot, never from the live stores, and always as the text of
+// one JSON object; a problem is an `{error}` object the model can read and correct, never a throw.
 //
 // Ranges are local days, inclusive at both ends. A `to` that is missing or not a real
 // YYYY-MM-DD day means today, a `from` like that means 30 days before `to`, and the two swap when
@@ -10,17 +11,29 @@
 // dates are Gregorian whatever the device's language. Entries count on their stored day key (the
 // day the diary shows them on), weigh-ins and body fat on their instant's local day, fasts on
 // any overlap with the range. A day without entries is simply absent: no 0 kcal rows, no fasts
-// inferred from an empty day.
+// inferred from an empty day. Activity ranges default to the last 7 days and hold at most 90, the
+// newest kept; a day Health Connect had nothing for is absent too, and a value it did not have is
+// left out rather than written as 0.
 
-import { addDays, dayKeyOf, isDayKey, startOfDay, type DayKey } from '../../domain/dates/dayKey';
+import type { ActivityRow, ActivitySession } from '../../data/schema';
+import {
+  addDays,
+  dayKeyOf,
+  daysBetween,
+  isDayKey,
+  startOfDay,
+  type DayKey,
+} from '../../domain/dates/dayKey';
 import { inDays } from '../../domain/dates/ranges';
 import { EXTRA_KEYS, NUTRIENT_KEYS, type DiaryEntry, type Fast } from '../../domain/model';
 import { NUTRIENT_UNITS, type MassUnit } from '../../domain/nutrients/catalogue';
 import { clampFastGoal, fastDuration, goalAt } from '../../domain/trackers/fasting';
-import { LB_PER_KG } from '../../domain/units/body';
 import { clamp } from '../../domain/units/numbers';
-import { snapshotDay, type CoachSnapshot } from './snapshot';
+import { snapshotDay, type CoachActivity, type CoachSnapshot } from './snapshot';
 import {
+  ACTIVITY_DEFAULT_DAYS,
+  ACTIVITY_MAX_DAYS,
+  ACTIVITY_TOOL_NAME,
   DEFAULT_SPAN_DAYS,
   NUTRITION_TOOL_NAMES,
   ROW_LIMITS,
@@ -44,7 +57,12 @@ export interface ToolRange {
 
 const MS_PER_MINUTE = 60_000;
 
-const AVAILABLE = `Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}.`;
+/** The sentence naming the tools this turn offers: activity_log only while it is connected. */
+function availableTools(snapshot: CoachSnapshot): string {
+  const names: string[] = [...NUTRITION_TOOL_NAMES];
+  if (snapshot.activity !== null) names.push(ACTIVITY_TOOL_NAME);
+  return `Available tools: ${names.join(', ')}.`;
+}
 
 // ---- Arguments ------------------------------------------------------------------------------
 
@@ -58,10 +76,13 @@ function dayArg(value: unknown): DayKey | undefined {
   return isDayKey(text) ? text : undefined;
 }
 
-/** The range a call asked for, with the defaults filled in and the ends in order. */
-export function toolRange(args: Args, today: DayKey): ToolRange {
+/**
+ * The range a call asked for, with the defaults filled in and the ends in order. A missing `from`
+ * is `daysBack` days before `to` (30 for the nutrition tools).
+ */
+export function toolRange(args: Args, today: DayKey, daysBack = DEFAULT_SPAN_DAYS): ToolRange {
   const to = dayArg(args.to) ?? today;
-  const from = dayArg(args.from) ?? addDays(to, -DEFAULT_SPAN_DAYS);
+  const from = dayArg(args.from) ?? addDays(to, -daysBack);
   // Valid day keys are zero-padded, so text order is calendar order.
   return from <= to ? { from, to } : { from: to, to: from };
 }
@@ -185,6 +206,76 @@ function fastRow(fast: Fast, now: number): Payload {
   };
 }
 
+// ---- Activity ---------------------------------------------------------------------------------
+
+/** An activity range and how many older days the 90-day cap left out of it. */
+export interface ActivityRange extends ToolRange {
+  readonly omittedOlderDays: number;
+}
+
+/** The range `activity_log` uses: the last 7 days by default, at most the newest 90. */
+export function activityRange(args: Args, today: DayKey): ActivityRange {
+  const asked = toolRange(args, today, ACTIVITY_DEFAULT_DAYS - 1);
+  const earliest = addDays(asked.to, -(ACTIVITY_MAX_DAYS - 1));
+  if (asked.from >= earliest) return { ...asked, omittedOlderDays: 0 };
+  return { from: earliest, to: asked.to, omittedOlderDays: daysBetween(asked.from, earliest) };
+}
+
+/** True when Health Connect gave the day nothing at all. */
+function emptyDay(day: ActivityRow): boolean {
+  return (
+    day.steps === null &&
+    day.activeKcal === null &&
+    day.totalKcal === null &&
+    day.distanceM === null &&
+    day.sessions.length === 0
+  );
+}
+
+/** Whole units of a value Health Connect gave; a value it did not have is left out. */
+function wholeIfKnown(row: Payload, key: string, value: number | null): void {
+  if (isAmount(value)) row[key] = Math.round(value);
+}
+
+function workoutRow(session: ActivitySession): Payload {
+  const row: Payload = {
+    type: session.type === '' ? 'other' : session.type,
+    start: localTimestamp(session.start),
+    minutes: Math.round((session.end - session.start) / MS_PER_MINUTE),
+  };
+  wholeIfKnown(row, 'activeKcal', session.activeKcal);
+  return row;
+}
+
+function activityRow(day: ActivityRow): Payload {
+  const row: Payload = { date: day.day };
+  wholeIfKnown(row, 'steps', day.steps);
+  wholeIfKnown(row, 'activeKcal', day.activeKcal);
+  wholeIfKnown(row, 'totalKcal', day.totalKcal);
+  wholeIfKnown(row, 'distanceM', day.distanceM);
+  row.workouts = [...day.sessions]
+    .sort((a, b) => a.start - b.start || compareText(a.id, b.id))
+    .map(workoutRow);
+  return row;
+}
+
+/** Health Connect's days in the range, oldest first; a day with nothing in it has no row. */
+function activityLog(args: Args, activity: CoachActivity, today: DayKey): Payload {
+  const range = activityRange(args, today);
+  const days = activity.days
+    .filter((day) => onDays(day.day, range) && !emptyDay(day))
+    .sort((a, b) => compareText(a.day, b.day));
+  return {
+    from: range.from,
+    to: range.to,
+    daysWithData: days.length,
+    ...(range.omittedOlderDays > 0
+      ? { limited: true, omittedOlderDays: range.omittedOlderDays }
+      : {}),
+    items: days.map(activityRow),
+  };
+}
+
 // ---- The tools ------------------------------------------------------------------------------
 
 type Tool = (args: Args, snapshot: CoachSnapshot, today: DayKey) => Payload;
@@ -209,7 +300,6 @@ const TOOLS: Readonly<Record<NutritionToolName, Tool>> = {
     const rows = oldestFirst(inRange, (reading) => reading.at).map((reading) => ({
       date: dayKeyOf(reading.at),
       kg: round(reading.kg, 1),
-      lb: round(reading.kg * LB_PER_KG, 1),
     }));
     return listed(range, rows, rowLimit(args.limit, ROW_LIMITS.weight_log));
   },
@@ -268,6 +358,8 @@ function problem(message: string): string {
   return JSON.stringify({ error: message });
 }
 
+const UNREADABLE = 'The stored data for this tool could not be read.';
+
 /**
  * Runs one tool call against the turn's snapshot and answers with the text of one JSON object.
  * `args` is whatever the wire parsed; anything but a plain object counts as no arguments.
@@ -277,11 +369,25 @@ export function runCoachTool(name: string, args: unknown, snapshot: CoachSnapsho
     try {
       return JSON.stringify(TOOLS[name](argsOf(args), snapshot, snapshotDay(snapshot)));
     } catch {
-      return problem('The stored data for this tool could not be read.');
+      return problem(UNREADABLE);
     }
   }
-  if (isLaterToolName(name)) {
-    return problem(`The tool "${name}" is not available in this version of the app. ${AVAILABLE}`);
+  if (name === ACTIVITY_TOOL_NAME && snapshot.activity !== null) {
+    try {
+      return JSON.stringify(activityLog(argsOf(args), snapshot.activity, snapshotDay(snapshot)));
+    } catch {
+      return problem(UNREADABLE);
+    }
   }
-  return problem(`There is no tool called "${name}". ${AVAILABLE}`);
+  const available = availableTools(snapshot);
+  if (name === ACTIVITY_TOOL_NAME) {
+    return problem(
+      `The tool "${name}" needs Health Connect, which is only in the Android app and is not ` +
+        `connected here. ${available}`,
+    );
+  }
+  if (isLaterToolName(name)) {
+    return problem(`The tool "${name}" is not available in this version of the app. ${available}`);
+  }
+  return problem(`There is no tool called "${name}". ${available}`);
 }

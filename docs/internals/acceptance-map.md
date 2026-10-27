@@ -1141,6 +1141,22 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > says reminders are not available in the Android app, where the home screen cannot help (P11)
   - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > says reminders are not available in the Android app, where the home screen cannot help (P11)
   - Test: src/features/onboarding/steps/Reminders.test.tsx > Reminders > keeps the button on the web, also where the browser has no notifications (ACC-M11-9)
+- **ACC-M11-10** In the Android app with Health Connect connected, the Coach reads steps, active and total calories, distance and workouts per day through `activity_log` (at most 90 days, the last 7 by default); on the web or while not connected the tool is not offered
+  - Test: src/services/coach/tools.test.ts > runCoachTool: activity_log (D-16.94) > gives the stored days of the last 7 by default, oldest first, with their figures and workouts
+  - Test: src/services/coach/tools.test.ts > runCoachTool: activity_log (D-16.94) > holds a range to its newest 90 days and says how many older days it left out
+  - Test: src/services/coach/engine.test.ts > runTurn: Health Connect activity (D-16.94) > runs an activity_log call on the snapshot and answers with what it returned
+  - Test: src/services/coach/engine.test.ts > runTurn: Health Connect activity (D-16.94) > offers activity_log and sends its rules and today’s activity only when the snapshot has activity
+  - Test: src/services/coach/session.test.ts > createCoachSession: Health Connect activity (D-16.94) > offers no activity tool while Health Connect is not connected, or without a copy
+- **ACC-M11-11** Each turn the Coach knows today's activity, whether "Count active calories" is on and the resulting target, with what is left worked out from it; none of it on the web
+  - Test: src/services/coach/context.test.ts > coachContext: Health Connect activity (D-16.94) > gives today's figures and workouts, and the target with today's active calories counted in
+  - Test: src/services/coach/context.test.ts > coachContext: Health Connect activity (D-16.94) > keeps the target at the goal when counting is off, saying active calories are not added
+  - Test: src/services/coach/context.test.ts > coachContext: Health Connect activity (D-16.94) > has no activity lines on the web or while Health Connect is not connected
+  - Test: src/services/coach/snapshot.test.ts > takeSnapshot: Health Connect activity (D-16.94) > copies every stored day and the counting switch while Health Connect is connected
+- **ACC-M11-12** The Coach's instructions say active calories are already in the target while counting is on (never counted twice), that total calories include resting burn, and to use `activity_log` for steps, workouts, burn and trends
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > says active calories are already in the target while counting is on, so never twice
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > says total calories include resting burn and are no extra food
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > points questions on steps, workouts, burn and trends to activity_log
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > adds none of it without activity, as on the web
 
 ## Known gaps
 

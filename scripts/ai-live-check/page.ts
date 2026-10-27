@@ -99,6 +99,7 @@ function snapshotNow(): CoachSnapshot {
     bodyFat: [],
     fasts: [],
     water: { on: false, goalMl: 2000, unit: 'ml', logs: [] },
+    activity: null,
   };
 }
 

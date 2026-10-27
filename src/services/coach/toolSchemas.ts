@@ -2,7 +2,8 @@
 // description in our own words saying what the tool returns and when it is worth a call. The
 // three chat wires wrap these unchanged (OpenAI `parameters`, Anthropic `input_schema`, Gemini
 // `functionDeclarations`), so the schemas use only the keywords all three accept: `type`,
-// `description`, `properties` and `required`. Version 1 offers the six nutrition tools only; the
+// `description`, `properties` and `required`. The six nutrition tools are always offered; in the
+// Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94). The
 // later workout and suggestion tools are named here so a stray call can be told they are not
 // available.
 
@@ -22,6 +23,13 @@ const NUTRITION_SET = new Set<string>(NUTRITION_TOOL_NAMES);
 export function isNutritionToolName(value: unknown): value is NutritionToolName {
   return typeof value === 'string' && NUTRITION_SET.has(value);
 }
+
+/** The tool over Health Connect's activity copy (D-16.94): offered only while it is connected. */
+export const ACTIVITY_TOOL_NAME = 'activity_log';
+export type ActivityToolName = typeof ACTIVITY_TOOL_NAME;
+
+/** Any tool the Coach can offer. */
+export type CoachToolName = NutritionToolName | ActivityToolName;
 
 /** Workout and suggestion tools of a later phase (L3): never offered in v1. */
 export const LATER_TOOL_NAMES = [
@@ -58,6 +66,12 @@ export const ROW_LIMITS = {
 /** Days before `to` that a range without a readable `from` starts. */
 export const DEFAULT_SPAN_DAYS = 30;
 
+/** The most days one `activity_log` call covers; a longer range keeps its newest days. */
+export const ACTIVITY_MAX_DAYS = 90;
+
+/** The days, `to` included, an `activity_log` range without a readable `from` covers. */
+export const ACTIVITY_DEFAULT_DAYS = 7;
+
 export interface SchemaProperty {
   readonly type: 'string' | 'integer';
   readonly description: string;
@@ -72,7 +86,7 @@ export interface ToolParameters {
 
 /** One tool as the chat wires send it. */
 export interface ToolSchema {
-  readonly name: NutritionToolName;
+  readonly name: CoachToolName;
   readonly description: string;
   readonly parameters: ToolParameters;
 }
@@ -126,8 +140,8 @@ export const NUTRITION_TOOLS: readonly ToolSchema[] = [
   {
     name: 'weight_log',
     description:
-      'Weigh-ins from one local day to another, oldest first: the day and the weight in kg ' +
-      `and in lb. At most ${ROW_LIMITS.weight_log.max} rows. ${RANGE_RESULT}`,
+      'Weigh-ins from one local day to another, oldest first: the day and the weight in kg. ' +
+      `At most ${ROW_LIMITS.weight_log.max} rows. ${RANGE_RESULT}`,
     parameters: rangeParameters(ROW_LIMITS.weight_log),
   },
   {
@@ -166,3 +180,35 @@ export const NUTRITION_TOOLS: readonly ToolSchema[] = [
     parameters: rangeParameters(ROW_LIMITS.fasting_log),
   },
 ];
+
+/** The activity tool (D-16.94): Health Connect's figures, day by day. */
+export const ACTIVITY_TOOL: ToolSchema = {
+  name: ACTIVITY_TOOL_NAME,
+  description:
+    'What Health Connect recorded on their phone, day by day from one local day to another, ' +
+    'oldest first: steps, activeKcal (burned by moving, on top of resting burn), totalKcal (the ' +
+    "whole day's burn, resting burn included), distanceM in metres, and the day's workouts with " +
+    'their type, start, minutes and activeKcal. Today is the day so far. A value Health Connect ' +
+    'did not have is left out, never 0, and a day it had nothing for has no row: that means no ' +
+    `data, not a day without moving. At most ${ACTIVITY_MAX_DAYS} days: a longer range keeps ` +
+    'its newest days and "omittedOlderDays" says how many older days it left out. Every result ' +
+    'repeats the range it used.',
+  parameters: {
+    type: 'object',
+    properties: {
+      from: {
+        type: 'string',
+        description:
+          'First day of the range, YYYY-MM-DD, a local day, included. A day that cannot be read ' +
+          `gives the ${ACTIVITY_DEFAULT_DAYS} days ending on "to".`,
+      },
+      to: TO,
+    },
+    required: ['from', 'to'],
+  },
+};
+
+/** The tools one turn offers, in the order the model sees them: activity last, when connected. */
+export function coachTools(activity: boolean): readonly ToolSchema[] {
+  return activity ? [...NUTRITION_TOOLS, ACTIVITY_TOOL] : NUTRITION_TOOLS;
+}

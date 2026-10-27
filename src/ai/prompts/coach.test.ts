@@ -2,14 +2,23 @@ import { describe, expect, it } from 'vitest';
 import { makeBodyFat, makeProfile, makeWater } from '../../test/factories';
 import {
   FIXTURE_FOOD_NAMES,
+  SNAPSHOT_TODAY,
+  activityOn,
   at,
+  connectedActivity,
   fastFrom,
   fixtureDiary,
   makeSnapshot,
   weighInOn,
+  workoutOn,
 } from '../../services/coach/__fixtures__/snapshot';
 import { coachContext } from '../../services/coach/context';
-import { LATER_TOOL_NAMES, NUTRITION_TOOL_NAMES } from '../../services/coach/toolSchemas';
+import {
+  ACTIVITY_MAX_DAYS,
+  LATER_TOOL_NAMES,
+  NUTRITION_TOOL_NAMES,
+  coachTools,
+} from '../../services/coach/toolSchemas';
 import { coachSystemPrompt } from './coach';
 
 /** The whole system text for a snapshot with every kind of data in it. */
@@ -131,5 +140,89 @@ describe('coachSystemPrompt: the notes for the AI (D-16.24)', () => {
     const bare = coachSystemPrompt({ context: CONTEXT });
     expect(coachSystemPrompt({ context: CONTEXT, notes: '  \n ' })).toBe(bare);
     expect(bare.trimEnd().endsWith('or say that the forecast needs more data first.')).toBe(true);
+  });
+});
+
+describe('coachSystemPrompt: Health Connect activity (D-16.94)', () => {
+  /** The system text of an Android turn with Health Connect connected. */
+  function activityPrompt(notes?: string): string {
+    const snapshot = makeSnapshot({
+      entries: fixtureDiary(),
+      activity: connectedActivity([
+        activityOn(SNAPSHOT_TODAY, {
+          steps: 8412,
+          activeKcal: 420,
+          sessions: [workoutOn(SNAPSHOT_TODAY, '07:10', 35)],
+        }),
+      ]),
+    });
+    return coachSystemPrompt({ context: coachContext(snapshot), notes, activity: true });
+  }
+
+  it('says what the activity data is and where it comes from', () => {
+    const text = activityPrompt();
+    expect(text).toContain('Activity from Health Connect:');
+    expect(text).toContain(
+      'the steps, active calories, total calories burned, distance and workouts that their phone, watch and fitness apps recorded',
+    );
+  });
+
+  it('says active calories are already in the target while counting is on, so never twice', () => {
+    const text = activityPrompt();
+    expect(text).toContain(
+      'When "Count active calories" is on, the energy target in the facts already includes today\'s active calories, and so does what is left of it.',
+    );
+    expect(text).toContain('Never add them a second time.');
+    expect(text).toContain(
+      "On any day it is on, that day's target is the goal plus that day's active calories.",
+    );
+    expect(text).toContain('When it is off, the target is the goal alone.');
+  });
+
+  it('says total calories include resting burn and are no extra food', () => {
+    const text = activityPrompt();
+    expect(text).toContain(
+      'Active calories are the energy burned by moving, on top of resting burn.',
+    );
+    expect(text).toContain("Total calories burned are the whole day's burn, resting burn included");
+    expect(text).toContain('never extra food to eat back');
+  });
+
+  it('points questions on steps, workouts, burn and trends to activity_log', () => {
+    const text = activityPrompt();
+    expect(text).toContain(
+      'For questions about steps, workouts, calories burned or how active they have been over time, call activity_log',
+    );
+    expect(text).toContain(`up to ${ACTIVITY_MAX_DAYS} days per call`);
+    const named = new Set(text.match(/\b[a-z]+(?:_[a-z0-9]+)+\b/g));
+    expect([...named].sort()).toEqual(
+      coachTools(true)
+        .map((tool) => tool.name)
+        .sort(),
+    );
+  });
+
+  it('keeps every other rule and puts the notes last', () => {
+    const text = activityPrompt('No running advice, please.');
+    expect(text).toContain('you give no medical advice');
+    expect(text).toContain('suggest they talk to a doctor or a registered dietitian');
+    expect(text).toContain('Answer in 2 to 5 sentences unless they ask for more detail.');
+    expect(text).toContain('You cannot log, change or delete anything');
+    expect(text.indexOf('Activity from Health Connect:')).toBeGreaterThan(
+      text.indexOf('Using the data tools:'),
+    );
+    expect(text.indexOf('Activity from Health Connect:')).toBeLessThan(
+      text.indexOf('Shaping answers:'),
+    );
+    expect(text.endsWith('No running advice, please.')).toBe(true);
+  });
+
+  it('adds none of it without activity, as on the web', () => {
+    for (const text of [
+      coachSystemPrompt({ context: CONTEXT }),
+      coachSystemPrompt({ context: CONTEXT, activity: false }),
+    ]) {
+      expect(text).not.toMatch(/Health Connect|activity_log|Count active calories|resting burn/);
+    }
   });
 });
