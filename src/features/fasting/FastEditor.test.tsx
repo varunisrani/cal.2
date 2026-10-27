@@ -226,6 +226,8 @@ describe('FastEditor', () => {
     await e.press(words.endNow);
 
     await e.closed();
+    // The toast is shown after the refusal has been read back; wait for it as the other tests do.
+    await settle(() => hooked('toast.message') !== null);
     expect(hooked('toast.message')).toHaveTextContent(words.gone);
     expect(await e.storedFasts()).toEqual([{ ...running, end: at('10:00') }]);
   });
