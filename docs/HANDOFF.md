@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 09:24 IST (Agent 1, session 3). 122/176 tasks; P00–P05 complete; the app runs on the
-real database. Usage window resets 10:20 IST; wave 10 landed, wave 11 three of five landed.
+Updated: 2026-10-27 10:24 IST (Agent 1, session 3). 122/176 tasks; P00–P05 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); five wave 11 builders running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -114,19 +114,18 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-No builders running. Wave 11's P07-16 (b2f9de2), P07-15 (dc6c909) and P07-06 (c3b9f43) were started early and
-landed (latest full loop: unit 3854 passed + 2 expected-fail, bundle 210.71 kB, e2e 6/6). Wave 10 is fully
-landed. The next window starts at the 10:20 IST reset: launch the other two wave 11 prompts (P06-11, P07-07) in
-`docs/handoff/wave11/` at the branch head (worktrees `/root/wt/wt-{p06s11,p07s2b}`):
-- P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`.
-- P07-06 water flows and settings, the Tracking settings page (`trackers` partition).
-- P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse
-  (`fasting` partition). At landing the lead mounts `FastingSettings` on the Tracking page (the
-  marked place in `src/features/settings/tracking/TrackingPage.tsx`; ACC-J10-1's fasting half).
-- P08 wave A (independent of P06/P07): `w11-p08s1` (P08-01..03 context, tools, limiter), `w11-p08s2`
-  (P08-05..07 chat wires; tool schemas passed in), `w11-p08s3` (P08-04 history, P08-12 chips, P08-13
-  Markdown; `coach` partition). Then P08 wave B: P08-08 engine + P08-09 session; P08-10 page + P08-11
-  composer; P08-14 e2e.
+Window reset at 10:20 IST (next reset 15:20 IST). Five builders started at 10:24 IST, all at base d24514e (prompts
+in `docs/handoff/wave11/`, filled copies in `/root/wt/prompt-<slice>.txt`):
+- P06-11 entry editor (`EntryEditor` as a component; P06-19 wires the row tap), `updateEntry`, `/root/wt/wt-p06s11`.
+- P07-07 fasting flows, editor, settings, `PausedDialog` wired into review, manual, copy and reuse; mounts
+  `FastingSettings` on the landed Tracking page (`fasting` partition), `/root/wt/wt-p07s2b`.
+- P08 S1 (P08-01..03 context, tools, limiter), `/root/wt/wt-p08s1`.
+- P08 S2 (P08-05..07 chat wires; tool schemas passed in), `/root/wt/wt-p08s2`.
+- P08 S3 (P08-04 history, P08-12 chips, P08-13 Markdown; `coach` partition), `/root/wt/wt-p08s3`.
+Expected merges: P06-11 and P07-07 both touch `src/features/log/review/ReviewSheet.tsx` and maybe
+`src/services/diary.ts`; S1 and S3 both add to `src/services/coach/`; en.ts gets three partitions.
+Earlier in wave 11: P07-16 (b2f9de2), P07-15 (dc6c909), P07-06 (c3b9f43). Then P08 wave B: P08-08 engine + P08-09
+session; P08-10 page + P08-11 composer; P08-14 e2e.
 Then wave 12: P07-05 (diary sort, water and fast rows; tap a fast → `FastEditor`), P07-08 (the + menu's
 water and fasting rows), P06-19 (selection bar and combine, row tap → `EntryEditor`, heart on rows,
 `PausedDialog` on combine); wave 13: P06-20 logging e2e, P07-17 Home and Progress e2e; then P08–P10.
