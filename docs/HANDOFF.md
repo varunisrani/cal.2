@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 12:32 IST (Agent 1, session 3). 150/176 tasks; P00–P05 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landed except the logging e2e.
+Updated: 2026-10-27 12:47 IST (Agent 1, session 3). 151/176 tasks; P00–P06 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landed, P09-05 building.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -128,12 +128,13 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 13 | P09-02, P09-04, P09-06 (App settings and units, Tab bar, Product details; `appSettings` service) | bcfa20d |
 | Wave 13 | P09-17, P09-18 (service worker and update flow; manifest, install prompt, CSP) | 9abd7b0 |
 | Wave 13 | P09-13 (backup and restore; `backupRepo`; GIF/HEIC photos go in as JPEG copies) | d8fcdfc |
+| Wave 13 | P06-20 (logging e2e, Demo 3: nine scenarios, routed food databases, no stray network). P06 done | 73c3788 |
 
 ## In progress
 
 Landed at 12:32 IST: bcfa20d, 9abd7b0, d8fcdfc (full loop: unit 4776 passed + 2 expected-fail in 333 files, check 6/6,
 bundle 228.56 kB, e2e 6/6).
-P06-20 logging e2e returned and is in its full loop on `/root/wt/verify` (msg `w13-05`; push with commit-landing.sh).
+P06-20 landed at 12:47 IST as 73c3788 (full loop: unit 4776, e2e 15/15 with the logging spec, bundle 228.56 kB).
 Builder running: P09-05 menu editor (`/root/wt/wt-p09s05`, base 9a958f7), started 12:39 IST at 78 % with nothing else
 building and nearly three hours left (expected about +5 %; the 88 % stop still applies).
 Usage 74 % at 12:14 IST: no new builders this window. Next window (15:20 IST): P09-05 menu editor (prompt ready),
@@ -145,7 +146,7 @@ Bundle: 228.34 kB gzip of 250 at 27596b1. Follow-ups from wave 13: the CSP's `ht
 L8; no inline theme script is possible under `script-src 'self'`; nothing else may use Cache Storage under the
 `platewise-` prefix; `appVersion` is '0.1.0' until P09-16's build constant; wire restore's `afterRestore` to
 `reminders.refresh()`; a Coach reply running during a restore can land in the restored chat.
-**Progress: 150/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 13/14, P09 11/19, P10 0/14).
+**Progress: 151/176 tasks** (P00–P06 complete, P07 16/17, P08 13/14, P09 11/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
