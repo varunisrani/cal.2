@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 11:01 IST (Agent 1, session 3). 133/176 tasks; P00–P05 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); wave 11 landed, wave 12 running.
+Updated: 2026-10-27 11:46 IST (Agent 1, session 3). 141/176 tasks; P00–P05 complete; the app runs on the
+real database. Window reset 10:20 IST (next reset 15:20 IST); wave 12 landed, wave 13 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -116,14 +116,19 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 11 | P08-01..03 (coach context and system prompt, six nutrition tools, tool-result limiter) | 0a3cbdb |
 | Wave 11 | P07-07 (fasting service, start sheet, editor, settings; paused dialog in review, manual, copy a day) | 3458a92 |
 | Wave 11 | P06-11 (entry editor; `updateEntry`, `toggleSaved`, `reprocess` service) | 9357cad |
+| Wave 12 | P09-12 (backup archive codec: our stored-ZIP writer and reader, safe names, content hash) | 0130532 |
+| Wave 12 | P09-08 (reminder engine: schedule, engine, ports; wired but silent until P09-09) | 419266c |
+| Wave 12 | P08-08, P08-09 (coach chat engine; Coach session) | 0695274 |
+| Wave 12 | P07-05, P07-08 (diary sort, water and fast rows; the + menu's water and fasting entries; `panel` menu entries) | a1dd707 |
+| Wave 12 | P06-19 (selection bar and combine; row tap → entry editor; saved heart) | c068426 |
+| Wave 12 | P09-10, P09-11 (diary export and import; `transferRepo`) | d8b3864 |
 
 ## In progress
 
-Landing: five slices stacked on `/root/wt/verify` over 0130532 in one full loop (P09-08 reminder engine, P08-08/09
-engine and session, P07-05/08 tracker rows and + menu, P06-19 selection and combine, P09-10/11 export and import);
-push with `/root/wt/land-multi.sh 0130532 18113fb /root/wt/msgs/w12-02.txt bcc8761 /root/wt/msgs/w12-03.txt
-0f02c14 /root/wt/msgs/w12-05.txt fdf26fd /root/wt/msgs/w12-04.txt 3181313 /root/wt/msgs/w12-06.txt` once the loop
-ends with ci=0 (each sha is one slice commit on verify; the ledger scripts are already applied).
+Landed at 11:46 IST: 419266c, 0695274, a1dd707, c068426, d8b3864 (full loop: unit 4500 passed + 2 expected-fail in
+307 files, check 6/6, bundle 226.44 kB, e2e 6/6). **Watch the bundle**: it grew 13 kB in this stack (the reminder
+engine and ports and the Coach session load at start; new catalogue partitions); load the reminder engine after
+first paint and keep new pages on demand.
 Builders running:
 - P08-10/11 Coach page and composer, `/root/wt/wt-p08s5` (base b8e5789 = branch head plus the P08-08/09 patch as a
   local commit; extract its patch against that commit).
@@ -133,7 +138,7 @@ Builders running:
 Next: P09-05 menu editor (prompt ready: `w13-p09s05.txt`); P09-09 notifier and reminders section (after P09-08 lands);
 P09-01 hub and load gate, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data page, P09-16 About; the e2e
 tasks P06-20, P07-17, P08-14, P09-19; then P10.
-**Progress: 133/176 landed** (P06 18/20, P07 14/17, P08 9/14, P09 1/19); the loop above brings it to 141.
+**Progress: 141/176 tasks** (P00–P05 complete, P06 19/20, P07 16/17, P08 11/14, P09 4/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
