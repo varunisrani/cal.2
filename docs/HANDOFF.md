@@ -133,7 +133,9 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 Landed at 12:32 IST: bcfa20d, 9abd7b0, d8fcdfc (full loop: unit 4776 passed + 2 expected-fail in 333 files, check 6/6,
 bundle 228.56 kB, e2e 6/6).
-Builder running: P06-20 logging e2e (`/root/wt/wt-p06s20`, base 085a9bb, prompt `docs/handoff/wave13/w13-p06s20.txt`).
+P06-20 logging e2e returned and is in its full loop on `/root/wt/verify` (msg `w13-05`; push with commit-landing.sh).
+Builder running: P09-05 menu editor (`/root/wt/wt-p09s05`, base 9a958f7), started 12:39 IST at 78 % with nothing else
+building and nearly three hours left (expected about +5 %; the 88 % stop still applies).
 Usage 74 % at 12:14 IST: no new builders this window. Next window (15:20 IST): P09-05 menu editor (prompt ready),
 P09-09 notifier and reminders section, P09-01 hub, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data
 (mounts Export, Import, Backup and Restore; calls `reminders.stop()` and backup `invalidate()` before Erase
