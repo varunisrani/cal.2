@@ -49,3 +49,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 09:05 | Agent 1 | Account 1 | 84 (reading 09:01) | 16 | 2026-10-27 10:20 | 121/176 tasks; 1 builder (P07-06); about 0.3 %/min; check again in 6 min |
 | 2026-10-27 09:24 | Agent 1 | Account 1 | 86 (reading 09:15) | 14 | 2026-10-27 10:20 | 122/176 tasks (P07-06 landed c3b9f43); no builders; waiting for the reset |
 | 2026-10-27 10:24 | Agent 1 | Account 1 | 0 (reading 10:23) | 100 | 2026-10-27 15:20 | 122/176 tasks; window reset; 5 builders launched (P06-11, P07-07, P08 S1–S3) |
+| 2026-10-27 10:57 | Agent 1 | Account 1 | 19 (reading 10:55) | 81 | 2026-10-27 15:20 | 125/176 tasks; 5 builders returned (about 0.6 %/min for 5); 3 slices in one loop |
