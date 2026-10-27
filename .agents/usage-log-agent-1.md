@@ -77,3 +77,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 22:54 | Agent 1 | Account 1 | 24 (reading 22:49) | 76 | 2026-10-28 01:20 | P11-01/02 in the lead loop; P11-03/04 builder running |
 | 2026-10-27 23:25 | Agent 1 | Account 1 | 30 (reading 23:21) | 70 | 2026-10-28 01:20 | P11-01/02 landed; P11-03/04 in the loop; P11-05 builder |
 | 2026-10-27 23:56 | Agent 1 | Account 1 | 35 (reading 23:47) | 65 | 2026-10-28 01:20 | P11-05 in the loop; follow-up fixes ready; Health Connect APK sent |
+| 2026-10-28 01:22 | Agent 1 | Account 1 | ~45 | ~55 | 2026-10-28 01:20 (window rolling over) | P11 polish landed (27e5604); APK sent; waiting on the user |

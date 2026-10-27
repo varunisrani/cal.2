@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
 Updated: 2026-10-28 00:20 IST (Agent 1, session 3). v1.0 complete: 176/176 tasks, release commit 1fa1f1b; P11
-(Android app and Health Connect, at the user's request) complete at 6e80369.
+(Android app and Health Connect, at the user's request) complete at 6e80369; polish at 27e5604.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -162,6 +162,10 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P11 polish (01:22 IST):** 27e5604 Progress total burn and distance, no "Turn on reminders" button inside the app, a
+timer for held-back write-back (full loop: unit 5292 passed + 2 expected-fail, strict 6/6, bundle 237.72 kB, e2e 47 + 1
+skipped by design). The APK built from 27e5604 was sent to the user. Nothing is left that does not need the user:
+waiting on their device test, `main`, the attribution URL, and any tag or 1.1.0 release.
 **P11 complete (00:20 IST, 2026-10-28):** 344e4ca P11-05 (Android user guide, CHANGELOG 1.1.0 unreleased, naming,
 59 Android licence notices shown on Credits inside the app) and 6e80369 the follow-ups (future-dated write-back held back
 until its time, total burn and distance on Home, reminders copy in the app; ACC-M11-8/9). Full loop: unit 5279 passed +
