@@ -3,13 +3,31 @@ import type { MessageTree } from '../catalogue';
 /**
  * Words of the trackers (src/features/water) and of Settings › Tracking & reminders
  * (src/features/settings/tracking): the + menu's water page, the custom amount sheet, the water
- * settings, the goal wheel and the quick-add editor. An amount with its unit word ("250 ml") and
- * the unit words alone come from `home.amount` and `home.unit`; fasting has its own partition.
+ * settings, the goal wheel and the quick-add editor; the meal times card and its editor. An
+ * amount with its unit word ("250 ml") and the unit words alone come from `home.amount` and
+ * `home.unit`; fasting has its own partition, the Notifications card the reminders partition.
  */
 export const trackers = {
   trackers: {
     page: {
       title: 'Tracking & reminders',
+    },
+    // The meal times card and its editor (P09-03).
+    mealTimes: {
+      heading: 'Meals',
+      row: 'Meal times',
+      note: 'They pick the meal a new entry goes under. You can still change it when you log.',
+      title: 'Meal times',
+      starts: {
+        breakfast: 'Breakfast starts',
+        lunch: 'Lunch starts',
+        dinner: 'Dinner starts',
+        lateSnack: 'Late snack starts',
+      },
+      help: 'Each meal starts at least 15 minutes after the one before. The late snack runs past midnight until breakfast.',
+      restore: 'Restore default times',
+      saveFailed: "Your meal times weren't saved. Please try again.",
+      unavailable: "Meal times can't be shown right now. Reload the page to try again.",
     },
     water: {
       heading: 'Water',

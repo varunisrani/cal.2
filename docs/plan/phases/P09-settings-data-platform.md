@@ -1,6 +1,6 @@
 # P09 · Settings, data and platform
 
-**Weeks:** 2–3 · **Tracks:** UI (settings pages, About); data (export, import, backup, reminders); platform (service worker, manifest, CSP) · **Depends on:** P02–P08 · **Status:** 🔨 in progress: P09-02, P09-04..08, P09-10..13, P09-16..18 landed (13/19, 2026-10-27)
+**Weeks:** 2–3 · **Tracks:** UI (settings pages, About); data (export, import, backup, reminders); platform (service worker, manifest, CSP) · **Depends on:** P02–P08 · **Status:** 🔨 in progress: P09-02..13, P09-16..18 landed (15/19, 2026-10-27)
 
 Reference paths are relative to `$PLATEWISE_REF` (`/root/reference/fud-ai`, pinned at `10e14b67`). Prefixes: `A/` = `android/app/src/main/java/com/apoorvdarshan/calorietracker/`, `I/` = `ios/calorietracker/`, `T/` = `android/app/src/test/java/com/apoorvdarshan/calorietracker/`, `IT/` = `ios/calorietrackerTests/`. A number in brackets is the file's length in lines; read only the named part of a big file. Read the research spec section first, then the reference, then its tests.
 

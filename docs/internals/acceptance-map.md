@@ -883,7 +883,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J4 · Meal times editor (P1)
 
 - **ACC-J4-1** Moving lunch to 11:30 files a 11:45 entry under lunch
-  - Review: P09-03
+  - Test: src/features/settings/tracking/MealTimesSheet.test.tsx > MealTimesSheet > files an entry logged at 11:45 under lunch once lunch starts at 11:30 (ACC-J4-1)
 
 ### J5 · Add-menu editor (P1)
 
@@ -923,10 +923,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### J11 · Reminders (P1)
 
 - **ACC-J11-1** Denying notification permission leaves the switch off with a pointer to browser settings
-  - Review: P09-09
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > leaves the switch off when the browser says no, and points to the browser's site settings (ACC-J11-1, R06.13)
 - **ACC-J11-2** A reminder missed while the app was closed shows once on the next open
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > shows a lunch reminder missed while the app was closed once on the next open (ACC-J11-2)
   - Test: src/services/reminders/schedule.test.ts > due > lists a reminder once when its time passed since it was dealt with (ACC-J11-2)
+  - Test: src/services/reminders/notifier.test.ts > the engine and the notifier together, as main.tsx joins them > shows a lunch missed while the app was closed as a banner once, on the next open (ACC-J11-2)
 
 ## K · Data management, backup and privacy
 
@@ -1016,7 +1017,8 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L5 · Notifications through the browser when permitted, otherwise in-app … (P1)
 
 - **ACC-L5-1** Without permission a due reminder shows as an in-app banner
-  - Review: P09-09
+  - Test: src/services/reminders/notifier.test.ts > createNotifier: reminders > uses the banner when the permission is %s (ACC-L5-1)
+  - Test: src/app/ReminderBanners.test.tsx > ReminderBanners > shows a missed lunch with when it was due, and takes it away on Dismiss (ACC-L5-1)
 
 ### L6 · Privacy (P1)
 

@@ -11,6 +11,7 @@ import { Boot } from './Boot';
 import { ErrorBoundary } from './ErrorBoundary';
 import { InstallPrompt } from './InstallPrompt';
 import { onDemand } from './onDemand';
+import { ReminderBanners } from './ReminderBanners';
 import { ShellPortsContext, type ShellPorts } from './ports';
 import type { Router } from './router';
 import { Screen } from './Screen';
@@ -79,6 +80,8 @@ function Shell() {
         {/* A waiting update (P09-17) and the install card (P09-18), above the screen. */}
         <UpdateBanner />
         <InstallPrompt />
+        {/* Reminders shown in the app rather than by the browser (P09-09). */}
+        <ReminderBanners />
         <Screen route={route} />
       </main>
       <TabBar />

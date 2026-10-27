@@ -1,9 +1,135 @@
 /*
  * Settings › Tracking & reminders (P07-06; P09 adds meal times and reminders): the page's stack of
- * cards. Every value comes from tokens.css.
+ * cards, the meal times card and its editor (P09-03), the Notifications card (P09-09). Every value
+ * comes from tokens.css; logical properties throughout.
  */
 
 .page {
   display: grid;
   gap: var(--space-4);
+}
+
+/* ---- Cards ------------------------------------------------------------------------------- */
+
+.card {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.card > h2 {
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.switchItem {
+  padding-inline: var(--space-4);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.rowLabel {
+  flex: none;
+  font-weight: var(--weight-medium);
+}
+
+/* A label alone in its row takes the room, keeping the chevron at the end. */
+.grow {
+  flex: 1 1 auto;
+}
+
+.rowValue {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.chevron:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* A note inside a card, lined up with the rows. */
+.cardNote {
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4);
+}
+
+/* The browser blocks notifications: the pointer reads in the text colour, not muted. */
+.pointer {
+  color: var(--text);
+}
+
+/* A reminder's time, under its switch while it is on. */
+.timeField {
+  padding-block-end: var(--space-3);
+}
+
+/* ---- The meal times editor ----------------------------------------------------------------- */
+
+.editor {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  list-style: none;
+}
+
+.list .row {
+  padding-inline: var(--space-3);
+}
+
+.wheels {
+  display: flex;
+  justify-content: center;
 }

@@ -11,6 +11,7 @@ import { installOffer } from './app/installOffer';
 import { appUpdates, registerServiceWorker } from './app/swRegistration';
 import { APP_VERSION } from './config/build';
 import { documentVisibility } from './app/useTuneUp';
+import { appBus } from './data/bus';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
 import { hasUnreadableData } from './data/guard';
@@ -59,6 +60,7 @@ import { createProfileEditsService } from './services/profileEdits';
 import { createSavedMealsService } from './services/savedMeals';
 import { createProgressService } from './services/progress';
 import { createReminderEngine } from './services/reminders/engine';
+import { browserNotifications, createNotifier } from './services/reminders/notifier';
 import {
   browserTimers,
   localReminderMemory,
@@ -66,6 +68,7 @@ import {
 } from './services/reminders/ports';
 import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
+import { createTrackingSettingsService } from './services/trackingSettings';
 import { createTransferService } from './services/transfer/transfer';
 import { createWaterService } from './services/water';
 
@@ -166,16 +169,24 @@ async function start(): Promise<void> {
     unnamed: (code) => t('scan.unnamed', { code }),
   });
 
-  // P09-08: reminders are worked out in the page (D-16.5). P09-09 plugs in the browser's
-  // notification permission and the notifier; until then nothing is allowed, so nothing shows.
+  // P09-08: reminders are worked out in the page (D-16.5). P09-09: they need the browser's
+  // notification permission; the notifier shows one due while the page runs as a system
+  // notification, and one missed while the app was closed as a banner in the app. The notifier
+  // also sends the goal-weight alert that weigh-ins post on the bus (P05-14).
+  const notifications = browserNotifications();
+  const notifier = createNotifier({
+    access: notifications,
+    alertSettings: () => settingsRepo.snapshot(),
+  });
+  notifier.listen(appBus());
   const reminders = createReminderEngine({
     ...storedReminderSources({ settingsRepo, fastRepo, diaryRepo, profileRepo }),
     clock: systemClock,
     timers: browserTimers,
     visibility: documentVisibility,
     memory: localReminderMemory(),
-    permitted: () => false,
-    show: () => undefined,
+    permitted: () => notifications.state() === 'granted',
+    show: (notice) => void notifier.show(notice),
   });
 
   const services: Services = {
@@ -255,6 +266,8 @@ async function start(): Promise<void> {
       onFirstEntry: () => storage.requestPersistence(),
     }),
     reminders,
+    notifier,
+    trackingSettings: createTrackingSettingsService({ settingsRepo, notifications, reminders }),
     coachSession: createCoachSession({
       coachRepo,
       data: {

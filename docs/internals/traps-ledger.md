@@ -588,6 +588,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > cancels the pending timer when the master switch goes off (R06.10)
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: daily reminders > cancels everything on stop (erase everything): no timer, no listener, nothing shown (R06.10)
   - Test: src/services/reminders/ports.test.ts > the engine over the stored data > cancels the timer when the master switch is turned off in the store (R06.10)
+  - Test: src/services/trackingSettings.test.ts > the notifications switch (R06.13) > reads the permission again, and lets the engine check only when it changed (R06.10)
 - **R06.11** Reminder times are the next wall-clock occurrence each time (DST-safe)
   - Test: src/services/reminders/schedule.test.ts > nextAt (R06.11) > gives 08:00 the morning after the March DST change in New York, 23 hours later, never 09:00
   - Test: src/services/reminders/schedule.test.ts > nextAt (R06.11) > stays at 08:00 every day from March to November, through both changes, without drifting
@@ -595,7 +596,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.12** There is no streak reminder (D-16.41), so its never-firing condition cannot occur; tested by the reminder list
   - Test: src/services/reminders/schedule.test.ts > the reminder list (D-16.41) > has breakfast, lunch, dinner, the summary, water and the fasting goal, and no streak or food-log reminder (R06.12)
 - **R06.13** The notifications switch turns on only after a grant and shows the real permission on every focus
-  - Review: owned by P09-09
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > leaves the switch off when the browser says no, and points to the browser's site settings (ACC-J11-1, R06.13)
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > turns on after a grant and lists the reminders, each off, with a line saying so (R06.13)
+  - Test: src/features/settings/tracking/RemindersSection.test.tsx > RemindersSection > shows the switch off when the permission was taken back while away, and on again once it is back (R06.13)
+  - Test: src/services/trackingSettings.test.ts > the notifications switch (R06.13) > asks the browser and stores the switch on after a grant
 - **R06.14** Exports always hold kcal; kJ users get a note and a kcal header
   - Test: src/services/transfer/exportDiary.test.ts > exporting from the diary (the transfer service) > keeps kcal in a kJ reader's file (R06.14, ACC-K1-2)
   - Test: src/services/transfer/exportFormats.test.ts > toCsv > is the same for a kJ reader: the header names kcal and values stay kcal (R06.14, ACC-K1-2)

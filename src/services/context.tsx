@@ -24,7 +24,9 @@ import type { ProfileEditsService } from './profileEdits';
 import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
 import type { ReminderEngine } from './reminders/engine';
+import type { Notifier } from './reminders/notifier';
 import type { ReprocessService } from './reprocess';
+import type { TrackingSettingsService } from './trackingSettings';
 import type { TransferService } from './transfer/transfer';
 import type { WaterService } from './water';
 
@@ -79,6 +81,10 @@ export interface Services {
    * it; a restore or a permission the page re-read asks it to check again. Optional likewise.
    */
   readonly reminders?: ReminderEngine;
+  /** Shows reminders as system notifications or banners, and the goal-weight alert (P09-09). */
+  readonly notifier?: Notifier;
+  /** Settings › Tracking & reminders: meal times and the reminder switches (P09-03, P09-09). */
+  readonly trackingSettings?: TrackingSettingsService;
   /** The Coach's one session: send, retry, reset and pending (P08-09); optional likewise. */
   readonly coachSession?: CoachSession;
   /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */
