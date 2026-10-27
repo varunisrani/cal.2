@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 06:20 IST (Agent 1, session 3). 103/176 tasks; P00–P04 complete; the app runs on the
+Updated: 2026-10-27 06:40 IST (Agent 1, session 3). 108/176 tasks; P00–P05 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -97,27 +97,31 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 10 | P05-10 (Settings › Personal info; `profileEdits` service) | d855e53 |
 | Wave 10 | P05-11, P05-12 (Settings › Goals and nutrition; nutrient goals editor; `targetEdits` service) | c69fd91 |
 | Wave 10 | P06-06..08 (review sheet, serving card and amount field, nutrition rows and micronutrients) | d9ae5fc |
+| Wave 10 | P05-15 (onboarding and goals e2e, Demo 2; `e2e/support.ts`). P05 done | 289332c |
+| Wave 10 | P06-12, P06-13 (reuse lists, copy a day; `openForReview`, `savedMeals` service) | 1e3db66 |
+| Wave 10 | P06-14, P06-17 (barcode scanner, lookup order, label memory; zxing in its own chunk) | 26e1c99 + cfd46c7 |
 | Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
 
 ## In progress
 
 Window reset at 05:20 IST (next reset 10:20 IST). Four builders (prompts in `docs/handoff/wave10/`):
-- P06 S3b (P06-14 scanner, P06-17 lookup order and label memory), base 48a1f56 (staged P06-01), `/root/wt/wt-p06s3b`.
-- P06 S4b (P06-12 reuse lists, P06-13 copy a day; `analysis.openForReview`), base 9a83eee, `/root/wt/wt-p06s4b`.
-- P05-15 (onboarding and goals e2e, `plan-ok` script), base b0022df (staged P05-11/12), `/root/wt/wt-p05s5`.
-- P06 S2b (P06-09 ingredients card and recipe split, P06-10 fit check; `ingredientIntake` service), base
-  ef8c0c9 (staged P06-06..08), `/root/wt/wt-p06s2b`.
-At landing: AddMenu's METHODS_NOT_BUILT_YET and HomePage's `choose` take lines from S3b and S4b; `Services`,
-`main.tsx`, `App.tsx`, `en.ts` take lines from several slices; merge by hand.
-Next after these land: a lazy-loading slice (initial JS 206.57 kB of 250 kB): tab screens and Settings category
-pages through React.lazy, the logging sheets (capture, describe, review, scan, reuse, copy day) loaded on first
-open, and the AI layer (client, adapters, prompts, tasks) through a dynamic import in the services that ask a
-model; `pnpm check:bundle` must show the drop. Then P06-18, P06 wave C (P06-11, P06-19, P06-20), P07.
+- P06 S2b (P06-09 ingredients card and recipe split, P06-10 fit check; `ingredientIntake`), base ef8c0c9,
+  `/root/wt/wt-p06s2b`.
+- Lazy-loading groundwork (tab screens, Settings pages, review/overlay mounts, the AI layer by dynamic
+  import), base 6ddc37c, `/root/wt/wt-lazy`.
+- P07 S4a (P07-09 Progress layout and ranges, P07-12 weight card and Log weight), base 289332c,
+  `/root/wt/wt-p07s4a`.
+- P07 S1a (P07-01 week bar, P07-02 selected day and day swipe; the review stamps a reuse pick on the viewed
+  day), base 7ced5b9, `/root/wt/wt-p07s1a`.
+Next: P07 S1b (P07-03 gauge and pillars, P07-04 nutrients sheet and pillar picker), P07 S4c (P07-13 body fat,
+P07-14 history), P06-18 (product block, allergen line, label text: the analysis draft needs a field for OFF's
+`ingredientsMarkup`), P06 wave C (P06-11, P06-19, P06-20), P07 S2 (water, fasting, sort), S4b (recap,
+averages), P07-17 e2e; P08–P10.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
 restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
 (latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
 container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-103/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 14/15, P06 10/20, P07 2/17).
+108/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 14/20, P07 2/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -427,6 +431,11 @@ moved usage about 0.5 %/min (+8 points in 17 min); the lead alone about 0.
   --soft <that base>`, then `git rebase origin/<branch>` before pushing. A soft reset to a remote head
   that moved after the worktree was made records the newer commits' files as deleted (7fbe51e dropped a
   prompt file that way; a0911d2 restored it). Check `git show --name-status` for `D` lines before pushing.
+- Never commit a landing before reading `ci=0` at the end of `/root/wt/verify-ci.log`: 26e1c99 went out with
+  its loop failed at lint (a duplicate `case` from the merge) because the commit step did not check it;
+  cfd46c7 fixed it. Landing commits now go through `/root/wt/commit-landing.sh <message-file>`: it refuses
+  unless the log ends with `ci=0`, fills `{UNIT} {FILES} {BUNDLE} {E2E}` in the Verified line from the log,
+  commits on `/root/wt/verify.base`, rebases, runs fmt, check and lint, and only then pushes.
 - 21565b4's message says 135.93 kB; the real initial JS after the wizard was 137.89 kB (its catalogue
   keys load at start-up). 7fbe51e's message corrects it.
 - `.gitignore` is the package's own now (the old monorepo's Python ignore file is gone); still check
