@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p08s14 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P08 slice S14 = P08-14, the Coach e2e. Spec: that row in docs/plan/phases/P08-coach.md; the landed specs in e2e/ (walking-skeleton, onboarding, logging) and their helpers in e2e/support.ts (the fake AI client `fakeAi` and its scripts, the food-database routes, the stray-request list, the hook recorder). Traps and acceptance ids: every row whose Review line names this task.
+Task note (before its code): docs/notes/P08/coach.md.
+
+You own:
+- e2e/coach.spec.ts and additive helpers in e2e/support.ts
+- data-ui hooks the spec needs, added to components only where one is missing (one attribute per line; say which in the report)
+
+Do not touch:
+- other e2e specs, src/** beyond the data-ui attributes above, eslint.config.js, scripts/**, playwright.config.ts (say so instead if a config switch is needed)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- No network outside loopback and the routed hosts (the logging spec's routes abort the rest; reuse them). No real waits: drive time with page.clock where the flow waits. Every scenario passes three times in a row (`--repeat-each=3`), one worker, in the mobile viewport the config sets.
+- Scenarios from the row with the fake AI: a tool script (a food_log call then a text answer) → the answer appears and the fake saw one tool message; a chip send; a failing script → error banner, Details, Retry → the answer without a duplicate question; Reset while a delayed reply is pending → the reply never appears; many short exchanges seeded through the UI or a fake script keep only the newest 200 (as the row says). Hooks: coach.chips, coach.cards, coach.chip.N, coach.card.N, coach.reply, coach.copy, coach.reset, coach.resetDialog(.confirm/.cancel), coach.input, coach.send, coach.attach(.camera/.library), coach.camera, coach.library, coach.preview, coach.error, coach.details, coach.retry, coach.typing, coach.list, coach.message (data-role). Add fake AI scripts for tool calls in the fake's own format (e2e/fake-ai) additively if the fake lacks them.
+
+Tests:
+- after pnpm build: PLATEWISE_E2E_PORT=4193 PLATEWISE_FAKE_AI_PORT=4339 pnpm exec playwright test e2e/coach.spec.ts --workers=1 --repeat-each=3, then the whole e2e folder once with --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

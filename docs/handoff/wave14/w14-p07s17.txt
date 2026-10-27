@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s17 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 slice S17 = P07-17, the Home and Progress e2e. Spec: that row in docs/plan/phases/P07-home-progress-trackers.md; the landed specs in e2e/ (walking-skeleton, onboarding, logging) and their helpers in e2e/support.ts (the fake AI client `fakeAi` and its scripts, the food-database routes, the stray-request list, the hook recorder). Traps and acceptance ids: every row whose Review line names this task.
+Task note (before its code): docs/notes/P07/home-progress.md.
+
+You own:
+- e2e/home-progress.spec.ts and additive helpers in e2e/support.ts
+- data-ui hooks the spec needs, added to components only where one is missing (one attribute per line; say which in the report)
+
+Do not touch:
+- other e2e specs, src/** beyond the data-ui attributes above, eslint.config.js, scripts/**, playwright.config.ts (say so instead if a config switch is needed)
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- No network outside loopback and the routed hosts (the logging spec's routes abort the rest; reuse them). No real waits: drive time with page.clock where the flow waits. Every scenario passes three times in a row (`--repeat-each=3`), one worker, in the mobile viewport the config sets.
+- Scenarios from the row: select a past day in the week bar and log water there; swipe the summary back and forth; choose pillars; turn on fasting, start a fast, try to log food → paused dialog → End fast and log; log a back-dated weight and see the chart; delete from history with confirmation; seed a previous week through the UI and see the recap tiles. Use the data-ui hooks the slices listed (home.sort*, water.row*, fast.row*, home.add.water / startFast / fasting / endFast / cancelFast, home.picker.*, home.allNutrients, the progress cards' hooks).
+
+Tests:
+- after pnpm build: PLATEWISE_E2E_PORT=4192 PLATEWISE_FAKE_AI_PORT=4338 pnpm exec playwright test e2e/home-progress.spec.ts --workers=1 --repeat-each=3, then the whole e2e folder once with --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

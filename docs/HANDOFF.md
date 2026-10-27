@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 12:47 IST (Agent 1, session 3). 151/176 tasks; P00–P06 complete; the app runs on the
-real database. Window reset 10:20 IST (next reset 15:20 IST); wave 13 landed, P09-05 building.
+Updated: 2026-10-27 13:24 IST (Agent 1, session 3). 152/176 tasks; P00–P06 complete; the app runs on the
+real database. Next reset 15:20 IST; wave 14 prompts ready.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -129,24 +129,27 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 13 | P09-17, P09-18 (service worker and update flow; manifest, install prompt, CSP) | 9abd7b0 |
 | Wave 13 | P09-13 (backup and restore; `backupRepo`; GIF/HEIC photos go in as JPEG copies) | d8fcdfc |
 | Wave 13 | P06-20 (logging e2e, Demo 3: nine scenarios, routed food databases, no stray network). P06 done | 73c3788 |
+| Wave 13 | P09-05 (Add-menu editor; `setMenuLayout`, `resetMenuLayout`) | 78db379 |
 
 ## In progress
 
-Landed at 12:32 IST: bcfa20d, 9abd7b0, d8fcdfc (full loop: unit 4776 passed + 2 expected-fail in 333 files, check 6/6,
-bundle 228.56 kB, e2e 6/6).
-P06-20 landed at 12:47 IST as 73c3788 (full loop: unit 4776, e2e 15/15 with the logging spec, bundle 228.56 kB).
-Builder running: P09-05 menu editor (`/root/wt/wt-p09s05`, base 9a958f7), started 12:39 IST at 78 % with nothing else
-building and nearly three hours left (expected about +5 %; the 88 % stop still applies).
-Usage 74 % at 12:14 IST: no new builders this window. Next window (15:20 IST): P09-05 menu editor (prompt ready),
-P09-09 notifier and reminders section, P09-01 hub, P09-03 meal times, P09-14 restore on Welcome, P09-15 Your data
-(mounts Export, Import, Backup and Restore; calls `reminders.stop()` and backup `invalidate()` before Erase
-everything), P09-16 About (reads `useAppUpdate`); the e2e tasks P07-17, P08-14, P09-19; then P10.
-Bundle: 228.34 kB gzip of 250 at 27596b1. Follow-ups from wave 13: the CSP's `http://[::1]:*` is not valid CSP
-(Chromium logs an error each load; kept because the plan names it); manifest shortcuts `#/log/*` open Home until
-L8; no inline theme script is possible under `script-src 'self'`; nothing else may use Cache Storage under the
-`platewise-` prefix; `appVersion` is '0.1.0' until P09-16's build constant; wire restore's `afterRestore` to
-`reminders.refresh()`; a Coach reply running during a restore can land in the restored chat.
-**Progress: 151/176 tasks** (P00–P06 complete, P07 16/17, P08 13/14, P09 11/19, P10 0/14).
+No builders running (13:24 IST, usage about 83 %). Everything built this window is landed; the last full loop
+(78db379): unit 4812 passed + 2 expected-fail in 335 files, check 6/6, bundle 229.03 kB, e2e 15/15.
+
+Next window (after the 15:20 IST reset), wave 14 prompts in `docs/handoff/wave14/` at the branch head:
+- `w14-p09s01` P09-01 Settings hub and load gate (two cards, sub-pages nested under App settings, update dot).
+- `w14-p09s09` P09-09 notifications section and notifier (replaces the engine's `permitted`/`show` stubs in
+  `main.tsx`) + P09-03 meal times editor, both on the Tracking page.
+- `w14-p09s14` P09-14 restore from a file on Welcome (reuses `RestoreSheet`).
+- `w14-p09s15` P09-15 Your data page (mounts Export, Import, Backup, Restore; Erase calls `backup.invalidate()`
+  and `reminders.stop()` first), storage card, persistence nudges.
+- `w14-p09s16` P09-16 About, credits, `src/config/links.ts`, `scripts/notices.ts`, a version build constant.
+- `w14-p07s17` P07-17 Home and Progress e2e; `w14-p08s14` P08-14 Coach e2e.
+Merges to expect: P09-01 and P09-15/16 all touch `registry.ts`; P09-09 and P09-01 both touch the Tracking page's
+registration only; P09-16 and P09-01 share `src/config/links.ts` (P09-16 owns it).
+Then P09-19 settings, data and offline e2e (after P09-14/15), then P10 (hardening and release: parity, ledgers
+with no Review lines left, security, docs). Bundle watch: 229 kB of 250.
+**Progress: 152/176 tasks** (P00–P06 complete, P07 16/17, P08 13/14, P09 12/19, P10 0/14).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
