@@ -7,8 +7,10 @@ import { capture } from './en/capture';
 import { charts } from './en/charts';
 import { common } from './en/common';
 import { display } from './en/display';
+import { fitCheck } from './en/fitCheck';
 import { goals } from './en/goals';
 import { home } from './en/home';
+import { ingredients } from './en/ingredients';
 import { log } from './en/log';
 import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
@@ -43,6 +45,8 @@ export const enPartitions = {
   aiSetup,
   profile,
   review,
+  ingredients,
+  fitCheck,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

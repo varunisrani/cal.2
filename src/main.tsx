@@ -34,11 +34,13 @@ import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
+import { createFitCheckService } from './services/fitCheck';
 import { createRebuildService } from './services/goals/rebuild';
 import { createTargetEditsService } from './services/goals/targetEdits';
 import { createTuneUpRunner } from './services/goals/tuneUp';
 import type { PlanServiceDeps } from './services/goals/planRequest';
 import { createPlanBuilder, storedAiAccess } from './services/goals/planBuilder';
+import { createIngredientIntake } from './services/ingredientIntake';
 import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
@@ -172,6 +174,16 @@ async function start(): Promise<void> {
     savedMeals: createSavedMealsService({ savedMealsRepo: createSavedMealsRepo(db), photoRepo }),
     copyDay: createCopyDayService({ diaryRepo }),
     barcode,
+    ingredientIntake: createIngredientIntake({
+      photos,
+      photoRepo,
+      aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+      fetch: browserFetch,
+    }),
+    fitCheck: createFitCheckService({
+      aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+      fetch: browserFetch,
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

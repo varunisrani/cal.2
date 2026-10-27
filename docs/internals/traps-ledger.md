@@ -122,12 +122,17 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R02.4** With ingredient lines the header is their sum and micronutrients stretch by the gram ratio
   - Test: src/domain/servings/ingredients.test.ts > applyLineChange > makes the header the sum of the lines: 120 + 80 kcal is 200 (R02.4)
   - Test: src/domain/servings/ingredients.test.ts > applyLineChange > scales sodium by 300/400 when a 100 g line leaves a 400 g meal (R02.4)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard > makes the header the sum when a manual part of 100 kcal is added: 398 + 100 (ACC-D13-1, R02.4)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard > stretches sodium by the weight left when a part is removed: 400 mg × 300/400 (R02.4, ACC-D13-2)
 - **R02.5** Header values edited through the unlock are replaced by the next line change (accepted behaviour, tested and hinted)
   - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > opens with the lines' sum as the header (R02.4) and lets the next line change replace values edited through the unlock (R02.5)
   - Test: src/features/log/review/NutritionRows.test.tsx > NutritionRows > says that a change of ingredients adds the values up again, only while unlocked and only with lines (R02.5)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard > lets a part change replace energy typed through the unlock (R02.5)
 - **R02.6** A logged portion cannot be split again; a split survives line edits with its unit first
   - Test: src/domain/servings/recipe.test.ts > canSplit > refuses a re-logged portion, which would divide the portion again (R02.6)
   - Test: src/domain/servings/recipe.test.ts > keepSplit > keeps n and shows the edited portion when a line of a split recipe changes (R02.6)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard: servings in recipe > keeps the 4 servings and the serving unit through a part edit, showing the edited portion (R02.6)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard: servings in recipe > offers no split for a re-logged portion (ACC-D14-2, R02.6), one part or an unknown weight
 - **R02.7** Saved meals have their own ids (D-16.17); often-eaten groups by normalised name and kcal; reorder hidden while searching
   - Test: src/domain/food/reuse.test.ts > oftenEaten (R02.7) > puts "Café latte" and "cafe latte " with 120 kcal together, the latest as template
   - Test: src/domain/food/reuse.test.ts > oftenEaten (R02.7) > keeps the same name with other kcal apart

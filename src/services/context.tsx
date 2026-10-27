@@ -6,10 +6,12 @@ import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
+import type { FitCheckService } from './fitCheck';
 import type { PlanBuilder } from './goals/planBuilder';
 import type { RebuildService } from './goals/rebuild';
 import type { TargetEditsService } from './goals/targetEdits';
 import type { TuneUpRunner } from './goals/tuneUp';
+import type { IngredientIntakeService } from './ingredientIntake';
 import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
@@ -47,6 +49,10 @@ export interface Services {
   readonly copyDay?: CopyDayService;
   /** Barcode scanning, lookup and the label-scan hand-off (P06-14, P06-17); optional likewise. */
   readonly barcode?: BarcodeService;
+  /** Parts of a reviewed meal from a photo or a description (P06-09); optional, as above. */
+  readonly ingredientIntake?: IngredientIntakeService;
+  /** The fit check's AI suggestion (P06-10); optional for the same reason. */
+  readonly fitCheck?: FitCheckService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

@@ -327,9 +327,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D11 · Fit check (what-if) (P1)
 
 - **ACC-D11-1** The fit check shows the day's total with the meal added and how far over or under the goal it is
-  - Review: P06-10
+  - Test: src/features/log/FitCheckSheet.test.tsx > FitCheckSheet: the day with the meal > shows a day at 1,500 of 2,000 plus 700 as +700 and 2,200 / 2,000, 200 over and highlighted (ACC-D11-1)
 - **ACC-D11-2** A failed suggestion offers Retry
-  - Review: P06-10
+  - Test: src/features/log/FitCheckSheet.test.tsx > FitCheckSheet: the suggestion > shows the failure with Retry, which asks again at once (ACC-D11-2)
 
 ### D12 · Edit a logged entry (P1)
 
@@ -343,17 +343,19 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D13 · Ingredient lines added by camera, photo, barcode, text, manual or … (P1)
 
 - **ACC-D13-1** Adding a 100 kcal line raises the meal total by 100
-  - Review: P06-09
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard > makes the header the sum when a manual part of 100 kcal is added: 398 + 100 (ACC-D13-1, R02.4)
 - **ACC-D13-2** Removing a line scales sodium by the remaining weight
   - Test: src/domain/servings/ingredients.test.ts > applyLineChange > scales sodium by 300/400 when a 100 g line leaves a 400 g meal (R02.4)
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard > stretches sodium by the weight left when a part is removed: 400 mg × 300/400 (R02.4, ACC-D13-2)
 
 ### D14 · Split into servings (1–50), hidden for portions that were already … (P1)
 
 - **ACC-D14-1** Splitting a 2 kg pot into 8 offers a 250 g serving
   - Test: src/domain/servings/recipe.test.ts > splitRecipe > splits a 2 kg pot into 8: a 250 g serving first, selected with count 1
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard: servings in recipe > splits the pot into 4: a serving unit first, one serving of 500 g on screen (ACC-D14-1)
 - **ACC-D14-2** A re-logged portion offers no split
   - Test: src/domain/servings/recipe.test.ts > canSplit > refuses a re-logged portion, which would divide the portion again (R02.6)
-  - Review: the review sheet's split button owned by P06-09
+  - Test: src/features/log/review/IngredientsCard.test.tsx > IngredientsCard: servings in recipe > offers no split for a re-logged portion (ACC-D14-2, R02.6), one part or an unknown weight
 
 ### D15 · Combine selected entries into one meal that sums every nutrient … (P1)
 

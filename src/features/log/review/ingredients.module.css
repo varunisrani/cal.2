@@ -1,0 +1,212 @@
+/*
+ * The ingredients card on the review (P06-09): the parts list, the add-ingredient row, the busy
+ * and problem lines, the recipe split and the part editor. Every value comes from tokens.css;
+ * logical properties throughout. A touch target is 44 px: var(--space-8) + var(--space-3).
+ */
+
+.lines {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lines > li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.lineRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    'thumb name amount'
+    'thumb macros macros';
+  align-items: center;
+  column-gap: var(--space-3);
+  row-gap: var(--space-1);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-block: var(--space-3);
+  padding-inline: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.lineRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-control);
+}
+
+.thumb {
+  grid-area: thumb;
+  display: grid;
+  place-items: center;
+  inline-size: calc(var(--space-8) + var(--space-3));
+  block-size: calc(var(--space-8) + var(--space-3));
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text-muted);
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.thumbEmoji {
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.lineName {
+  grid-area: name;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lineAmount {
+  grid-area: amount;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  white-space: nowrap;
+}
+
+.lineMacros {
+  grid-area: macros;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+.empty,
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+/* ---- Adding ---------------------------------------------------------------------------------- */
+
+.addRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+}
+
+.busy {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.spinner {
+  flex: none;
+  inline-size: var(--space-6);
+  block-size: var(--space-6);
+  border: 3px solid var(--line);
+  border-block-start-color: var(--accent);
+  border-radius: 50%;
+  animation: turn calc(var(--motion-slow) * 2) linear infinite;
+}
+
+@keyframes turn {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
+}
+
+.problem {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.problem p {
+  margin: 0;
+}
+
+/* ---- Split ----------------------------------------------------------------------------------- */
+
+.split {
+  display: grid;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+}
+
+.splitRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.splitLabel {
+  font-size: var(--type-body);
+}
+
+/* ---- Editor and describe sheets ------------------------------------------------------------- */
+
+.form {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.describeInput {
+  min-block-size: calc(3lh + 2 * var(--space-3));
+  max-block-size: calc(5lh + 2 * var(--space-3));
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--raised);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+  field-sizing: content;
+  overflow-y: auto;
+  resize: none;
+}
+
+.describeInput::placeholder {
+  color: var(--text-muted);
+}
+
+.describeInput:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+.describeLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}

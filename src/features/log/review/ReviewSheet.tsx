@@ -16,7 +16,8 @@ import {
   type ProductInfo,
   type ServingBasis,
 } from '../../../domain/model';
-import { applyLineChange, lineTotals } from '../../../domain/servings/ingredients';
+import { applyLineChange, lineTotals, stretchFactor } from '../../../domain/servings/ingredients';
+import { keepSplit, SPLIT_MIN } from '../../../domain/servings/recipe';
 import {
   draftAtAmount,
   initialAmount,
@@ -36,8 +37,10 @@ import { ListPicker } from '../../../ui/ListPicker';
 import { Sheet } from '../../../ui/Sheet';
 import { useToast } from '../../../ui/Toast';
 import { useAnalysis } from '../AnalysisOverlay';
+import { FitCheckSheet } from '../FitCheckSheet';
 import logStyles from '../log.module.css';
 import { MEAL_NAME_KEYS } from '../meals';
+import { IngredientsCard } from './IngredientsCard';
 import { MoreNutrition } from './MoreNutrition';
 import { NutritionRows } from './NutritionRows';
 import { PhotoStrip } from './PhotoStrip';
@@ -59,6 +62,8 @@ export interface ReviewWorking {
   /** Values describe the draft's own basis; the shown amount scales them. */
   readonly draft: NutritionDraft;
   readonly shown: ShownAmount;
+  /** The servings a recipe split divides the dish into (P06-09); absent while there is none. */
+  readonly servings?: number;
 }
 
 /** The draft with energy and macros as its lines' sums when it has lines (R02.4). */
@@ -79,31 +84,56 @@ export function workingScale(working: ReviewWorking): number {
   return scaleFor(working.shown.amount, reviewBase(working.draft));
 }
 
+/** The draft with its nutrients and extras multiplied by `factor`. */
+function withNutrientsAt(draft: NutritionDraft, factor: number): NutritionDraft {
+  return {
+    ...draft,
+    nutrients: scaleValues(draft.nutrients, factor),
+    extras: scaleValues(draft.extras, factor),
+  };
+}
+
 /**
  * The copy after its lines change to `lines`, the lines as the sheet shows them. The header
  * becomes their sums and replaces values edited through the unlock (R02.5); nutrients stretch by
- * the lines' weight (R02.4). With a weight, it becomes the new whole, shown in grams. Without
- * one, the sums describe the amount on screen, which becomes the copy's own amount.
+ * the lines' weight (R02.4), or keep the values on screen when the old lines had no weight to
+ * compare with. While a recipe split is active the change is to one portion: the dish is rebuilt
+ * from it and divided into the same servings, the unit kept (`keepSplit`, R02.6). Otherwise, with
+ * a weight, the copy becomes the new whole, shown in grams, and any split ends. Without one, the
+ * sums describe the amount on screen, which becomes the copy's own amount; under a split they are
+ * scaled back to the whole dish instead, so the split stays.
  */
 export function withLines(working: ReviewWorking, lines: readonly IngredientLine[]): ReviewWorking {
-  const next = applyLineChange(working.draft, lines);
-  if (next.basis !== working.draft.basis) {
-    const grams = reviewBase(next);
-    return { draft: next, shown: { unit: GRAMS_UNIT, count: grams, amount: grams } };
-  }
-  const { amount } = working.shown;
   const scale = workingScale(working);
+  const servings = working.servings ?? SPLIT_MIN;
+  const split = servings > SPLIT_MIN;
+  if (split) {
+    const kept = keepSplit(working.draft, lines, scale, servings, working.shown.unit);
+    if (kept) return { draft: kept.draft, shown: kept.shown, servings: kept.servings };
+  }
+
+  const before = lineTotals(working.draft.lines).grams;
+  const after = lineTotals(lines).grams;
+  if (Number.isFinite(after) && after > 0) {
+    const next = applyLineChange(working.draft, lines);
+    const draft = stretchFactor(before, after) === null ? withNutrientsAt(next, scale) : next;
+    const grams = reviewBase(draft);
+    return { draft, shown: { unit: GRAMS_UNIT, count: grams, amount: grams } };
+  }
+
+  const { amount } = working.shown;
+  // Nothing on screen to describe: the sums are taken as they are.
+  if (!(amount > 0)) return { ...working, draft: applyLineChange(working.draft, lines) };
+  if (split) {
+    const whole = lines.map((line) => scaleLine(line, 1 / scale));
+    return { ...working, draft: applyLineChange(working.draft, whole) };
+  }
   const basis: ServingBasis =
     working.draft.basis.kind === 'grams'
       ? { kind: 'grams', grams: amount }
       : { kind: 'servings', count: amount };
   return {
-    draft: {
-      ...next,
-      basis,
-      nutrients: scaleValues(next.nutrients, scale),
-      extras: scaleValues(next.extras, scale),
-    },
+    draft: withNutrientsAt({ ...applyLineChange(working.draft, lines), basis }, scale),
     shown: working.shown,
   };
 }
@@ -412,10 +442,17 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   );
 }
 
+/** The parts the analysis review fills itself: the ingredients card and the fit check. */
+const ANALYSIS_SLOTS: ReviewSlots = {
+  ingredients: (slot) => <IngredientsCard {...slot} />,
+  fitCheck: (slot) => <FitCheckSheet {...slot} />,
+};
+
 /**
  * The review of the app's food analysis: open while the analysis has a draft waiting
  * (`reviewReady`); Log and Cancel hand the draft back to the analysis, which lets it go. A new
- * draft starts a fresh sheet. Mounted once in the tab frame.
+ * draft starts a fresh sheet. Mounted once in the tab frame; it fills the slots it serves
+ * itself (`ANALYSIS_SLOTS`) and takes any others it is given.
  */
 export function AnalysisReview({ slots }: { readonly slots?: ReviewSlots }) {
   const { service, state } = useAnalysis();
@@ -425,5 +462,12 @@ export function AnalysisReview({ slots }: { readonly slots?: ReviewSlots }) {
       console.error('The reviewed draft could not be let go', error);
     });
   };
-  return <ReviewSheet key={state.generation} review={state.draft} onClose={close} slots={slots} />;
+  return (
+    <ReviewSheet
+      key={state.generation}
+      review={state.draft}
+      onClose={close}
+      slots={{ ...ANALYSIS_SLOTS, ...slots }}
+    />
+  );
 }
