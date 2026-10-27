@@ -162,6 +162,11 @@ export interface WriteBackPlan {
   readonly sent: Record<string, SentRecord>;
   /** Ledger ids whose day is before the window: dropped without removing anything. */
   readonly forget: string[];
+  /**
+   * The earliest time, epoch ms, of the records held back because they are dated after `now`
+   * (and not sent as they are already); null when nothing waits.
+   */
+  readonly heldBackUntil: number | null;
 }
 
 export interface WriteBackInput {
@@ -181,7 +186,8 @@ export interface WriteBackInput {
  * stored there, and forgotten when its day is before the window. Imported weigh-ins are never sent
  * back. A record dated after `now` (an entry logged for later today) waits: it is neither sent
  * nor removed nor forgotten, and the first pass after its time sends it, since Health Connect
- * refuses it until then and one refused record fails the whole call.
+ * refuses it until then and one refused record fails the whole call. `heldBackUntil` says when
+ * the first of them can go.
  */
 export function writeBackPlan({
   entries,
@@ -190,7 +196,7 @@ export function writeBackPlan({
   window,
   now,
 }: WriteBackInput): WriteBackPlan {
-  const plan: WriteBackPlan = {
+  const plan: Omit<WriteBackPlan, 'heldBackUntil'> = {
     nutrition: [],
     removeNutrition: [],
     weights: [],
@@ -199,14 +205,20 @@ export function writeBackPlan({
     forget: [],
   };
   const stored = new Set<string>();
+  let heldBackUntil: number | null = null;
+  /** True when a record dated `at` must wait, keeping the earliest such time. */
+  const holdBack = (at: number): boolean => {
+    if (at <= now) return false;
+    if (heldBackUntil === null || at < heldBackUntil) heldBackUntil = at;
+    return true;
+  };
 
   for (const entry of entries) {
     if (!inWindow(entry.dayKey, window)) continue;
     stored.add(entry.id);
-    if (entry.loggedAt > now) continue;
     const record = nutritionRecord(entry);
     const sig = fingerprint(record);
-    if (ledger[entry.id]?.sig === sig) continue;
+    if (ledger[entry.id]?.sig === sig || holdBack(entry.loggedAt)) continue;
     plan.nutrition.push(record);
     plan.sent[entry.id] = { kind: 'nutrition', day: entry.dayKey, sig };
   }
@@ -214,10 +226,9 @@ export function writeBackPlan({
     const day = dayKeyOf(weighIn.at);
     if (isImportedWeighIn(weighIn.id) || !inWindow(day, window)) continue;
     stored.add(weighIn.id);
-    if (weighIn.at > now) continue;
     const record = weightRecord(weighIn);
     const sig = fingerprint(record);
-    if (ledger[weighIn.id]?.sig === sig) continue;
+    if (ledger[weighIn.id]?.sig === sig || holdBack(weighIn.at)) continue;
     plan.weights.push(record);
     plan.sent[weighIn.id] = { kind: 'weight', day, sig };
   }
@@ -227,5 +238,5 @@ export function writeBackPlan({
     else if (record.kind === 'nutrition') plan.removeNutrition.push(id);
     else plan.removeWeights.push(id);
   }
-  return plan;
+  return { ...plan, heldBackUntil };
 }

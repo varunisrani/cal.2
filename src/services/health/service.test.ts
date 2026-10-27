@@ -7,9 +7,11 @@ import type { SettingKey, SettingValue } from '../../data/settingsSchema';
 import type { Clock } from '../../lib/clock';
 import { openTestDb } from '../../test/db';
 import { FACTORY_NOW, makeEntry, makeProfileRow } from '../../test/factories';
+import type { Timers } from '../reminders/engine';
+import { browserTimers } from '../reminders/ports';
 import type { DailyTotals } from './contract';
 import { syncWindow } from './records';
-import { createHealthService } from './service';
+import { createHealthService, HELD_BACK_MARGIN_MS } from './service';
 import { fakeHealthPlugin, type FakeHealthPlugin } from './testing/fakeHealthPlugin';
 import type { HealthWatch } from './watch';
 
@@ -73,12 +75,38 @@ function handWatch() {
   return { watch, fire: () => listener?.() };
 }
 
+/**
+ * The page's timers (faked by the test with Vitest), keeping count of the ones set and neither
+ * run nor cleared, and of every delay asked for.
+ */
+function countedTimers() {
+  const pending = new Set<unknown>();
+  const delays: number[] = [];
+  const timers: Timers = {
+    setTimeout(run, ms) {
+      delays.push(ms);
+      const handle: unknown = browserTimers.setTimeout(() => {
+        pending.delete(handle);
+        run();
+      }, ms);
+      pending.add(handle);
+      return handle;
+    },
+    clearTimeout(handle) {
+      pending.delete(handle);
+      browserTimers.clearTimeout(handle);
+    },
+  };
+  return { timers, delays, pending: () => pending.size };
+}
+
 interface SetupOptions {
   readonly plugin?: FakeHealthPlugin;
   readonly settings?: Partial<{ [K in SettingKey]: SettingValue<K> }>;
+  readonly timers?: Timers;
 }
 
-async function setup({ plugin = fakeHealthPlugin(), settings = {} }: SetupOptions = {}) {
+async function setup({ plugin = fakeHealthPlugin(), settings = {}, timers }: SetupOptions = {}) {
   const { db, bus } = await openTestDb();
   const clock = movableClock();
   const settingsRepo = createSettingsRepo(db, { locale: 'en-US', bus, clock });
@@ -98,6 +126,7 @@ async function setup({ plugin = fakeHealthPlugin(), settings = {} }: SetupOption
     diaryRepo,
     weightRepo,
     clock,
+    ...(timers ? { timers } : {}),
     visibility,
     watch: watch.watch,
   });
@@ -540,5 +569,107 @@ describe('write-back (D-16.89)', () => {
     expect(await service.setWriteBack(false)).toEqual({ kind: 'off' });
     expect(await settingsRepo.get('health.writeBack')).toBe(false);
     expect(plugin.calls).toEqual([]);
+  });
+});
+
+describe('the pass for a held-back record (ACC-M11-5)', () => {
+  /** Fake timers; the service's clock is the test's own, and the fake IndexedDB stays real. */
+  async function heldBackSetup() {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    const counted = countedTimers();
+    const rig = await setup({ settings: { 'health.writeBack': true }, timers: counted.timers });
+    // Like the native plugin, the stand-in refuses a record dated after the phone's clock.
+    rig.plugin.set({ now: rig.clock.now });
+    /** Moves the clock and the timers on together, and waits for the passes they start. */
+    const pass = async (ms: number): Promise<void> => {
+      rig.clock.move(ms);
+      await vi.advanceTimersByTimeAsync(ms);
+      await rig.service.idle();
+    };
+    return { ...rig, ...counted, pass };
+  }
+
+  it('sends an entry logged for later today a second after its time, with nothing else happening', async () => {
+    const { plugin, service, diaryRepo, delays, pending, pass } = await heldBackSetup();
+    await diaryRepo.add(makeEntry({ id: 'lunch', loggedAt: FACTORY_NOW - HOUR }));
+    await diaryRepo.add(makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR }));
+    service.start();
+    await service.idle();
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch']);
+    expect(delays).toEqual([6 * HOUR + HELD_BACK_MARGIN_MS]);
+    expect(pending()).toBe(1);
+
+    await pass(6 * HOUR);
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch']);
+
+    await pass(HELD_BACK_MARGIN_MS);
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch', 'dinner']);
+    expect(service.getSnapshot().failure).toBeNull();
+    // Nothing waits any more: no timer.
+    expect(pending()).toBe(0);
+  });
+
+  it('keeps one timer at most, for the earliest record, cleared by each pass and by stop', async () => {
+    const { plugin, service, diaryRepo, weightRepo, watch, delays, pending, pass } =
+      await heldBackSetup();
+    await diaryRepo.add(makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR }));
+    await diaryRepo.add(makeEntry({ id: 'snack', loggedAt: FACTORY_NOW + 3 * HOUR }));
+    service.start();
+    await service.idle();
+    expect(delays).toEqual([3 * HOUR + HELD_BACK_MARGIN_MS]);
+    expect(pending()).toBe(1);
+
+    // A change runs a pass: the timer is cleared and set again, still one.
+    await weightRepo.addWeighIn({ at: FACTORY_NOW + 2 * HOUR, kg: 63.2 });
+    watch.fire();
+    await service.idle();
+    expect(delays).toHaveLength(2);
+    expect(delays.at(-1)).toBe(2 * HOUR + HELD_BACK_MARGIN_MS);
+    expect(pending()).toBe(1);
+
+    // Its pass sends the weigh-in and sets the next one, for the snack.
+    await pass(2 * HOUR + HELD_BACK_MARGIN_MS);
+    expect(plugin.callsOf('writeWeight')).toHaveLength(1);
+    expect(plugin.nutrition.size).toBe(0);
+    expect(delays.at(-1)).toBe(HOUR);
+    expect(pending()).toBe(1);
+
+    // Stop clears it: the snack's time passes and nothing is sent.
+    service.stop();
+    expect(pending()).toBe(0);
+    await pass(2 * HOUR);
+    expect(plugin.nutrition.size).toBe(0);
+  });
+
+  it('retries a failed pass at the held-back time', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { plugin, service, diaryRepo, pending, pass } = await heldBackSetup();
+    await diaryRepo.add(makeEntry({ id: 'lunch', loggedAt: FACTORY_NOW - HOUR }));
+    await diaryRepo.add(makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + HOUR }));
+    plugin.failNext('writeNutrition', 'rateLimited');
+    service.start();
+    await service.idle();
+    expect(plugin.nutrition.size).toBe(0);
+    expect(service.getSnapshot().failure).toBe('rateLimited');
+    expect(pending()).toBe(1);
+
+    await pass(HOUR + HELD_BACK_MARGIN_MS);
+    expect([...plugin.nutrition.keys()]).toEqual(['lunch', 'dinner']);
+    expect(service.getSnapshot().failure).toBeNull();
+  });
+
+  it('sets no timer while write-back is off, or before the service starts', async () => {
+    const { service, settingsRepo, diaryRepo, pending, delays } = await heldBackSetup();
+    await diaryRepo.add(makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR }));
+
+    // Not started: a sync's pass holds the entry back but sets nothing.
+    await service.sync();
+    expect(delays).toEqual([]);
+
+    await settingsRepo.set('health.writeBack', false);
+    service.start();
+    await service.idle();
+    expect(delays).toEqual([]);
+    expect(pending()).toBe(0);
   });
 });

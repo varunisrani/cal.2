@@ -8,6 +8,24 @@ import { remindersOn, type AskNotifications } from '../wizard';
 const words = onboarding.onboarding.reminders;
 const continueName = onboarding.onboarding.wizard.continue;
 
+/** Inside the Android app: the shell's bridge says so. */
+function inAndroidApp(): void {
+  vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+}
+
+/** A page with no Notification API (the Android app's WebView, some browsers). */
+function withoutNotifications(): void {
+  vi.stubGlobal('Notification', undefined);
+}
+
+/** A page with a Notification API that has not been asked yet. */
+function withNotifications(): void {
+  vi.stubGlobal('Notification', {
+    permission: 'default',
+    requestPermission: async () => 'default',
+  });
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
@@ -90,19 +108,55 @@ describe('Reminders', () => {
   });
 
   it('says reminders are not available in the Android app, where the home screen cannot help (P11)', async () => {
-    vi.stubGlobal('Capacitor', { getPlatform: () => 'android' });
+    inAndroidApp();
+    withoutNotifications();
+    const user = userEvent.setup();
+    const ask = vi.fn<AskNotifications>(async () => 'unsupported');
+    const { latest } = renderWizard({ state: wizardAt('reminders'), ask });
+
+    // Nothing to turn on there: no button, the explanation and the app's own line (ACC-M11-9).
+    expect(screen.queryByRole('button', { name: words.ask })).toBeNull();
+    expect(document.querySelector('[data-ui="wizard.reminders.ask"]')).toBeNull();
+    expect(screen.getByText(words.body)).toBeVisible();
+    expect(screen.getByRole('status')).toHaveTextContent(words.unsupportedAndroid);
+    expect(screen.getByRole('status')).not.toHaveTextContent(/home screen/);
+
+    await user.click(screen.getByRole('button', { name: continueName }));
+    expect(latest()).toMatchObject({ step: 'aiAccess', reminders: null });
+    expect(remindersOn(latest())).toBe(false);
+    expect(ask).not.toHaveBeenCalled();
+  });
+
+  it('keeps the button in the Android app where the page has notifications, and says so if they fail', async () => {
+    inAndroidApp();
+    withNotifications();
     const user = userEvent.setup();
     const { latest } = renderWizard({
       state: wizardAt('reminders'),
       ask: async () => 'unsupported',
     });
 
+    expect(screen.getByRole('status')).toHaveTextContent(words.skip);
     await user.click(screen.getByRole('button', { name: words.ask }));
 
     expect(latest().reminders).toBe('unsupported');
     expect(remindersOn(latest())).toBe(false);
     expect(screen.getByRole('status')).toHaveTextContent(words.unsupportedAndroid);
-    expect(screen.getByRole('status')).not.toHaveTextContent(/home screen/);
+  });
+
+  it('keeps the button on the web, also where the browser has no notifications (ACC-M11-9)', async () => {
+    withoutNotifications();
+    const user = userEvent.setup();
+    const { latest } = renderWizard({
+      state: wizardAt('reminders'),
+      ask: async () => 'unsupported',
+    });
+
+    expect(screen.getByRole('status')).toHaveTextContent(words.skip);
+    await user.click(screen.getByRole('button', { name: words.ask }));
+
+    expect(latest().reminders).toBe('unsupported');
+    expect(screen.getByRole('status')).toHaveTextContent(words.unsupported);
   });
 
   it('skips with Continue without asking', async () => {

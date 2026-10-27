@@ -3,11 +3,12 @@ import { useActivity, useSettings, type ActivityDay } from '../../data/hooks';
 import type { DayKey } from '../../domain/dates/dayKey';
 import { windowEnding } from '../../domain/dates/ranges';
 import { toDisplay, type EnergyDisplayUnit } from '../../domain/units/energy';
-import { formatInt } from '../../i18n/format';
+import { formatDecimal, formatInt } from '../../i18n/format';
 import { t } from '../../i18n/t';
 import { Card } from '../../ui/Card';
 import { BarChart, type BarChartDay } from '../../ui/charts/BarChart';
 import { Segmented } from '../../ui/Segmented';
+import { distanceIn, distanceText, distanceUnitOf } from '../home/distance';
 import nutritionStyles from './nutrition.module.css';
 import styles from './progress.module.css';
 
@@ -16,9 +17,12 @@ type ActivitySpan = 'week' | 'month';
 
 const SPAN_DAYS: Readonly<Record<ActivitySpan, number>> = { week: 7, month: 30 };
 
-const SETTINGS = ['units.energy'] as const;
+const SETTINGS = ['units.energy', 'units.height'] as const;
 
-/** The days with a value above 0, as bars, and their whole mean (null without one). */
+/**
+ * The days with a value above 0, as bars, and their mean (null without one). The mean is rounded
+ * only where it is written, so a distance keeps its decimal.
+ */
 function series(
   days: readonly ActivityDay[],
   valueOf: (day: ActivityDay) => number | null,
@@ -28,7 +32,7 @@ function series(
     return value !== null && value > 0 ? [{ day: day.day, value }] : [];
   });
   const sum = bars.reduce((total, bar) => total + bar.value, 0);
-  return { bars, average: bars.length === 0 ? null : Math.round(sum / bars.length) };
+  return { bars, average: bars.length === 0 ? null : sum / bars.length };
 }
 
 /** An amount already in the display unit, with its unit word. */
@@ -43,10 +47,19 @@ interface HistoryProps {
   readonly average: string | null;
   readonly bars: readonly BarChartDay[];
   readonly formatValue: (value: number) => string;
+  readonly formatTick?: (value: number) => string;
   readonly 'data-ui': string;
 }
 
-function History({ title, chartLabel, average, bars, formatValue, 'data-ui': ui }: HistoryProps) {
+function History({
+  title,
+  chartLabel,
+  average,
+  bars,
+  formatValue,
+  formatTick,
+  'data-ui': ui,
+}: HistoryProps) {
   const headingId = useId();
   return (
     <section aria-labelledby={headingId} className={styles.metricCard} data-ui={ui}>
@@ -62,6 +75,7 @@ function History({ title, chartLabel, average, bars, formatValue, 'data-ui': ui 
           label={chartLabel}
           valueLabel={title}
           formatValue={formatValue}
+          formatTick={formatTick}
           data-ui={`${ui}.chart`}
         />
       )}
@@ -76,8 +90,10 @@ export interface ActivityHistoryCardProps {
 /**
  * Progress's activity card (P11-04), on the Android app while Health Connect is connected: the
  * last 7 or 30 days, today included, with a bar per day for steps and for active calories and the
- * mean of the days that have one. Its span is its own: Health Connect data is kept for 30 days,
- * so the range bar above does not apply.
+ * mean of the days that have one; then, only when the days shown have any, the total calories
+ * burned and the distance the same way (shown, never counted: D-16.89), the distance in km beside
+ * centimetres and miles beside feet and inches, as Home writes it. Its span is its own: Health
+ * Connect data is kept for 30 days, so the range bar above does not apply.
  */
 export function ActivityHistoryCard({ today }: ActivityHistoryCardProps) {
   const headingId = useId();
@@ -87,6 +103,9 @@ export function ActivityHistoryCard({ today }: ActivityHistoryCardProps) {
   const settings = useSettings(SETTINGS);
   const days = read.status === 'ready' ? read.value : null;
   const unit = settings.status === 'ready' ? settings.value['units.energy'] : 'kcal';
+  const distanceUnit = distanceUnitOf(
+    settings.status === 'ready' ? settings.value['units.height'] : 'cm',
+  );
 
   const steps = useMemo(() => series(days ?? [], (day) => day.steps), [days]);
   const active = useMemo(
@@ -96,11 +115,23 @@ export function ActivityHistoryCard({ today }: ActivityHistoryCardProps) {
       ),
     [days, unit],
   );
+  const total = useMemo(
+    () =>
+      series(days ?? [], (day) => (day.totalKcal === null ? null : toDisplay(day.totalKcal, unit))),
+    [days, unit],
+  );
+  const distance = useMemo(
+    () =>
+      series(days ?? [], (day) =>
+        day.distanceM === null ? null : distanceIn(day.distanceM, distanceUnit),
+      ),
+    [days, distanceUnit],
+  );
 
   let body;
   if (days === null || settings.status !== 'ready') {
     body = null;
-  } else if (steps.bars.length === 0 && active.bars.length === 0) {
+  } else if ([steps, active, total, distance].every((figure) => figure.bars.length === 0)) {
     body = (
       <p className={styles.empty} data-ui="progress.activity.empty">
         {t('health.progress.empty')}
@@ -133,6 +164,31 @@ export function ActivityHistoryCard({ today }: ActivityHistoryCardProps) {
           formatValue={(value) => displayedEnergy(value, unit)}
           data-ui="progress.activity.active"
         />
+        {total.average === null ? null : (
+          <History
+            title={t('health.progress.total')}
+            chartLabel={t('health.progress.totalChart')}
+            average={t('health.progress.average', {
+              amount: displayedEnergy(total.average, unit),
+            })}
+            bars={total.bars}
+            formatValue={(value) => displayedEnergy(value, unit)}
+            data-ui="progress.activity.total"
+          />
+        )}
+        {distance.average === null ? null : (
+          <History
+            title={t('health.progress.distance')}
+            chartLabel={t('health.progress.distanceChart')}
+            average={t('health.progress.average', {
+              amount: distanceText(distance.average, distanceUnit),
+            })}
+            bars={distance.bars}
+            formatValue={(value) => distanceText(value, distanceUnit)}
+            formatTick={(value) => formatDecimal(value, 1)}
+            data-ui="progress.activity.distance"
+          />
+        )}
       </>
     );
   }

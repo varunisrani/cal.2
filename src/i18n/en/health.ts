@@ -104,6 +104,12 @@ export const health = {
       stepsChart: 'Steps chart',
       active: 'Active calories',
       activeChart: 'Active calories chart',
+      // Shown, never counted (D-16.89).
+      total: 'Total calories',
+      totalChart: 'Total calories chart',
+      // In km beside centimetres, miles beside feet and inches, as on Home.
+      distance: 'Distance',
+      distanceChart: 'Distance chart',
       average: 'Avg {amount}',
       empty: 'No Health Connect data for these days.',
     },

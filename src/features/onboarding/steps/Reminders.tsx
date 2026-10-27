@@ -29,6 +29,14 @@ function answerKey(answer: ReminderAnswer): TKey {
     : ANSWER_KEYS[answer];
 }
 
+/**
+ * Inside the Android app, whose page has no notifications (probed as the route asks), there is
+ * nothing to turn on: the step offers no button. A browser keeps it, with or without them.
+ */
+function appWithoutNotifications(): boolean {
+  return isHealthAvailable() && typeof Notification === 'undefined';
+}
+
 export interface RemindersProps extends StepProps {
   /** Asks the browser for notification permission. */
   readonly requestNotifications: AskNotifications;
@@ -37,7 +45,8 @@ export interface RemindersProps extends StepProps {
 /**
  * Step 9 (D-16.15): what meal reminders do and a button that asks the browser for permission.
  * Only a grant turns reminders on; a block says how to allow them later, and Continue skips the
- * step. Nothing is scheduled here.
+ * step. Nothing is scheduled here. Inside the Android app without notifications the button is
+ * left out and the line says reminders are not available there yet.
  */
 export function Reminders({ state, dispatch, requestNotifications }: RemindersProps) {
   const ask = async (): Promise<void> => {
@@ -52,8 +61,13 @@ export function Reminders({ state, dispatch, requestNotifications }: RemindersPr
   };
 
   const answer = state.reminders;
+  const unavailable = appWithoutNotifications();
   // Asking again only helps when the last prompt was closed without a choice.
-  const canAsk = answer === null || answer === 'dismissed';
+  const canAsk = !unavailable && (answer === null || answer === 'dismissed');
+  let line: TKey;
+  if (answer !== null) line = answerKey(answer);
+  else if (unavailable) line = 'onboarding.reminders.unsupportedAndroid';
+  else line = 'onboarding.reminders.skip';
   return (
     <>
       <StepHeader
@@ -69,7 +83,7 @@ export function Reminders({ state, dispatch, requestNotifications }: RemindersPr
         </Button>
       ) : null}
       <p className={styles.note} role="status" data-ui="wizard.reminders.status">
-        {answer === null ? t('onboarding.reminders.skip') : t(answerKey(answer))}
+        {t(line)}
       </p>
     </>
   );

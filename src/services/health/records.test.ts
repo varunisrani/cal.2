@@ -261,10 +261,39 @@ describe('writeBackPlan', () => {
       removeWeights: [],
       sent: {},
       forget: [],
+      heldBackUntil: FACTORY_NOW + 2 * HOUR,
     });
 
     const due = writeBackPlan({ ...input, now: FACTORY_NOW + 2 * HOUR });
     expect(due.nutrition).toEqual([nutritionRecord(moved)]);
     expect(due.weights).toEqual([weightRecord(weighIn)]);
+  });
+
+  it('says when the first held-back record can go, and nothing when none waits', () => {
+    const dinner = makeEntry({ id: 'dinner', loggedAt: FACTORY_NOW + 6 * HOUR });
+    const snack = makeEntry({ id: 'snack', loggedAt: FACTORY_NOW + 3 * HOUR });
+    const evening = makeWeighIn({ id: 'evening', at: FACTORY_NOW + 2 * HOUR });
+    const exactlyNow = makeEntry({ id: 'now', loggedAt: FACTORY_NOW });
+    const input = { ledger: {}, window: WINDOW, now: FACTORY_NOW };
+
+    const plan = writeBackPlan({ ...input, entries: [dinner, snack, exactlyNow], weighIns: [] });
+    expect(plan.heldBackUntil).toBe(FACTORY_NOW + 3 * HOUR);
+    expect(writeBackPlan({ ...input, entries: [dinner], weighIns: [evening] }).heldBackUntil).toBe(
+      FACTORY_NOW + 2 * HOUR,
+    );
+    // A record exactly at now goes; nothing waits.
+    expect(
+      writeBackPlan({ ...input, entries: [exactlyNow], weighIns: [] }).heldBackUntil,
+    ).toBeNull();
+    // A future record already sent as it is (the clock went back) does not wait either.
+    const sentAsItIs = {
+      snack: { kind: 'nutrition', day: TODAY, sig: fingerprint(nutritionRecord(snack)) },
+    } as const;
+    expect(
+      writeBackPlan({ ...input, ledger: sentAsItIs, entries: [snack], weighIns: [] }).heldBackUntil,
+    ).toBeNull();
+    // Imported weigh-ins never go, so they never wait.
+    const imported = makeWeighIn({ id: 'health-hc-9', at: FACTORY_NOW + HOUR });
+    expect(writeBackPlan({ ...input, entries: [], weighIns: [imported] }).heldBackUntil).toBeNull();
   });
 });

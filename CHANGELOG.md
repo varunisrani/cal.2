@@ -62,7 +62,8 @@ what each setting does: [docs/user/android.md](docs/user/android.md).
 - Home: an Activity card for the day on show, with steps, active calories and workouts, then the
   total calories burned and the distance (km or miles), or a note that Health Connect has nothing
   for that day.
-- Progress: steps and active calories for the last 7 or 30 days, as charts with their averages.
+- Progress: steps, active calories, total calories burned and distance for the last 7 or 30 days,
+  as charts with their averages.
 
 ### Known issues
 

@@ -2,12 +2,17 @@ import { useId } from 'react';
 import type { ActivityDay, ActivitySession } from '../../data/hooks';
 import type { HeightDisplayUnit } from '../../domain/units/body';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
-import { formatNumber } from '../../domain/units/numbers';
 import { formatDuration } from '../../i18n/format';
-import { currentLocale } from '../../i18n/locale';
 import { t, type TKey } from '../../i18n/t';
 import { Card } from '../../ui/Card';
 import styles from './activity.module.css';
+import {
+  distanceAmount,
+  distanceIn,
+  distanceText,
+  distanceUnitOf,
+  type DistanceUnit,
+} from './distance';
 import { energyText } from './energy';
 
 /** Words for the common workout types; anything else is a "Workout". */
@@ -39,15 +44,6 @@ function workoutLine(session: ActivitySession, unit: EnergyDisplayUnit): string 
       });
 }
 
-type DistanceUnit = 'km' | 'mi';
-
-const METRES_PER: Readonly<Record<DistanceUnit, number>> = { km: 1_000, mi: 1_609.344 };
-
-/** Distances follow the person's length unit (`units.height`): km beside cm, miles beside ft/in. */
-export function distanceUnitOf(lengthUnit: HeightDisplayUnit): DistanceUnit {
-  return lengthUnit === 'ftIn' ? 'mi' : 'km';
-}
-
 /** The day's distance, to one decimal in the locale's marks: "7.1 km", "4.4 mi". */
 function DistanceFigure({
   metres,
@@ -56,13 +52,13 @@ function DistanceFigure({
   readonly metres: number;
   readonly unit: DistanceUnit;
 }) {
-  const amount = formatNumber(metres / METRES_PER[unit], currentLocale(), 1, 1);
+  const amount = distanceIn(metres, unit);
   return (
     <li
-      aria-label={t(`health.home.distanceName.${unit}`, { amount })}
+      aria-label={t(`health.home.distanceName.${unit}`, { amount: distanceAmount(amount) })}
       data-ui="home.activity.distance"
     >
-      {t(`health.home.distance.${unit}`, { amount })}
+      {distanceText(amount, unit)}
     </li>
   );
 }

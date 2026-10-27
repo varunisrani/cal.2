@@ -2,7 +2,8 @@ import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import type { ActivityDay, ActivitySession } from '../../data/hooks';
 import { health } from '../../i18n/en/health';
-import { ActivityCard, distanceUnitOf, workoutName } from './ActivityCard';
+import { ActivityCard, workoutName } from './ActivityCard';
+import { distanceUnitOf } from './distance';
 
 const words = health.health.home;
 const START = Date.parse('2026-10-26T07:00:00-04:00');

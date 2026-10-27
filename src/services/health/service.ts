@@ -6,7 +6,9 @@
 // person asks. It reads the daily totals and the workouts into the activity copy, imports other
 // apps' weigh-ins when that is on, and then sends what changed when write-back is on. Write-back
 // also runs after every change to the stored entries or weigh-ins (the watch). One sync and one
-// send run at a time; a change during a send runs one more after it.
+// send run at a time; a change during a send runs one more after it. A pass that holds back a
+// record dated after now sets one timer for just after the first such time, so the record goes
+// then even if nothing else happens; every pass clears it first, and `stop` clears it.
 //
 // Nothing here ever throws into the app: a failed call is logged, its code is kept in the status
 // for the Settings page, and the diary goes on as before. Only the actions the person starts on
@@ -19,7 +21,7 @@ import type { WeightRepo } from '../../data/repos/weightRepo';
 import type { Settings } from '../../data/settingsSchema';
 import { dayKeyOf } from '../../domain/dates/dayKey';
 import type { Clock } from '../../lib/clock';
-import type { PageVisibility } from '../reminders/engine';
+import type { PageVisibility, Timers } from '../reminders/engine';
 import {
   HEALTH_READ_KINDS,
   HEALTH_WRITE_KINDS,
@@ -79,7 +81,7 @@ export type WriteBackOutcome =
 export interface HealthService {
   /** Reads the status and the last sync time, syncs once, and listens for the page and changes. */
   start(): void;
-  /** Stops listening (the page's visibility and the watch). */
+  /** Stops listening (the page's visibility and the watch) and clears the held-back timer. */
   stop(): void;
   subscribe(onChange: () => void): () => void;
   getSnapshot(): HealthStatus;
@@ -109,10 +111,27 @@ export interface HealthServiceDeps {
   readonly diaryRepo: Pick<DiaryRepo, 'between'>;
   readonly weightRepo: Pick<WeightRepo, 'between'>;
   readonly clock: Clock;
+  /** For the one pass set for a held-back record's time; the page's own unless a test passes some. */
+  readonly timers?: Timers;
   readonly visibility: PageVisibility;
   /** Calls back after every change to the stored entries or weigh-ins (`storedHealthWatch`). */
   readonly watch: HealthWatch;
 }
+
+/**
+ * How long after a held-back record's time its pass runs: the plugin compares with the phone's
+ * own clock, and a timer can fire a moment early.
+ */
+export const HELD_BACK_MARGIN_MS = 1_000;
+
+/**
+ * The page's timers, looked up at each call (so a test's fake timers apply). Not the reminders'
+ * `browserTimers`: importing that module would pull the database library into a chunk of its own.
+ */
+const PAGE_TIMERS: Timers = {
+  setTimeout: (run, ms) => setTimeout(run, ms),
+  clearTimeout: (handle) => clearTimeout(handle as ReturnType<typeof setTimeout>),
+};
 
 const INITIAL: HealthStatus = {
   availability: null,
@@ -144,6 +163,7 @@ function sentFor(plan: WriteBackPlan, records: readonly { clientId: string }[]):
 
 export function createHealthService(deps: HealthServiceDeps): HealthService {
   const { plugin, healthRepo, settingsRepo, clock } = deps;
+  const timers = deps.timers ?? PAGE_TIMERS;
   let status = INITIAL;
   const listeners = new Set<() => void>();
   let syncRun: Promise<SyncOutcome> | null = null;
@@ -152,6 +172,10 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
   const background = new Set<Promise<unknown>>();
   let sendAgain = false;
   let stops: Array<() => void> = [];
+  // Between `start` and `stop`; the held-back timer is set only then.
+  let started = false;
+  // The pass set for the first held-back record; one at most.
+  let heldBackTimer: { handle: unknown } | null = null;
 
   function patch(changes: Partial<HealthStatus>): void {
     status = { ...status, ...changes };
@@ -225,8 +249,31 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
     return syncRun;
   }
 
+  function clearHeldBackTimer(): void {
+    if (heldBackTimer === null) return;
+    timers.clearTimeout(heldBackTimer.handle);
+    heldBackTimer = null;
+  }
+
+  /** Sets the one more pass for just after `at` (the first held-back record's time). */
+  function setHeldBackTimer(at: number): void {
+    clearHeldBackTimer();
+    if (!started) return;
+    const slot: { handle: unknown } = { handle: null };
+    slot.handle = timers.setTimeout(
+      () => {
+        if (heldBackTimer !== slot) return;
+        heldBackTimer = null;
+        track(send());
+      },
+      Math.max(0, at + HELD_BACK_MARGIN_MS - clock.now()),
+    );
+    heldBackTimer = slot;
+  }
+
   /** One write-back pass: sends what changed in the window, removes what was deleted. */
   async function sendOnce(): Promise<void> {
+    clearHeldBackTimer();
     const stored = await settings();
     if (!stored['health.connected'] || !stored['health.writeBack']) return;
     const granted = status.granted ?? cleanGrants(await plugin.grantedPermissions());
@@ -237,8 +284,10 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
       deps.weightRepo.between(window.first, window.last),
       healthRepo.sent(),
     ]);
-    // Records dated after `now` wait for a later pass (start, return, change or sync).
+    // Records dated after `now` wait for a later pass: a trigger (start, return, change or sync)
+    // or, at the latest, the timer set here.
     const plan = writeBackPlan({ entries, weighIns, ledger, window, now });
+    if (plan.heldBackUntil !== null) setHeldBackTimer(plan.heldBackUntil);
     if (plan.forget.length > 0) await healthRepo.updateSent({ remove: plan.forget });
 
     // Each call's ledger change is stored only after the call succeeded, so a failure is retried.
@@ -307,6 +356,7 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
 
   return {
     start() {
+      started = true;
       track(
         healthRepo.lastSyncAt().then(
           (lastSyncAt) => {
@@ -329,6 +379,8 @@ export function createHealthService(deps: HealthServiceDeps): HealthService {
     },
 
     stop() {
+      started = false;
+      clearHeldBackTimer();
       for (const stop of stops) stop();
       stops = [];
     },
