@@ -52,7 +52,7 @@ describe('ProfilePage', () => {
     await openPage({ profile: PLANNED });
 
     expect(screen.getByText(words.planNote)).toBeVisible();
-    expect(rowValue('sex')).toBe(`${words.rows.sex}${wizard.sex.female}`);
+    expect(rowValue('sex')).toBe(`${words.rows.sex} ${wizard.sex.female}`);
     expect(rowValue('birthday')).toContain('Mar 14, 1994 (32 years old)');
     expect(rowValue('height')).toContain('168 cm');
     expect(rowValue('weight')).toContain('64.0 kg');

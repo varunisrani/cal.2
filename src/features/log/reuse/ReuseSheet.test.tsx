@@ -357,6 +357,17 @@ describe('ReuseSheet: Saved', () => {
     expect(document.querySelectorAll('[data-ui="reuse.saved.row"]')).toHaveLength(2);
   });
 
+  it('gives each saved meal one Remove control: the visible one, no keyboard twin (P10-07)', async () => {
+    await openSheet('saved', savedMeals('Porridge', 'Toast'));
+    await untilShown('[data-ui="reuse.list"]');
+
+    const removeName = (name: string) => words.row.remove.replace('{name}', name);
+    for (const name of ['Porridge', 'Toast']) {
+      const removes = screen.getAllByRole('button', { name: removeName(name) });
+      expect(removes.map((button) => button.getAttribute('data-ui'))).toEqual(['reuse.row.remove']);
+    }
+  });
+
   it('says how to save one when there are none', async () => {
     await openSheet('saved');
     await untilShown('[data-ui="reuse.empty"]');

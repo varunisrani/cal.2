@@ -221,7 +221,8 @@ function SavedFoods({ meals, query, energyUnit, onPick }: SavedFoodsProps) {
           <li key={meal.id}>
             <SwipeRow
               onRequestDelete={() => void remove(meal)}
-              deleteLabel={t('reuse.row.remove', { name })}
+              // The row's own Remove button serves the keyboard: no second one of the same name.
+              keyboardDelete={false}
               data-ui="reuse.saved.row"
             >
               <ReuseRow

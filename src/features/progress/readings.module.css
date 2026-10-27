@@ -31,22 +31,41 @@
 /* ---- History link ---------------------------------------------------------------------------- */
 
 .link {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  inline-size: 100%;
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
   border-radius: var(--radius-card);
   background: var(--card);
   box-shadow: var(--shadow-card);
   color: var(--text);
+}
+
+/* The button holds the name only; its hit area and focus ring cover the whole card. */
+.linkButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
 }
 
-.link:focus-visible {
+.linkButton::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-card);
+  content: '';
+}
+
+.linkButton:focus-visible {
+  outline: none;
+}
+
+.linkButton:focus-visible::after {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

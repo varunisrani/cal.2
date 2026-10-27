@@ -125,7 +125,9 @@ function useLongPress(onLongPress: () => void) {
  * edge, or its delete button, asks before anything is deleted. On Home a tap also opens the
  * entry's editor, a long-press (or its Select button, shown on keyboard focus) starts picking rows
  * for a combine, and a heart adds a copy to the saved meals or takes it out. While rows are picked
- * a tap picks this one or lets it go, and the row can be neither swiped nor deleted.
+ * a tap picks this one or lets it go, and the row can be neither swiped nor deleted. The tap
+ * target is a button holding the name only, so its name ("Edit Toast") holds all the text it
+ * shows (WCAG 2.5.3); its hit area and focus ring cover the tile and both lines.
  */
 export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
   const { diary } = useServices();
@@ -175,7 +177,14 @@ export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
     }
   };
 
-  const content: ReactNode = (
+  const nameText = (
+    <span id={nameId} className={styles.entryName}>
+      {entry.name}
+    </span>
+  );
+
+  /** The tile and the two lines, with `name` (the name, or the button holding it) first. */
+  const content = (name: ReactNode): ReactNode => (
     <>
       <span className={styles.tile} aria-hidden="true">
         {entry.emoji ? (
@@ -186,9 +195,7 @@ export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
       </span>
       <span className={styles.entryText}>
         <span className={styles.entryLine}>
-          <span id={nameId} className={styles.entryName}>
-            {entry.name}
-          </span>
+          {name}
           <time className={styles.entryTime} dateTime={new Date(entry.loggedAt).toISOString()}>
             {formatTime(entry.loggedAt)}
           </time>
@@ -224,25 +231,29 @@ export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
             className={sel.row}
             data-picked={picked || undefined}
           >
-            <button
-              ref={pressRef}
-              type="button"
-              className={sel.press}
-              aria-label={tx(picking ? 'home.entry.select' : 'home.entry.open', {
-                name: entry.name,
-              })}
-              aria-pressed={picking ? picked : undefined}
-              onClick={press}
-              {...longPress.handlers}
-              data-ui="entry.row.open"
-            >
+            <div className={sel.press} data-picking={picking || undefined}>
               {picking ? (
                 <span className={sel.check} aria-hidden="true" data-picked={picked || undefined}>
                   {picked ? <Icon name="check" size={16} /> : null}
                 </span>
               ) : null}
-              {content}
-            </button>
+              {content(
+                <button
+                  ref={pressRef}
+                  type="button"
+                  className={sel.pressTarget}
+                  aria-label={tx(picking ? 'home.entry.select' : 'home.entry.open', {
+                    name: entry.name,
+                  })}
+                  aria-pressed={picking ? picked : undefined}
+                  onClick={press}
+                  {...longPress.handlers}
+                  data-ui="entry.row.open"
+                >
+                  {nameText}
+                </button>,
+              )}
+            </div>
             {!picking && saved !== null && toggleSaved ? (
               <IconButton
                 label={tx('home.entry.save', { name: entry.name })}
@@ -266,7 +277,7 @@ export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
           </div>
         ) : (
           <div role="group" aria-labelledby={`${nameId} ${energyId}`} className={styles.entry}>
-            {content}
+            {content(nameText)}
           </div>
         )}
       </SwipeRow>

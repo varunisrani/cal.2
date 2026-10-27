@@ -20,7 +20,10 @@ function setupUser() {
 }
 
 /** A Home-like row of the given width (jsdom lays nothing out, so the width is stubbed). */
-function renderRow(width = 400, props: { deleteLabel?: string; disabled?: boolean } = {}) {
+function renderRow(
+  width = 400,
+  props: { deleteLabel?: string; disabled?: boolean; keyboardDelete?: boolean } = {},
+) {
   const onRequestDelete = vi.fn();
   const onOpen = vi.fn();
   render(
@@ -221,6 +224,18 @@ describe('SwipeRow', () => {
     // The row's own tap still works.
     fireEvent.click(screen.getByRole('button', { name: 'Toast' }));
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves its keyboard delete button out where the content shows its own, and still swipes (P10-07)', () => {
+    const { slide, onRequestDelete } = renderRow(400, {
+      deleteLabel: 'Delete Toast',
+      keyboardDelete: false,
+    });
+    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(['Toast']);
+    expect(document.querySelector('[data-ui="entry-row.delete"]')).toBeNull();
+
+    press(slide, 350, [300, 100])();
+    expect(onRequestDelete).toHaveBeenCalledTimes(1);
   });
 
   it('names the delete button from the catalogue by default', () => {

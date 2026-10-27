@@ -1,6 +1,66 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices, type Project } from '@playwright/test';
 
 const port = Number(process.env.PLATEWISE_E2E_PORT ?? 4173);
+
+/**
+ * The other two engines (P10-11), for a smoke subset only and off unless asked for:
+ * `PLATEWISE_E2E_ENGINES=webkit,firefox` (or `all`). Only Chromium is installed in the build
+ * container; elsewhere run `pnpm exec playwright install webkit firefox` first. Without the
+ * variable `pnpm e2e` runs mobile Chromium alone, as before.
+ */
+const engines = new Set(
+  (process.env.PLATEWISE_E2E_ENGINES ?? '')
+    .split(',')
+    .map((name) => name.trim().toLowerCase())
+    .filter(Boolean),
+);
+const wants = (engine: 'webkit' | 'firefox'): boolean => engines.has('all') || engines.has(engine);
+
+/** A test title as a pattern that matches it literally. */
+const titled = (title: string): RegExp => new RegExp(title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+/**
+ * The smoke subset, by test title: the shell loads (e2e/smoke.spec.ts); Settings and every
+ * Settings page, and a food entered by hand and a weight logged with the keyboard
+ * (e2e/a11y.spec.ts, which takes its device from the project).
+ */
+const SMOKE = [
+  titled('loads the product name on a phone viewport'),
+  titled('the Settings list and every Settings page'),
+  titled('logs a food entered by hand and a weight, with a focus ring at every stop'),
+];
+
+/**
+ * Smoke tests in specs that set the Pixel 7 profile themselves (the mobile flag included), which
+ * Playwright's Firefox cannot emulate: WebKit only. The walking skeleton (a manual log, Demo 1)
+ * and Log weight on Progress (e2e/home-progress.spec.ts).
+ */
+const SMOKE_MOBILE_ONLY = [
+  titled('a manual entry lands under its meal, moves the gauge, survives a reload'),
+  titled("logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's"),
+];
+
+const otherEngines: Project[] = [
+  ...(wants('webkit')
+    ? [
+        {
+          name: 'mobile-webkit',
+          use: { ...devices['iPhone 13'] },
+          grep: [...SMOKE, ...SMOKE_MOBILE_ONLY],
+        },
+      ]
+    : []),
+  ...(wants('firefox')
+    ? [
+        {
+          name: 'phone-firefox',
+          // A phone-sized window: Playwright's Firefox has no mobile emulation.
+          use: { browserName: 'firefox' as const, viewport: devices['Pixel 7'].viewport },
+          grep: SMOKE,
+        },
+      ]
+    : []),
+];
 
 export default defineConfig({
   testDir: './e2e',
@@ -29,6 +89,7 @@ export default defineConfig({
       grep: /@offline/,
       use: { ...devices['Pixel 7'], serviceWorkers: 'allow' },
     },
+    ...otherEngines,
   ],
   webServer: {
     command: `pnpm exec vite preview --host 127.0.0.1 --port ${port} --strictPort`,

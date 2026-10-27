@@ -18,34 +18,52 @@
   background: var(--accent-soft);
 }
 
-/* The tap target: the tile and the text, as the plain row lays them out. */
+/* The tap target's area: the tile and the text, as the plain row lays them out. */
 .press {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: var(--space-3);
   min-inline-size: 0;
   padding: var(--space-3);
+  /* A held press is ours: no text selection and no system callout. */
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* While picking, the mark comes first. */
+.press[data-picking] {
+  grid-template-columns: auto auto minmax(0, 1fr);
+}
+
+/* The button holds the name; its hit area and focus ring cover the whole of .press. */
+.pressTarget {
+  min-inline-size: 0;
+  padding: 0;
   border: 0;
   background: none;
   color: inherit;
   font: inherit;
   text-align: start;
   cursor: pointer;
-  /* A held press is ours: no text selection, no system callout and no tap flash. */
-  user-select: none;
   -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
 }
 
-.press:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
+.pressTarget::after {
+  position: absolute;
+  inset: 0;
+  content: '';
 }
 
-/* While picking, the mark comes first. */
-.press[aria-pressed] {
-  grid-template-columns: auto auto minmax(0, 1fr);
+.pressTarget:focus-visible {
+  outline: none;
+}
+
+.pressTarget:focus-visible::after {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
 }
 
 .check {

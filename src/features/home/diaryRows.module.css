@@ -95,28 +95,35 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--space-3);
-  inline-size: 100%;
   padding: var(--space-3);
+}
+
+/*
+ * The row's button holds its title only (the title's own look comes from .title); its hit area
+ * covers the whole card, the progress bar under it too.
+ */
+.openButton {
+  min-inline-size: 0;
+  padding: 0;
   border: 0;
   background: none;
   color: inherit;
-  font: inherit;
+  font-family: inherit;
   text-align: start;
   cursor: pointer;
 }
 
-/* The button's hit area covers the progress bar under it too. */
-.open::after {
+.openButton::after {
   position: absolute;
   inset: 0;
   content: '';
 }
 
-.open:focus-visible {
+.openButton:focus-visible {
   outline: none;
 }
 
-.open:focus-visible::after {
+.openButton:focus-visible::after {
   border-radius: inherit;
   outline: 2px solid var(--focus);
   outline-offset: -2px;

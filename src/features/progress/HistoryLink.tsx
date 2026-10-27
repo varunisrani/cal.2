@@ -31,35 +31,35 @@ export interface HistoryLinkProps {
 /**
  * The card under the metric card that opens its history: a list mark, the history's name, how
  * many readings it holds with a word on what the list is for, and a chevron. Nothing while the
- * metric has no readings at all.
+ * metric has no readings at all. The button holds only the name, so its name is all the text it
+ * shows (WCAG 2.5.3); its hit area and focus ring cover the whole card, and the count line
+ * describes it.
  */
 export function HistoryLink({ metric, count, onOpen }: HistoryLinkProps) {
   const id = useId();
   if (count <= 0) return null;
   const words = HISTORY_WORDS[metric];
-  const titleId = `${id}-title`;
   const detailId = `${id}-detail`;
   return (
-    <button
-      type="button"
-      className={styles.link}
-      aria-labelledby={titleId}
-      aria-describedby={detailId}
-      data-ui="progress.history"
-      onClick={onOpen}
-    >
+    <div className={styles.link}>
       <span className={styles.linkIcon} aria-hidden="true">
         <Icon name="text" size={18} />
       </span>
       <span className={styles.linkText}>
-        <span id={titleId} className={styles.linkTitle}>
-          {t(words.title)}
-        </span>
+        <button
+          type="button"
+          className={styles.linkButton}
+          aria-describedby={detailId}
+          data-ui="progress.history"
+          onClick={onOpen}
+        >
+          <span className={styles.linkTitle}>{t(words.title)}</span>
+        </button>
         <span id={detailId} className={styles.linkDetail}>
           {t(words.count, { count })}
         </span>
       </span>
       <Icon name="chevronRight" size={18} className={styles.chevron} />
-    </button>
+    </div>
   );
 }

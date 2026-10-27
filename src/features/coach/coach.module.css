@@ -346,6 +346,12 @@
   border-color: var(--accent);
 }
 
+/* The field draws no ring of its own: the capsule around it shows the keyboard focus. */
+.capsule:has(.field:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 .preview {
   position: relative;
   justify-self: start;

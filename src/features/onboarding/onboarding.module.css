@@ -173,6 +173,11 @@
   font-weight: var(--weight-medium);
 }
 
+/* On the accent wash of a checked card the light accents fall under 4.5:1 for this small text. */
+.choiceChecked .choiceExtra {
+  color: var(--text);
+}
+
 .choiceMark {
   display: grid;
   flex: none;

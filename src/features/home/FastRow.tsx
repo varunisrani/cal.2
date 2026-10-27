@@ -4,6 +4,7 @@ import { fastDuration } from '../../domain/trackers/fasting';
 import { formatDuration, formatTime } from '../../i18n/format';
 import type { Clock } from '../../lib/clock';
 import { useServices } from '../../services/context';
+import { cx } from '../../ui/classes';
 import { Dialog } from '../../ui/Dialog';
 import { Icon } from '../../ui/icons';
 import { ProgressBar } from '../../ui/ProgressBar';
@@ -62,9 +63,11 @@ function useEverySecond(clock: Clock): number {
  * A fast in the diary (05 §3.3.3). Running: an hourglass tile, "Fasting now" with its start time,
  * the time so far (redrawn every second while visible) and the goal, and a thin bar of the time so
  * far over the goal, full at most. Finished: its length, its start and end times and its goal.
- * Tapping either opens the fast editor. A finished fast also slides toward the leading edge (or
- * uses its delete button) to be deleted after a confirmation; a running one is ended or cancelled
- * from its editor or the + menu instead. Shown whether or not fasting is tracked (R05.9).
+ * Tapping either opens the fast editor: its button holds only the row's title, so its name is all
+ * the text it shows (WCAG 2.5.3), and its hit area and focus ring cover the whole card. A finished
+ * fast also slides toward the leading edge (or uses its delete button) to be deleted after a
+ * confirmation; a running one is ended or cancelled from its editor or the + menu instead. Shown
+ * whether or not fasting is tracked (R05.9).
  */
 export function FastRow({ fast, onOpen }: FastRowProps) {
   return fast.end === null ? (
@@ -85,20 +88,20 @@ function RunningFast({ fast, onOpen }: FastRowProps) {
 
   return (
     <div className={styles.fast} data-ui="fast.row" data-running="">
-      <button
-        type="button"
-        className={styles.open}
-        aria-labelledby={`${id}-title ${id}-elapsed`}
-        aria-describedby={`${id}-started ${id}-goal`}
-        onClick={() => onOpen(fast)}
-      >
+      <div className={styles.open}>
         <span className={styles.tile} aria-hidden="true">
           <Icon name="hourglass" size={22} />
         </span>
         <span className={styles.text}>
-          <span id={`${id}-title`} className={styles.title}>
-            {tx('home.fast.running')}
-          </span>
+          <button
+            type="button"
+            className={cx(styles.openButton, styles.title)}
+            aria-labelledby={`${id}-title ${id}-elapsed`}
+            aria-describedby={`${id}-started ${id}-goal`}
+            onClick={() => onOpen(fast)}
+          >
+            <span id={`${id}-title`}>{tx('home.fast.running')}</span>
+          </button>
           <span id={`${id}-started`} className={styles.detail}>
             {tx('home.fast.started', { time: formatTime(fast.start) })}
           </span>
@@ -112,7 +115,7 @@ function RunningFast({ fast, onOpen }: FastRowProps) {
           </span>
         </span>
         <Icon name="chevronRight" size={18} className={styles.chevron} />
-      </button>
+      </div>
       <div className={styles.bar}>
         <ProgressBar
           value={elapsedMs}
@@ -157,20 +160,20 @@ function FinishedFast({ fast, end, onOpen }: FinishedFastProps) {
         data-ui="fast.row"
       >
         <div className={styles.fast}>
-          <button
-            type="button"
-            className={styles.open}
-            aria-labelledby={`${id}-title`}
-            aria-describedby={`${id}-times ${id}-goal`}
-            onClick={() => onOpen(fast)}
-          >
+          <div className={styles.open}>
             <span className={styles.tile} aria-hidden="true">
               <Icon name="hourglass" size={22} />
             </span>
             <span className={styles.text}>
-              <span id={`${id}-title`} className={styles.title}>
+              <button
+                id={`${id}-title`}
+                type="button"
+                className={cx(styles.openButton, styles.title)}
+                aria-describedby={`${id}-times ${id}-goal`}
+                onClick={() => onOpen(fast)}
+              >
                 {tx('home.fast.done', { length })}
-              </span>
+              </button>
               <span id={`${id}-times`} className={styles.detail}>
                 {tx('home.fast.times', { start: formatTime(fast.start), end: formatTime(end) })}
               </span>
@@ -179,7 +182,7 @@ function FinishedFast({ fast, end, onOpen }: FinishedFastProps) {
               {tx('home.fast.goal', { length: lengthText(fast.goalMin * MS_PER_MINUTE) })}
             </span>
             <Icon name="chevronRight" size={18} className={styles.chevron} />
-          </button>
+          </div>
         </div>
       </SwipeRow>
       <Dialog

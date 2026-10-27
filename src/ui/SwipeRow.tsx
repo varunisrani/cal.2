@@ -48,6 +48,12 @@ export interface SwipeRowProps {
   readonly deleteLabel?: string;
   /** No swipe and no delete button, e.g. while rows are being picked for a combine. */
   readonly disabled?: boolean;
+  /**
+   * False where the content already shows its own delete control: the keyboard and screen readers
+   * reach that one, and a second button with the same name would only repeat it (P10-07). The
+   * swipe stays. Default true.
+   */
+  readonly keyboardDelete?: boolean;
   /** Extra class for the outer box, e.g. the rounded corners of a first or last row. */
   readonly className?: string;
   /** Hook for the row; the delete button gets `<hook>.delete`. */
@@ -57,14 +63,15 @@ export interface SwipeRowProps {
 /**
  * A diary row that slides toward the leading edge to reveal a delete strip. The slide stops at
  * 72 % of the row's width; letting go past the threshold calls `onRequestDelete` and the row
- * slides back. For the keyboard, a delete button follows the row's content; while it has the
- * focus the row slides aside to show it.
+ * slides back. For the keyboard, a delete button follows the row's content (unless the content
+ * has its own); while it has the focus the row slides aside to show it.
  */
 export function SwipeRow({
   children,
   onRequestDelete,
   deleteLabel,
   disabled = false,
+  keyboardDelete = true,
   className,
   'data-ui': dataUi,
 }: SwipeRowProps) {
@@ -178,7 +185,7 @@ export function SwipeRow({
       >
         {children}
       </div>
-      {disabled ? null : (
+      {disabled || !keyboardDelete ? null : (
         <button
           type="button"
           className={styles.swipeDelete}

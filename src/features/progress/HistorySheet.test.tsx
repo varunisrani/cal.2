@@ -69,7 +69,9 @@ describe('HistoryLink', () => {
     const weight = screen.getByRole('button', { name: words.history.weight.title });
     expect(weight).toHaveAccessibleDescription('3 weigh-ins. See them all or remove one.');
     // Right after the metric's card.
-    expect(document.querySelector('[data-ui="progress.weight"]')?.nextElementSibling).toBe(weight);
+    expect(
+      document.querySelector('[data-ui="progress.weight"]')?.nextElementSibling,
+    ).toContainElement(weight);
 
     await user.click(screen.getByRole('radio', { name: words.metric.bodyFat }));
 

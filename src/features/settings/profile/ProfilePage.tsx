@@ -70,7 +70,9 @@ function Row({ field, value, onOpen }: RowProps) {
         data-ui={`profile.${field}`}
         onClick={() => onOpen(field)}
       >
-        <span className={styles.rowLabel}>{name}</span>
+        {/* The space keeps the two words apart in the row's text, as in its name (WCAG 2.5.3);
+            a flex row draws no gap for it. */}
+        <span className={styles.rowLabel}>{name}</span>{' '}
         <span className={styles.rowValue}>{value}</span>
         <Icon name="chevronRight" size={18} className={styles.chevron} />
       </button>

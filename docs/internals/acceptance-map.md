@@ -1076,7 +1076,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-L6-1** The page's CSP allows only our own scripts
   - Test: src/app/InstallPrompt.test.tsx > index.html > carries the CSP with exactly these directives, before anything loads (ACC-L6-1)
 - **ACC-L6-2** The built app contacts no host outside the providers and food databases
-  - Review: P10-08
+  - Test: e2e/hosts.spec.ts > the hosts the built app contacts (ACC-L6-2) > only its own origin, the AI provider and the food databases, across every screen
 
 ### L7 · Every open tab sees every saved change (P1)
 
@@ -1086,7 +1086,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L9 · Accessible names on every control (P1)
 
 - **ACC-L9-1** Automated accessibility checks find no serious problems on the main screens
-  - Review: P10-07
+  - Test: e2e/a11y.spec.ts > accessibility checks on the main screens, in both themes (ACC-L9-1) > the wizard, each step from Welcome to Plan ready
+  - Test: e2e/a11y.spec.ts > accessibility checks on the main screens, in both themes (ACC-L9-1) > the + menu, the manual sheet, a food review, then Home with food, water and a fast
+  - Test: e2e/a11y.spec.ts > accessibility checks on the main screens, in both themes (ACC-L9-1) > Progress with two weigh-ins, the Log weight sheet and the history
+  - Test: e2e/a11y.spec.ts > accessibility checks on the main screens, in both themes (ACC-L9-1) > the Coach, empty and with an answer in Markdown
+  - Test: e2e/a11y.spec.ts > accessibility checks on the main screens, in both themes (ACC-L9-1) > the Settings list and every Settings page
 - **ACC-L9-2** The gauge's value is readable by a screen reader
   - Test: src/ui/Gauge.test.tsx > Gauge > reads the visible value and status to a screen reader (ACC-L9-2)
 
