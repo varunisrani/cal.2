@@ -1,0 +1,17 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p11s5 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P11 polish (no new task id), three small items from docs/notes/P11/follow-ups.md and the HANDOFF. Spec: docs/plan/phases/P11-android-and-health-connect.md; docs/notes/P11/*.md; src/services/health/**; src/features/progress/ActivityHistoryCard.tsx; src/features/onboarding/steps/Reminders.tsx; src/features/home/ActivityCard.tsx (for the existing total-burn and distance formatting to reuse).
+Task note (before its text): docs/notes/P11/polish.md.
+
+1. Progress's activity card shows only steps and active calories. Add the period's total calories burned and distance (mean per day with data, like the existing rows), each only when the period has any, reusing the Home card's formatting (energy unit; km beside cm, miles beside feet and inches). Tests.
+2. Inside the Android app (isHealthAvailable()) where notifications are unsupported, the onboarding Reminders step still offers "Turn on reminders"; hide that button there (the step keeps its explanation and lets the person continue). Tests for the app and for the web (unchanged).
+3. A write-back record held back because its time is later than now goes at the next pass (start, return to the front, a change, a sync). Add a timer in the health service: after a pass that held something back, schedule one more pass at the earliest held-back time (plus a second), cleared on the next pass and on stop; one timer at most; use the service's clock and an injectable timer so tests use fake timers. Tests.
+
+You own: those components and the health service files, their tests, src/i18n/en/*.ts lines if a string is needed, the task note.
+Do not touch: docs/** except the note (the lead updates the user page and CHANGELOG), android/**, package.json, pnpm-lock.yaml, e2e/**.
+
+Tests: the files you touch and their folders with --maxWorkers=1; then lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref --strict`, `pnpm build`, `pnpm check:bundle` (report the size). No full `pnpm test`, no e2e.
+
+Final report as the rules file says (tests as file > describe > test name, and the acceptance rows they belong under: ACC-M11-3 for Progress, ACC-M11-9 for the reminders step, ACC-M11-5 for the timer). Leave everything uncommitted.
