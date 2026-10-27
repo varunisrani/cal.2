@@ -10,6 +10,9 @@
 // that was cancelled or overtaken never opens: it clears what it may have stored under its own
 // generation and lets its photos go. Photos are only ever released through `releaseIfUnused`, so
 // a photo that the capture record, a newer draft or a logged entry still names is kept.
+//
+// A food picked from a reuse list (P06-12) reaches the review the same way, without the AI:
+// `openForReview` takes over like a start, stores the draft under a new generation and shows it.
 
 import type { ProviderId } from '../ai/catalog/providers';
 import type { AiDeps } from '../ai/client';
@@ -23,7 +26,7 @@ import type { DraftsRepo } from '../data/repos/draftsRepo';
 import type { PhotoRepo } from '../data/repos/photoRepo';
 import type { SecretsRepo } from '../data/repos/secretsRepo';
 import type { SettingsRepo } from '../data/repos/settingsRepo';
-import type { AnalysisDraft, NutritionDraft } from '../domain/model';
+import type { AnalysisDraft, EntrySource, NutritionDraft } from '../domain/model';
 import { systemClock, type Clock } from '../lib/clock';
 import { ok, type Result } from '../lib/result';
 
@@ -87,6 +90,14 @@ export type AnalysisState =
   /** A stored draft waiting for review (P06-06 opens it). */
   | { readonly phase: 'reviewReady'; readonly draft: AnalysisDraft; readonly generation: number };
 
+/** Where a food handed straight to the review came from (a reuse list, P06-12). */
+export interface ReviewOrigin {
+  /** Photos the food already names: reused, never copied. */
+  readonly photoIds: readonly string[];
+  /** Kept on the entry the review logs. */
+  readonly source: EntrySource;
+}
+
 export interface AnalysisService {
   getSnapshot(): AnalysisState;
   subscribe(onChange: () => void): () => void;
@@ -107,6 +118,15 @@ export interface AnalysisService {
   closeReview(): Promise<void>;
   /** At app start: a stored draft opens the review, unless an analysis started meanwhile. */
   restore(): Promise<void>;
+  /**
+   * Opens the review for a food that needs no analysis (a reuse pick, P06-12): takes over like
+   * `start` (a running analysis stops, a draft waiting for review is dropped), stores the draft
+   * so a reload opens it again (D-16.46) and shows it as `reviewReady`; it is never logged here.
+   * Resolves true once the review is ready, false when a newer start or pick took over; rejects
+   * when the draft cannot be stored. Optional only until every stand-in carries it;
+   * `createAnalysisService` always provides it.
+   */
+  openForReview?(draft: NutritionDraft, origin: ReviewOrigin): Promise<boolean>;
 }
 
 export interface AnalysisDeps {
@@ -369,6 +389,45 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
     }
   }
 
+  /**
+   * Takes the attempt on screen (running, or its failure) off for good, as a newer start does;
+   * resolves once a finished one has cleaned up after itself.
+   */
+  function overtake(previous: Attempt | null): Promise<void> {
+    if (!previous) return Promise.resolve();
+    retire(previous, false);
+    // A finished one (a failure on screen) has no run left to clean up after it.
+    return previous.finished ? cleanUp(previous) : Promise.resolve();
+  }
+
+  async function openDraft(food: NutritionDraft, origin: ReviewOrigin): Promise<boolean> {
+    starts += 1;
+    const mine = starts;
+    const before = overtake(current);
+    // Nothing to wait for on screen: the draft is written at once.
+    if (state.phase !== 'idle') show(IDLE);
+    try {
+      const begun = await draftsRepo.begin();
+      await release(begun.previousPhotoIds);
+      if (starts !== mine) return false;
+      const draft: AnalysisDraft = {
+        draft: food,
+        photoIds: [...origin.photoIds],
+        source: origin.source,
+        createdAt: clock.now(),
+        fromSavedLabel: false,
+      };
+      // Stale when a newer start or pick (here or in another tab) began meanwhile: it owns the
+      // record, and its begin drops this draft when it lands after this write.
+      const saved = await draftsRepo.saveResult(begun.generation, draft);
+      if (saved !== 'saved' || starts !== mine) return false;
+      show({ phase: 'reviewReady', draft, generation: begun.generation });
+      return true;
+    } finally {
+      await before;
+    }
+  }
+
   function startRequest(asked: AnalysisRequest): Promise<void> {
     const request = requestFor(asked);
     starts += 1;
@@ -384,12 +443,7 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
       done: Promise.resolve(),
     };
     current = attempt;
-    let before: Promise<void> = Promise.resolve();
-    if (previous) {
-      retire(previous, false);
-      // A finished one (a failure on screen) has no run left to clean up after it.
-      if (previous.finished) before = cleanUp(previous);
-    }
+    const before = overtake(previous);
     show({ phase: 'analysing', kind: request.kind, photoIds: attempt.photoIds });
     attempt.done = Promise.all([run(attempt), before]).then(() => undefined);
     return attempt.done;
@@ -433,5 +487,7 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
       if (!stored || starts !== startsBefore || state.phase !== 'idle') return;
       show({ phase: 'reviewReady', draft: stored.draft, generation: stored.generation });
     },
+
+    openForReview: openDraft,
   };
 }

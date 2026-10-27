@@ -7,8 +7,10 @@ import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
 import { AddMenu } from '../log/AddMenu';
 import { CaptureSheet, type CapturePicker, type CaptureRequest } from '../log/capture/CaptureSheet';
+import { CopyDaySheet } from '../log/CopyDaySheet';
 import { DescribeSheet } from '../log/DescribeSheet';
 import { ManualSheet } from '../log/ManualSheet';
+import { ReuseSheet } from '../log/reuse/ReuseSheet';
 import { DaySummary } from './DaySummary';
 import { Diary } from './Diary';
 import styles from './home.module.css';
@@ -20,6 +22,12 @@ export const MANUAL_SHEET = 'manual';
 export const CAPTURE_SHEET = 'capture';
 /** The typed meal sheet's place on the sheet stack. */
 export const DESCRIBE_SHEET = 'describe';
+/** The reuse lists' places on the sheet stack (P06-12). */
+export const RECENT_SHEET = 'recent';
+export const OFTEN_SHEET = 'often';
+export const SAVED_SHEET = 'saved';
+/** The copy-a-day sheet's place on the sheet stack (P06-13). */
+export const COPY_DAY_SHEET = 'copyDay';
 
 const SETTINGS = ['units.energy', 'meals.times', 'goals.nutrients', 'menu.layout'] as const;
 
@@ -48,6 +56,10 @@ export function HomePage() {
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
   const describe = useSheet(DESCRIBE_SHEET);
+  const recent = useSheet(RECENT_SHEET);
+  const often = useSheet(OFTEN_SHEET);
+  const saved = useSheet(SAVED_SHEET);
+  const copyDay = useSheet(COPY_DAY_SHEET);
   // What the capture sheet's "Add photo" opens; a sheet brought back after a reload uses the library.
   const [picker, setPicker] = useState<CapturePicker>('library');
 
@@ -81,12 +93,20 @@ export function HomePage() {
       case 'manual':
         manual.show();
         return;
-      case 'barcode':
       case 'recent':
+        recent.show();
+        return;
       case 'often':
+        often.show();
+        return;
       case 'saved':
+        saved.show();
+        return;
       case 'copyDay':
-        // Their sheets are not built yet; the add menu leaves them off (METHODS_NOT_BUILT_YET).
+        copyDay.show();
+        return;
+      case 'barcode':
+        // Its sheet is not built yet; the add menu leaves it off (METHODS_NOT_BUILT_YET).
         return;
     }
   };
@@ -164,6 +184,10 @@ export function HomePage() {
         onClose={capture.close}
       />
       <DescribeSheet open={describe.open} onClose={describe.close} />
+      <ReuseSheet list="recent" open={recent.open} onClose={recent.close} />
+      <ReuseSheet list="often" open={often.open} onClose={often.close} />
+      <ReuseSheet list="saved" open={saved.open} onClose={saved.close} />
+      <CopyDaySheet open={copyDay.open} onClose={copyDay.close} targetDay={dayKey} />
     </section>
   );
 }

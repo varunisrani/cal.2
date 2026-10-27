@@ -3,6 +3,7 @@ import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
 import type { CaptureDraftService } from './captureDrafts';
+import type { CopyDayService } from './copyDay';
 import type { DiaryService } from './diary';
 import type { PlanBuilder } from './goals/planBuilder';
 import type { RebuildService } from './goals/rebuild';
@@ -11,6 +12,7 @@ import type { TuneUpRunner } from './goals/tuneUp';
 import type { OnboardingService } from './onboarding';
 import type { PhotoService } from './photos';
 import type { ProfileEditsService } from './profileEdits';
+import type { SavedMealsService } from './savedMeals';
 
 /** What screens act through (they never reach the repositories): built once by `main.tsx`. */
 export interface Services {
@@ -38,6 +40,10 @@ export interface Services {
   readonly profileEdits?: ProfileEditsService;
   /** The Goals page's writes: targets, locks, its switches, nutrient goals (P05-11, P05-12). */
   readonly targetEdits?: TargetEditsService;
+  /** Removes and reorders saved meals (P06-12); optional for the same reason. */
+  readonly savedMeals?: SavedMealsService;
+  /** Copies a day's entries onto another day (P06-13); optional for the same reason. */
+  readonly copyDay?: CopyDayService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

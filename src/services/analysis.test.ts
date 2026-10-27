@@ -20,9 +20,14 @@ import { fixedClock } from '../lib/clock';
 import { withIdSequence } from '../lib/ids';
 import { storableBlob } from '../test/blobs';
 import { openTestDb } from '../test/db';
-import { FACTORY_NOW, makeEntry } from '../test/factories';
+import { FACTORY_NOW, makeDraft, makeEntry } from '../test/factories';
 import { advanceAsync } from '../test/time';
-import { createAnalysisService, type AnalysisService, type AnalysisState } from './analysis';
+import {
+  createAnalysisService,
+  type AnalysisService,
+  type AnalysisState,
+  type ReviewOrigin,
+} from './analysis';
 
 const GEMINI = 'https://generativelanguage.googleapis.com/';
 const GEMINI_KEY = 'gm-test-key-5521';
@@ -660,5 +665,158 @@ describe('restore after a reload (D-16.46)', () => {
 
     expect(phaseOf(after.service)).toBe('idle');
     expect(await repos.draftsRepo.load()).toBeNull();
+  });
+});
+
+describe('openForReview: a reuse pick goes to the review (P06-12)', () => {
+  const TOAST = makeDraft({ name: 'Toast', kcal: 250, basis: { kind: 'grams', grams: 60 } });
+
+  function openForReview(service: AnalysisService, origin: ReviewOrigin) {
+    if (!service.openForReview) throw new Error('The service has no openForReview');
+    return service.openForReview(TOAST, origin);
+  }
+
+  /** Photos an entry in the diary names, as a reuse pick finds them. */
+  async function loggedPhotos(setup: Repos, ...sizes: number[]): Promise<string[]> {
+    const photoIds = await storePhotos(setup.photoRepo, ...sizes);
+    await createDiaryRepo(setup.db).add(makeEntry({ photoIds }));
+    return photoIds;
+  }
+
+  it('stores the draft with the photos and source it is given, and shows it with no overlay or request', async () => {
+    const setup = await setUp();
+    const photoIds = await loggedPhotos(setup, 1_000);
+
+    expect(await openForReview(setup.service, { photoIds, source: 'barcode' })).toBe(true);
+
+    const review = reviewOf(setup.service);
+    expect(review.draft).toEqual({
+      draft: TOAST,
+      photoIds,
+      source: 'barcode',
+      createdAt: FACTORY_NOW,
+      fromSavedLabel: false,
+    });
+    expect(await setup.draftsRepo.load()).toEqual({
+      generation: review.generation,
+      draft: review.draft,
+    });
+    expect(setup.appState.getSnapshot().analysisOverlay).toBe(false);
+    expect(setup.fake.requests).toEqual([]);
+  });
+
+  it('opens again after a reload (D-16.46)', async () => {
+    const repos = await openRepos();
+    const before = connect(repos, fakeFetch());
+    await openForReview(before.service, { photoIds: [], source: 'manual' });
+    const stored = reviewOf(before.service);
+
+    const after = connect(repos, fakeFetch());
+    await after.service.restore();
+
+    expect(reviewOf(after.service)).toEqual(stored);
+  });
+
+  it("keeps the entry's photos when the review is cancelled: they are shared, not copied", async () => {
+    const setup = await setUp();
+    const photoIds = await loggedPhotos(setup, 1_000, 2_000);
+    await openForReview(setup.service, { photoIds, source: 'photo' });
+
+    await setup.service.closeReview();
+
+    expect(phaseOf(setup.service)).toBe('idle');
+    expect(await setup.draftsRepo.load()).toBeNull();
+    expect(await storedPhotos(setup.photoRepo, photoIds)).toEqual(photoIds);
+  });
+
+  it('drops a draft waiting for review, letting go of the photos only it named', async () => {
+    const setup = await setUp();
+    const analysed = await captured(setup, 3_000);
+    setup.fake.on(GEMINI, answer(SOUP));
+    await setup.service.start('photo', { photoIds: analysed, note: '', progressive: false });
+    const photoIds = await loggedPhotos(setup, 1_000);
+
+    expect(await openForReview(setup.service, { photoIds, source: 'photo' })).toBe(true);
+
+    expect(reviewOf(setup.service).draft.draft.name).toBe('Toast');
+    expect(await storedPhotos(setup.photoRepo, analysed)).toEqual([]);
+    expect(await storedPhotos(setup.photoRepo, photoIds)).toEqual(photoIds);
+  });
+
+  it('stops an analysis that is running, whose late result never shows', async () => {
+    const fake = fakeFetch().on(GEMINI, answer(SOUP));
+    const held = holding(fake, 1, true);
+    const setup = connect(await openRepos(), fake, { fetch: held.fetch });
+    const started = setup.service.start('text', { text: 'Lentil soup' });
+    await until(() => held.calls() === 1);
+
+    expect(await openForReview(setup.service, { photoIds: [], source: 'text' })).toBe(true);
+    expect(setup.appState.getSnapshot().analysisOverlay).toBe(false);
+    held.open();
+    await started;
+
+    expect(reviewOf(setup.service).draft.draft.name).toBe('Toast');
+    expect((await setup.draftsRepo.load())?.draft.draft.name).toBe('Toast');
+  });
+
+  it('closes a failure on screen and opens the pick', async () => {
+    const setup = await setUp({ withKey: false });
+    await setup.service.start('text', { text: 'Lentil soup' });
+    expect(phaseOf(setup.service)).toBe('failed');
+
+    expect(await openForReview(setup.service, { photoIds: [], source: 'manual' })).toBe(true);
+    expect(reviewOf(setup.service).draft.source).toBe('manual');
+  });
+
+  it('yields to an analysis started while it writes', async () => {
+    const setup = await setUp();
+    setup.fake.on(GEMINI, answer(BAKE));
+
+    const picking = openForReview(setup.service, { photoIds: [], source: 'manual' });
+    const started = setup.service.start('text', { text: 'Vegetable bake' });
+
+    expect(await picking).toBe(false);
+    await started;
+    expect(reviewOf(setup.service).draft.draft.name).toBe('Vegetable bake');
+    expect((await setup.draftsRepo.load())?.draft.draft.name).toBe('Vegetable bake');
+  });
+
+  it('never shows the pick over an analysis started just after its draft was written', async () => {
+    let startNow = (): void => undefined;
+    const setup = await setUp({
+      draftsRepo: (real) => ({
+        ...real,
+        saveResult: (generation, draft) => {
+          const saving = real.saveResult(generation, draft);
+          startNow();
+          return saving;
+        },
+      }),
+    });
+    setup.fake.on(GEMINI, answer(BAKE));
+    let started: Promise<void> = Promise.resolve();
+    startNow = () => {
+      startNow = () => undefined;
+      started = setup.service.start('text', { text: 'Vegetable bake' });
+    };
+
+    expect(await openForReview(setup.service, { photoIds: [], source: 'manual' })).toBe(false);
+    expect(phaseOf(setup.service)).not.toBe('reviewReady');
+    await started;
+    expect(reviewOf(setup.service).draft.draft.name).toBe('Vegetable bake');
+  });
+
+  it('rejects when the draft cannot be stored, leaving no review', async () => {
+    const setup = await setUp({
+      draftsRepo: (real) => ({
+        ...real,
+        saveResult: () => Promise.reject(new Error('disk full')),
+      }),
+    });
+
+    await expect(openForReview(setup.service, { photoIds: [], source: 'manual' })).rejects.toThrow(
+      'disk full',
+    );
+    expect(phaseOf(setup.service)).toBe('idle');
   });
 });

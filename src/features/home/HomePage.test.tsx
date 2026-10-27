@@ -8,9 +8,20 @@ import { menu } from '../../i18n/en/menu';
 import type { AnalysisService, AnalysisState } from '../../services/analysis';
 import type { CaptureDraft, CaptureDraftService } from '../../services/captureDrafts';
 import { ServicesProvider, type Services } from '../../services/context';
+import { createCopyDayService } from '../../services/copyDay';
 import type { PhotoService } from '../../services/photos';
 import { FACTORY_NOW, makeEntry, makeProfile } from '../../test/factories';
-import { CAPTURE_SHEET, DESCRIBE_SHEET, HomePage, MANUAL_SHEET } from './HomePage';
+import { reuse } from '../../i18n/en/reuse';
+import {
+  CAPTURE_SHEET,
+  COPY_DAY_SHEET,
+  DESCRIBE_SHEET,
+  HomePage,
+  MANUAL_SHEET,
+  OFTEN_SHEET,
+  RECENT_SHEET,
+  SAVED_SHEET,
+} from './HomePage';
 import {
   closeHarnesses,
   openHarness,
@@ -117,6 +128,7 @@ describe('HomePage', () => {
     expect(groups.map((item) => item.textContent)).toEqual([
       menuWords.group.snapScan,
       menuWords.group.describe,
+      menuWords.group.reuse,
     ]);
     fireEvent.click(screen.getByRole('menuitem', { name: menuWords.group.describe }));
     const manualRow = screen.getByRole('menuitem', { name: menuWords.method.manual });
@@ -334,6 +346,51 @@ describe('HomePage: the add menu opens its sheets (P06-01)', () => {
     });
     await untilGone('[data-ui="capture"]');
     expect(h.router.current().sheets).toEqual([]);
+  });
+
+  it.each([
+    [menuWords.method.recent, reuse.reuse.title.recent, RECENT_SHEET, 'reuse.recent'],
+    [menuWords.method.often, reuse.reuse.title.often, OFTEN_SHEET, 'reuse.often'],
+    [menuWords.method.saved, reuse.reuse.title.saved, SAVED_SHEET, 'reuse.saved'],
+    [menuWords.method.copyDay, reuse.reuse.copyDay.title, COPY_DAY_SHEET, 'copyDay'],
+  ])('opens %s from the Reuse group (P06-12, P06-13)', async (method, title, sheet, hook) => {
+    const { h } = await openHome();
+    chooseFromMenu('reuse', method);
+    await untilShown(`[data-ui="${hook}"]`);
+
+    expect(screen.getByRole('dialog', { name: title })).toBeVisible();
+    expect(h.router.current().sheets).toEqual([sheet]);
+  });
+
+  it('copies a day onto the day Home shows, and the copies appear in the diary (ACC-D18-1)', async () => {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile());
+    const yesterdayLunch = Date.parse('2026-10-25T13:00:00-04:00');
+    await h.repos.diaryRepo.add(
+      makeEntry({ name: 'Lentil soup', meal: 'lunch', loggedAt: yesterdayLunch }),
+    );
+    const services: Services = {
+      ...h.services,
+      copyDay: createCopyDayService({ diaryRepo: h.repos.diaryRepo, clock: h.clock }),
+    };
+    h.mount(
+      <ServicesProvider services={services}>
+        <HomePage />
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.add"]');
+    chooseFromMenu('reuse', menuWords.method.copyDay);
+    await untilShown('[data-ui="copyDay.all"]');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Copy 1 food' }));
+    await untilShown('[data-ui="home.meal.lunch"]');
+
+    const lunch = document.querySelector<HTMLElement>('[data-ui="home.meal.lunch"]');
+    expect(lunch && within(lunch).getByText('Lentil soup')).toBeTruthy();
+    expect(await h.repos.diaryRepo.byDay('2026-10-25')).toHaveLength(1);
+    expect(await h.repos.diaryRepo.byDay('2026-10-26')).toEqual([
+      expect.objectContaining({ name: 'Lentil soup', meal: 'lunch' }),
+    ]);
   });
 
   it('draws the stored layout', async () => {

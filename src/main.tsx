@@ -28,6 +28,7 @@ import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
 import { createCaptureDraftService } from './services/captureDrafts';
+import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
 import { createDiaryService } from './services/diary';
@@ -39,6 +40,7 @@ import { createPlanBuilder, storedAiAccess } from './services/goals/planBuilder'
 import { createOnboardingService } from './services/onboarding';
 import { createPhotoService } from './services/photos';
 import { createProfileEditsService } from './services/profileEdits';
+import { createSavedMealsService } from './services/savedMeals';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
 
 // The composition root: the one place that opens the database, creates each repository once and
@@ -154,6 +156,8 @@ async function start(): Promise<void> {
       weightRepo,
       clock: systemClock,
     }),
+    savedMeals: createSavedMealsService({ savedMealsRepo: createSavedMealsRepo(db), photoRepo }),
+    copyDay: createCopyDayService({ diaryRepo }),
     clock: systemClock,
   };
   const data: DataSources = {

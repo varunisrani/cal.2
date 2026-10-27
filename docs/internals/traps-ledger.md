@@ -109,6 +109,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/servings/units.test.ts > pickerUnits > offers only the serving count when the weight is unknown, never grams (R02.1)
   - Test: src/domain/servings/scale.test.ts > initialAmount > reopens an unknown weight saved at 2 servings at 2 servings and never shows grams (R02.1)
   - Test: src/features/log/review/ServingCard.test.tsx > ServingCard > offers only servings, with no grams and no ≈ line, when the weight is unknown (R02.1)
+  - Test: src/domain/food/reuse.test.ts > reuseDraft > keeps an unknown weight as servings, never inventing grams (R02.1)
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Recent > opens an entry of unknown weight as servings (R02.1)
 - **R02.2** The unknown-weight basis is its own kind, separate from a unit named serving
   - Test: src/domain/servings/units.test.ts > pickerUnits > keeps a recipe serving unit with known grams a named unit, not the servings basis (R02.2)
   - Test: src/domain/servings/scale.test.ts > initialAmount > keeps a split serving with known grams a named unit when reopened (R02.2)
@@ -127,7 +129,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/servings/recipe.test.ts > canSplit > refuses a re-logged portion, which would divide the portion again (R02.6)
   - Test: src/domain/servings/recipe.test.ts > keepSplit > keeps n and shows the edited portion when a line of a split recipe changes (R02.6)
 - **R02.7** Saved meals have their own ids (D-16.17); often-eaten groups by normalised name and kcal; reorder hidden while searching
-  - Review: owned by P06-12
+  - Test: src/domain/food/reuse.test.ts > oftenEaten (R02.7) > puts "Café latte" and "cafe latte " with 120 kcal together, the latest as template
+  - Test: src/domain/food/reuse.test.ts > oftenEaten (R02.7) > keeps the same name with other kcal apart
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Often eaten > puts "Café latte" and "cafe latte " with 120 kcal together under the latest, with its count (R02.7)
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Saved > keeps two saved meals with the same name and kcal apart, and removes only the one asked (R02.7, D-16.17)
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Saved > hides the reorder buttons while searching, and keeps remove (ACC-D17-2)
 - **R02.8** A photo is deleted only when no entry, line, saved meal or draft uses it; cleanup stops if any owner is unreadable
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps a photo shared by an entry and a saved meal when the entry is deleted (ACC-D28-1, R02.8)
   - Test: src/data/repos/photoRepo.test.ts > releaseIfUnused > keeps the saved meal’s copy when an edit removes the photo from the entry (R02.8)
@@ -146,6 +152,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > writes one entry when Log is pressed twice (ACC-D7-2, R02.11)
 - **R02.12** The active-fast refusal happens at write time for every food write path
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
+  - Test: src/services/copyDay.test.ts > copy > writes nothing while a fast runs, and says so (R02.12)
+  - Test: src/features/log/CopyDaySheet.test.tsx > CopyDaySheet > writes nothing during a fast: the paused dialog shows and the sheet stays (R02.12)
 - **R02.13** The review's suggested meal follows its picked date and time (D-16.16)
   - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > suggests the meal for the picked time: 08:00 is breakfast and 19:30 dinner (ACC-D7-1, R02.13, D-16.16)
 - **R02.14** Barcodes keep their digits for Open Food Facts; label memory and FDC compare without leading zeros; FDC accepts exact GTIN matches only

@@ -14,16 +14,9 @@ import { Menu, type MenuAction, type MenuEntry } from '../../ui/Menu';
 
 /**
  * Methods whose sheets are not built yet. They stay in the layout (and the default) but are left
- * off the drawn menu; each slice deletes its own here when its sheet lands: barcode (P06-14),
- * recent, often and saved (P06-12), copyDay (P06-13).
+ * off the drawn menu; each slice deletes its own here when its sheet lands: barcode (P06-14).
  */
-export const METHODS_NOT_BUILT_YET: readonly AddMethod[] = [
-  'barcode',
-  'recent',
-  'often',
-  'saved',
-  'copyDay',
-];
+export const METHODS_NOT_BUILT_YET: readonly AddMethod[] = ['barcode'];
 
 const GROUP_WORDS: Record<PresetGroupName, TKey> = {
   snapScan: 'menu.group.snapScan',

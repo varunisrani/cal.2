@@ -14,6 +14,7 @@ import { menu } from './en/menu';
 import { onboarding } from './en/onboarding';
 import { profile } from './en/profile';
 import { review } from './en/review';
+import { reuse } from './en/reuse';
 import { settings } from './en/settings';
 import { shell } from './en/shell';
 
@@ -32,6 +33,7 @@ export const enPartitions = {
   log,
   menu,
   capture,
+  reuse,
   settings,
   charts,
   about,

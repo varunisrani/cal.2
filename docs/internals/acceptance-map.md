@@ -363,21 +363,24 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### D16 · Recent (30 days) and Often eaten (90 days, grouped by name and … (P1)
 
 - **ACC-D16-1** Searching "cafe" finds "Café latte"
-  - Review: P06-12
+  - Test: src/domain/food/reuse.test.ts > search > finds "Café" for "cafe", and "cafe" for "CAFÉ" (ACC-D16-1)
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: search > finds "Café latte" for "cafe", ignoring case, accents and the spaces around (ACC-D16-1)
 - **ACC-D16-2** Tapping a recent item opens the review instead of logging at once
-  - Review: P06-12
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Recent > opens the review with the entry's grams, units, photos and source, and logs nothing (ACC-D16-2)
 
 ### D17 · Saved meals with their own ids, toggled from the editor and Home … (P1)
 
 - **ACC-D17-1** Two different foods with the same name and calories can both be saved
   - Test: src/data/repos/savedMealsRepo.test.ts > toggleFromEntry > saves two different foods with the same name and calories separately (ACC-D17-1, D-16.17)
 - **ACC-D17-2** Reorder buttons are hidden while searching
-  - Review: P06-12
+  - Test: src/features/log/reuse/ReuseSheet.test.tsx > ReuseSheet: Saved > hides the reorder buttons while searching, and keeps remove (ACC-D17-2)
 
 ### D18 · Copy a day (P1)
 
 - **ACC-D18-1** Copying yesterday adds new entries today and leaves yesterday unchanged
-  - Review: P06-13
+  - Test: src/services/copyDay.test.ts > copy > copies yesterday onto today with new ids at the clock time, meals kept and yesterday unchanged (ACC-D18-1)
+  - Test: src/features/log/CopyDaySheet.test.tsx > CopyDaySheet > copies all of them with the count on the button, keeps their meals and leaves yesterday as it was (ACC-D18-1)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the add menu opens its sheets (P06-01) > copies a day onto the day Home shows, and the copies appear in the diary (ACC-D18-1)
 
 ### D19 · Barcode scanning by camera, plus typing the digits (D-16.18) (P1)
 

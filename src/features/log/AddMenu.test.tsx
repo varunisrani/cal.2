@@ -85,12 +85,16 @@ describe('AddMenu', () => {
   });
 
   it('leaves off the methods whose sheets are not built yet, and a group they leave empty', () => {
-    expect(METHODS_NOT_BUILT_YET).toEqual(['barcode', 'recent', 'often', 'saved', 'copyDay']);
+    expect(METHODS_NOT_BUILT_YET).toEqual(['barcode']);
     mount(DEFAULT_MENU_LAYOUT);
     open();
-    expect(rowNames()).toEqual([words.group.snapScan, words.group.describe]);
+    expect(rowNames()).toEqual([words.group.snapScan, words.group.describe, words.group.reuse]);
     fireEvent.click(row(words.group.snapScan));
     expect(rowNames()).toEqual([words.method.camera, words.method.library, BACK]);
+    cleanup();
+    mount(layoutOf([['g1', 'Scan', ['barcode']]], ['manual']));
+    open();
+    expect(rowNames()).toEqual([words.method.manual]);
   });
 
   it('clears an armed label scan before every method it hands on (R02.20)', () => {
