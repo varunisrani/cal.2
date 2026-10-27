@@ -41,3 +41,4 @@ log in `usage-log-agent-2.md`. Only Agent 1 writes this file; add one row per ch
 | 2026-10-27 07:00 | Agent 1 | Account 1 | 62 (reading 06:58) | 38 | 2026-10-27 10:20 | 114/176 tasks (P06-09/10, lazy loading, P07-09/12, P07-01/02 landed; worker restarted at 06:54, state intact); 3 builders running; about 30 %/h |
 | 2026-10-27 07:21 | Agent 1 | Account 1 | 71 (reading 07:17) | 29 | 2026-10-27 10:20 | 116/176 tasks (P07-13/14 landed); P06-18 loop running; 1 builder (P07 S1b); no new builders from here |
 | 2026-10-27 07:31 | Agent 1 | Account 1 | 73 (reading 07:28) | 27 | 2026-10-27 10:20 | 119/176 tasks (P06-18 c447eaf, P07-03/04 630e227 landed; wave 11 prompts pushed 902fd76); no builders; waiting for the reset |
+| 2026-10-27 07:34 | Agent 1 | Account 1 | 75 (reading 07:34) | 25 | 2026-10-27 10:20 | 119/176 tasks; 2 builders (P07-15, P07-16); 75–89 % band: no new builders |
