@@ -1,0 +1,21 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p10s7 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P10-14, release prep. Spec: the P10-14 row and "Files to update" in docs/plan/phases/P10-hardening-and-release.md; the phase goal (its first paragraph) for the list of gates; scripts/notices.ts; docs/HANDOFF.md ("Done" rows and the follow-up notes) for what each phase shipped; docs/plan/16-what-we-change.md for the intended differences; docs/internals/*-v1.0.md for the reports to link.
+Task note (before its text): docs/notes/P10/release-prep.md.
+
+You own:
+- CHANGELOG.md (new, at the root): a 1.0.0 entry dated 2026-10-27, in our own words, grouped by what a person can do (onboarding and goals; logging by photo, description, barcode, manual and reuse; the diary and Home; water and fasting; Progress and weight; the Coach; AI providers and keys; settings, data, backup and restore; offline and install; accessibility; privacy and security), then "Known issues" (from HANDOFF's follow-ups that are still open, plain words), then "Differences from the app that inspired Platewise" pointing at docs/plan/16-what-we-change.md (do not copy its rows). Credit the inspiration the way THIRD_PARTY_NOTICES.md already does. Never use the reference's names, strings or file names (the banned check runs on it).
+- package.json: "version": "1.0.0" (that field only). If the app shows its version anywhere (grep for `version` in vite.config.ts and src/), check it follows; update a test that pins 0.1.0, if any.
+- THIRD_PARTY_NOTICES.md and src/generated/notices.json, refreshed by the notices script (`pnpm exec tsx scripts/notices.ts`, then `--check` passes). HANDOFF records that zxing-wasm bundles zxing-cpp (Apache-2.0) and zint (BSD-3) whose notices are not in Credits: find their licence texts inside node_modules/zxing-wasm (or its package's licence files) and make the notices script include them (scripts/notices.ts and its test), so both appear in THIRD_PARTY_NOTICES.md and the Credits page data. If a text is not shipped in the package, say so in the report and do not invent one.
+- docs/internals/release-checklist-v1.0.md (new): one row per gate with the command, the result and the date: lint, fmt, typecheck, unit (count), check --require-ref (6/6), check:acceptance --strict, check:traps, ledger:gaps, build, check:bundle (kB of 250), e2e (count, both projects), the a11y spec, the browser matrix, the parity run (link the parity report; 14/14 flows on 2026-10-27), the security review (open items: S-4 host headers, with the headers to send when a host is chosen), the similarity report, the live provider check (skipped: no keys), the user docs, notices --check, pnpm audit. Run what you can; for the gates that depend on the P10-07/08/11 slice still being landed (check:acceptance --strict, which fails only on ACC-L6-2 and ACC-L9-1 until then; the a11y spec; the browser matrix), write "pending P10-07/08/11: the lead fills this on the release commit". Then a "Release steps" section: the release commit is the one that lands P10-14 after P10-07/08/11; tags, GitHub releases and PRs only when the user asks; `main` is fast-forwarded only when the user says so.
+- the task note.
+
+Do not touch: docs/HANDOFF.md (the lead's), docs/plan/**, pnpm-lock.yaml, src/** beyond the version follow-through and generated notices, e2e/**, playwright.config.ts (P10-07/08/11 is running there).
+
+Tests:
+- unit: scripts/notices.test.ts and any test you touch, with --maxWorkers=1; do not run the full `pnpm test` or the e2e folder.
+- before you finish: lint, fmt:check, typecheck, `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`, `pnpm exec tsx scripts/notices.ts --check`, `pnpm build`, `pnpm check:bundle`.
+
+Final report as the rules file says: every file written, each gate's result as you recorded it, the zxing-cpp/zint finding, anything pending for the lead. Leave everything uncommitted.
