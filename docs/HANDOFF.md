@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 18:31 IST (Agent 1, session 3), STOPPED_90. 168/176 tasks; P00–P09 complete; the app runs on the
-real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, security and similarity landed; no builder running.
+Updated: 2026-10-27 18:55 IST (Agent 1, session 3), ACTIVE to 100 % (user). 168/176 tasks; P00–P09 complete; the app runs on the
+real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, security and similarity landed; P10-07/08/11 builder running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -142,7 +142,10 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-**STOPPED_90 at 18:21 IST (88 % read at 18:15; reset 20:20 IST).** No builder is running.
+**18:55 IST: the user said to keep working until 100 %.** Work resumed at an 89 % read; save point at a 97 % read
+(stop builders, patches to `.agents/wip/`, push), since nothing can be pushed at 100 %. Builder running at 71e9727:
+P10-07/08/11 resumed from `.agents/wip/p10s3.patch` in `/root/wt/wt-p10s3b` (playwright.config.ts conflict resolved:
+`offline-chromium` and `...otherEngines` both kept). Earlier: STOPPED_90 at 18:21 IST (88 % read at 18:15).
 Landed at 18:31 IST (89 % read), after the full loop passed (unit 5121 passed + 2 expected-fail in 360 files, check 6/6,
 bundle 235.49 kB, e2e 37 passed + the offline test skipped by design in `mobile-chromium`): 4deddf0 P10-01..04 parity
 (13 REA scenarios, 14/14 flows, `pnpm parity`, obligations ledger, parity report, the `reuse.saved.row` fix,
