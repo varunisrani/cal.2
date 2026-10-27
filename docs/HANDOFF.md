@@ -1,7 +1,8 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-28 00:20 IST (Agent 1, session 3). v1.0 complete: 176/176 tasks, release commit 1fa1f1b; P11
-(Android app and Health Connect, at the user's request) complete at 6e80369; polish at 27e5604.
+Updated: 2026-10-28 05:30 IST (Agent 1, session 3). v1.0 complete (176/176, 1fa1f1b); 1.1.0 released at e94f7a7:
+the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
+reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
 
@@ -162,7 +163,14 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
-**04:45 IST:** 1bee232 P13 S3 (notifications + your own reminders) landed. The final stack sits in `/root/wt/verify`:
+**1.1.0 RELEASED (05:30 IST, 2026-10-28):** 1570597 P13 S4 (Coach chat + reminders through the Coach), b3d85bd the
+test-harness fix (`until()` waits outside act; root cause of the ReminderCard and probably the HomePage load timeouts),
+e94f7a7 the 1.1.0 release (package.json 1.1.0, CHANGELOG 1.1.0 dated, checklist A6–A8, P12 and P13 done). The release
+loop: unit 5 523 + 2 expected-fail in 388 files, strict 6/6, bundle 240.35 kB, e2e 49 + 1 skipped. The 1.1.0 APK
+(versionName 1.1.0, versionCode 2, `PLATEWISE_BUILD_NUMBER=2`) and 10 screenshots were sent to the owner. Open: the
+owner's device tests (checklist A4, A5, A8); a tag or GitHub release only if they ask; `main` and the OpenRouter
+attribution URL still wait on them. The container restarted once (05:05 IST): `/root/wt` and the scratchpad survived.
+Earlier: **04:45 IST:** 1bee232 P13 S3 (notifications + your own reminders) landed. The final stack sits in `/root/wt/verify`:
 c0cd493 P13 S4 (Coach chat + reminders through the Coach) and efaaf8a the 1.1.0 release (package.json 1.1.0, CHANGELOG
 1.1.0 dated, checklist section, P12/P13 done); messages `/root/wt/msgs/w19-04.txt` and `w19-05.txt`. Its loop failed only on
 an intermittent hang in `src/features/coach/ReminderCard.test.tsx` (its last three tests, under load, about one run in
