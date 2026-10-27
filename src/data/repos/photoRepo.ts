@@ -60,6 +60,12 @@ export interface PhotoRepo {
   /** Deletes every photo nothing uses, except fresh ones; returns the deleted ids. */
   prune(): Promise<string[]>;
   usage(): Promise<PhotoUsage>;
+  /**
+   * Drops the thumbnail of every readable photo (Clear cache); the photos stay and their
+   * thumbnails are made again on demand. Changes nothing while a restore runs. Returns how many
+   * thumbnails were dropped.
+   */
+  clearThumbs(): Promise<number>;
 }
 
 export interface PhotoRepoOptions {
@@ -208,5 +214,20 @@ export function createPhotoRepo(db: PlatewiseDb, options: PhotoRepoOptions = {})
         thumbBytes: items.reduce((sum, photo) => sum + (photo.thumb?.size ?? 0), 0),
       };
     },
+
+    clearThumbs: () =>
+      db.transaction('rw', db.photos, db.meta, async () => {
+        if (await isRestoring(db)) return 0;
+        const bare: PhotoRow[] = [];
+        // A row that cannot be read is left exactly as it is.
+        for (const raw of await db.photos.toArray()) {
+          const photo = decodePhoto(raw);
+          if (!photo || photo.thumb === undefined) continue;
+          const { thumb: _dropped, ...rest } = photo;
+          bare.push(rest);
+        }
+        if (bare.length > 0) await db.photos.bulkPut(bare);
+        return bare.length;
+      }),
   };
 }

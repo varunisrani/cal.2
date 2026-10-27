@@ -141,7 +141,14 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     parent: 'app',
     page: onDemand(() => import('./app/TabsPage').then((module) => module.TabsPage)),
   },
-  // Your data (P09-15) registers as `data`; HUB_ORDER puts each entry in its slot wherever it is added.
+  // Backup and restore, the diary file, storage, Clear diary and Erase everything (P09-15).
+  {
+    id: 'data',
+    titleKey: 'data.page.title',
+    icon: 'lock',
+    group: 'prefs',
+    page: onDemand(() => import('./data/DataPage').then((module) => module.DataPage)),
+  },
   // The mark, version, update status, sharing, help links and the pages below (P09-16).
   {
     id: 'about',

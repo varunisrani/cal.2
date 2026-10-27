@@ -576,7 +576,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.5** Erase everything invalidates any running backup before wiping
   - Test: src/services/backup/service.test.ts > createBackupService > never offers or records a backup that started before everything was erased (R06.5)
   - Test: src/services/backup/backup.test.ts > offerBackup > records nothing when everything was erased while the share sheet was open (R06.5)
-  - Review: owned by P09-15
+  - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > tells the backup, stops the reminders, erases, then starts again, in that order (R06.5, R06.10)
+  - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > never offers or records a backup that was being made when everything was erased (R06.5)
+  - Test: src/features/settings/data/DataPage.test.tsx > DataPage > asks before erasing everything, then tells the backup, stops the reminders, erases and starts again (R06.5, ACC-K6-1)
+  - Test: src/features/settings/data/DataPage.test.tsx > DataPage > never records a backup whose share sheet was open when everything was erased (R06.5)
 - **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything
   - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > gives back identical tables after backup, erase everything and restore, and no keys (R06.6)
   - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses a newer version, changing nothing (R06.6)
@@ -618,7 +621,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/transfer/exportFormats.test.ts > toMarkdown > tells a kJ reader the energy is in kcal and keeps the kcal numbers (R06.14, ACC-K1-2)
   - Test: src/features/settings/data/ExportSheet.test.tsx > ExportSheet > keeps kcal in a kJ reader's CSV and names the column in kcal (R06.14, ACC-K1-2)
 - **R06.15** One-time nudges are marked done only after they were shown and dismissed
-  - Review: owned by P09-15
+  - Test: src/services/storageNudge.test.ts > createStorageNudge: keep your diary safe (R06.19, R06.15) > is not marked done when it was never drawn, so it comes back (R06.15)
+  - Test: src/services/storageNudge.test.ts > createStorageNudge: keep your diary safe (R06.19, R06.15) > is marked done once drawn and dismissed, and never shows again, after a reload too (R06.15)
+  - Test: src/features/settings/data/StorageNudge.test.tsx > StorageNudge > draws nothing away from Home, so a card never drawn is never marked done (R06.15)
+  - Test: src/features/settings/data/StorageNudge.test.tsx > StorageNudge > is marked done when dismissed after it was drawn, and does not come back (R06.15)
 - **R06.16** Import replace-range matches by id then by day, minute, meal and name, keeps photos, mints ids on collisions, refuses the whole file on any bad value or DST-gap time
   - Test: src/services/transfer/importDiary.test.ts > readDiaryFile > refuses 02:30 on the spring-forward day, food or water, and takes 03:30 (R06.16)
   - Test: src/services/transfer/importDiary.test.ts > importing into the diary (the transfer service) > keeps a matched entry's id and photos and takes the file's values (ACC-K2-2, R06.16)
@@ -635,7 +641,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/photoRepo.test.ts > prune > deletes nothing while a restore runs (R06.18)
 - **R06.19** Browser storage can be evicted: request persistence, show it, nudge install and backups
   - Test: src/data/storage.test.ts > requestPersistence (R06.19, D-16.8) > asks the browser once even when asked twice, and shows the answer
-  - Review: the storage card owned by P09-15
+  - Test: src/features/settings/data/StorageCard.test.tsx > StorageCard > shows … until measured, then photo and thumbnail bytes, usage of the quota and that the data may be cleared (ACC-K7-1, R06.19)
+  - Test: src/services/yourData.test.ts > createYourDataService: the storage card > measures photo and thumbnail bytes, the site’s usage of its quota and the persistence (ACC-K7-1, R06.19)
+  - Test: src/services/storageNudge.test.ts > createStorageNudge: time for a backup (R06.19) > is due 14 days after the last backup, not a day sooner, and not after a new backup
+  - Test: src/features/settings/data/StorageNudge.test.tsx > StorageNudge > shows keep safe under Home’s diary on the visit after the first entry (R06.19)
 - **R06.20** An untouched kJ goal wheel keeps the exact kcal goal
   - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
   - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > shows kJ to a kJ reader and keeps the exact kcal when the wheel is saved untouched (R06.20)

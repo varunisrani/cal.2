@@ -9,6 +9,7 @@ import { aiSetup } from '../../i18n/en/aiSetup';
 import { appearance } from '../../i18n/en/appearance';
 import { appSettings } from '../../i18n/en/appSettings';
 import { common } from '../../i18n/en/common';
+import { data } from '../../i18n/en/data';
 import { goals } from '../../i18n/en/goals';
 import { profile } from '../../i18n/en/profile';
 import { settings } from '../../i18n/en/settings';
@@ -222,6 +223,7 @@ describe('SettingsHub', () => {
       trackers.trackers.page.title,
       aiSetup.aiSetup.page.title,
       appSettings.appSettings.title,
+      data.data.page.title,
     ]);
     // Help and privacy have no address yet (D-16.66); Credits opens from About.
     expect(rowNames(hub.group.info)).toEqual([about.about.page.title, about.about.methods.title]);
@@ -235,9 +237,9 @@ describe('SettingsHub', () => {
   });
 
   it('puts Your data and About in their slots, then help and privacy, once they exist (ACC-J1-2)', () => {
-    // The real About and its Credits page step aside for the stand-in.
+    // The real Your data, About and its Credits page step aside for the stand-ins.
     const specs: CategorySpec[] = SETTINGS_CATEGORIES.filter(
-      ({ id }) => id !== 'about' && id !== 'credits',
+      ({ id }) => id !== 'data' && id !== 'about' && id !== 'credits',
     ).map(({ route: _route, ...spec }: SettingsCategory) => spec);
     // Registered at the end, the way a later task adds them.
     const categories = defineCategories([

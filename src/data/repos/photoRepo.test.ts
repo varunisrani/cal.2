@@ -326,3 +326,47 @@ describe('prune', () => {
     db.close();
   });
 });
+
+describe('clearThumbs', () => {
+  it('drops every thumbnail and keeps every photo with its bytes', async () => {
+    const { db, photos } = await setUp();
+    const blob = await storableBlob(64, 3);
+    const withThumb = await photos.put(blob, {
+      thumb: await storableBlob(8, 9),
+      width: 4,
+      height: 3,
+    });
+    const [plain = ''] = await storePhotos(photos, 1);
+
+    expect(await photos.clearThumbs()).toBe(1);
+
+    expect(await storedIds(db)).toEqual([withThumb, plain].sort());
+    expect(await photos.getThumb(withThumb)).toBeNull();
+    expect(await bytesOf((await photos.get(withThumb))?.blob ?? new Blob())).toEqual(
+      await bytesOf(blob),
+    );
+    expect(await photos.usage()).toEqual({ count: 2, photoBytes: 80, thumbBytes: 0 });
+    db.close();
+  });
+
+  it('leaves an unreadable row as it is, and changes nothing while a restore runs', async () => {
+    const { db, photos } = await setUp();
+    const broken = { id: 'photo-broken', thumb: await storableBlob(4) };
+    await db.photos.put(broken as never);
+    const id = await photos.put(await storableBlob(16), {
+      thumb: await storableBlob(8),
+      width: 1,
+      height: 1,
+    });
+    await db.meta.put({ key: RESTORING_FLAG, value: true });
+
+    expect(await photos.clearThumbs()).toBe(0);
+    expect(await photos.getThumb(id)).not.toBeNull();
+
+    await db.meta.delete(RESTORING_FLAG);
+    expect(await photos.clearThumbs()).toBe(1);
+    expect(await photos.getThumb(id)).toBeNull();
+    expect((await db.photos.get('photo-broken'))?.thumb).toBeDefined();
+    db.close();
+  });
+});

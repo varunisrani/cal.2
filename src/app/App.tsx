@@ -1,6 +1,7 @@
 import { Suspense, useSyncExternalStore } from 'react';
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
 import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
+import { StorageNudge } from '../features/settings/data/StorageNudge';
 import { systemClock, type Clock } from '../lib/clock';
 import type { AnalysisService } from '../services/analysis';
 import type { TuneUpRunner } from '../services/goals/tuneUp';
@@ -83,6 +84,8 @@ function Shell() {
         {/* Reminders shown in the app rather than by the browser (P09-09). */}
         <ReminderBanners />
         <Screen route={route} />
+        {/* Keep your diary safe, or time for a backup, under Home's diary (P09-15). */}
+        <StorageNudge />
       </main>
       <TabBar />
       <GoalReachedDialog />

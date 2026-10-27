@@ -9,6 +9,7 @@ import { capture } from './en/capture';
 import { charts } from './en/charts';
 import { coach } from './en/coach';
 import { common } from './en/common';
+import { data } from './en/data';
 import { display } from './en/display';
 import { editor } from './en/editor';
 import { fasting } from './en/fasting';
@@ -65,6 +66,7 @@ export const enPartitions = {
   transfer,
   appSettings,
   backup,
+  data,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */

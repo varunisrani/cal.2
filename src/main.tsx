@@ -31,6 +31,7 @@ import { createWaterRepo } from './data/repos/waterRepo';
 import { createWeightRepo } from './data/repos/weightRepo';
 import type { PlatewiseDb } from './data/schema';
 import { createStorageAccess } from './data/storage';
+import { closeOnErase, eraseEverything } from './data/wipe';
 import { t } from './i18n/t';
 import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
@@ -68,9 +69,11 @@ import {
 } from './services/reminders/ports';
 import { createReprocessService } from './services/reprocess';
 import { createShellPorts, openErrorPorts, openingPorts } from './services/shell';
+import { createStorageNudge } from './services/storageNudge';
 import { createTrackingSettingsService } from './services/trackingSettings';
 import { createTransferService } from './services/transfer/transfer';
 import { createWaterService } from './services/water';
+import { createYourDataService, reloadOnWelcome } from './services/yourData';
 
 // The composition root: the one place that opens the database, creates each repository once and
 // hands the app the shell's ports, the services and the read hooks' data sources. Screens never
@@ -111,6 +114,8 @@ async function start(): Promise<void> {
     render(openErrorPorts());
     return;
   }
+  // P09-15: when another tab erases everything, this one lets go and starts again on Welcome.
+  closeOnErase(db, reloadOnWelcome);
 
   const profileRepo = createProfileRepo(db);
   const settingsRepo = createSettingsRepo(db);
@@ -128,6 +133,11 @@ async function start(): Promise<void> {
   });
 
   const storage = createStorageAccess({ settings: settingsRepo });
+  // P09-15: the persistence request after the first entry, and Home's storage card for this visit.
+  const storageNudge = createStorageNudge({ storage, settingsRepo, clock: systemClock });
+  storageNudge.check().catch((error: unknown) => {
+    console.error('Platewise: the storage card could not be worked out', error);
+  });
   const photoRepo = createPhotoRepo(db);
   const backupRepo = createBackupRepo(db);
   // A restore's flag that a closed tab left behind would pause photo cleanup for good; the
@@ -196,7 +206,7 @@ async function start(): Promise<void> {
       photoRepo: createPhotoRepo(db),
       // The entry editor's Saved switch (P06-11).
       savedMealsRepo: createSavedMealsRepo(db),
-      onFirstEntry: () => storage.requestPersistence(),
+      onFirstEntry: () => storageNudge.afterFirstEntry(),
     }),
     onboarding: createOnboardingService({
       profileRepo,
@@ -263,7 +273,7 @@ async function start(): Promise<void> {
       diaryRepo,
       settingsRepo,
       clock: systemClock,
-      onFirstEntry: () => storage.requestPersistence(),
+      onFirstEntry: () => storageNudge.afterFirstEntry(),
     }),
     reminders,
     notifier,
@@ -306,6 +316,17 @@ async function start(): Promise<void> {
       // P09-16: package.json's version, written into the build.
       appVersion: APP_VERSION,
     }),
+    // Settings › Your data (P09-15): Erase tells the backup, stops the reminders, then deletes.
+    yourData: createYourDataService({
+      transferRepo: createTransferRepo(db),
+      photoRepo,
+      storage,
+      // Looked up when Erase runs: the backup service is built in this same object.
+      backup: { invalidate: () => services.backup?.invalidate() },
+      reminders,
+      erase: () => eraseEverything({ db }),
+    }),
+    storageNudge,
     clock: systemClock,
   };
   const data: DataSources = {

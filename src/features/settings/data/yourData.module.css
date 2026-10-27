@@ -1,0 +1,145 @@
+/*
+ * Settings › Your data (P09-15): the page's cards, the rows that open a sheet or a question, and
+ * the Storage card's figures. Every value comes from tokens.css; logical properties throughout.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+/* A card whose rows run edge to edge. */
+.listCard {
+  padding-block-end: var(--space-1);
+  padding-inline: 0;
+}
+
+.listCard > h2 {
+  padding-inline: var(--space-4);
+}
+
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rowItem + .rowItem {
+  border-block-start: 1px solid var(--line);
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.linkText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.linkTitle {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.danger .linkTitle {
+  color: var(--danger);
+}
+
+.linkHint {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.chevron {
+  flex: none;
+  color: var(--text-muted);
+}
+
+.chevron:dir(rtl) {
+  transform: scaleX(-1);
+}
+
+/* ---- The Storage card ------------------------------------------------------------------- */
+
+.facts {
+  display: grid;
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.fact + .fact {
+  border-block-start: 1px solid var(--line);
+}
+
+.fact dt {
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.fact dd {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---- Erase everything ------------------------------------------------------------------- */
+
+.failed {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}

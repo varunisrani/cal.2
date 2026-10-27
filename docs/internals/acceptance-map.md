@@ -996,17 +996,21 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### K5 · Clear the diary (P1)
 
 - **ACC-K5-1** Clear diary removes entries but keeps saved meals, weights and settings
-  - Review: P09-15
+  - Test: src/services/yourData.test.ts > createYourDataService: Clear diary > removes every entry and the photos only they used; saved meals, weights, water, fasts, the profile, chat and settings stay (ACC-K5-1)
+  - Test: src/features/settings/data/DataPage.test.tsx > DataPage > clears the diary: entries go; saved meals with their photos, weights, water and settings stay (ACC-K5-1)
 
 ### K6 · Erase everything and return to onboarding (P1)
 
 - **ACC-K6-1** Erase everything empties the app, other open tabs included, and shows Welcome
-  - Review: P09-15
+  - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > deletes everything, the nudge’s key too, and another open tab starts again on Welcome (ACC-K6-1)
+  - Test: src/features/settings/data/DataPage.test.tsx > DataPage > asks before erasing everything, then tells the backup, stops the reminders, erases and starts again (R06.5, ACC-K6-1)
 
 ### K7 · Storage card (P1)
 
 - **ACC-K7-1** The storage card shows photo bytes and whether storage is persistent
-  - Review: P09-15
+  - Test: src/features/settings/data/StorageCard.test.tsx > StorageCard > shows … until measured, then photo and thumbnail bytes, usage of the quota and that the data may be cleared (ACC-K7-1, R06.19)
+  - Test: src/features/settings/data/StorageCard.test.tsx > StorageCard > says Yes and warns of nothing when the browser keeps the data, and Not available without an estimate (ACC-K7-1)
+  - Test: src/services/yourData.test.ts > createYourDataService: the storage card > measures photo and thumbnail bytes, the site’s usage of its quota and the persistence (ACC-K7-1, R06.19)
 
 ### K9 · Unreadable stored data is kept aside, never overwritten, and a … (P1)
 
@@ -1039,7 +1043,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### L4 · Persistent storage requested after the first logged entry, with … (P1)
 
 - **ACC-L4-1** Logging the first entry asks for persistent storage once
-  - Review: P09-15
+  - Test: src/services/storageNudge.test.ts > createStorageNudge: the persistence request (D-16.8) > asks the browser once, after the first logged entry, and not again after a reload (ACC-L4-1)
 
 ### L5 · Notifications through the browser when permitted, otherwise in-app … (P1)
 
