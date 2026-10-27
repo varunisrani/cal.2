@@ -326,7 +326,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 ## R04 · Coach (`research/04-*.md` §6)
 
 - **R04.1** A standby re-run discards everything the failed attempt produced
-  - Review: owned by P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: the standby (R04.1, D-16.22) > re-runs the whole turn on the standby after the primary fails, with nothing from the first attempt (ACC-I12-1)
 - **R04.2** Earlier photos are not re-sent and the prompt says the model cannot see them (D-16.48)
   - Test: src/services/coach/history.test.ts > coachHistory: text only (R04.2, D-16.48) > never sends a thumbnail: every turn holds only its side and its words
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: who the Coach is > says photos from earlier messages are not sent again and cannot be seen (R04.2)
@@ -335,11 +335,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > merges two failed questions in a row into one turn, a blank line between them
   - Test: src/services/coach/history.test.ts > coachHistory: shape (R04.3, D-16.34) > turns are always alternating, opening with the person and closing on a reply
 - **R04.4** A failed turn keeps the question and offers Retry without duplicating it (D-16.31)
-  - Review: owned by P08-09
+  - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
 - **R04.5** Pending is set before the first await, so double taps start one turn
-  - Review: owned by P08-09
+  - Test: src/services/coach/session.test.ts > createCoachSession: send (04 §3.6) > starts one turn for two sends in the same tick (R04.5)
 - **R04.6** Reset aborts the request and drops any late reply by generation (D-16.34)
-  - Review: owned by P08-09
+  - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)
+  - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > drops a reply that comes back after a Reset in another tab
 - **R04.7** An unreadable stored message is kept aside, never overwritten
   - Test: src/data/repos/coachRepo.test.ts > unreadable messages (R04.7) > keeps a corrupt message aside and still lists the rest
 - **R04.8** Chat storage is bounded: one record per message, newest 200, small thumbnails (D-16.29)
@@ -351,7 +352,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/coach/tools.test.ts > runCoachTool: limits keep the newest rows (R04.10, D-16.32) > returns the newest 365 of 400 entries, oldest first, with the markers
   - Test: src/services/coach/toolSchemas.test.ts > NUTRITION_TOOLS: the schemas > says the limit keeps the newest rows (R04.10)
 - **R04.11** Round-limit and cut-off-twice failures keep their own kinds and messages
-  - Review: owned by P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > ends with roundLimit when the sixth round still asks for tools, and sends no seventh (R04.11, ACC-I8-2)
+  - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > gives truncated, its own kind, for a reply cut off twice (R04.11)
 - **R04.12** Every tool call id gets exactly one result, an error result for calls without a name
   - Test: src/ai/chat/openaiChat.test.ts > openAiChat.continueWith (R04.12) > appends the assistant message as it came, then one tool message per call, in order
   - Test: src/ai/chat/openaiChat.test.ts > openAiChat.continueWith (R04.12) > answers a call with an id but no name with an error result, without running it
@@ -389,7 +391,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > gives truncated after a second cut, with no third request
 - **R04.19** Six requests per turn include the answer; the prompt asks the model to batch tool calls
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > asks for every needed tool in the same round (R04.19)
-  - Review: owned by P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > counts the answer round among the six: five tool rounds and the answer fit (R04.19)
 - **R04.20** v1 offers and mentions only the six nutrition tools; a stray workout call gets not available
   - Test: src/services/coach/tools.test.ts > runCoachTool: names and answers (R04.20) > answers our later-phase workout_log, and every other later tool, with not available
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: the facts and the tools > names exactly the six nutrition tools of the schemas, and no later one (R04.20)
@@ -398,7 +400,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.21** Exercise proposals: add only while pending, mark added after the write, fixed ids, name re-check, dedupe, at most 10 (workouts)
   - Review: owned by L3
 - **R04.22** Tools read the snapshot taken at send time, never live stores mid-loop
-  - Review: owned by P08-08
+  - Test: src/services/coach/session.test.ts > createCoachSession: send (04 §3.6) > runs the tools on the data as it stood at Send, not on what is logged meanwhile (R04.22)
+  - Test: src/services/coach/snapshot.test.ts > takeSnapshot (R04.22) > is a copy: data stored after it was taken is not in it
 
 ## R05 · Home, Progress, water and fasting (`research/05-*.md` §6)
 

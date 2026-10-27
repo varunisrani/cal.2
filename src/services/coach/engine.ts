@@ -1,0 +1,204 @@
+// One Coach turn from question to answer (P08-08, 04 §3.11–3.12). The question picks who answers:
+// with a photo the primary, without one the text provider when it is on, else the primary. A
+// provider that is not set up refuses before anything is sent. The system text is built once from
+// the snapshot taken when the person pressed Send, and the tools of the turn read only that
+// snapshot, so a meal logged while the reply runs shows up on the next question (R04.22).
+//
+// A turn is a short run of rounds on the provider's wire. Each round sends everything so far;
+// tool calls are answered locally, every result cut to the 60 000-character limit (D-16.32), and
+// the next round carries them. Six rounds at most, the answer's included (R04.19): a sixth reply
+// that still asks for tools ends the turn as `roundLimit` (R04.11). The retry ladder and the one
+// re-ask after a cut-off reply live inside a round; all of it shares the turn's one deadline
+// (D-16.23). When an attempt fails for any reason but Cancel or the deadline, a standby set up for
+// this kind of question runs the whole turn again from its first round, in a conversation of its
+// own: nothing the failed attempt sent or received goes with it (R04.1). Failures are values.
+
+import { PROVIDERS } from '../../ai/catalog/providers';
+import { askRound, chatWireFor } from '../../ai/chat/round';
+import type { ChatSetup, RunTool, ToolSchema } from '../../ai/chat/types';
+import { withDeadline, type AiDeps } from '../../ai/client';
+import type { Deadline } from '../../ai/deadline';
+import { bothFailed, type AiFailure, type SingleFailure } from '../../ai/errors';
+import { COACH_PHOTO, prepareImage } from '../../ai/image';
+import { coachSystemPrompt } from '../../ai/prompts/coach';
+import {
+  keyFor,
+  missingFor,
+  roleFor,
+  standbyFor,
+  type Missing,
+  type ProviderKeys,
+  type RoleTarget,
+} from '../../ai/settings';
+import type { CoachMessage } from '../../domain/model';
+import { err, ok, type Result } from '../../lib/result';
+import { coachContext } from './context';
+import { coachHistory, type TurnQuestion } from './history';
+import { limitToolResult } from './limiter';
+import type { CoachSnapshot } from './snapshot';
+import { NUTRITION_TOOLS } from './toolSchemas';
+import { runCoachTool } from './tools';
+
+/** Requests one attempt may send, the one that brings the answer included (R04.19). */
+export const MAX_ROUNDS = 6;
+
+export interface TurnInput {
+  /** The stored conversation, oldest first, usually with the question as its newest message. */
+  readonly messages: readonly CoachMessage[];
+  /** The question this turn answers: its stored id and its words. */
+  readonly question: TurnQuestion;
+  /** The photo sent with the question, as picked (or its stored copy on a retry). */
+  readonly image?: Blob;
+  /** The data as it stood when the person pressed Send. */
+  readonly snapshot: CoachSnapshot;
+}
+
+/** What a role that is not set up fails with, before any request (as every AI request does). */
+const NOT_SET_UP: Readonly<Record<Missing, SingleFailure['kind']>> = {
+  key: 'noKey',
+  model: 'model',
+  server: 'invalidUrl',
+};
+
+/** The six tools in the shape the chat wires take. */
+const CHAT_TOOLS: readonly ToolSchema[] = NUTRITION_TOOLS.map((tool) => ({
+  name: tool.name,
+  description: tool.description,
+  parameters: { ...tool.parameters },
+}));
+
+/** What both attempts of one turn share. */
+interface Turn {
+  readonly input: TurnInput;
+  readonly deps: AiDeps;
+  readonly deadline: Deadline;
+  readonly system: string;
+  /** The prepared photo, base64 JPEG. */
+  readonly photo?: string;
+  readonly secrets: readonly string[];
+  readonly runTool: RunTool;
+}
+
+/**
+ * Answers one question: the trimmed answer, or one failure whose detail (the provider's own
+ * message, every stored key cut out) is for Details. Never rejects.
+ */
+export async function runTurn(input: TurnInput, deps: AiDeps): Promise<Result<string, AiFailure>> {
+  try {
+    return await withDeadline(deps, (deadline) => turn(input, deps, deadline));
+  } catch {
+    return err({ kind: 'generic' });
+  }
+}
+
+async function turn(
+  input: TurnInput,
+  deps: AiDeps,
+  deadline: Deadline,
+): Promise<Result<string, AiFailure>> {
+  if (deadline.stoppedBy() !== undefined) return err(stopFailure(deadline));
+  const { settings, keys } = deps;
+  const role = roleFor({ images: input.image === undefined ? [] : [input.image] }, settings);
+  const missing = missingFor(role, keys)[0];
+  if (missing !== undefined) return err({ kind: NOT_SET_UP[missing] });
+
+  let photo: string | undefined;
+  if (input.image !== undefined) {
+    const prepared = await prepareImage(input.image, COACH_PHOTO, deps.imageBackend);
+    if (!prepared.ok) return prepared;
+    photo = prepared.value.base64;
+  }
+  const { snapshot } = input;
+  const plan: Turn = {
+    input,
+    deps,
+    deadline,
+    system: coachSystemPrompt({ context: coachContext(snapshot), notes: settings.instructions }),
+    photo,
+    secrets: storedKeys(keys),
+    runTool: (call) => limitToolResult(runCoachTool(call.name, call.args, snapshot)),
+  };
+
+  const first = await attempt(plan, role);
+  if (first.ok || first.error.kind === 'cancelled') return first;
+  // Cancel, or no time left: a standby would only be cut off.
+  if (deadline.stoppedBy() !== undefined) return err(stopFailure(deadline));
+  const standby = standbyFor(role, settings, keys);
+  if (standby === null) return first;
+
+  const second = await attempt(plan, standby);
+  if (second.ok) return second;
+  return err(bothFailed(nameOf(role), nameOf(standby), second.error));
+}
+
+/**
+ * One provider's go at the turn, from its first round: its own wire, a conversation built from
+ * the stored messages in its own format, and nothing from any earlier attempt.
+ */
+async function attempt(plan: Turn, target: RoleTarget): Promise<Result<string, SingleFailure>> {
+  const { input, deps, deadline } = plan;
+  try {
+    const wire = chatWireFor(target.provider);
+    const { turns, text } = coachHistory(
+      input.messages,
+      input.question,
+      PROVIDERS[target.provider].format,
+    );
+    const setup: ChatSetup = {
+      provider: target.provider,
+      baseUrl: target.baseUrl,
+      model: target.model,
+      key: keyFor(target.provider, deps.keys),
+      system: plan.system,
+      tools: CHAT_TOOLS,
+      maxTokens: deps.settings.maxTokens,
+      openRouterEffort: deps.settings.openRouterEffort,
+    };
+    let transcript = wire.open({
+      history: turns,
+      text,
+      ...(plan.photo === undefined ? {} : { image: plan.photo }),
+    });
+    for (let round = 1; ; round += 1) {
+      const reply = await askRound(wire, setup, transcript, {
+        fetch: deps.fetch,
+        deadline,
+        secrets: plan.secrets,
+      });
+      if (!reply.ok) return reply;
+      if (reply.value.kind === 'answer') {
+        const answer = reply.value.text.trim();
+        return answer === '' ? err({ kind: 'invalidResponse' }) : ok(answer);
+      }
+      // The last round asked for more tools: their results could never be read (R04.11).
+      if (round >= MAX_ROUNDS) return err({ kind: 'roundLimit' });
+      transcript = wire.continueWith(transcript, reply.value, plan.runTool);
+    }
+  } catch (error) {
+    return err(thrownFailure(error, deadline));
+  }
+}
+
+/** The keys a provider's error text could echo: all of them, not only the one sent. */
+function storedKeys(keys: ProviderKeys): string[] {
+  return Object.values(keys).filter((key): key is string => typeof key === 'string');
+}
+
+function nameOf(target: RoleTarget): string {
+  return PROVIDERS[target.provider].name;
+}
+
+/** The failure for a turn the deadline stopped: a silent cancel, or the time limit. */
+function stopFailure(deadline: Deadline): SingleFailure {
+  return { kind: deadline.stoppedBy() === 'cancel' ? 'cancelled' : 'timeout' };
+}
+
+/** Something threw in a wire or a tool: generic, unless the deadline stopped the turn. */
+function thrownFailure(error: unknown, deadline: Deadline): SingleFailure {
+  if (deadline.stoppedBy() !== undefined) return stopFailure(deadline);
+  const name =
+    typeof error === 'object' && error !== null && 'name' in error ? error.name : undefined;
+  if (name === 'AbortError') return { kind: 'cancelled' };
+  if (name === 'TimeoutError') return { kind: 'timeout' };
+  return { kind: 'generic' };
+}

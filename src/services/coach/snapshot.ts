@@ -14,6 +14,14 @@ import type {
 } from '../../domain/model';
 import type { WaterDisplayUnit } from '../../domain/units/water';
 import type { DisplayUnits } from '../../ai/prompts/shared';
+import type { BodyFatRepo } from '../../data/repos/bodyFatRepo';
+import type { DiaryRepo } from '../../data/repos/diaryRepo';
+import type { FastRepo } from '../../data/repos/fastRepo';
+import type { ProfileRepo } from '../../data/repos/profileRepo';
+import type { SettingsRepo } from '../../data/repos/settingsRepo';
+import type { WaterRepo } from '../../data/repos/waterRepo';
+import type { WeightRepo } from '../../data/repos/weightRepo';
+import type { Clock } from '../../lib/clock';
 
 /** Water as the settings and the log stand at send time. */
 export interface CoachWater {
@@ -49,4 +57,58 @@ export interface CoachSnapshot {
 /** The local day the snapshot was taken on. */
 export function snapshotDay(snapshot: Pick<CoachSnapshot, 'now'>): DayKey {
   return dayKeyOf(snapshot.now);
+}
+
+/** Where a snapshot is read from: the repositories and the clock. */
+export interface SnapshotSources {
+  readonly profileRepo: Pick<ProfileRepo, 'get'>;
+  readonly settingsRepo: Pick<SettingsRepo, 'get'>;
+  readonly diaryRepo: Pick<DiaryRepo, 'between'>;
+  readonly weightRepo: Pick<WeightRepo, 'history'>;
+  readonly bodyFatRepo: Pick<BodyFatRepo, 'history'>;
+  readonly fastRepo: Pick<FastRepo, 'list'>;
+  readonly waterRepo: Pick<WaterRepo, 'byDay'>;
+  readonly clock: Clock;
+}
+
+// Day keys sort as text, so these two take in every stored day.
+const FIRST_DAY: DayKey = '0000-01-01';
+const LAST_DAY: DayKey = '9999-12-31';
+
+/**
+ * Copies the data one turn reads out of the stores, as they are now: every entry, weigh-in,
+ * body-fat reading and tracked fast, today's water logs, and the unit and water settings. Null
+ * when no readable profile is stored (the context cannot be built without one).
+ */
+export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnapshot | null> {
+  const { settingsRepo } = sources;
+  const now = sources.clock.now();
+  const profile = await sources.profileRepo.get();
+  if (profile.kind !== 'ok') return null;
+  const [entries, weighIns, bodyFat, fasts, logs] = await Promise.all([
+    sources.diaryRepo.between(FIRST_DAY, LAST_DAY),
+    sources.weightRepo.history(),
+    sources.bodyFatRepo.history(),
+    sources.fastRepo.list(),
+    sources.waterRepo.byDay(dayKeyOf(now)),
+  ]);
+  const [energy, weight, height, on, goalMl, unit] = await Promise.all([
+    settingsRepo.get('units.energy'),
+    settingsRepo.get('units.weight'),
+    settingsRepo.get('units.height'),
+    settingsRepo.get('water.on'),
+    settingsRepo.get('water.goalMl'),
+    settingsRepo.get('water.unit'),
+  ]);
+  return {
+    now,
+    timeZone: sources.clock.timeZone(),
+    profile: profile.value,
+    units: { energy, weight, height },
+    entries,
+    weighIns,
+    bodyFat,
+    fasts,
+    water: { on, goalMl, unit, logs },
+  };
 }

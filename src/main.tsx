@@ -31,6 +31,7 @@ import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
+import { createCoachSession } from './services/coach/session';
 import { createCopyDayService } from './services/copyDay';
 import { ServicesProvider, type Services } from './services/context';
 import { createAiAccess } from './services/aiAccess';
@@ -101,6 +102,8 @@ async function start(): Promise<void> {
   const weightRepo = createWeightRepo(db);
   const bodyFatRepo = createBodyFatRepo(db);
   const secretsRepo = createSecretsRepo(db);
+  // One coach repository for the session and the read hooks: its writes queue per instance.
+  const coachRepo = createCoachRepo(db);
 
   // A fast left running while tracking is off would keep food logging locked (R05.2).
   await fastRepo.settleOnOpen(systemClock.now()).catch((error: unknown) => {
@@ -232,6 +235,22 @@ async function start(): Promise<void> {
       onFirstEntry: () => storage.requestPersistence(),
     }),
     reminders,
+    coachSession: createCoachSession({
+      coachRepo,
+      data: {
+        profileRepo,
+        settingsRepo,
+        diaryRepo,
+        weightRepo,
+        bodyFatRepo,
+        fastRepo,
+        waterRepo: createWaterRepo(db),
+        clock: systemClock,
+      },
+      aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
+      fetch: browserFetch,
+      photoOnlyText: () => t('coach.photoOnly'),
+    }),
     clock: systemClock,
   };
   const data: DataSources = {
@@ -243,7 +262,7 @@ async function start(): Promise<void> {
     weightRepo,
     bodyFatRepo,
     savedMealsRepo: createSavedMealsRepo(db),
-    coachRepo: createCoachRepo(db),
+    coachRepo,
     unreadableFlag: () => hasUnreadableData(db),
     clock: systemClock,
   };

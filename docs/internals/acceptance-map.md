@@ -790,7 +790,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I5 · Reset with confirmation (P1)
 
 - **ACC-I5-1** Reset during a pending reply leaves the chat empty
-  - Review: P08-09
+  - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)
 
 ### I6 · Fresh context each turn (P1)
 
@@ -807,9 +807,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I8 · Tool loop of up to six rounds on all three formats, with the … (P1)
 
 - **ACC-I8-1** A question needing two tool rounds is answered
-  - Review: P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > answers after two tool rounds, each round carrying the calls and their results (ACC-I8-1)
 - **ACC-I8-2** A seventh round is never sent; the round-limit message shows
-  - Review: P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: rounds (04 §3.11, R04.19) > ends with roundLimit when the sixth round still asks for tools, and sends no seventh (R04.11, ACC-I8-2)
 
 ### I9 · Tool results capped at 60 000 characters on every provider, … (P1)
 
@@ -826,12 +826,13 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### I11 · Friendly errors with Details and Retry on the failed turn (D-16.31) (P1)
 
 - **ACC-I11-1** A failed turn shows a friendly message, Details and Retry; Retry does not repeat the question
-  - Review: P08-09
+  - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > marks a failed question with its kind and the provider’s message, keys cut out (ACC-I11-1)
+  - Test: src/services/coach/session.test.ts > createCoachSession: failures and Retry (D-16.31, R04.4) > asks a failed question again without storing it twice, its mark cleared (R04.4, ACC-I11-1)
 
 ### I12 · The standby provider re-runs the whole turn when the primary fails (P1)
 
 - **ACC-I12-1** With the primary failing, the standby answers and nothing from the failed attempt remains
-  - Review: P08-08
+  - Test: src/services/coach/engine.test.ts > runTurn: the standby (R04.1, D-16.22) > re-runs the whole turn on the standby after the primary fails, with nothing from the first attempt (ACC-I12-1)
 
 ## J · Settings and configuration
 
