@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 06:40 IST (Agent 1, session 3). 108/176 tasks; P00–P05 complete; the app runs on the
+Updated: 2026-10-27 07:00 IST (Agent 1, session 3). 114/176 tasks; P00–P05 complete; the app runs on the
 real database. Usage window resets 05:20 IST; waves 8–9 running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -100,28 +100,27 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 | Wave 10 | P05-15 (onboarding and goals e2e, Demo 2; `e2e/support.ts`). P05 done | 289332c |
 | Wave 10 | P06-12, P06-13 (reuse lists, copy a day; `openForReview`, `savedMeals` service) | 1e3db66 |
 | Wave 10 | P06-14, P06-17 (barcode scanner, lookup order, label memory; zxing in its own chunk) | 26e1c99 + cfd46c7 |
+| Wave 10 | P06-10, P06-09 (fit check sheet; ingredients card and recipe split, then its barcode and reuse sources; D-16.83) | d72f291 + d78c140 |
+| Wave 10 | Lazy-loading groundwork (tab screens, Settings pages, review and overlay, the AI layer on first use) | ff6e147 |
+| Wave 10 | P07-09, P07-12 (Progress layout, ranges, weight card, Log weight) | 63a79c7 |
+| Wave 10 | P07-01, P07-02 (week bar, selected day, day swipe) | cad5f93 |
 | Wave 9 | P05-05, P05-07 (Building plan, completion; the wizard replaces the quick start; Demo 1 walks it; REA run `ev_829b1eb8aacac4a1ed4274063ad3dcda8914060a1afa189e9bb794e6474a84dc`: 50/50 steps, no page errors) | c1f0bd3 |
 
 ## In progress
 
-Window reset at 05:20 IST (next reset 10:20 IST). Four builders (prompts in `docs/handoff/wave10/`):
-- P06 S2b (P06-09 ingredients card and recipe split, P06-10 fit check; `ingredientIntake`), base ef8c0c9,
-  `/root/wt/wt-p06s2b`.
-- Lazy-loading groundwork (tab screens, Settings pages, review/overlay mounts, the AI layer by dynamic
-  import), base 6ddc37c, `/root/wt/wt-lazy`.
-- P07 S4a (P07-09 Progress layout and ranges, P07-12 weight card and Log weight), base 289332c,
-  `/root/wt/wt-p07s4a`.
-- P07 S1a (P07-01 week bar, P07-02 selected day and day swipe; the review stamps a reuse pick on the viewed
-  day), base 7ced5b9, `/root/wt/wt-p07s1a`.
-Next: P07 S1b (P07-03 gauge and pillars, P07-04 nutrients sheet and pillar picker), P07 S4c (P07-13 body fat,
-P07-14 history), P06-18 (product block, allergen line, label text: the analysis draft needs a field for OFF's
-`ingredientsMarkup`), P06 wave C (P06-11, P06-19, P06-20), P07 S2 (water, fasting, sort), S4b (recap,
-averages), P07-17 e2e; P08–P10.
+Window reset at 05:20 IST (next reset 10:20 IST). Three builders, all at base d78c140 (prompts in
+`docs/handoff/wave10/`):
+- P07 S1b (P07-03 gauge and pillars, P07-04 day nutrients sheet and pillar picker), `/root/wt/wt-p07s1b`.
+- P07 S4c (P07-13 body-fat card and logging, P07-14 history sheets), `/root/wt/wt-p07s4c`.
+- P06-18 (product block, allergen line, label text; the saved-label notice slot; an OFF ingredients-markup
+  field on the draft), `/root/wt/wt-p06s18`.
+Next: P06 wave C (P06-11 entry editor, P06-19 selection bar and combine, P06-20 logging e2e), P07 S2 (P07-05..08
+water, fasting, sort, diary update), P07 S4b (P07-15 recap, P07-16 averages), P07-17 e2e; P08–P10.
 Landed this window: bca540b, 9d8d27d, 8b03cfd, ea9563c, 265c9b7, 257f9e3, 3d521f9, 21565b4, 7fbe51e (+ a0911d2
 restoring a prompt it dropped), 10a5f62, 83ee202, 8456a60, f6bd162, a66e465, 0478616, 57b504a, c1f0bd3, de1e2fe
 (latest full loop: unit 3046 passed + 2 expected-fail in 199 files, check 6/6, bundle 183.50 kB, e2e 2/2). If this
 container is gone, re-create the worktrees at their bases and relaunch the same prompts. **Progress:
-108/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 14/20, P07 2/17).
+114/176 tasks** (P00 10/10, P01 19/19, P02 15/15, P03 19/19, P04 14/14, P05 15/15, P06 16/20, P07 6/17).
 
 **Open for the user:** the OpenRouter attribution URL (`ATTRIBUTION_URL` in
 `src/ai/adapters/openaiCompat.ts`) is the project's repository URL until Platewise has a site; and
@@ -144,6 +143,12 @@ whether to fast-forward `main` to the work branch.
   repositories. The settings registry holds page components and is empty until P05-10. Follow-ups: the
   router restores scroll before late data draws (a re-apply after data is needed); no meal/flame/food
   icons; no photo hook yet (P06).
+- From wave 10 (lazy loading): new Settings pages register as `page: onDemand(() => import('./x/XPage').then((m) => m.XPage))`;
+  services that ask a model import `src/ai/tasks/*` with `await import(...)` at send time (a static import puts
+  the AI layer back in the start-up download: fitCheck and ingredientIntake did, fixed at landing); tests wait
+  for lazy pieces with `untilLoaded()` or load the module in a `beforeAll`. Follow-ups: lazy onboarding (about
+  −16 kB), Home's sheets on first open, a Rolldown chunk group for the many small shared chunks, and Retry after
+  a failed chunk fetch (Chrome keeps it failed until reload). Initial JS 201.26 kB after P06 landed.
 - Similarity findings for the P10-10 report (`docs/internals/similarity-report-v1.0.md`): P03-15/16, one
   activity-table line of a prompt rewritten by its builder; P05-12, the nutrient-name list in
   `src/i18n/en/goals.ts` shared a 13-word run in the reference's order and was rewritten in our model's order.
