@@ -162,6 +162,12 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P13 (the user asked 01:45 IST):** kg only (D-16.91), Coach reads Health Connect (D-16.94), reminders as Android
+notifications plus custom reminders made by hand or through the Coach (D-16.92, D-16.93), and an easier Coach chat.
+Plan `docs/plan/phases/P13-kg-coach-health-reminders.md`. Wave A builders running at b9a3f7a: S1 kg only
+(`/root/wt/wt-p13s1`), S2 Coach × Health Connect (`wt-p13s2`), S3 notifications and custom reminders (`wt-p13s3`);
+prompts in `docs/handoff/wave19/`. Wave B after P12/S2/S3 land: S4 the Coach chat UI and `propose_reminder`. 1.1.0
+(P12-05) ships with P12 and P13 together.
 **P12 (the user asked 01:30 IST, 2026-10-28):** an orange redesign (light: white and orange; dark: charcoal and
 orange; orange the default accent, D-16.90) and the official 1.1.0 release with an APK. Plan
 `docs/plan/phases/P12-orange-redesign-and-1.1.md`; the design builder (P12-01..04) runs in `/root/wt/wt-p12s1`

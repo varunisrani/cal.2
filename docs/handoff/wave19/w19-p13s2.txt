@@ -1,0 +1,21 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p13s2 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P13 S2, the Coach reads Health Connect (D-16.94). Spec: docs/plan/phases/P13-kg-coach-health-reminders.md (Goal item 3, D-16.94); src/services/coach/** (engine, tools, toolSchemas, context, snapshot, session) and the Coach's system prompt (find where it is written: grep the coach engine and i18n); src/services/health/** and src/data/repos/healthRepo.ts (the `activity` table and how the app reads it); docs/notes/P08/*.md and docs/notes/P11/*.md for how the Coach and the health data were built.
+Task note (before its text): docs/notes/P13/coach-health.md.
+
+Do:
+- A new read tool `activity_log` (name and schema in the style of the existing six): input a day range (from, to; at most 90 days; defaults to the last 7), output per day: steps, active kcal, total kcal, distance in metres, workouts (type, start, minutes, active kcal), in the same shape conventions as `daily_energy_totals` and `food_log` (energy in kcal, the person's energy unit noted the way the other tools note it). It exists only when the health service is available and connected (Android app); otherwise the tool is not offered to the model at all.
+- The Coach's context (the snapshot it gets each turn): when connected, today's steps, active and total calories, distance and workouts, whether "Count active calories" is on, and so what today's target is (goal + active kcal) — in a short block in the same style as the rest of the context. Nothing on the web.
+- The system prompt: tell the model what the activity data is, that active calories are already counted in the target when the switch is on (so it never double counts), that total calories include resting burn, and to use the activity tool for questions about steps, workouts, burn and trends; keep the prompt's existing rules (no medical claims, etc.).
+- Weight in the Coach is kg (S1 is making the app kg-only in parallel; if your tool outputs or context mention weight units, use kg).
+- Tests: tool schema, the tool's output from a fake activity repo (range clamp, empty days, workouts), the tool absent on the web and when not connected, the context block present/absent, the prompt naming the rules above (a test that the system prompt text contains the key sentences), and an engine test where the fake AI calls `activity_log` and the reply uses it (see the existing engine tests and e2e/fake-ai for how tool calls are faked).
+- Planted-key tests stay green (src/services/coach/plantedKey.test.tsx).
+
+You own: src/services/coach/**, the prompt text wherever it lives, src/services/health/** only for a read helper if needed, their tests, the note.
+Do not touch: src/features/coach/** UI and *.module.css (Wave B and P12), src/services/reminders/** (S3), the units code (S1), docs/** except the note, package.json, android/**.
+
+Tests and checks: the files you touch with --maxWorkers=1; `pnpm test` once; lint, fmt:check, typecheck; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`; `pnpm build`; `pnpm check:bundle` (the tool must not grow the web start-up download: keep it in the coach chunk or the health chunk).
+
+Final report as the rules file says (tests as file > describe > test name, and proposed acceptance rows for D-16.94). Leave everything uncommitted.

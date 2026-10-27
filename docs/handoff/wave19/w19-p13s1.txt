@@ -1,0 +1,20 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p13s1 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P13 S1, kg only (D-16.91). Spec: docs/plan/phases/P13-kg-coach-health-reminders.md (Goal item 1, D-16.91); src/domain/units/** (weight, defaults), src/data/settingsSchema.ts (`units.weight`), every place weight is shown or entered (grep for WeightDisplayUnit, 'lb', lbs, pounds, toDisplay/fromDisplay for weight, units.weight): the onboarding wizard (weight, goal weight, pace), Settings (units, goals, profile), weigh-in and body-fat sheets, Progress, Home, exports and imports (CSV/Markdown/diary file), the Coach's context and tool outputs, Health Connect weigh-ins, i18n strings.
+Task note (before its text): docs/notes/P13/kg-only.md.
+
+Do:
+- `units.weight` accepts only `kg`; a stored `lb` (or anything else) reads as `kg`, and the first read after the update writes `kg` back (a migration test). First-run defaults are kg in every locale (en-US, en-LR, my-MM included). Height and energy units are unchanged.
+- Remove the weight unit choice from Settings and the wizard (keep the height and energy choices). Every weight shown is kg with the existing decimals; every weight entered is kg (wheels, steppers, fields); pace is kg per week. No lb text anywhere a person can see (keep code that converts an imported pound value, with a test).
+- Weights are already stored in kg: no stored weight changes. A person who used lb sees the same weight in kg, rounded as kg displays round.
+- Tests: update the tests that pinned lb behaviour to kg (say which), add tests that a stored `lb` shows kg everywhere a weight is shown (Home/Progress/weigh-in sheet/goals at least) and that en-US starts in kg. List the acceptance rows and trap rows whose wording changes (ACC-B11-1 and ACC-B11-2 at least, any R01.x about lb) with the new wording and their tests, for the lead to put in the ledgers.
+- The parity scenarios (parity/*.platewise.json) and e2e specs that pick lb or check pounds: update them to kg (say which).
+
+You own: the files above under src/** and their tests, parity/*.platewise.json steps that use lb, e2e specs that use lb, the note.
+Do not touch: *.module.css and src/ui/** styling (P12's design builder is restyling now; if markup must change, keep it minimal), src/services/coach/** (S2), src/services/reminders/** (S3), docs/** except the note, package.json, android/**.
+
+Tests and checks: the files you touch with --maxWorkers=1; `pnpm test` once; lint, fmt:check, typecheck; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`; `pnpm build`; `pnpm check:bundle`; `pnpm e2e` once on PLATEWISE_E2E_PORT=4188 PLATEWISE_FAKE_AI_PORT=4338.
+
+Final report as the rules file says, with the ledger rows to change. Leave everything uncommitted.
