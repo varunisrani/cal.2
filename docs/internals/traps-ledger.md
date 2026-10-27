@@ -423,6 +423,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > ends the running fast when switched off, keeps it, says so, and food logs again (ACC-H10-1, R05.2)
   - Test: src/services/fasting.test.ts > settings > ends the running fast when fasting is switched off, keeping it and the water logs (R05.2)
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > keeps Fasting while a fast runs with fasting switched off, and never offers Start fast then (R05.2)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > ends a fast that runs in the backup while fasting is off in it (R05.2)
 - **R05.3** Fast edits are validated atomically against the stored list; End fast now is one write
   - Test: src/domain/trackers/fasting.test.ts > checkEdit (R05.3) > refuses editing a completed fast into another's span and changes nothing (R05.3)
   - Test: src/domain/trackers/fasting.test.ts > canStart (R05.3) > refuses a start while one is active (R05.3)
@@ -554,14 +555,24 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/db.test.ts > openDb > refuses a database a newer version wrote and leaves it exactly as it was (R06.4)
   - Test: src/data/db.test.ts > openDb > turns a failing upgrade into DbOpenError and keeps version 1 with its rows (R06.4)
 - **R06.5** Erase everything invalidates any running backup before wiping
+  - Test: src/services/backup/service.test.ts > createBackupService > never offers or records a backup that started before everything was erased (R06.5)
+  - Test: src/services/backup/backup.test.ts > offerBackup > records nothing when everything was erased while the share sheet was open (R06.5)
   - Review: owned by P09-15
 - **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything
-  - Review: owned by P09-13
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > gives back identical tables after backup, erase everything and restore, and no keys (R06.6)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses a newer version, changing nothing (R06.6)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses a damaged file, changing nothing (ACC-K4-2, R06.6)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses for lack of storage before anything changes, and restores with exactly enough (R06.6)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > leaves everything as it was, flag included, when a write inside the restore fails (R06.6)
+  - Test: src/data/repos/backupRepo.test.ts > createBackupRepo > restore > changes nothing, flag included, when one write fails (R06.6)
+  - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet from the Backup card > cannot be dismissed while restoring, and the restore finishes when the sheet is gone (R06.6)
 - **R06.7** The backup hash leaves out backup bookkeeping and device-local state
   - Test: src/services/backup/hash.test.ts > contentHash > does not change when backup.lastAt changes, appears or goes (R06.7)
   - Test: src/services/backup/hash.test.ts > contentHash > leaves out every device-local setting and table (R06.7)
+  - Test: src/services/backup/backup.test.ts > makeBackup > gives the same hash again after the last backup time was recorded (R06.7)
 - **R06.8** Restore states what it will replace and asks first (D-16.42)
-  - Review: owned by P09-13
+  - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)
 - **R06.9** Archive entry names are plain photo names only, when writing and reading
   - Test: src/services/backup/archive.test.ts > packBackup and unpackBackup > skips the same names when reading, with every other stray entry, and lists them (R06.9)
   - Test: src/services/backup/archive.test.ts > isSafePhotoName > refuses every other name rather than cleaning it up (R06.9)

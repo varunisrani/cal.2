@@ -538,7 +538,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/data/repos/secretsRepo.test.ts > mask (ACC-E14-1) > shows the first four and the last four characters of a 40-character key
   - Test: src/features/ai-setup/KeyField.test.tsx > KeyField > shows a saved key masked, never whole, and offers to replace it (ACC-E14-1)
 - **ACC-E14-2** A backup file never contains a key
-  - Review: P09-13
+  - Test: src/services/backup/backup.test.ts > makeBackup > never holds a key, the rows kept aside or this device’s state (ACC-E14-2, R06.7)
 
 ## F · Home and day view
 
@@ -942,14 +942,18 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### K3 · Back up to a file (P1)
 
 - **ACC-K3-1** Back up now produces one file with the diary, photos and chat
-  - Review: P09-13
+  - Test: src/services/backup/backup.test.ts > makeBackup > makes one file with the diary, its photos and the Coach chat (ACC-K3-1)
+  - Test: src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)
 
 ### K4 · Restore from a file (P1)
 
 - **ACC-K4-1** Restore shows what the file holds and asks before replacing anything
-  - Review: P09-13
+  - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > shows when the backup was made and what it holds, and changes nothing before Restore (R06.8, ACC-K4-1)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > shows what the file holds before anything changes (R06.8, ACC-K4-1)
 - **ACC-K4-2** A damaged file changes nothing
-  - Review: P09-13
+  - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a file is not a backup and changes nothing (ACC-K4-2)
+  - Test: src/features/settings/data/RestoreSheet.test.tsx > RestoreSheet > says a damaged file changed nothing (ACC-K4-2)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > refuses a damaged file, changing nothing (ACC-K4-2, R06.6)
 
 ### K5 · Clear the diary (P1)
 

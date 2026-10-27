@@ -3,6 +3,7 @@ import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
 import type { AppSettingsService } from './appSettings';
+import type { BackupService } from './backup/service';
 import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
 import type { CoachSession } from './coach/session';
@@ -86,6 +87,8 @@ export interface Services {
   readonly transfer?: TransferService;
   /** Settings › App settings, Tab bar, Product details (P09-02/04/06); optional likewise. */
   readonly appSettings?: AppSettingsService;
+  /** Backup files and restoring them (P09-13); optional for the same reason. */
+  readonly backup?: BackupService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }

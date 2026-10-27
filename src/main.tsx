@@ -13,6 +13,7 @@ import { documentVisibility } from './app/useTuneUp';
 import { DataProvider, type DataSources } from './data/DataProvider';
 import { openDb } from './data/db';
 import { hasUnreadableData } from './data/guard';
+import { createBackupRepo } from './data/repos/backupRepo';
 import { createBodyFatRepo } from './data/repos/bodyFatRepo';
 import { createCoachRepo } from './data/repos/coachRepo';
 import { createDiaryRepo } from './data/repos/diaryRepo';
@@ -33,6 +34,7 @@ import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
 import { createAppSettingsService } from './services/appSettings';
+import { createBackupService } from './services/backup/service';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
 import { createCoachSession } from './services/coach/session';
@@ -123,6 +125,12 @@ async function start(): Promise<void> {
 
   const storage = createStorageAccess({ settings: settingsRepo });
   const photoRepo = createPhotoRepo(db);
+  const backupRepo = createBackupRepo(db);
+  // A restore's flag that a closed tab left behind would pause photo cleanup for good; the
+  // restore itself either committed whole or rolled back.
+  await backupRepo.endRestore().catch((error: unknown) => {
+    console.error('Platewise: clearing a stale restore flag failed', error);
+  });
   // One drafts repository for the capture draft and the analysis draft (same table).
   const draftsRepo = createDraftsRepo(db);
   const photos = createPhotoService({ photoRepo });
@@ -274,6 +282,16 @@ async function start(): Promise<void> {
     // The diary file (P09-10, P09-11): its modules load on first use.
     transfer: createTransferService({ transferRepo: createTransferRepo(db), photoRepo }),
     appSettings: createAppSettingsService({ settingsRepo }),
+    backup: createBackupService({
+      backupRepo,
+      settingsRepo,
+      fastRepo,
+      photoRepo,
+      storage,
+      clock: systemClock,
+      // Until the build constant of P09-16 exists.
+      appVersion: '0.1.0',
+    }),
     clock: systemClock,
   };
   const data: DataSources = {

@@ -4,6 +4,7 @@ import { ai } from './en/ai';
 import { aiSetup } from './en/aiSetup';
 import { appearance } from './en/appearance';
 import { appSettings } from './en/appSettings';
+import { backup } from './en/backup';
 import { capture } from './en/capture';
 import { charts } from './en/charts';
 import { coach } from './en/coach';
@@ -63,6 +64,7 @@ export const enPartitions = {
   reminders,
   transfer,
   appSettings,
+  backup,
 } as const;
 
 /** The one English catalogue: every user-visible string of the app. */
