@@ -2,10 +2,10 @@
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
   "state": "ACTIVE",
-  "usage_pct": 35,
-  "remaining_pct": 65,
-  "resets_at": "2026-10-28T01:20:00+05:30",
-  "last_check": "2026-10-28T01:35:00+05:30",
-  "current_step": "P12 (user request): orange redesign + 1.1.0 release; design builder running",
+  "usage_pct": 22,
+  "remaining_pct": 78,
+  "resets_at": "2026-10-28T06:20:00+05:30",
+  "last_check": "2026-10-28T02:14:00+05:30",
+  "current_step": "P12 redesign builder + P13 wave A (kg only, Coach x Health Connect, notifications and custom reminders)",
   "last_commit": "27e5604"
 }
