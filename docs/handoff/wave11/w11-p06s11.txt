@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s11 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave C slice S11 = P06-11, the entry editor. Spec: that row in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3.7; D-16.19 and R02.21. Traps and acceptance ids: every row whose Review line names P06-11.
+Task note (before its code): docs/notes/P06/entry-editor.md.
+
+You own:
+- src/features/log/EntryEditor.tsx (+ test; css) and a new catalogue partition src/i18n/en/editor.ts (register it in src/i18n/en.ts: one additive line)
+- `updateEntry` (and, if needed, `deleteEntry` with confirmation handled in the UI) in src/services/diary.ts (+ tests), staging photo removals until Save and releasing only the removed photos after the write (src/services/photos.ts: import, extend additively only if a release helper is missing)
+
+Do not touch:
+- src/features/home/** (P06-19 wires the row tap and mounts the editor: make EntryEditor a component that takes the entry id and onClose, testable on its own), src/features/progress/**, src/features/water/**, src/features/fasting/** (other builders, now), src/domain/** (import only: scaling, notes, recipe split), src/data/** (import only), src/ai/** (import; load AI tasks with `await import(...)` at call time, never statically), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- Reuse the review sheet's parts (src/features/log/review/**) rather than copying them; extend them additively (a mode prop) when the editor needs Save instead of Log. Save is the primary action; it becomes Reprocess while the note differs from the saved note; nothing is written until Save; Save keeps `loggedAt` to the millisecond unless the date or the minute changed. A refused write while a fast is active comes back as the service's `fastActive` result: show the existing paused toast for now (P07-07 adds the shared dialog).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/log src/services/diary.test.ts src/services/photos.test.ts src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

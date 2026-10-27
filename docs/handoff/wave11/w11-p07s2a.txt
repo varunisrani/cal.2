@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s2a (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave B slice S2a = P07-06, water flows and settings. Spec: that row in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.6; D-16.39. Traps and acceptance ids: every row whose Review line names P07-06.
+Task note (before its code): docs/notes/P07/water-flows-and-settings.md.
+
+You own:
+- src/features/water/** (WaterMenuPage, CustomWaterSheet, WaterSettings, PresetsEditor; + tests; css)
+- src/features/settings/tracking/TrackingPage.tsx (+ test), registered with `onDemand` in src/features/settings/registry.ts (additive); it mounts WaterSettings now and leaves a clearly marked place for the fasting settings (another builder makes FastingSettings now; the lead mounts it at landing)
+- a new catalogue partition src/i18n/en/trackers.ts for the water and Tracking words (register it in src/i18n/en.ts: one additive line)
+- a water service if none exists (src/services/water.ts: add a log on the selected day, settings writes; additive in Services and main.tsx)
+
+Do not touch:
+- src/features/home/** and src/features/log/AddMenu.tsx (P07-08 puts WaterMenuPage into the + menu later: make it a component with onDone/onBack, testable on its own), src/features/fasting/**, src/features/progress/** (other builders, now), src/domain/** (import only: P01-05 input filters, water units, the selected-day rule), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. New Settings pages register with `onDemand` (see src/features/settings/registry.ts). With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- As the row says: three quick-add amounts log at once with a short confirmation; Custom amount has one numeric field with the unit suffix, Add enabled above 0, capped at 5 000 ml; untouched preset fields keep their exact ml through a fl oz round trip; Save disabled on error; Reset. Water is off by default; turning it off also turns its reminder setting off (the reminder itself is P09-08: only the setting).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/water src/features/settings src/services src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

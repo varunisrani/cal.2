@@ -1,0 +1,25 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s4b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave B slice S4b = P07-15, the weekly recap. Spec: that row in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.5.6; R05.19, D-16.44. Traps and acceptance ids: every row whose Review line names P07-15.
+Task note (before its code): docs/notes/P07/weekly-recap.md.
+
+You own:
+- src/domain/progress/recap.ts (+ test): pure, no I/O
+- src/features/progress/RecapCard.tsx (+ test; css) and its place in src/features/progress/ProgressPage.tsx (one mount; another builder adds the calories and averages cards to the same page now, and the lead merges)
+- your words in the progress partition (src/i18n/en/progress.ts: additive keys only)
+
+Do not touch:
+- other src/features/progress/** files (landed: import), src/features/home/**, src/features/log/**, src/features/water/**, src/features/fasting/** (other builders, now), other src/domain/** (import only: week start, day keys, targets, energy units), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- As the row says: the most recent completed week by the app's week start, never the current week; ±10 % calorie-target days always compared in kcal (kJ only for display); protein rounded to a whole gram; at most three highlights, improvements only, in the row's order; workout tiles, burn and the more-workouts highlight are left out; forward arrow stops at offset 0 (session only); an empty message; a re-read of today on foreground. Water and fasts never count (R05.4).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/domain/progress src/features/progress src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

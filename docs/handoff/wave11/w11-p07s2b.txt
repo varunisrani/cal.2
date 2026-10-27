@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s2b (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave B slice S2b = P07-07, fasting flows, editor, settings and the paused dialog. Spec: that row in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.7; D-16.35. Traps and acceptance ids: every row whose Review line names P07-07 (R05.20's alert is P09-08: leave its review line).
+Task note (before its code): docs/notes/P07/fasting-flows-editor-and-settings.md.
+
+You own:
+- src/features/fasting/** (StartFastSheet, FastEditor, FastingSettings, PausedDialog; + tests; css). FastingSettings is a component the lead mounts on the Tracking page at landing (another builder creates that page now); do not create the page.
+- a new catalogue partition src/i18n/en/fasting.ts (register it in src/i18n/en.ts: one additive line)
+- a fasting service if none exists (src/services/fasting.ts: start, end now, cancel, edit, delete, the settings switch that ends an active fast; additive in Services and main.tsx)
+- wiring PausedDialog into the food paths that already get the diary service's `fastActive` result: src/features/log/review/ReviewSheet.tsx, src/features/log/ManualSheet.tsx, src/features/log/CopyDaySheet.tsx and the reuse sheets under src/features/log/reuse/ (replace their paused toast or flag with the dialog; "End fast and log" calls a service method backed by `diaryRepo.endFastAndAdd`). Only those lines in those files.
+
+Do not touch:
+- src/features/home/** and src/features/log/AddMenu.tsx (P07-08 adds Start fast / Fasting to the + menu and P07-05 the fast rows later: make StartFastSheet and FastEditor components with onClose, testable on their own), src/features/water/**, src/features/settings/** (another builder, now), src/features/progress/**, src/domain/** (import only: P01-08 fasting rules), src/data/** (import only: fastRepo, diaryRepo.endFastAndAdd), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts.
+- As the row says: goal stepper 1–168 h seeded with the default; Ended never before Started; an active fast's End fast now is one write with the edits (`fastRepo.endNow`); Save keeps an active fast active; refusals show "overlaps another fast" with a hint and change nothing; fasting is off by default; turning it off ends an active fast. The combine path gets the dialog in P06-19.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/fasting src/features/log src/services src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
