@@ -1,0 +1,27 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p06s19 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P06 wave C slice S19 = P06-19, Home selection and combine; the row tap opens the entry editor; the saved heart on rows. Spec: that row in docs/plan/phases/P06-logging-flows.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 02 §3 (combine, D-16.20, P01-11). Traps and acceptance ids: every row whose Review line names P06-19.
+Task note (before its code): docs/notes/P06/home-selection-and-combine.md.
+
+You own:
+- src/features/home/SelectionBar.tsx (+ test; css) and src/features/home/EntryRow.tsx (+ test): long-press (and a select button for keyboard users) enters selection mode; the "+" button is replaced by the bar with the count, Cancel and Combine (enabled at ≥ 2); row tap opens the landed `EntryEditor` (src/features/log/EntryEditor.tsx) as a Home sheet through `onDemand`; the heart toggles a saved meal from the row
+- the selection state and the bar's place in src/features/home/HomePage.tsx and src/features/home/Diary.tsx (+ tests): only what selection, the editor sheet and the heart need
+- src/services/combine.ts (+ test): builds the entry with P01-11 (summing every nutrient all rows know, D-16.20) and writes it with `diaryRepo.combine` in one transaction; a refusal while a fast is active returns `fastActive` and the UI shows the landed `PausedDialog` (src/features/fasting/); additive in Services and main.tsx
+- your words in the home partition (src/i18n/en/home.ts: additive keys)
+
+Do not touch:
+- src/features/home/{SortMenu,WaterRow,FastRow}.tsx and src/features/log/AddMenu.tsx (another builder adds the diary's sort, water and fast rows and the + menu's tracker rows now; keep your Diary.tsx and HomePage.tsx changes to selection, the editor sheet and the heart so the merge stays small), src/features/log/** other than importing EntryEditor, src/features/fasting/** and src/features/water/** (landed: import), src/domain/** (import only), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 209): the editor and the dialog load on demand.
+- As the row says: three rows → Combine → one entry named "A + B + C" at the latest time, the originals gone, in one transaction; a nutrient is summed only when every row knows it; with a fast active nothing changes and the paused dialog shows; only food rows can be selected (water and fast rows cannot).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/home src/services/combine.test.ts src/i18n --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4188 PLATEWISE_FAKE_AI_PORT=4334 pnpm exec playwright test e2e/walking-skeleton.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, check:bundle (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

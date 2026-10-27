@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p07s2c (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P07 wave C slice S2c = P07-05 and P07-08, the trackers on Home: the diary's sort modes, water and fast rows, and the + menu's water and fasting entries. Spec: those two rows in docs/plan/phases/P07-home-progress-trackers.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 05 §3.3–3.4; R05.9. Traps and acceptance ids: every row whose Review line names P07-05 or P07-08.
+Task notes (each before its code): docs/notes/P07/diary-sort-water-and-fast-rows.md, docs/notes/P07/add-menu-water-and-fasting.md.
+
+You own:
+- src/features/home/{SortMenu,WaterRow,FastRow}.tsx (+ tests; css) and the changes they need in src/features/home/Diary.tsx (+ test) and src/features/home/HomePage.tsx (+ test): water logs and fasts for the selected day (P01-08 `fastsOnDay`), the sort control in the first section header only, persisted; swipe-delete with confirmation for water and completed fasts; tap a fast → the landed `FastEditor` (src/features/fasting/) as a Home sheet
+- src/features/log/AddMenu.tsx (+ test): below the food groups a divider, Water (water tracking on) opening the landed `WaterMenuPage` (src/features/water/), and Start fast (fasting on, none active, opening the landed `StartFastSheet`) or Fasting (active: End fast, Cancel fast, Back, acting at once through the fasting service); while a fast is active every food group and method is hidden
+- your words in the home and menu partitions (src/i18n/en/home.ts, src/i18n/en/menu.ts: additive keys)
+
+Do not touch:
+- src/features/home/EntryRow.tsx and the selection mode (another builder adds selection and combine now; keep your Diary.tsx and HomePage.tsx changes to the rows, sheets and menu you own so the merge stays small), src/features/water/**, src/features/fasting/** (landed: import; extend a component additively only if a prop is missing), src/features/progress/**, src/domain/** (import only), src/data/** (import only), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Sheets that pull in a feature's code open through `onDemand` so Home's first chunk stays small (bundle budget 250 kB gzip; now about 209).
+- As the rows say: newest-first shows repeated meal sections; the active fast row ticks every second while visible (elapsed, goal, a thin bar capped at 1); completed fasts show duration, start–end and goal; rows of a tracker that is switched off still show; water rows show the drop icon, "Water", time and the amount in the water unit. Water and fasts never change a section total (R05.4: the domain already guarantees it; keep a test).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/features/home src/features/log/AddMenu.test.tsx src/i18n --maxWorkers=1
+- e2e (after pnpm build): PLATEWISE_E2E_PORT=4187 PLATEWISE_FAKE_AI_PORT=4333 pnpm exec playwright test e2e/walking-skeleton.spec.ts e2e/onboarding.spec.ts --workers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref, check:bundle (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
