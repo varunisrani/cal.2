@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 18:55 IST (Agent 1, session 3), ACTIVE to 100 % (user). 168/176 tasks; P00–P09 complete; the app runs on the
+Updated: 2026-10-27 18:55 IST (Agent 1, session 3), ACTIVE to 100 % (user). 170/176 tasks; P00–P09 complete; the app runs on the
 real database. Window reset 15:20 IST (next reset 20:20 IST); P10 parity, security and similarity landed; P10-07/08/11 builder running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -146,10 +146,12 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 (stop builders, patches to `.agents/wip/`, push), since nothing can be pushed at 100 %. Builder running at 71e9727:
 P10-07/08/11 resumed from `.agents/wip/p10s3.patch` in `/root/wt/wt-p10s3b` (playwright.config.ts conflict resolved:
 `offline-chromium` and `...otherEngines` both kept). Earlier: STOPPED_90 at 18:21 IST (88 % read at 18:15).
-Builder running at 94031fd: P10-05/06 acceptance strict pass and traps ledger completion (`/root/wt/wt-p10s2`, prompt
-`docs/handoff/wave16/w16-p10s2.txt`; at that base `check:acceptance --strict` fails on five rows: ACC-B11-1, B13-1,
-C12-2, and L6-2/L9-1 which the P10-07/08/11 builder owns; three v1-owned trap rows keep a Review line: R05.18, R06.1's
-banner, R06.22's settings screens).
+P10-05/06 landed at 19:27 IST as 0ee2a33 (full loop: unit 5129 passed + 2 expected-fail, check 6/6, bundle 235.49 kB,
+e2e 37 + 1 skipped by design). `check:acceptance --strict` fails only on ACC-L6-2 and ACC-L9-1 (the P10-07/08 builder
+owns them); `pnpm ledger:gaps` lists none. **Lead decision (K9):** the damaged-data banner is a P1 feature that is missing
+(the guard sets `meta.unreadableData`, `useUnreadableFlag` in `src/data/hooks.ts` reads it, no screen shows it). Build
+it before P10-14 as a small slice (a shell notice using the hook, with a dismiss that clears the flag, a test that fails
+first), then move it from Known gaps to a Test line on R06.1; not N-9.
 Landed at 18:31 IST (89 % read), after the full loop passed (unit 5121 passed + 2 expected-fail in 360 files, check 6/6,
 bundle 235.49 kB, e2e 37 passed + the offline test skipped by design in `mobile-chromium`): 4deddf0 P10-01..04 parity
 (13 REA scenarios, 14/14 flows, `pnpm parity`, obligations ledger, parity report, the `reuse.saved.row` fix,
@@ -175,7 +177,7 @@ handler; onboarding still has its own notification ask; `diaryRepo.clear()` coul
 rewrite; nothing listens to `db.ts`'s reload-needed message for schema upgrades from another tab; zxing-wasm's
 bundled zxing-cpp (Apache-2.0) and zint (BSD-3) notices are not in Credits; a small stored photo keeps its own bytes
 (and any location data) in backups.
-**Progress: 168/176 tasks** (P00–P09 complete, P10 8/14). Open security decisions from P10-09
+**Progress: 170/176 tasks** (P00–P09 complete, P10 10/14). Open security decisions from P10-09
 (lead, before P10-14): S-3 drop the CSP's `http://[::1]:*` (and refuse `[::1]` in `checkServerUrl`, changing
 D-16.26's list), S-5 add `form-action 'none'`, S-4 host headers, S-15 `pnpm audit` in CI; S-6..S-9, S-12 small fixes
 proposed in `docs/internals/security-review-v1.0.md`.
