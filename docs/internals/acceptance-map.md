@@ -445,6 +445,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/fasting/PausedDialog.test.tsx > the review during a fast (D-16.35) > ends the fast and logs the food in one step with End fast and log (ACC-D27-1)
   - Test: src/features/log/ManualSheet.test.tsx > ManualSheet > ends the fast and stores the entry with End fast and log (ACC-D27-1, D-16.35)
   - Test: src/services/fasting.test.ts > endFastAndLog (D-16.35) > ends the running fast now and stores the food, in one step (ACC-D27-1)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a manual entry when a fast starts in another tab; End fast and log does both (ACC-D27-1, R05.1, D-16.35)
 - **ACC-D27-2** No path writes food during an active fast
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
 
@@ -551,8 +552,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-F1-1** Selecting last Monday shows that day's diary
   - Test: src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows the week bar on today, and last Monday's diary and summary once it is selected (ACC-F1-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 - **ACC-F1-2** Tomorrow cannot be selected
   - Test: src/features/home/WeekBar.test.tsx > WeekBar > shows the days after today but never selects them: tomorrow is disabled (ACC-F1-2, D-16.36)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 
 ### F2 · Swipe the day summary to change day, never past today (P1)
 
@@ -560,6 +563,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/DaySwipe.test.tsx > DaySwipe > shows yesterday after a swipe of 100 px toward the right (ACC-F2-1)
   - Test: src/features/home/DaySwipe.test.tsx > DaySwipe > never moves past today: a swipe toward the left on today does nothing (ACC-F2-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: the selected day (P07-01, P07-02) > shows yesterday after a swipe toward the right on the summary; toward the left on today does nothing (ACC-F2-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > swipes the summary to yesterday and back, never past today (ACC-F2-1)
 
 ### F3 · Energy gauge with the eaten amount and left, over, goal reached or … (P0)
 
@@ -572,6 +576,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-F4-1** Home shows protein, carbs, fat and fibre pillars by default
   - Test: src/features/home/DaySummary.test.tsx > DaySummary pillars > shows protein, carbs, fat and fibre against their goals, in that order (ACC-F4-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)
 - **ACC-F4-2** A sodium pillar shows how far over its limit the day is
   - Test: src/features/home/PillarRow.test.tsx > PillarRow > shows 200 mg over on a sodium pillar with a goal of 2 300 and 2 500 eaten (ACC-F4-2)
 
@@ -580,20 +585,24 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-F5-1** Choosing a fifth nutrient replaces the most recent choice
   - Test: src/features/home/PillarPicker.test.tsx > PillarPicker > replaces the latest pick when a fifth nutrient is picked (ACC-F5-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > chooses pillars over the sheet: Done stores them and Home shows them (ACC-F5-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)
 
 ### F6 · All-nutrients sheet for the selected day (P1)
 
 - **ACC-F6-1** The sheet lists every nutrient for the selected day with its goal
   - Test: src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > lists every nutrient of the day with its unit and its goal (ACC-F6-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > opens the shown day's nutrients from All nutrients: yesterday's while yesterday is shown (ACC-F6-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)
 
 ### F7 · Diary grouped by meal with food-only section totals (P0)
 
 - **ACC-F7-1** Entries appear under their meal with that meal's total
   - Test: src/features/home/Diary.test.tsx > Diary > shows a 300 kcal breakfast under Breakfast with the section total 300 (ACC-F7-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > sorts the diary newest first, where breakfast comes back, and by meal again (ACC-F7-1, ACC-F7-2)
 - **ACC-F7-2** Newest first shows repeated meal sections in time order
   - Test: src/features/home/Diary.test.tsx > Diary: water, fasts and the sort order (P07-05) > shows repeated meal sections in time order when sorted newest first (ACC-F7-2)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > stores the sort order from the first header; newest first shows a meal again (ACC-F7-2)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > sorts the diary newest first, where breakfast comes back, and by meal again (ACC-F7-1, ACC-F7-2)
 
 ### F8 · Water and fast rows in the diary (P1)
 
@@ -602,6 +611,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
 - **ACC-F8-2** The active fast row counts up every second
   - Test: src/features/home/FastRow.test.tsx > FastRow > advances by one second with fake timers (ACC-F8-2)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)
 
 ### F9 · Swipe to delete diary rows, always with a confirmation (P1)
 
@@ -609,6 +619,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/WaterRow.test.tsx > WaterRow > asks before deleting on a swipe, and keeps the log on Cancel (ACC-F9-1)
   - Test: src/features/home/WaterRow.test.tsx > WaterRow > deletes the log once Delete is confirmed (ACC-F9-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > asks before deleting a water row and removes it once confirmed (ACC-F9-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 
 ### F10 · Empty-day message (P0)
 
@@ -621,9 +632,11 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-F11-1** With water tracking on, the + menu has a Water page that logs a preset at once
   - Test: src/features/water/WaterMenuPage.test.tsx > WaterMenuPage > logs 500 ml on the selected day at once, confirms it and is done (ACC-F11-1)
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > opens the water page inside the menu, where a preset logs on the day shown at once (ACC-F11-1, ACC-H1-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 - **ACC-F11-2** During a fast the + menu shows only water and fasting entries
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > shows only Water and Fasting while a fast runs: no food group or method (ACC-F11-2)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)
 
 ### F12 · Long-press multi-select with a combine bar (P1)
 
@@ -631,6 +644,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/EntryRow.test.tsx > EntryRow: on Home (P06-19) > starts picking after a press held still for half a second, and the click that ends it does nothing more (ACC-F12-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: picking and combining rows (P06-19) > starts picking on a long-press: the bar with the count, Cancel and Combine takes the place of "+" (ACC-F12-1)
   - Test: src/features/home/SelectionBar.test.tsx > SelectionBar > says how many rows are picked and offers Combine from two (ACC-F12-1)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a combine during a fast; End fast and log ends it and combines (ACC-F12-1, R05.1, D-16.35)
 
 ## G · Progress, weight and body fat
 
@@ -649,6 +663,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-G3-1** The weight chart shows the goal line and a tooltip when pressed
   - Test: src/ui/charts/LineChart.test.tsx > LineChart > draws the goal line and shows a tooltip on the nearest point while pressed and dragged (ACC-G3-1)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **ACC-G3-2** A change under 0.05 kg reads 0.0 without a sign
   - Test: src/features/progress/WeightCard.test.tsx > WeightCard > shows 0.0 without a sign for a net change of −0.04 kg (ACC-G3-2)
   - Test: src/domain/progress/ranges.test.ts > changeToTenth > reads a change closer to zero than 0.05 as 0, never −0 (ACC-G3-2)
@@ -658,8 +673,10 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-G4-1** A weight logged for last week lands on that day without changing the current weight
   - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > logs a weight for last week on that day at the current clock time, keeping the current weight (ACC-G4-1)
   - Test: src/services/progress.test.ts > logWeight > puts an earlier day at the current clock time and keeps the newer profile weight (ACC-G4-1)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **ACC-G4-2** Toggling lb in the log sheet changes the app's weight unit
   - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 
 ### G5 · Body-fat card and Log body fat (3–60 % in 0.5 steps) (P1)
 
@@ -670,27 +687,32 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-G6-1** Deleting a weigh-in asks first and removes it from the list at once
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)
 
 ### G7 · The profile's weight and body fat follow the latest reading (P1)
 
 - **ACC-G7-1** Deleting the latest weigh-in sets the profile weight to the previous one
   - Test: src/data/repos/weightRepo.test.ts > deleteWeighIn (R05.8) > sets the profile weight to the previous reading when the latest is deleted (ACC-G7-1, R05.8)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)
 
 ### G8 · Weekly recap of the last completed week against the one before, … (P1)
 
 - **ACC-G8-1** The recap shows days logged out of 7 and the change from the week before
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > recaps the last week that ended: days logged of 7 with the change from the week before (ACC-G8-1, R05.19)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 - **ACC-G8-2** At most three highlights appear, improvements only
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > names a step forward and never a step back (ACC-G8-2)
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows at most three lines, the first three in their order (ACC-G8-2, R05.19)
   - Test: src/domain/progress/recap.test.ts > highlightsFor > keeps the first three in their order when more improved (R05.19, ACC-G8-2)
   - Test: src/domain/progress/recap.test.ts > highlightsFor > never names a step back (ACC-G8-2)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 
 ### G9 · Count-today switch for the nutrition charts (P1)
 
 - **ACC-G9-1** Turning off Count today removes today's partial day from the averages
   - Test: src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not
   - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > takes out the partial today when Count today is turned off on the page (ACC-G9-1, R05.17)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 
 ### G10 · Calorie history bars with a goal line and inspector (P1)
 
@@ -711,6 +733,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/settings/tracking/TrackingPage.test.tsx > TrackingPage > adds the water pillar on Home once water is turned on, and a log from the water page fills it (ACC-H1-1)
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > logs a custom amount from the + menu's water page on the sheet over Home (ACC-H1-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 
 ### H2 · Three quick-add amounts (1–5 000 ml) that keep exact values … (P1)
 
@@ -723,13 +746,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/water/CustomWaterSheet.test.tsx > CustomWaterSheet > refuses 6 000 ml with a message naming 5,000 ml and stores nothing (ACC-H3-1, R05.10, D-16.39)
   - Test: src/services/water.test.ts > logWater > refuses more than 5 000 ml, nothing, and part of a ml, storing nothing (ACC-H3-1, D-16.39)
 - **ACC-H3-2** Water logged while yesterday is selected lands on yesterday
-  - Review: P07-17
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 
 ### H4 · Water pillar and water section in the all-nutrients sheet (P1)
 
 - **ACC-H4-1** The water pillar shows today's amount against the goal
   - Test: src/features/home/PillarRow.test.tsx > PillarRow > shows the day's water against the daily goal in the water unit (ACC-H4-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: pillars and the day's nutrients (P07-03, P07-04) > shows the stored pillars, then water with the shown day's logs while it is tracked (ACC-H4-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 
 ### H5 · Water reminder with a time picker, default 14 (P1)
 
@@ -742,12 +766,14 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/fasting/FastingSettings.test.tsx > FastingSettings > shows the default goal of 16 hours once fasting is on (ACC-J10-1, ACC-H6-1)
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: water and fasting (P07-08) > offers Water, then Start fast, under a hairline while each is tracked (ACC-H1-1, ACC-H6-1)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > starts a fast from the + menu; while it runs the menu holds only Fasting, which ends it (ACC-H6-1, ACC-F11-2)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)
 
 ### H7 · Start, end and cancel a fast from the + menu (P1)
 
 - **ACC-H7-1** Starting a 16 h fast shows it as active; cancelling removes it from history
   - Test: src/features/fasting/StartFastSheet.test.tsx > StartFastSheet > opens on the default 16 hours and starts a running fast now (ACC-H7-1)
   - Test: src/features/fasting/FastEditor.test.tsx > FastEditor > cancels a running fast so it leaves no history (ACC-H7-1)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)
 
 ### H8 · Fast editor (P1)
 

@@ -424,6 +424,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add while a fast runs and writes nothing (R05.1, R02.12, ACC-D27-2)
   - Test: src/data/repos/diaryRepo.test.ts > food during a fast > refuses an add that was waiting while another transaction started a fast (R05.1)
   - Test: src/features/fasting/PausedDialog.test.tsx > the review during a fast (D-16.35) > shows the paused dialog when Log meets a running fast, and writes nothing (R05.1)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a combine during a fast; End fast and log ends it and combines (ACC-F12-1, R05.1, D-16.35)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a manual entry when a fast starts in another tab; End fast and log does both (ACC-D27-1, R05.1, D-16.35)
 - **R05.2** Turning fasting off ends the active fast; an active fast restored with tracking off is ended on open
   - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > switching fasting off ends the running fast, keeps it and the water logs, and leaves no fast to block food (ACC-H10-1, R05.2)
   - Test: src/data/repos/fastRepo.test.ts > setTracking (R05.2) > keeps the switch as it was when ending the fast fails: one transaction (R05.2)
@@ -451,10 +453,12 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/progress/NutritionCards.test.tsx > NutritionCards > counts food only: water and a fast on a day without food add no bar and change no average (R05.4)
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows only the empty message for a week of water and fasts (R05.4)
   - Test: src/features/home/Diary.test.tsx > Diary: water, fasts and the sort order (P07-05) > puts water in the meal of its time and a fast in the meal it ended in, never in the totals (R05.4)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 - **R05.5** Readings logged today stay inside range windows (half-open day range)
   - Test: src/domain/dates/ranges.test.ts > inDays > keeps a reading logged at 21:00 on the last day inside the window (R05.5)
   - Test: src/domain/dates/ranges.test.ts > inDays > includes the whole first and last day and nothing outside them
   - Test: src/domain/progress/ranges.test.ts > readingsIn > keeps a reading logged at 21:00 on the last day and leaves out the day before the first (R05.5)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **R05.6** An unreadable stored list is never replaced with an empty one and saved
   - Test: src/data/guard.test.ts > readAll > never lets an unreadable row turn into an empty list that a save replaces (R05.6)
 - **R05.7** A back-dated weigh-in never celebrates; latest means latest by date
@@ -470,8 +474,10 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/services/progress.test.ts > history deletes > deletes body-fat readings; the profile follows the newest left, then keeps the last value (R05.8)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > moves the profile weight to the one before when the newest weigh-in is deleted (R05.8)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > lists body-fat readings in percent and deletes them; the profile follows the newest left (R05.8)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)
 - **R05.9** Tracker switches hide entry controls, not history
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > logs water on last Tuesday and on yesterday from the week bar, never on today (ACC-H3-2, ACC-H1-1, ACC-H4-1, ACC-F1-1, ACC-F1-2, ACC-F9-1, ACC-F11-1, R05.4, R05.9)
 - **R05.10** Unit round trips: untouched fl oz fields keep exact ml, custom water capped at 5 000 ml (D-16.39), weight tenths rounded
   - Test: src/domain/units/water.test.ts > quickAddFromFields > keeps the exact ml of a field left untouched in fl oz (R05.10)
   - Test: src/domain/units/water.test.ts > amountToMl > caps a custom amount at 5 000 ml (R05.10, D-16.39)
@@ -483,6 +489,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R05.11** The Log weight unit toggle changes the app-wide unit (kept global)
   - Test: src/features/progress/LogWeightSheet.test.tsx > LogWeightSheet > converts 70.0 kg to 154.3 lb on the toggle and changes the unit of the whole app (ACC-G4-2, R05.11)
   - Test: src/services/progress.test.ts > settings > stores the weight unit for the whole app (R05.11)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **R05.12** No fallback goals flash before the profile is read
   - Test: src/app/Boot.test.tsx > Boot > shows no Home numbers before the profile read resolves
 - **R05.13** Hidden tabs never flash or strand the person; the setting changes one tab at a time
@@ -509,6 +516,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/progress/chartMath.test.ts > isClearlyHorizontal > lets only drags well over half again as wide as they are tall scrub (R05.16)
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > leaves a pinned tooltip alone during a vertical drag (R05.16)
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > scrubs across the bars on a sideways drag and clears on release (R05.16)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > logs a weight for last Tuesday in kg and shows it on the 1M chart, keeping today's as Current (ACC-G4-1, ACC-G4-2, ACC-G3-1, R05.5, R05.11, R05.16)
 - **R05.17** Macro averages divide by logged days, the calorie average by days with energy; missing days are gaps; Count today shifts the window
   - Test: src/ui/charts/BarChart.test.tsx > BarChart > draws no bar for a missing day or a day without food (R05.17)
   - Test: src/domain/progress/averages.test.ts > windowNutrition > calorie history (R05.17) > gives 1 800 and 2 200 with an empty day between two bars and Avg 2 000
@@ -517,6 +525,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/progress/CaloriesCard.test.tsx > CaloriesCard > shows Avg 2,000 kcal and two bars for 1 800 and 2 200 with a missing day between (R05.17)
   - Test: src/domain/progress/averages.test.ts > windowNutrition > averages per logged day (ACC-G11-1, R05.17) > divides the macros by the days with food, not by the days of the window
   - Test: src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 - **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
   - Review: owned by P07-03
 - **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights
@@ -531,6 +540,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > recaps the last week that ended: days logged of 7 with the change from the week before (ACC-G8-1, R05.19)
   - Test: src/features/progress/RecapCard.test.tsx > RecapCard > shows at most three lines, the first three in their order (ACC-G8-2, R05.19)
   - Test: src/domain/progress/recap.test.ts > highlightsFor > keeps the first three in their order when more improved (R05.19, ACC-G8-2)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 - **R05.20** The fasting goal alert is dropped on end, cancel and delete and re-evaluated after edits and on open
   - Test: src/services/reminders/ports.test.ts > the engine over the stored data > drops the goal alert when the fast is cancelled in the store (R05.20)
   - Test: src/services/reminders/engine.test.ts > createReminderEngine: the fasting goal (R05.20) > moves the alert to the new goal after an edit
@@ -541,9 +551,11 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows a fast from 20:00 to 12:00 the next day on the second day only (R05.21, ACC-F8-1)
   - Test: src/domain/meals/diary.test.ts > fastsOnDay > shows the running fast on today and not on the day it started (R05.21)
   - Test: src/features/home/HomePage.test.tsx > HomePage: water and fasts (P07-05, P07-08) > shows the day's water and fasts with both trackers off, a fast over midnight on its end day only, and no tracker in the menu (R05.9, R05.21, ACC-F8-1)
+  - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > starts, cancels and ends fasts from the + menu, which holds only Fasting while one runs (ACC-H6-1, ACC-H7-1, ACC-F11-2, ACC-F8-2, R05.21)
 - **R05.22** History rows have a visible delete with a confirmation and vanish at once (D-16.38)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > asks first, naming the date and the value, and keeps the row on Cancel (R05.22)
   - Test: src/features/progress/HistorySheet.test.tsx > HistorySheet > takes the row out of the open list at once, before the store answers (ACC-G6-1, R05.22)
+  - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > deletes a weigh-in from the history only after confirming, and Current follows (ACC-G6-1, ACC-G7-1, R05.8, R05.22)
 
 ## R06 · Settings and data (`research/06-*.md` §6)
 
