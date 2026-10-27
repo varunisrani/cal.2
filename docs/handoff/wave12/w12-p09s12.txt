@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s12 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S12 = P09-12, the backup archive codec and content hash. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); Proposed D-16.52; R06.7, R06.9. Traps and acceptance ids: every row whose Review line names P09-12.
+Task note (before its code): docs/notes/P09/backup-archive-codec.md.
+
+You own:
+- src/services/backup/{zip,archive,hash}.ts (+ tests): pure, no I/O beyond WebCrypto for the hash. Backup and restore themselves (P09-13) and their UI come later and will build on these.
+
+Do not touch:
+- src/features/**, src/domain/** (import only), src/data/** (import only: the table and settings names the hash leaves out), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Our own minimal ZIP writer and reader for stored (uncompressed) entries with CRC-32, local headers and a central directory; no new dependency. The reader rejects compressed entries, ZIP64, encrypted entries and a CRC mismatch. The ZIP layout is a public format: follow the published specification (PKWARE APPNOTE), not the reference.
+- payload.json first, then photos/<name>; safe names only on both write and read (ASCII letters, digits, ., _, -; jpg/jpeg/png/webp; ≤ 128 characters; no leading dot, no .., no folder part); other entries skipped (R06.9).
+- SHA-256 over a canonical text: values sorted by key and photo name:size lines sorted by name, leaving out backup bookkeeping and device-local state (R06.7).
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/backup --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

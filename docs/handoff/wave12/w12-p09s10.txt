@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s10 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S10 = P09-10 and P09-11, export and import of the diary. Spec: those two rows in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.13–3.14; D-16.2; R06.14, R06.16, R06.17. Traps and acceptance ids: every row whose Review line names P09-10 or P09-11.
+Task notes (each before its code): docs/notes/P09/export-diary.md, docs/notes/P09/import-diary.md.
+
+You own:
+- src/services/transfer/{exportDiary,exportFormats,importDiary}.ts (+ tests); `transfer?` in Services and its wiring in src/main.tsx (additive)
+- src/features/settings/data/{ExportSheet,ImportSheet}.tsx (+ tests; css) as components with open/onClose, testable on their own (P09-15 mounts them on the Your data page later); a catalogue partition src/i18n/en/transfer.ts (register it in src/i18n/en.ts: one additive line)
+- a repository method only if the import's one-transaction replace needs one the diary or water repository lacks: add it additively in src/data/repos/ with its own tests, and say so in the report
+
+Do not touch:
+- other src/features/** files (other builders now: Home, log, Coach, settings), src/domain/** (import only: day keys, week start, energy units, nutrient keys), other src/data/** files, e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 213): code a screen does not need at start loads on demand.
+- Our format only: {format: 'platewise-diary', version: '1.0', ...} as the row gives it; the reference's format id, keys and file names are not ours. Markdown and CSV as the row says (RFC 4180 quoting; the energy column names kcal for kJ users). File name platewise-diary-<start>_to_<end>.<ext>. Export by Web Share with a file when supported, else a download.
+- Import: over 20 MiB refused before reading; the whole file validated before anything changes; preview with Replace these dates / Add as new; Replace in one transaction with the matching rules of the row; water touched only when the file has water arrays; photo cleanup afterwards; the sheet blocks dismissal while importing.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/transfer src/features/settings/data src/data/repos src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.

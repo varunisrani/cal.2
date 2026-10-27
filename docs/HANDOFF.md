@@ -125,6 +125,9 @@ Three wave 12 builders started at 11:01 IST, base 9357cad (prompts in `docs/hand
 - P06-19 (selection bar and combine; row tap → `EntryEditor`; saved heart; `PausedDialog` on combine), `/root/wt/wt-p06s19`.
 - P08-08 + P08-09 (chat engine; Coach session with the `CoachSession` shape), `/root/wt/wt-p08s4`.
 Expected merges: P07-05/08 and P06-19 both edit `Diary.tsx` and `HomePage.tsx` (each keeps to its own parts).
+Three P09 builders started next, base 2215f6e: P09-08 reminder engine (`/root/wt/wt-p09s08`), P09-10 + P09-11
+export and import with their sheets (`/root/wt/wt-p09s10`), P09-12 backup archive codec and hash
+(`/root/wt/wt-p09s12`). Prompts in `docs/handoff/wave12/w12-p09s*.txt`.
 Next: P08-10 + P08-11 (Coach page and composer, against `CoachSession`) once P08-08/09 land; then the e2e
 tasks P06-20 (logging), P07-17 (Home and Progress), P08-14 (Coach); then P09 and P10.
 Landed this window (10:20–15:20 IST): d18dd7a, 29d15b9, 0a3cbdb, 3458a92, 9357cad (latest full loop: unit 4162

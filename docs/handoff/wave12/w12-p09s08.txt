@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p09s08 (detached at <BASE>, dependencies installed; do not install anything). Work only there.
+
+Task: P09 slice S08 = P09-08, the reminder engine. Spec: that row in docs/plan/phases/P09-settings-data-platform.md (the "Read in reference" column names exactly which reference parts to read, then their tests); research spec 06 §3.9–3.11; D-16.5, D-16.40, D-16.41, Proposed D-16.61; R06.10, R06.11, R05.20. Traps and acceptance ids: every row whose Review line names P09-08.
+Task note (before its code): docs/notes/P09/reminder-engine.md.
+
+You own:
+- src/services/reminders/{schedule,engine}.ts (+ tests): schedule pure; the engine takes its clock, timers, visibility source, settings, fasts, today's totals and a "show" callback as dependencies, so P09-09 (the notifier and the settings section, next) only plugs in the browser Notification and the banner.
+- `reminders?` in Services and its wiring in src/main.tsx if the engine needs a long-lived instance (additive); a catalogue partition src/i18n/en/reminders.ts for the reminder texts (register it in src/i18n/en.ts: one additive line)
+
+Do not touch:
+- src/features/** (other builders now: Home, log, Coach, settings), src/domain/** (import only), src/data/** (import only: settings keys for the reminder switches and times; the water and fasting tracking switches), e2e/**, eslint.config.js, scripts/**
+- docs/internals/**, docs/plan/**, pnpm-lock.yaml, package.json
+
+Decisions already made:
+- Screens read through src/data/hooks and act through src/services (lint boundaries); every visible word comes from the catalogue (copy rule). Shared files (Services, main.tsx, App.tsx, en.ts, the settings registry): additive edits only; other slices edit them now and the lead merges. With fake timers over the test database, fake setTimeout, clearTimeout, setInterval, clearInterval and Date (not setImmediate); lazy pieces in tests: `untilLoaded()` from src/test/lazy.ts. Bundle budget 250 kB gzip (now about 213): code a screen does not need at start loads on demand.
+- As the row says: nextAt is the next wall-clock occurrence in the local zone, DST-safe and recomputed every time; defaults 08:00 / 12:00 / 19:00 / summary 20:00 / water 14:00, every one off; no streak or food-log reminder; at fire time re-check the master switch, the reminder's switch, its tracking switch and the permission; a reminder due while the app was closed shows once on the next open; the fasting goal fires at start + goal only for a future time and is dropped on end, cancel and delete and re-evaluated after an edit (R05.20); the summary reads eaten X of Y, Z left in the display unit (kJ converted before subtracting); erase-everything and master-off cancel everything.
+
+Tests (one worker; never the full suites):
+- unit: pnpm vitest run src/services/reminders src/i18n --maxWorkers=1
+- before you finish: lint, fmt:check, typecheck, check --require-ref (rules file).
+
+Final report as the rules file says: list each trap id and acceptance id your tests cover, with file > describe > test name. Leave everything uncommitted.
