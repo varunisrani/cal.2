@@ -26,6 +26,7 @@
     "check:licenses": "tsx tooling/checks/runAll.ts --only licenses",
     "check:traps": "tsx tooling/checks/runAll.ts --only traps",
     "check:acceptance": "tsx tooling/checks/runAll.ts --only acceptance",
+    "ledger:gaps": "tsx scripts/ledger-gaps.ts",
     "check:bundle": "tsx scripts/bundle-budget.ts",
     "probe:cors": "tsx scripts/ai-cors-probe.ts",
     "parity": "tsx scripts/parity.ts"

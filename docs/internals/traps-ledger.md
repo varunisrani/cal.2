@@ -532,7 +532,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/domain/progress/averages.test.ts > windowNutrition > Count today (ACC-G9-1, R05.17) > leaves today's partial day out of the bars and every average when it is not
   - Test: e2e/home-progress.spec.ts > Progress (Demo 4) > recaps last week logged through the week bar in its tiles, and Count today moves the calorie average (ACC-G8-1, ACC-G8-2, ACC-G9-1, R05.17, R05.19)
 - **R05.18** The fill animation plays only on cold start and real foreground returns (feature is v1.x, F13)
-  - Review: owned by P07-03
+  - Review: owned by v1.x item F13 (fill from zero, P2): not built in v1, so there is nothing to test yet
 - **R05.19** Recap weeks follow the app's week start, never the current week; protein rounded; ±10 % in kcal; at most three highlights
   - Test: src/domain/progress/recap.test.ts > recapWeek > recaps the last week that has ended, by the week start setting (R05.19)
   - Test: src/domain/progress/recap.test.ts > recapWeek > never recaps the current week, even on its last day (R05.19)
@@ -568,7 +568,7 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/data/guard.test.ts > readAll > drops an unreadable entry, keeps it in its table and aside, and sets the flag (R06.1, ACC-K9-1)
   - Test: src/data/guard.test.ts > writeOne > keeps a corrupt profile aside before saving over it (R06.1)
   - Test: src/data/guard.test.ts > writeOne > refuses the save and leaves the record untouched when the copy fails (R06.1)
-  - Review: the banner owned by P09 (K9)
+  - Review: the banner is missing from v1: the flag is set and `useUnreadableFlag` reads it, but no screen shows it and no task owns it (K9; acceptance map Known gaps, proposed N-9)
 - **R06.2** Read, change and write in one IndexedDB transaction; cross-entity rules read inside it
   - Test: src/data/repos/diaryRepo.test.ts > update > keeps both of two edits made at the same time to different entries (R06.2)
   - Test: src/data/repos/settingsRepo.test.ts > update > keeps both changes when two updates run at once (R06.2)
@@ -673,7 +673,8 @@ Every hard part the research found (each research spec's §6) has a row here. `p
   - Test: src/features/settings/app/MenuEditorPage.test.tsx > MenuEditorPage > draws nothing until the stored menu is read, then shows it with a change made meanwhile (R06.21, R06.22)
   - Test: src/features/settings/CategoryPage.test.tsx > CategoryPage > shows a spinner, not switches at their defaults, until the settings are read (R06.22, ACC-A10-2)
   - Test: src/features/settings/CategoryPage.test.tsx > CategoryPage > holds back even a page that draws its switches at once, until the settings are read (R06.22)
-  - Review: the settings screens owned by P09-01
+  - Test: src/features/settings/registry.test.ts > the registered categories > wait for the stored settings, except About, Credits and the methods page, which show none
+  - Test: src/data/hooks.test.tsx > useSettings > stays loading until the first settings snapshot has been read (R06.22)
 - **R06.23** Translated strings must keep every placeholder; the catalogue lint exists from v1
   - Test: src/i18n/lint.test.ts > lintCatalogue > passes the real catalogue
   - Test: src/i18n/lint.test.ts > lintCatalogue > fails an unclosed plural

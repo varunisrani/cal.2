@@ -146,7 +146,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B11 · Unit defaults from the browser locale (P1)
 
 - **ACC-B11-1** The unit defaults for an en-US browser are lb and ft-in, and kg and cm for en-GB
-  - Review: P01-04
+  - Test: src/domain/units/defaults.test.ts > defaultUnits > starts en-US, en-LR and my-MM in lb and feet and inches
+  - Test: src/domain/units/defaults.test.ts > defaultUnits > starts every other tag in kg and cm
+  - Test: src/domain/profile/profile.test.ts > firstRunDefaults > seeds lb and feet and inches together for en-US
 - **ACC-B11-2** A fresh wizard in an en-US browser shows weight in lb
   - Test: src/features/onboarding/WizardPage.test.tsx > WizardPage > shows weight in pounds in a fresh wizard in an en-US browser (ACC-B11-2)
 
@@ -162,7 +164,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 ### B13 · Calculation methods page in our words with sources and a … (P1)
 
 - **ACC-B13-1** The methods page opens from Plan Ready and from Settings
-  - Review: P05-13
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > opens the calculation methods in a sheet and closes it with Done
+  - Test: src/features/about/MethodsPage.test.tsx > MethodsPage > is registered as an About page in Settings at #/settings/methods
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: switches and links > links to the methods page and opens the nutrient goals
 
 ## C · Goals and formulas
 
@@ -250,7 +254,9 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection > shows Kilojoules and 8,368 kJ for a 2,000 kcal goal once kJ is chosen, and keeps every stored kcal (ACC-C12-1)
   - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > changes the accent and the units: the page and Home follow at once, a reload keeps them, and no stored value changes (ACC-A9-1, ACC-C12-1, D-16.1)
 - **ACC-C12-2** Opening and saving the kJ goal wheel unchanged keeps 2 000 kcal
-  - Review: P01-03
+  - Test: src/domain/units/energy.test.ts > pickerSave > keeps the exact stored kcal when the kJ wheel was not moved (R06.20)
+  - Test: src/features/settings/goals/GoalsPage.test.tsx > GoalsPage: targets and locks > shows and edits the energy target in kJ, keeping the exact kcal when untouched (R06.20)
+  - Test: src/features/onboarding/steps/PlanReady.test.tsx > PlanReady > shows kJ to a kJ reader and keeps the exact kcal when the wheel is saved untouched (R06.20)
 
 ### C13 · Weight forecast (30/60/90-day weights, days to goal, under-logging … (P1)
 
@@ -1099,4 +1105,5 @@ Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and re
 - **Key passphrase lock (N-6).** Keys are wrapped by a device key and the Settings page states the browser's limits (E14, D-16.7).
 - **Body measurements, amino acids (N-7).** Not recorded; the Coach context has no measurement block.
 - **Hosted AI, weekly challenge, short share links (N-8).** Not planned; every server-side trap (R07.14, R07.15, R07.18, R07.19) is recorded as not planned in the traps ledger.
+- **Damaged-data banner (part of K9, P1; proposed N-9, found in P10-05).** Unreadable records are skipped and kept aside (ACC-K9-1), and the guard sets the flag the banner would read (`useUnreadableFlag`), but no screen shows a notice that some data could not be read, and no task owns one (R06.1). Unlike the entries above, this one is not decided yet: the lead records N-9 in `docs/plan/16-what-we-change.md` §2.8 or schedules the banner.
 - **What's New dialog (D-16.43), streaming Coach replies (D-16.47), on-device models (D-16.6), watch, widgets and Siri (D-16.3).** Not in v1.
