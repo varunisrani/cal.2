@@ -538,11 +538,13 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R06.6** Restore is all or nothing: validate the whole file and free space before changing anything
   - Review: owned by P09-13
 - **R06.7** The backup hash leaves out backup bookkeeping and device-local state
-  - Review: owned by P09-12
+  - Test: src/services/backup/hash.test.ts > contentHash > does not change when backup.lastAt changes, appears or goes (R06.7)
+  - Test: src/services/backup/hash.test.ts > contentHash > leaves out every device-local setting and table (R06.7)
 - **R06.8** Restore states what it will replace and asks first (D-16.42)
   - Review: owned by P09-13
 - **R06.9** Archive entry names are plain photo names only, when writing and reading
-  - Review: owned by P09-12
+  - Test: src/services/backup/archive.test.ts > packBackup and unpackBackup > skips the same names when reading, with every other stray entry, and lists them (R06.9)
+  - Test: src/services/backup/archive.test.ts > isSafePhotoName > refuses every other name rather than cleaning it up (R06.9)
 - **R06.10** Reminders re-check every switch and the permission when due; everything is cancelled on erase, master off or permission loss
   - Review: owned by P09-08
 - **R06.11** Reminder times are the next wall-clock occurrence each time (DST-safe)
