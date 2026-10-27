@@ -75,7 +75,8 @@ function providerExtras(input: AdapterInput): JsonRecord {
   }
 }
 
-function headersFor(input: AdapterInput): Record<string, string> {
+/** The key as a Bearer token when there is one, and OpenRouter's attribution headers. */
+export function headersFor(input: Pick<AdapterInput, 'provider' | 'key'>): Record<string, string> {
   const headers: Record<string, string> = {};
   const key = keyOf(input);
   if (key !== undefined) headers.Authorization = `Bearer ${key}`;
@@ -112,13 +113,13 @@ export function buildOpenAiCompat(input: AdapterInput): WireRequest {
 }
 
 /** Whether a reply carries an error envelope: `error` as an object or as a non-blank string. */
-function carriesError(reply: JsonRecord): boolean {
+export function carriesError(reply: JsonRecord): boolean {
   const { error } = reply;
   return isRecord(error) || (typeof error === 'string' && error.trim() !== '');
 }
 
 /** Whether the model wrote reasoning, in any of the fields the family uses for it. */
-function hasReasoning(message: JsonRecord): boolean {
+export function hasReasoning(message: JsonRecord): boolean {
   const filled = (value: unknown): boolean => typeof value === 'string' && value.trim() !== '';
   const { reasoning_details: details } = message;
   return (

@@ -86,7 +86,7 @@ export function endpoint(baseUrl: string, path: string): string {
 }
 
 /** The trimmed key, or undefined when there is none worth sending (R03.20). */
-export function keyOf(input: AdapterInput): string | undefined {
+export function keyOf(input: Pick<AdapterInput, 'key'>): string | undefined {
   const key = input.key?.trim();
   return key === undefined || key === '' ? undefined : key;
 }

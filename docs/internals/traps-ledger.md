@@ -348,19 +348,35 @@ Every hard part the research found (each research spec's §6) has a row here. `p
 - **R04.11** Round-limit and cut-off-twice failures keep their own kinds and messages
   - Review: owned by P08-08
 - **R04.12** Every tool call id gets exactly one result, an error result for calls without a name
-  - Review: owned by P08-05
+  - Test: src/ai/chat/openaiChat.test.ts > openAiChat.continueWith (R04.12) > appends the assistant message as it came, then one tool message per call, in order
+  - Test: src/ai/chat/openaiChat.test.ts > openAiChat.continueWith (R04.12) > answers a call with an id but no name with an error result, without running it
+  - Test: src/ai/chat/openaiChat.test.ts > openAiChat.read > keeps a call that has an id but no name, so its id can be answered (R04.12)
+  - Test: src/ai/chat/anthropicChat.test.ts > anthropicChat.continueWith (R04.12) > appends the assistant turn, then one user message with a result per id, in order
+  - Test: src/ai/chat/anthropicChat.test.ts > anthropicChat.continueWith (R04.12) > answers a tool_use without a name with an error result, without running it
 - **R04.13** Gemini: echo returned parts verbatim, echo the call id, wrap results as objects, results always valid JSON
-  - Review: owned by P08-07
+  - Test: src/ai/chat/geminiChat.test.ts > geminiChat.read > reads function calls with their ids and echoes the returned parts unchanged (R04.13)
+  - Test: src/ai/chat/geminiChat.test.ts > geminiChat.continueWith (R04.13) > appends the model turn, then one user turn of function responses, ids echoed when given
+  - Test: src/ai/chat/geminiChat.test.ts > geminiChat.continueWith (R04.13) > keeps a result that is not a JSON object inside an object response
 - **R04.14** A chip sends with the attached photo and clears it (D-16.33)
   - Test: src/features/coach/ChipRow.test.tsx > ChipRow: sending (D-16.33, R04.14) > sends the attached photo with the chip and clears it (ACC-I3-2, R04.14)
 - **R04.15** Cut-off replies are detected on every format and the cap is sent to Gemini too
-  - Review: owned by P08-06 (Anthropic) and P08-07 (Gemini)
+  - Test: src/ai/chat/anthropicChat.test.ts > anthropicChat.read > reads a max_tokens stop as cut off, with text or with a tool_use (R04.15)
+  - Test: src/ai/chat/anthropicChat.test.ts > askRound on the Anthropic wire (R04.15) > asks again once with the same body after a max_tokens stop
+  - Test: src/ai/chat/anthropicChat.test.ts > askRound on the Anthropic wire (R04.15) > gives truncated after a second max_tokens stop
+  - Test: src/ai/chat/geminiChat.test.ts > geminiChat.build > sends the system text, user/model history, the tools and the cap (R04.15)
+  - Test: src/ai/chat/geminiChat.test.ts > geminiChat.read > reads a MAX_TOKENS stop as cut off, with text or with calls (R04.15)
+  - Test: src/ai/chat/geminiChat.test.ts > askRound on the Gemini wire (R04.15) > asks again once with the same body after a MAX_TOKENS stop
+  - Test: src/ai/chat/geminiChat.test.ts > askRound on the Gemini wire (R04.15) > gives truncated after a second MAX_TOKENS stop
 - **R04.16** Tools and context never invent empty days: no 0 kcal rows, no inferred fasts
   - Review: owned by P08-02
 - **R04.17** Tool dates are local, ISO, Gregorian and inclusive; bad dates default silently and the effective range is echoed
   - Review: owned by P08-02
 - **R04.18** One compact retry per round; only OpenRouter changes the request
-  - Review: owned by P08-05
+  - Test: src/ai/chat/openaiChat.test.ts > openAiChat.build: reasoning switches > hides OpenRouter reasoning and asks for low effort on the compact re-ask (R04.18)
+  - Test: src/ai/chat/openaiChat.test.ts > openAiChat.build: reasoning switches > sends the same body on the re-ask to every provider but OpenRouter (R04.18)
+  - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > asks again once after a length stop and takes the second reply
+  - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > changes only OpenRouter’s reasoning on the re-ask: hidden, low effort
+  - Test: src/ai/chat/openaiChat.test.ts > askRound on the OpenAI-compatible wire (R04.18) > gives truncated after a second cut, with no third request
 - **R04.19** Six requests per turn include the answer; the prompt asks the model to batch tool calls
   - Review: owned by P08-08
 - **R04.20** v1 offers and mentions only the six nutrition tools; a stray workout call gets not available
