@@ -1,6 +1,6 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-27 17:45 IST (Agent 1, session 3). 163/176 tasks; P00–P08 complete; the app runs on the
+Updated: 2026-10-27 18:21 IST (Agent 1, session 3), STOPPED_90. 163/176 tasks landed, 168 with .agents/wip/; P00–P08 complete; the app runs on the
 real database. Window reset 15:20 IST (next reset 20:20 IST); P10 security and similarity landed; 3 builders running.
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
 updated by this session unless the user asks. Session 2 has stopped and pushes nothing more.
@@ -142,21 +142,37 @@ updated by this session unless the user asks. Session 2 has stopped and pushes n
 
 ## In progress
 
-Landed at 16:45 IST: ec065f0 … e370445 (seven commits; full loop: unit 4967 passed + 2 expected-fail, check 6/6,
-bundle 232.64 kB, e2e 30/30).
-P09-15 landed at 17:11 IST as 465e353 (full loop: unit 5025 passed + 2 expected-fail, bundle 235.46 kB, e2e 30/30).
-Builder running at 465e353: P09-19 settings, data and offline e2e (`/root/wt/wt-p09s19`).
-Builders running at e370445 (prompts in `docs/handoff/wave15/`): P10-01..04 parity (`/root/wt/wt-p10s1`), P10-07/08/11
-accessibility, ship inventory and browser matrix (`/root/wt/wt-p10s3`; adds `@axe-core/playwright` 4.14.0 exactly),
-P10-09/10/12 security review, similarity report, gated live check (`/root/wt/wt-p10s4`).
-Left after these: P10-05/06 (acceptance strict pass and traps ledger completion, once every feature landed), P10-14
-release prep (CHANGELOG, version 1.0.0, notices, release checklist; no tag unless the user asks).
+**STOPPED_90 at 18:21 IST (88 % read at 18:15; reset 20:20 IST).** Last landed: 0ed03fa (P10-09/10/12). No builder
+is running. Three slices wait in `.agents/wip/`:
+- `p10s1.patch` (P10-01..04 parity: 13 REA scenarios, `scripts/parity.ts`, obligations ledger, parity report, the
+  `reuse.saved.row` bug fix, D-16.86/D-16.87) and `p09s19.patch` (P09-19 settings, data and offline e2e, the
+  `offline-chromium` Playwright project; P09 complete). Both are `git format-patch` commits on 657dc2d with their
+  ledger edits already in (scripts `/root/wt/msgs/ledger_w15_p10s1.py`, `ledger_w15_p09s19.py`, and
+  `sync_parity_manifest.py`, which copies the acceptance map's Test lines into `parity/ledger/manifest.json`; run it
+  after any ledger script that adds Test lines to a parity ACC row, or `scripts/parity.test.ts` fails). The first
+  full loop failed only on that manifest test; the fixed stack was in its second loop at the stop. Resume:
+  `git am` both on a fresh verify, run the loop, then
+  `land-multi.sh <base> <sha1> msgs/w15-03.txt <sha2> msgs/w15-04.txt` (messages in `/root/wt/msgs/`; copies of
+  both are worth re-making if `/root/wt` is gone: the commit subjects are "platewise(P10-01..04): parity scenarios,
+  runner and obligations ledger" and "platewise(P09-19): settings, data and offline e2e (Demo 6)"). Follow-ups from
+  them: the parity data flow still lacks export, Back up now and erase (P09-15 landed after its base); each saved
+  meal has two "Remove <name>" controls (proposal: `SwipeRow` leaves out its keyboard button where the row shows
+  one, for P10-07); REA captures record typed password values, so scenarios type only made-up keys.
+- `p10s3.patch` (P10-07/08/11 accessibility pass, ship inventory, browser matrix; base e370445; adds
+  `@axe-core/playwright` 4.14.0 exactly, so it carries `pnpm-lock.yaml`). Unfinished: the builder was stopped while
+  restructuring the Home fast-row variants for the a11y pass; `e2e/a11y.spec.ts`, the matrix and inventory docs and
+  the three task notes are written. Resume: a new worktree at the landed head, `git apply -3` the patch, and relaunch
+  `docs/handoff/wave15/` P10-07/08/11 prompt with "your work so far is applied; finish the fast-row restructure,
+  then re-run your checks".
+Left after these: P10-05/06 (acceptance strict pass and traps ledger completion; prompt not yet written), the open
+security decisions below, then P10-14 release prep (CHANGELOG, version 1.0.0, notices, release checklist; no tag unless
+the user asks).
 Bundle: 232.64 kB of 250 (Your data adds about 2.8 kB). Follow-ups from wave 14: `sw.ts` has no `notificationclick`
 handler; onboarding still has its own notification ask; `diaryRepo.clear()` could replace Clear diary's full-range
 rewrite; nothing listens to `db.ts`'s reload-needed message for schema upgrades from another tab; zxing-wasm's
 bundled zxing-cpp (Apache-2.0) and zint (BSD-3) notices are not in Credits; a small stored photo keeps its own bytes
 (and any location data) in backups.
-**Progress: 163/176 tasks** (P00–P08 complete, P09 18/19, P10 4/14). Open security decisions from P10-09
+**Progress: 163/176 tasks landed** (P00–P08 complete, P09 18/19, P10 4/14); with the two waiting patches 168/176 (P09 complete, P10 8/14). Open security decisions from P10-09
 (lead, before P10-14): S-3 drop the CSP's `http://[::1]:*` (and refuse `[::1]` in `checkServerUrl`, changing
 D-16.26's list), S-5 add `form-action 'none'`, S-4 host headers, S-15 `pnpm audit` in CI; S-6..S-9, S-12 small fixes
 proposed in `docs/internals/security-review-v1.0.md`.

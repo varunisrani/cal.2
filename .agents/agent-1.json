@@ -1,11 +1,11 @@
 {
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
-  "state": "ACTIVE",
-  "usage_pct": 85,
-  "remaining_pct": 15,
+  "state": "STOPPED_90",
+  "usage_pct": 88,
+  "remaining_pct": 12,
   "resets_at": "2026-10-27T20:20:00+05:30",
-  "last_check": "2026-10-27T18:00:00+05:30",
-  "current_step": "163/176 tasks; P10-01..04 and P09-19 in the lead loop (verify fb82a5a on 657dc2d); 1 builder (P10-07/08/11); no new builders; 88 % stop near 18:10",
+  "last_check": "2026-10-27T18:21:00+05:30",
+  "current_step": "163/176 landed; STOPPED_90 at an 88 % read; p10s1, p09s19 and p10s3 patches in .agents/wip/; resume after 20:20 IST",
   "last_commit": "0ed03fa"
 }
