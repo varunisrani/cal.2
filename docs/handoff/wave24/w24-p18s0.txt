@@ -1,0 +1,22 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p18s0 (detached at 83e51b2, dependencies installed). Work only there. Spec: docs/plan/phases/P18-sources-streaming-spending.md — read it from /home/user/cal.2/docs/plan/phases/P18-sources-streaming-spending.md (not in your base commit).
+
+Bundle: initial JS is 249.30 kB gzip of the 250 kB limit (L10). Another builder (S0) is moving catalogue partitions used only by lazy or Android-only screens out of the initial bundle in parallel; until that lands, keep your new strings few and short, put the words of any new lazily loaded screen in a NEW partition file (src/i18n/en/<name>.ts) and tell the lead its name (the lead wires it into the lazy registration at landing), keep new screens lazy, and report your initial-bundle growth. If check:bundle fails only because of your growth, say so in the report instead of trimming features.
+
+Four builders share 4 cores: run the full `pnpm test` and `pnpm e2e` only once each, near the end, with the ports given.
+
+Task: P18 S0 (P18-00), catalogue partitions on demand. Read first: src/i18n/** (catalogue.ts mergePartitions, en.ts enPartitions, t.ts, message.ts, lint.ts and its test, format), how screens and Android-only services load lazily (React.lazy pages, src/services/*/load.ts with dynamic import, the walk screens), vite.config.ts and scripts/check-bundle (what counts as initial JS), the tests that read the whole catalogue.
+Task notes: docs/notes/P18/catalogue-on-demand.md.
+
+Do:
+1. A way to register a partition at run time (e.g. `registerPartition(name, tree)`) that `t()` reads; registering twice is harmless; a key of a partition not yet registered never draws a raw key on screen (decide: throw in tests, fall back safely in production; say which).
+2. Move out of the initial bundle the partitions only lazily loaded screens or the Android app use: at least `walk` and `onboarding` (onboarding runs once, on first start), and any others whose screens are all lazy (measure: about, transfer, ingredients, scan, fitCheck, health, backup parts, reminders' Android parts, notifications…). Each is registered by the module that loads its screens or services, before they draw.
+3. The catalogue lint and its tests, and every test that reads the catalogue, still see every partition (a static list of all partitions for tools; the run-time list for the app).
+4. Keep every screen test and e2e green with no word changed. Report the initial bundle before and after, and which partitions moved.
+
+You own: src/i18n/** (mechanics, en.ts), the lazy loaders' registration lines (src/services/*/load.ts, lazy page modules, main.tsx), tests, the note. Do not change any words in the partitions. Do not touch features' logic.
+
+Tests and checks: the files you touch with --maxWorkers=1; `pnpm test` once; lint, fmt:check, typecheck; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`; `pnpm build`; `pnpm check:bundle`; `pnpm e2e` once on PLATEWISE_E2E_PORT=4201 PLATEWISE_FAKE_AI_PORT=4351.
+
+Final report as the rules file says (the size before and after, the moved partitions, how a new lazy partition is added). Leave everything uncommitted.

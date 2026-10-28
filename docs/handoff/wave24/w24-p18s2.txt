@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p18s2 (detached at 83e51b2, dependencies installed). Work only there. Spec: docs/plan/phases/P18-sources-streaming-spending.md — read it from /home/user/cal.2/docs/plan/phases/P18-sources-streaming-spending.md (not in your base commit).
+
+Bundle: initial JS is 249.30 kB gzip of the 250 kB limit (L10). Another builder (S0) is moving catalogue partitions used only by lazy or Android-only screens out of the initial bundle in parallel; until that lands, keep your new strings few and short, put the words of any new lazily loaded screen in a NEW partition file (src/i18n/en/<name>.ts) and tell the lead its name (the lead wires it into the lazy registration at landing), keep new screens lazy, and report your initial-bundle growth. If check:bundle fails only because of your growth, say so in the report instead of trimming features.
+
+Four builders share 4 cores: run the full `pnpm test` and `pnpm e2e` only once each, near the end, with the ports given.
+
+Task: P18 S2 (P18-02), Coach replies stream live (D-16.106; replaces D-16.47). Read first: the Coach chat transport (src/ai/chat/**: anthropicChat, openaiChat, geminiChat, round, types), the shared request pieces (src/ai/adapters/request.ts, src/ai/transport.ts, retry.ts, deadline.ts, errors.ts), the Coach engine and session (src/services/coach/engine.ts, session.ts: one turn per chat, D-16.99; tool rounds; P17's own tools), the Coach screens (src/features/coach/**: MessageList, Bubble, the pending/typing state), the fake AI server for e2e (e2e/fake-ai/**), docs/plan/research/04-coach.md on providers. CSP connect-src already allows https:.
+Task notes: docs/notes/P18/coach-streaming.md.
+
+Do:
+1. Streamed requests for the three chat wire formats: Anthropic Messages with stream: true (SSE: message_start, content_block_start/delta (text_delta; input_json_delta for tool_use), content_block_stop, message_delta with stop_reason, message_stop, error, ping; thinking blocks skipped), OpenAI-compatible chat completions with stream: true (data: chunks with choices[0].delta.content and delta.tool_calls pieces, finish_reason, [DONE]), Gemini streamGenerateContent?alt=sse (each event a GenerateContentResponse; text parts and functionCall parts). A pure, tested SSE reader over a ReadableStream (chunk boundaries anywhere, CRLF, comments, multi-line data).
+2. Fallback: an answer whose content type is not text/event-stream (or a server that refuses stream) is read whole, as today; providers known not to stream can be marked. Timeouts and the 75 s attempt cap apply to the first byte and to silence between events, not to the whole long reply; cancel (Delete chat, leaving) aborts the stream.
+3. The engine passes text deltas up per round; tool calls are assembled from their pieces and run when the round ends (P17's set_reminder/schedule_check_in included); the reply is stored once complete; a failure mid-reply shows the error and Retry (I11) and stores nothing partial; the standby provider (I12) restarts the whole turn.
+4. The chat shows the growing text in the pending bubble with a working mark (no layout jump; it scrolls with the text when the person is at the bottom, not when they scrolled up); a reply streaming in another chat shows live when that chat is opened; accessible: the bubble is not announced on every token (announce when done).
+5. The fake AI (e2e) serves streams for the three formats; the Coach e2e sees the text grow and the final reply stored; unit tests per format with recorded streams (text, tool calls, stop reasons, an error event, a cut stream, a non-stream answer).
+6. Docs: docs/user/coach.md (live replies). Inventory I13 becomes P1 (the lead records it). Do not edit CHANGELOG.md: propose lines.
+
+You own: src/ai/chat/**, src/ai/adapters/request.ts and transport pieces you need (keep the food analysis path unchanged), src/services/coach/** (engine, session), src/features/coach/**, e2e/fake-ai/**, e2e/coach.spec.ts, docs/user/coach.md, tests, the note. Do not touch src/features/home/**, src/data/**, src/features/progress/**, the food analysis path (src/ai/client.ts complete(), src/ai/tasks/**) except to keep it unstreamed.
+
+Tests and checks: as the rules say; `pnpm e2e` once on PLATEWISE_E2E_PORT=4203 PLATEWISE_FAKE_AI_PORT=4353.
+
+Final report as the rules file says (proposed ACC rows under I13 "Streaming replies", CHANGELOG lines, anything a real provider might do differently from the recorded streams). Leave everything uncommitted.

@@ -5,7 +5,7 @@
   "usage_pct": 9,
   "remaining_pct": 91,
   "resets_at": "2026-10-29T02:30:00+05:30",
-  "last_check": "2026-10-28T22:55:00+05:30",
-  "current_step": "1.4.0 released (5fbabb3); P17 (1.5.0): S1 done, S2 building",
-  "last_commit": "5fbabb3"
+  "last_check": "2026-10-29T00:35:00+05:30",
+  "current_step": "1.5.0 releasing; P18 (1.6.0): four builders",
+  "last_commit": "83e51b2"
 }

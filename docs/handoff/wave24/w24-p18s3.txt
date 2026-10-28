@@ -1,0 +1,26 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p18s3 (detached at 83e51b2, dependencies installed). Work only there. Spec: docs/plan/phases/P18-sources-streaming-spending.md — read it from /home/user/cal.2/docs/plan/phases/P18-sources-streaming-spending.md (not in your base commit).
+
+Bundle: initial JS is 249.30 kB gzip of the 250 kB limit (L10). Another builder (S0) is moving catalogue partitions used only by lazy or Android-only screens out of the initial bundle in parallel; until that lands, keep your new strings few and short, put the words of any new lazily loaded screen in a NEW partition file (src/i18n/en/<name>.ts) and tell the lead its name (the lead wires it into the lazy registration at landing), keep new screens lazy, and report your initial-bundle growth. If check:bundle fails only because of your growth, say so in the report instead of trimming features.
+
+Four builders share 4 cores: run the full `pnpm test` and `pnpm e2e` only once each, near the end, with the ports given.
+
+Task: P18 S3 (P18-03, P18-04), food prices and spending (D-16.107, D-16.108). Read first: the entry model and codecs (src/domain/model.ts DiaryEntry/NutritionDraft/SavedMeal; src/data/codecs.ts: unknown fields are left behind), the diary repo, the entry editor and the review sheet (src/features/log/**, review), saved meals, the analysis prompts and readers (src/ai/prompts/**, src/ai/parse/foodReply.ts, labelReply.ts; describe/text logging and a photo's note), settings (src/data/settingsSchema.ts; Settings › Units), backups and the diary file (src/services/backup/**, src/services/transfer/**), Home (src/features/home/DaySummary, SugarLine as a pattern), Progress (src/features/progress/**), the Coach's food log tool and context (src/services/coach/tools.ts, context.ts), i18n, tokens, Intl currency formatting.
+Task notes: docs/notes/P18/food-prices.md, docs/notes/P18/spending.md.
+
+Do:
+1. Data: `price?: { amount: number; currency: string }` on entries (and drafts/saved meals so it travels from review and saved meals); codec guard (finite, ≥ 0, at most 2 decimals kept, ISO 4217 code); `money.currency` setting defaulting from the locale's region (INR for IN, USD for US, EUR for the euro area, GBP for GB, else USD), chosen in Settings › Units; backups and the diary file carry prices (a backup without them restores as before).
+2. Editor and review: a Price field (amount, the currency shown; empty = no price); saved meals keep the price when logged again (editable); a row shows its price discreetly.
+3. Analysis: the food prompts ask for a price only when the person's own words (the description, a note) state one (₹120, 120 rupees, Rs 120, $5, 5 dollars…), with its currency (or the setting's when only a number with a money word); the reader takes it, never invents one; the review shows it. Tests with the fake AI: stated → filled, not stated → empty.
+4. Home: a spend line for the shown day under the day's summary when any entry has a price ("₹240 spent", "from 4 of 6 foods"), switch `home.spendLine` (on) in All nutrients beside Sugar on Home; a tap opens Progress › Spending.
+5. Progress › Spending (lazy): the last 7/30 days as bars (days without prices are "no prices", not 0), this month's total and the average per priced day, months (up to 12) as totals, by meal, the foods that cost most; another currency's prices totalled apart.
+6. Coach: food log rows carry the price; the context has today's spend (and how many foods had a price).
+7. Strings in new partitions where screens are lazy (e.g. src/i18n/en/spending.ts); hooks (price.*, spending.*); accessible names; both themes. e2e: describe a meal with a price, review shows it, log it, Home shows the spend, Spending shows the day.
+8. Docs: docs/user (logging and Progress parts: prices and spending). Do not edit CHANGELOG.md: propose lines.
+
+You own: src/domain/model.ts (the price field), src/data/** (codecs, settings), src/features/log/** (editor, review), src/features/home/** (the spend line only; S1 adds a Sources sheet there in parallel, keep to your lines), src/features/progress/** (Spending), src/ai/prompts/** and src/ai/parse/** (price only), src/services/backup/** and src/services/transfer/** (price only), src/services/coach/tools.ts and context.ts (price lines only), src/i18n/en/*, e2e specs for logging/progress, docs/user, tests, the notes. Do not touch src/ai/chat/** or src/services/coach/engine.ts/session.ts (S2 streams the Coach in parallel).
+
+Tests and checks: as the rules say; `pnpm e2e` once on PLATEWISE_E2E_PORT=4204 PLATEWISE_FAKE_AI_PORT=4354. Screenshots (light and dark, en-IN, Asia/Kolkata) of the editor's Price field, a review with a price from a description, Home's spend line and Progress › Spending into /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/p18-spend-shots/.
+
+Final report as the rules file says (proposed ACC rows under a new feature M19 "Food prices and spending", CHANGELOG lines, new partition names, screenshots). Leave everything uncommitted.

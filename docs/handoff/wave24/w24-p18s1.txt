@@ -1,0 +1,24 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p18s1 (detached at 83e51b2, dependencies installed). Work only there. Spec: docs/plan/phases/P18-sources-streaming-spending.md — read it from /home/user/cal.2/docs/plan/phases/P18-sources-streaming-spending.md (not in your base commit).
+
+Bundle: initial JS is 249.30 kB gzip of the 250 kB limit (L10). Another builder (S0) is moving catalogue partitions used only by lazy or Android-only screens out of the initial bundle in parallel; until that lands, keep your new strings few and short, put the words of any new lazily loaded screen in a NEW partition file (src/i18n/en/<name>.ts) and tell the lead its name (the lead wires it into the lazy registration at landing), keep new screens lazy, and report your initial-bundle growth. If check:bundle fails only because of your growth, say so in the report instead of trimming features.
+
+Four builders share 4 cores: run the full `pnpm test` and `pnpm e2e` only once each, near the end, with the ports given.
+
+Task: P18 S1 (P18-01), nutrient sources (D-16.105). Read first: Home (src/features/home/**: DayNutrientsSheet (All nutrients), dayNutrients.ts, SugarLine (D-16.98), PillarRow, DaySummary, the entry editor it opens), the nutrient model and goals (src/domain/model.ts, src/domain/nutrients/** incl. sugar.ts: a food without a figure is never 0), i18n home.ts, tokens.
+Task notes: docs/notes/P18/nutrient-sources.md.
+
+Do:
+1. Pure (tested): for a day's entries and a nutrient (calories, protein/carbs/fat, any of the 23 nutrients, the sports compounds), the foods carrying it largest first with amount and share of the day's total, the total, how many foods have no figure.
+2. A lazily loaded Sources sheet: the nutrient's name and the day, the total against its goal or limit when set (limit wording for limits), the list (food name, emoji, meal and time, amount, share as a thin bar), "N foods have no <nutrient> figure" apart, an empty state; a food opens its entry (the existing editor, which lists its nutrients; if it does not show the full nutrient list, add a read-only "All nutrients of this food" view and say so).
+3. Opened from each row of All nutrients, from the Sugar line (directly Sugar's sources), and from a pillar.
+4. Strings in a new partition (e.g. src/i18n/en/sources.ts); data-ui hooks (sources.*); accessible names; both themes.
+5. An e2e step: tap the Sugar line, see the foods by sugar, open one.
+6. Docs: the Home part of docs/user/getting-started.md. Do not edit CHANGELOG.md: propose lines in the report.
+
+You own: src/features/home/** (the sheet and its openers), a pure module in src/domain/nutrients/, src/i18n/en/sources.ts (new) and home.ts lines, e2e/home-progress.spec.ts, docs/user/getting-started.md, tests, the note. Do not touch src/services/coach/**, src/ai/**, src/data/** (S3 adds a price field), src/features/progress/**.
+
+Tests and checks: as the rules say; `pnpm e2e` once on PLATEWISE_E2E_PORT=4202 PLATEWISE_FAKE_AI_PORT=4352. Screenshots (light and dark, en-IN, Asia/Kolkata) of Sugar's and Fibre's sources into /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/p18-sources-shots/ (scratchpad/p16-sugar-shots/shots.mts shows how).
+
+Final report as the rules file says (proposed ACC rows under a new feature F15 "Nutrient sources: which foods gave the most of a nutrient", CHANGELOG lines, the new partition's name, screenshots). Leave everything uncommitted.
