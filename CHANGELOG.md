@@ -3,7 +3,9 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.4.0)
+## 1.4.0 (2026-10-28)
+
+Platewise 1.4 shows your sugar on Home and gives the Coach several chats with a history.
 
 ### Sugar on Home
 

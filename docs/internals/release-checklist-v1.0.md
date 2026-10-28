@@ -86,6 +86,19 @@ loop and the APK are in the rows below; device checks are the owner's.
 | C5 | Google Drive setup | The one-time Google Cloud setup (`docs/user/backup.md`, Google Drive): Drive API, consent screen with `drive.file`, Android OAuth client for `app.platewise.android` and the APK's SHA-1 | **Open: the owner** | — |
 | C6 | Google Drive on a device | Connect in Settings › Your data › Google Drive; Back up now and check "Platewise backups" in Drive; Restore from Drive; on a fresh install, Welcome › Restore from Google Drive | **Open: the owner's phone (after C5)** | — |
 
+## 1.4.0 (2026-10-28): sugar on Home and several Coach chats
+
+P16 (`docs/plan/phases/P16-sugar-and-coach-chats.md`, D-16.98, D-16.99): the Sugar line on Home and several Coach
+chats with New chat and the Chats list. `CHANGELOG.md` describes 1.4.0. Results of the release loop and the APK are in
+the rows below; device checks are the owner's.
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| D1 | Release loop | `scripts/ci-local.sh` on the 1.4.0 stack | see the 1.4.0 release commit's message | 2026-10-28, lead's loop |
+| D2 | 1.4.0 APK | `PLATEWISE_BUILD_NUMBER=5 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| D3 | Upgrade on a device | Install 1.4.0 over 1.3.0: the Coach's conversation is the first chat in Chats; Home shows the Sugar line | **Open: the owner's phone** | — |
+| D4 | Chats on a device | New chat, ask, switch to another chat while it answers, come back; rename; delete; the keyboard stays below the composer | **Open: the owner's phone** | — |
+
 ## Release files
 
 | File | State |
