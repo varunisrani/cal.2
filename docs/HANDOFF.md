@@ -163,6 +163,10 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P14 (the user asked 11:30 IST):** automatic backup in the Android app (D-16.95: daily/weekly on start and return,
+Documents/Platewise, keep 7, restore from the list) and the keyboard covering the Coach composer (no
+windowSoftInputMode; edge-to-edge API 35 never resized the WebView). Plan `docs/plan/phases/P14-auto-backup.md`; builders
+`/root/wt/wt-p14s1` (backup) and `/root/wt/wt-p14s2` (keyboard), prompts `docs/handoff/wave20/`. Ship as 1.2.0.
 **1.1.0 RELEASED (05:30 IST, 2026-10-28):** 1570597 P13 S4 (Coach chat + reminders through the Coach), b3d85bd the
 test-harness fix (`until()` waits outside act; root cause of the ReminderCard and probably the HomePage load timeouts),
 e94f7a7 the 1.1.0 release (package.json 1.1.0, CHANGELOG 1.1.0 dated, checklist A6–A8, P12 and P13 done). The release
