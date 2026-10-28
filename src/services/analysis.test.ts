@@ -185,13 +185,18 @@ function nextTask(): Promise<void> {
   });
 }
 
-/** Runs tasks until `check()` holds; fails after a generous number of rounds. */
+/**
+ * Runs tasks until `check()` holds. The limit is a time, not a count of rounds: the stored key is
+ * opened with WebCrypto, which answers on the clock (in a thread of its own), and a loaded machine
+ * runs any number of rounds before it does.
+ */
 async function until(check: () => boolean): Promise<void> {
-  for (let round = 0; round < 500; round++) {
-    if (check()) return;
+  const deadline = performance.now() + 3_000;
+  while (!check()) {
+    if (performance.now() > deadline)
+      throw new Error('The analysis never reached the expected state');
     await nextTask();
   }
-  throw new Error('The analysis never reached the expected state');
 }
 
 function phaseOf(service: AnalysisService): AnalysisState['phase'] {

@@ -202,6 +202,9 @@ describe('HealthPage (P11-04)', () => {
     await untilShown('[data-ui="health.sync.failed"]');
     expect(stateOf('health.sync.failed')).toBe(words.sync.failed);
 
+    // The button stays busy until the first press's sync has settled and React has drawn that,
+    // which can come after the note; a press on a busy button is ignored.
+    await until(() => !button(words.sync.now).hasAttribute('aria-busy'));
     fireEvent.click(button(words.sync.now));
     await until(() => document.querySelector('[data-ui="health.sync.failed"]') === null);
     expect(stateOf('health.lastSync')).not.toBe(words.sync.never);
