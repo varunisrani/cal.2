@@ -3,7 +3,10 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.3.0)
+## 1.3.0 (2026-10-28)
+
+Platewise 1.3 records your walks and tells you how effective they were, and copies your backups to
+your own Google Drive.
 
 ### Walks in the Android app
 

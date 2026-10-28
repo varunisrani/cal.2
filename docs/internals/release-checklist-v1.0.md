@@ -71,6 +71,21 @@ below; device checks are the owner's.
 | B3 | Keyboard on a device | Open the Coach and type; open Log › Manual and type in the last field; on Android 15+ and on an older phone | **Open: the owner's phone** | — |
 | B4 | Automatic backup on a device | Install 1.2.0, open it, check Documents › Platewise has a backup; next day open it again; Restore one from the list; on Android 8–10 the storage question | **Open: the owner's phone** | — |
 
+## 1.3.0 (2026-10-28): walks and Google Drive backup
+
+P15 (`docs/plan/phases/P15-walks-and-drive-backup.md`, D-16.96, D-16.97): the walk recorder with its walk score in the
+Android app, and copies of backups in the person's Google Drive. `CHANGELOG.md` describes 1.3.0. Results of the release
+loop and the APK are in the rows below; device checks are the owner's.
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| C1 | Release loop | `scripts/ci-local.sh` on the 1.3.0 stack | see the 1.3.0 release commit's message | 2026-10-28, lead's loop |
+| C2 | 1.3.0 APK | `PLATEWISE_BUILD_NUMBER=4 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| C3 | A walk on a device | Start a walk (allow location and physical activity), walk 10 minutes with the screen off, pause from the notification, resume, stop; check the summary, Save, Progress › Walks, Home's burn line; with Health Connect connected and sending on, the walk in Health Connect | **Open: the owner's phone** | — |
+| C4 | Walk survives the app closing | Start a walk, swipe Platewise away, walk, open it again (the walk carries on); stop from the notification with the app closed, open it (the summary) | **Open: the owner's phone** | — |
+| C5 | Google Drive setup | The one-time Google Cloud setup (`docs/user/backup.md`, Google Drive): Drive API, consent screen with `drive.file`, Android OAuth client for `app.platewise.android` and the APK's SHA-1 | **Open: the owner** | — |
+| C6 | Google Drive on a device | Connect in Settings › Your data › Google Drive; Back up now and check "Platewise backups" in Drive; Restore from Drive; on a fresh install, Welcome › Restore from Google Drive | **Open: the owner's phone (after C5)** | — |
+
 ## Release files
 
 | File | State |
