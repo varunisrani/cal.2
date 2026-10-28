@@ -30,13 +30,14 @@ interface WalkTrackerPlugin {
   pause(): Promise<WalkSnapshot>;
   resume(): Promise<WalkSnapshot>;
   stop(): Promise<WalkSnapshot & { endedAt: string }>;
-  discard(): Promise<void>;
-  current(): Promise<WalkSnapshot | null>; // a walk in progress, e.g. after the app was reopened
+  discard(): Promise<void>; // call after saving or throwing away; an ended walk (state 'paused' plus endedAt) is kept until then
+  current(): Promise<WalkSnapshot | null>; // a walk in progress, e.g. after the app was reopened; no walk resolves undefined, read it as null
   addListener(event: 'walkUpdate', fn: (s: WalkSnapshot) => void): Promise<{ remove(): Promise<void> }>; // about every 2 s while in front
 }
 // Health Connect additions (the P11 plugin):
 //   writeWalk({ clientId, start, end, distanceM, activeKcal, steps: number | null }): Promise<void>
 //   readHeartRate({ start, end }): Promise<{ samples: { t: string; bpm: number }[] }>   // kind 'heartRate' in HealthReadKind
+//   kind 'walk' in HealthWriteKind: needed by writeWalk (exercise, distance, active calories; steps are asked with it and optional)
 interface DrivePlugin {
   authorize(o: { interactive: boolean }): Promise<{ accessToken: string; email: string | null }>; // rejects 'notConfigured' | 'cancelled' | 'unavailable' | 'unknown'
   signOut(): Promise<void>;
