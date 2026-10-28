@@ -165,10 +165,8 @@ shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Centr
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
 **Landed (2026-10-28 evening):** 7852a19 P16-01 sugar on Home; b9c4ec5 P16-02/03 several Coach chats (schema 4;
-`openWater` settle now time-bounded). **1.4.0 RELEASED at 5fbabb3** (APK build 5 sent; D1/D2 filled; device checks D3/D4 open). P17 S1 (nudges, notices, panel) is
-done in `/root/wt/wt-p17s1`, patch `/root/wt/patches/p17s1.patch`; rebased on b9c4ec5 as
-`/root/wt/patches/p17s1-rebased.patch` (context.tsx conflict resolved), ledger script `/root/wt/msgs/ledger_w23_p17s1.py`.
-P17 S2 (the Coach's notifications) builds in `/root/wt/wt-p17s2` on a local commit f6dc89b (= b9c4ec5 + P17 S1).
+`openWater` settle now time-bounded). **1.4.0 RELEASED at 5fbabb3** (APK build 5 sent; D1/D2 filled; device checks D3/D4 open). P17 S1 (nudges, notices, panel) LANDED at 3da2487 (bundle 248.80 kB of 250: Android-only catalogue partitions loaded
+lazily would win back ~1–3 kB; do it before the next feature that adds strings). P17 S2 (the Coach's notifications) builds in `/root/wt/wt-p17s2` on a local commit f6dc89b (= b9c4ec5 + P17 S1).
 **P17 (the user asked 19:30 IST): smart notifications → 1.5.0.** Plan `docs/plan/phases/P17-smart-notifications.md`
 (D-16.100 planned nudges, D-16.101 event notices, D-16.102 the Coach's own). Wave 23: S1 nudges and notices
 (`/root/wt/wt-p17s1` at 775e1d4, prompt `docs/handoff/wave23/`); S2 (the Coach: auto reminders, check-ins, reply
