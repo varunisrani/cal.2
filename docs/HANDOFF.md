@@ -164,6 +164,10 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P17 (the user asked 19:30 IST): smart notifications → 1.5.0.** Plan `docs/plan/phases/P17-smart-notifications.md`
+(D-16.100 planned nudges, D-16.101 event notices, D-16.102 the Coach's own). Wave 23: S1 nudges and notices
+(`/root/wt/wt-p17s1` at 775e1d4, prompt `docs/handoff/wave23/`); S2 (the Coach: auto reminders, check-ins, reply
+ready) starts after P16 S2 (chats) lands. Ledgers at landing: inventory J14, ACC rows, D-16.100..102.
 **P16 (the user asked 19:00 IST): sugar on Home and several Coach chats → 1.4.0.** Plan
 `docs/plan/phases/P16-sugar-and-coach-chats.md` (D-16.98 sugar line, D-16.99 chats). Wave 22 builders at e56d804: S1
 sugar (`/root/wt/wt-p16s1`), S2 chats (`/root/wt/wt-p16s2`); prompts `docs/handoff/wave22/`. Ledgers at landing:
