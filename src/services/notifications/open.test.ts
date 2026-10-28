@@ -10,6 +10,7 @@ function app(): OpenApp & { calls: string[] } {
     navigate: vi.fn((route) => calls.push(`go ${JSON.stringify(route)}`)),
     selectToday: () => calls.push('today'),
     openReview: () => calls.push('review'),
+    openChat: (chatId) => calls.push(`chat ${chatId}`),
   };
 }
 
@@ -23,7 +24,8 @@ describe('where a notification opens the app (P17, D-16.101)', () => {
     ['weight', [go(tabRoute('progress'))]],
     ['review', ['today', go(HOME_ROUTE), 'review']],
     ['data', [go(tabRoute('settings', 'data'))]],
-    [{ coachChat: 'chat-1' }, [go(tabRoute('coach'))]],
+    // A reply's or a check-in's: the Coach on that chat (P17-03, D-16.102).
+    [{ coachChat: 'chat-1' }, ['chat chat-1', go(tabRoute('coach'))]],
   ])('opens %j', (target, expected) => {
     const a = app();
     openTarget(target, a);

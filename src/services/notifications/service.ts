@@ -1,6 +1,7 @@
 // What screens use of the Android app's notifications (P17): the inbox as a live view with its
 // changes (D-16.103), the Smart notifications switches, quiet hours, Only if I haven't logged it,
-// the Home card's Not now, and opening what an item is about.
+// the Home card's Not now, opening what an item is about, and the Coach's own (D-16.102): Let the
+// Coach set reminders, and cancelling a check-in.
 
 import type { LiveSource, LiveState } from '../../data/live';
 import type { SettingsRepo } from '../../data/repos/settingsRepo';
@@ -87,6 +88,14 @@ export function createNotifyService(deps: NotifyServiceDeps): NotifyService {
 
     async dismissCard() {
       await store.device.change((state) => (state.cardDone ? state : { ...state, cardDone: true }));
+    },
+
+    async setCoachSets(on) {
+      await settingsRepo.update('coach.setsReminders', () => on);
+    },
+
+    async cancelCheckIn(id) {
+      await settingsRepo.update('coach.checkIns', (list) => list.filter((one) => one.id !== id));
     },
   };
 }

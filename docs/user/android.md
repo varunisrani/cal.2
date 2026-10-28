@@ -244,17 +244,31 @@ These come at once, at most once a day each (the week's once a week):
 - The fasting goal alert you turn on among the reminders works as before.
 
 A tap on any notification opens what it is about: Home on today, your water, Progress for a
-weigh-in, the review, or Your data.
+weigh-in, the review, Your data, or the Coach's chat.
+
+### From the Coach
+
+- **The Coach replied**: a reply came while Platewise was in the background, or while another
+  screen or another chat was open. It shows the start of the reply, and a tap opens that chat.
+  Nothing comes for the chat you are looking at. Its switch is **Coach replies**.
+- **Coach check-in**: a message the Coach scheduled with you (see [The Coach](coach.md)). It comes
+  at its time even in quiet hours, since you agreed to it, and a tap opens its chat, where the
+  message then is. Settings › Tracking & reminders lists the check-ins that wait, under Coach, with
+  Delete; they have no switch.
+- With **Let the Coach set reminders** on (under Coach in Settings › Tracking & reminders), the
+  reminders you ask the Coach for are set at once, with Undo and Edit in the chat.
 
 ### Settings
 
 Settings › Tracking & reminders › **Smart notifications** has a switch for each nudge and notice
 (all on to start with), each with a line on what it does, and **Quiet hours** (on): from 22:00 to
 07:00 Platewise sends none of its own; a nudge or notice that would come then is skipped, and the
-fasting goal waits until 07:00. Reminders you set always come at their time.
+fasting goal waits until 07:00. Reminders you set, and the Coach's check-ins, always come at their
+time.
 
 Each kind also has its own channel in Android's settings (Apps › Platewise › Notifications), so
-you can silence one there, or change its sound, without touching the others.
+you can silence one there, or change its sound, without touching the others. The Coach's
+check-ins have their own channel too (Check-ins).
 
 ### The notification panel
 

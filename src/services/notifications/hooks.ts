@@ -12,8 +12,8 @@
 //   one, a success starts again): a tap opens Settings › Your data.
 // The fasting goal is planned ahead with the reminders (`nativePlan.ts`), not posted here.
 //
-// The Coach's notices (coachReplied, coachCheckIn: P17 S2) post through the same
-// `NotifyService.notices.post`, with `open: { coachChat: id }`; nothing here watches the Coach.
+// The Coach's (D-16.102) are not watched here: "The Coach replied" is posted when the session
+// stores a reply (`setup.ts`), and check-ins are planned ahead with the reminders (`nativePlan.ts`).
 
 import type { LiveSource } from '../../data/live';
 import type { DiaryRepo } from '../../data/repos/diaryRepo';

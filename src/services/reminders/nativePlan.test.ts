@@ -4,12 +4,16 @@ import { dayNumberOf } from '../../domain/dates/dayKey';
 import { WEEKDAYS, type CustomReminder } from '../../domain/reminders/custom';
 import { makeFast } from '../../test/factories';
 import { REMINDER_SETTING_KEYS, type ReminderSettings } from './engine';
+import { NOTICE_KINDS } from '../../domain/reminders/notices';
+import { NOTICE_BASE_ID } from '../notifications/notices';
 import {
   CHANNEL_ID,
+  CHECK_IN_IDS,
   NATIVE_IDS,
   channelOf,
   SMALL_ICON,
   SUMMARY_DAYS,
+  checkInIds,
   customBaseIds,
   immediateRequest,
   nativePlan,
@@ -21,6 +25,7 @@ import {
   type NudgeFacts,
 } from './nativePlan';
 import { writeMessage } from './notifier';
+import { DAY_SLOTS, NUDGE_IDS } from './nudgePlan';
 import type { DayTotals } from './schedule';
 
 // Tests run in America/New_York. Monday 26 October 2026, 12:30.
@@ -328,5 +333,85 @@ describe('nativePlan with the nudges (P17-01, D-16.100)', () => {
       at: new Date(local('2026-10-27T00:00:00')),
       allowWhileIdle: true,
     });
+  });
+});
+
+describe('nativePlan: the Coach’s check-ins (P17-03, D-16.102)', () => {
+  const checkIn = (id: string, at: string, chatId = 'chat-1') => ({
+    id,
+    chatId,
+    at: local(at),
+    text: `Check-in ${id}`,
+  });
+
+  it('plans each waiting check-in once at its time, in its own channel, opening its chat', () => {
+    const list = plan(
+      stored({
+        'remind.master': false,
+        'coach.checkIns': [checkIn('a', '2026-10-29T19:00:00', 'chat-7')],
+      }),
+    );
+
+    expect(list).toEqual([
+      {
+        id: checkInIds([checkIn('a', '2026-10-29T19:00:00')]).get('a'),
+        title: 'Coach check-in',
+        body: 'Check-in a',
+        schedule: { at: new Date(local('2026-10-29T19:00:00')), allowWhileIdle: true },
+        smallIcon: SMALL_ICON,
+        channelId: channelOf('coachCheckIn'),
+        extra: {
+          open: { coachChat: 'chat-7' },
+          key: expect.any(String) as unknown as string,
+          kind: 'coachCheckIn',
+        },
+      },
+    ]);
+  });
+
+  it('keeps a check-in at its time in quiet hours: the person agreed to it', () => {
+    const late = stored({ 'coach.checkIns': [checkIn('late', '2026-10-27T23:30:00')] });
+    expect(late['notify.quiet']).toBe(true);
+    expect(plan(late)[0]?.schedule).toEqual({
+      at: new Date(local('2026-10-27T23:30:00')),
+      allowWhileIdle: true,
+    });
+  });
+
+  it('leaves out one whose time has come, and plans none without Android’s permission', () => {
+    const settings = stored({
+      'coach.checkIns': [
+        checkIn('due', '2026-10-26T12:00:00'),
+        checkIn('next', '2026-10-28T09:00:00'),
+      ],
+    });
+    expect(plan(settings).map((each) => each.body)).toEqual(['Check-in next']);
+    expect(plan(settings, { permitted: false })).toEqual([]);
+  });
+
+  it('gives each check-in its own id in 210–241, never one of any other notification', () => {
+    const three = [
+      checkIn('one', '2026-10-27T09:00:00'),
+      checkIn('two', '2026-10-28T09:00:00'),
+      checkIn('three', '2026-10-29T09:00:00'),
+    ];
+    const ids = [...checkInIds(three).values()];
+    expect(new Set(ids).size).toBe(3);
+    // The same ids whatever else changes, so an unchanged one is not handed over again.
+    expect(checkInIds(three.slice(1)).get('two')).toBe(checkInIds(three).get('two'));
+
+    const taken = new Set<number>([
+      ...Object.values(NATIVE_IDS).filter((id) => id < NATIVE_IDS.custom),
+      ...Array.from({ length: DAY_SLOTS }, (_, slot) => NATIVE_IDS.summary + slot),
+    ]);
+    const nudgeEnd = NUDGE_IDS.weighIn + DAY_SLOTS - 1;
+    const noticeEnd = NOTICE_BASE_ID + NOTICE_KINDS.length * DAY_SLOTS - 1;
+    for (let slot = 0; slot < CHECK_IN_IDS.slots; slot += 1) {
+      const id = CHECK_IN_IDS.first + slot;
+      expect(taken.has(id)).toBe(false);
+      expect(id).toBeGreaterThan(nudgeEnd);
+      expect(id).toBeLessThan(NOTICE_BASE_ID);
+    }
+    expect(noticeEnd).toBeLessThan(NATIVE_IDS.custom);
   });
 });

@@ -14,6 +14,14 @@ What changed in each release of Platewise, newest first. Version numbers follow
 
 ### Smart notifications in the Android app
 
+- The Coach sets the reminders you ask for at once (Settings › Tracking & reminders › Coach › Let the Coach set
+  reminders, on); its reply shows "Reminder set" with Undo and Edit. Turned off, and on the web, it proposes them with
+  Add as before.
+- Coach check-ins: the Coach can schedule a follow-up message within 14 days (at most 3 waiting). It comes as a
+  notification that opens its chat, where the message appears. Cancel it on its card or Delete it in Settings.
+  Check-ins come in quiet hours too, since you agreed to them.
+- "The Coach replied": when a reply arrives while Platewise is in the background or another screen or chat is open, a
+  notification shows its start and opens that chat (switch: Coach replies in Smart notifications).
 - Platewise now nudges you when it helps. A meal check comes about an hour after your usual meal time if nothing is
   logged. A water-pace nudge comes at 13:00, 16:00 and 19:00 while you are behind, an empty-day nudge at 20:30, and a
   weigh-in nudge a week after your last one. Each is taken back once it no longer applies.

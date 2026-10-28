@@ -1,0 +1,46 @@
+/*
+ * The Coach's card on Settings › Tracking & reminders (P17): Let the Coach set reminders, and the
+ * waiting check-ins, each with its Delete button. The card, rows and notes reuse
+ * tracking.module.css; every value here comes from tokens.css; logical properties throughout.
+ */
+
+/* "Check-ins": reads like the card's own heading. */
+.subheading {
+  margin: 0;
+  padding-block: var(--space-3) 0;
+  padding-inline: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+}
+
+/* A check-in: its words and when, then Delete at the end. */
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-4) var(--space-2);
+}
+
+.words {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.text {
+  margin: 0;
+  color: var(--text);
+  font-size: var(--type-body);
+  line-height: var(--leading-snug);
+  overflow-wrap: anywhere;
+}
+
+.when {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}

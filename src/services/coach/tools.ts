@@ -3,7 +3,9 @@
 // call is answered from the turn's snapshot, never from the live stores, and always as the text of
 // one JSON object; a problem is an `{error}` object the model can read and correct, never a throw.
 // `propose_reminder` (D-16.93, reminderTool.ts) writes nothing either: it notes a proposal on the
-// turn's desk, and is answered "not available" in a turn without one.
+// turn's desk, and is answered "not available" in a turn without one. The tools that write
+// (`set_reminder`, `schedule_check_in`: P17, ownTools.ts) are run by the engine before the round's
+// results go back; here they are only answered "not available" where the turn does not offer them.
 //
 // Ranges are local days, inclusive at both ends. A `to` that is missing or not a real
 // YYYY-MM-DD day means today, a `from` like that means 30 days before `to`, and the two swap when
@@ -40,10 +42,12 @@ import {
   ACTIVITY_DEFAULT_DAYS,
   ACTIVITY_MAX_DAYS,
   ACTIVITY_TOOL_NAME,
+  CHECK_IN_TOOL_NAME,
   DEFAULT_SPAN_DAYS,
   NUTRITION_TOOL_NAMES,
   REMINDER_TOOL_NAME,
   ROW_LIMITS,
+  SET_REMINDER_TOOL_NAME,
   WALK_TOOL_NAME,
   isLaterToolName,
   isNutritionToolName,
@@ -67,13 +71,17 @@ const MS_PER_MINUTE = 60_000;
 
 /**
  * The sentence naming the tools this turn offers: activity_log only while it is connected,
- * propose_reminder only with a desk.
+ * propose_reminder only with a desk (set_reminder in its place while the Coach sets reminders,
+ * and schedule_check_in, in the Android app: P17).
  */
 function availableTools(snapshot: CoachSnapshot, desk: ReminderDesk | undefined): string {
   const names: string[] = [...NUTRITION_TOOL_NAMES];
   if (snapshot.activity !== null) names.push(ACTIVITY_TOOL_NAME);
   if (snapshot.walks !== null) names.push(WALK_TOOL_NAME);
-  if (desk !== undefined) names.push(REMINDER_TOOL_NAME);
+  if (desk !== undefined) {
+    names.push(desk.own?.setsReminders ? SET_REMINDER_TOOL_NAME : REMINDER_TOOL_NAME);
+  }
+  if (desk?.own !== undefined) names.push(CHECK_IN_TOOL_NAME);
   return `Available tools: ${names.join(', ')}.`;
 }
 
@@ -438,7 +446,7 @@ export function runCoachTool(
       return problem(UNREADABLE);
     }
   }
-  if (name === REMINDER_TOOL_NAME && desk !== undefined) {
+  if (name === REMINDER_TOOL_NAME && desk !== undefined && !desk.own?.setsReminders) {
     try {
       return proposeReminder(args, desk);
     } catch {
@@ -446,7 +454,11 @@ export function runCoachTool(
     }
   }
   const available = availableTools(snapshot, desk);
-  if (name === REMINDER_TOOL_NAME) {
+  if (
+    name === REMINDER_TOOL_NAME ||
+    name === SET_REMINDER_TOOL_NAME ||
+    name === CHECK_IN_TOOL_NAME
+  ) {
     return problem(`The tool "${name}" is not available here. ${available}`);
   }
   if (name === ACTIVITY_TOOL_NAME) {

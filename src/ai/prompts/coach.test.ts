@@ -15,9 +15,11 @@ import {
 import { coachContext } from '../../services/coach/context';
 import {
   ACTIVITY_MAX_DAYS,
+  CHECK_IN_TOOL_NAME,
   LATER_TOOL_NAMES,
   NUTRITION_TOOL_NAMES,
   REMINDER_TOOL_NAME,
+  SET_REMINDER_TOOL_NAME,
   coachTools,
 } from '../../services/coach/toolSchemas';
 import { coachSystemPrompt } from './coach';
@@ -286,6 +288,64 @@ describe('coachSystemPrompt: reminders (P13, D-16.93)', () => {
     ]) {
       expect(text).not.toMatch(/propose_reminder|Reminders:|tap Add/);
     }
+  });
+});
+
+describe('coachSystemPrompt: what the Coach does itself (P17-03, D-16.102)', () => {
+  const android = (setsReminders: boolean) =>
+    coachSystemPrompt({ context: CONTEXT, reminders: true, setsReminders, checkIns: true });
+
+  it('says to set a reminder the person asked for or agreed to, and nothing more', () => {
+    const text = android(true);
+    expect(text).toContain(`call ${SET_REMINDER_TOOL_NAME} with what it should say`);
+    expect(text).toContain('or say yes to a reminder you suggested for a plan or a habit');
+    expect(text).toContain('It sets the reminder at once; a card under your reply lets them undo');
+    expect(text).toContain(
+      'Set only what they asked for or agreed to: never more reminders than that, and never one they did not want.',
+    );
+    expect(text).toContain('suggest it and wait for a yes');
+    expect(text).toContain('Always say in your reply what you set');
+    expect(text).toContain('ask them instead of guessing');
+    expect(text).not.toContain(REMINDER_TOOL_NAME);
+    expect(text).not.toContain('Never say that a reminder is set');
+  });
+
+  it('says when a check-in is welcome, its limits, and to say when it comes', () => {
+    const text = android(true);
+    expect(text).toContain('Check-ins:');
+    expect(text).toContain(`${CHECK_IN_TOOL_NAME} sends them one short message from you later`);
+    expect(text).toContain('within the next 14 days');
+    expect(text).toContain('to ask how a plan they agreed to went');
+    expect(text).toContain('Set one only when they asked for it or said yes to it');
+    expect(text).toContain('at most 120 characters');
+    expect(text).toContain('At most 3 can wait at once.');
+    expect(text).toContain('always say in your reply when you will check in');
+  });
+
+  it('keeps the proposal rules while the Coach may not set reminders, with check-ins', () => {
+    const text = android(false);
+    expect(text).toContain(`call ${REMINDER_TOOL_NAME} with what it should say`);
+    expect(text).toContain('Never say that a reminder is set, saved or scheduled.');
+    expect(text).toContain('Check-ins:');
+  });
+
+  it('names exactly the tools offered with it, before the answer shapes', () => {
+    for (const setsReminders of [false, true]) {
+      const text = android(setsReminders);
+      const named = new Set(text.match(/\b[a-z]+(?:_[a-z0-9]+)+\b/g));
+      expect([...named].sort()).toEqual(
+        coachTools(false, true, false, { setsReminders, checkIns: true })
+          .map((tool) => tool.name)
+          .sort(),
+      );
+      expect(text.indexOf('Check-ins:')).toBeGreaterThan(text.indexOf('Reminders:'));
+      expect(text.indexOf('Check-ins:')).toBeLessThan(text.indexOf('Shaping answers:'));
+    }
+  });
+
+  it('adds none of it on the web', () => {
+    const text = coachSystemPrompt({ context: CONTEXT, reminders: true });
+    expect(text).not.toMatch(/set_reminder|schedule_check_in|Check-ins:/);
   });
 });
 

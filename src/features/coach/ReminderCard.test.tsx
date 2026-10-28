@@ -2,7 +2,11 @@ import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CoachReminderCard } from '../../domain/model';
-import { CUSTOM_REMINDER_LIMIT, WEEKDAYS } from '../../domain/reminders/custom';
+import {
+  CUSTOM_REMINDER_LIMIT,
+  WEEKDAYS,
+  type CustomReminder,
+} from '../../domain/reminders/custom';
 import { coach } from '../../i18n/en/coach';
 import { createReminderCards } from '../../services/coach/reminderCards';
 import type { CoachSession } from '../../services/coach/session';
@@ -63,16 +67,19 @@ interface Open {
   readonly permission?: NotificationState;
   /** The Notifications switch as stored; on unless said otherwise. */
   readonly master?: boolean;
+  /** Your reminders as stored first (P17: the ones the Coach set). */
+  readonly kept?: CustomReminder[];
 }
 
 /**
  * The Coach tab over a conversation whose reply proposed `cards`, with the real custom reminders
  * and tracking services and the real card logic behind the session's Add and Dismiss.
  */
-async function openChat({ cards, permission = 'granted', master = true }: Open) {
+async function openChat({ cards, permission = 'granted', master = true, kept = [] }: Open) {
   const h = await openTracking({ permission, hash: '#/coach' });
   const { settingsRepo, coachRepo } = h.repos;
   await settingsRepo.set('remind.master', master);
+  await settingsRepo.set('remind.custom', kept);
   await coachRepo.append(
     { chatId: CHAT, role: 'user', text: 'Remind me, please.', at: FACTORY_NOW },
     { start: true },
@@ -99,6 +106,7 @@ async function openChat({ cards, permission = 'granted', master = true }: Open) 
       renameChat: vi.fn(async () => null),
       addReminder: (id, index, on) => reminderCards.add(id, index, on),
       dismissReminder: (id, index) => reminderCards.dismiss(id, index),
+      undoReminder: (id, index) => reminderCards.undo(id, index),
     };
   }
 
@@ -281,5 +289,82 @@ describe('ReminderCard: Dismiss (P13, D-16.93)', () => {
     expect((await c.storedCards())?.map((each) => each.status)).toEqual(['dismissed', 'proposed']);
     expect(c.add).not.toHaveBeenCalled();
     expect(screen.getByText('I have proposed it: tap Add to set it.')).toBeVisible();
+  });
+});
+
+describe('ReminderCard: a reminder the Coach set (P17-03, D-16.102)', () => {
+  const WATER: CustomReminder = {
+    id: 'set-1',
+    text: 'Drink a glass of water',
+    time: '10:00',
+    days: [...WEEKDAYS],
+    on: true,
+  };
+  const SET: CoachReminderCard = { ...DAILY, status: 'set', reminderId: 'set-1' };
+  const untilStatus = (status: string) =>
+    until(() => card()?.getAttribute('data-status') === status);
+
+  it('shows it as set, as Your reminders keeps it, with Undo and Edit', async () => {
+    await openChat({ cards: [SET], kept: [{ ...WATER, time: '10:30' }] });
+    // Edit comes once Your reminders are read.
+    await untilShown('[data-ui="coach.reminderCard.edit"]');
+
+    expect(card()).toHaveAttribute('data-status', 'set');
+    expect(card()).toHaveAccessibleName(`${words.set} Drink a glass of water`);
+    expect(within(card()).getByText(words.set)).toHaveAttribute(
+      'data-ui',
+      'coach.reminderCard.set',
+    );
+    expect(card().querySelector('[data-ui="coach.reminderCard.when"]')).toHaveTextContent(
+      'Every day at 10:30 AM',
+    );
+    expect(within(card()).getByRole('button', { name: words.undo })).toBeVisible();
+    expect(within(card()).getByRole('button', { name: 'Edit' })).toBeVisible();
+    expect(within(card()).queryByRole('button', { name: words.add })).toBeNull();
+    expect(card().querySelector('[data-ui="coach.reminderCard.off"]')).toBeNull();
+  });
+
+  it('takes the reminder away on Undo; the card then waits for Add, which adds it again', async () => {
+    const c = await openChat({ cards: [SET], kept: [WATER] });
+
+    await c.user.click(within(card()).getByRole('button', { name: words.undo }));
+    await untilStatus('proposed');
+
+    expect(await c.stored()).toEqual([]);
+    expect(await c.storedCards()).toEqual([DAILY]);
+    await c.user.click(addButton());
+    await untilAdded();
+    expect(await c.stored()).toEqual([{ ...WATER, id: 'reminder-1' }]);
+  });
+
+  it('opens the reminder’s own editor on Edit; a change shows on the card', async () => {
+    const c = await openChat({ cards: [SET], kept: [WATER] });
+    await untilShown('[data-ui="coach.reminderCard.edit"]');
+
+    await c.user.click(within(card()).getByRole('button', { name: 'Edit' }));
+    await untilShown('[data-ui="reminders.yours.sheet"]');
+    const field = screen.getByRole('textbox', { name: /What it says/ });
+    expect(field).toHaveValue('Drink a glass of water');
+    await c.user.clear(field);
+    await c.user.type(field, 'Two glasses of water');
+    await c.user.click(screen.getByRole('button', { name: 'Save' }));
+    await untilGone('[data-ui="reminders.yours.sheet"]');
+
+    expect(await c.stored()).toEqual([{ ...WATER, text: 'Two glasses of water' }]);
+    await until(
+      () =>
+        card().querySelector('[data-ui="coach.reminderCard.text"]')?.textContent ===
+        'Two glasses of water',
+    );
+    expect(c.add).not.toHaveBeenCalled();
+  });
+
+  it('says it shows once notifications are on, and offers no Edit once it was deleted', async () => {
+    await openChat({ cards: [SET], master: false });
+    await untilShown('[data-ui="coach.reminderCard.off"]');
+
+    expect(within(card()).getByText(words.notificationsOff)).toBeVisible();
+    expect(within(card()).queryByRole('button', { name: 'Edit' })).toBeNull();
+    expect(within(card()).getByRole('button', { name: words.undo })).toBeVisible();
   });
 });

@@ -111,6 +111,9 @@ export const reminders = {
       analysisBody: 'Check it, then add it.',
       backupFailed: 'Backups are failing',
       backupBody: 'Two in a row failed. Tap to see why.',
+      // The Coach's (D-16.102): a reply that came while you were away, a check-in it set.
+      coachReplied: 'The Coach replied',
+      coachCheckIn: 'Coach check-in',
     },
     // Settings › Tracking & reminders › Smart notifications (P17); each kind's label and line also
     // name its Android channel.
@@ -136,6 +139,11 @@ export const reminders = {
       analysisReadyHint: 'When a photo is done in the background.',
       backupFailed: 'Backup failed',
       backupFailedHint: 'When two in a row fail.',
+      coachReplied: 'Coach replies',
+      coachRepliedHint: 'When you are not in that chat.',
+      // The Coach's check-ins: their list in Settings and their Android channel (no switch).
+      coachCheckIn: 'Check-ins',
+      coachCheckInHint: 'From the Coach, even in quiet hours.',
       quiet: 'Quiet hours',
       quietHint: 'None of these 22:00–07:00.',
       onlyIfNotLogged: "Only if I haven't logged it",
@@ -185,6 +193,9 @@ export const reminders = {
       date: 'Date',
       delete: 'Delete reminder',
       deleted: 'Reminder deleted.',
+      // In the Android app (P17, D-16.102).
+      coachSets: 'Let the Coach set reminders',
+      coachSetsHint: 'Off, it proposes them for you to add.',
       problems: {
         noText: 'Write what the reminder should say.',
         textTooLong: 'Keep it to 80 characters or fewer.',

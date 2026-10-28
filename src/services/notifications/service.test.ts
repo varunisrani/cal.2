@@ -121,6 +121,20 @@ describe('the notify service (P17)', () => {
     r.stop();
   });
 
+  it('stores Let the Coach set reminders, and cancels a check-in (P17-03, D-16.102)', async () => {
+    const r = await rig();
+    expect(await r.settingsRepo.get('coach.setsReminders')).toBe(true);
+    await r.service.setCoachSets(false);
+    expect(await r.settingsRepo.get('coach.setsReminders')).toBe(false);
+
+    const checkIn = (id: string) => ({ id, chatId: 'c', at: NOW + 3_600_000, text: id });
+    await r.settingsRepo.set('coach.checkIns', [checkIn('a'), checkIn('b')]);
+    await r.service.cancelCheckIn('a');
+    await r.service.cancelCheckIn('gone');
+    expect(await r.settingsRepo.get('coach.checkIns')).toEqual([checkIn('b')]);
+    r.stop();
+  });
+
   it('opens a target through the app', async () => {
     const r = await rig();
     r.service.open('weight');

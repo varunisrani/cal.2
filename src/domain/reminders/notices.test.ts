@@ -5,10 +5,12 @@ import { NOTICE_KINDS, SMART_KINDS, afterQuiet, isQuietAt } from './notices';
 const at = (text: string) => new Date(text).getTime();
 
 describe('notice kinds and quiet hours (P17)', () => {
-  it('has a switch for every kind but the fasting goal and the Coach’s', () => {
+  it('has a switch for every kind but the fasting goal and the Coach’s check-ins', () => {
     expect(
       NOTICE_KINDS.filter((kind) => !(SMART_KINDS as readonly string[]).includes(kind)),
-    ).toEqual(['fastGoal', 'coachReplied', 'coachCheckIn']);
+    ).toEqual(['fastGoal', 'coachCheckIn']);
+    // The Coach replied has one, last (P17-03, D-16.102).
+    expect(SMART_KINDS.at(-1)).toBe('coachReplied');
   });
 
   it('is quiet from 22:00 until 07:00', () => {

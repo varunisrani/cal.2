@@ -9,9 +9,12 @@
  * Connect is connected, when the rules for its figures come too (D-16.94); and `propose_reminder`
  * when the turn can take reminder proposals, with the rules that it only proposes, that nothing is
  * set until the person taps Add, and that a missing time or day is asked for (D-16.93); and
- * `walk_log` where the app records walks, with a line on what the walk score means (D-16.96). The names
- * are written out here because the AI layer does not import the Coach service, and a test keeps
- * them equal to the tool schemas.
+ * `walk_log` where the app records walks, with a line on what the walk score means (D-16.96). In
+ * the Android app (P17, D-16.102) `set_reminder` takes `propose_reminder`'s place while the Coach
+ * may set reminders itself, and `schedule_check_in` sets a check-in; their rules say when to use
+ * them (what the person asked for or agreed to, never more), and to say in the reply what was set.
+ * The names are written out here because the AI layer does not import the Coach service, and a
+ * test keeps them equal to the tool schemas.
  */
 import { withNotes } from '../client';
 import { bullets, lines, paragraphs } from './shared';
@@ -31,6 +34,13 @@ export interface CoachPromptInput {
    * proposing one are added. Off by default.
    */
   readonly reminders?: boolean;
+  /**
+   * With `reminders`: `set_reminder` is offered instead, and the reminder is set at once (P17).
+   * Off by default.
+   */
+  readonly setsReminders?: boolean;
+  /** `schedule_check_in` is offered (P17): its rules are added. Off by default. */
+  readonly checkIns?: boolean;
   /**
    * `walk_log` is offered (the app records walks): what the walk score and brisk minutes mean is
    * added. Off by default.
@@ -122,6 +132,38 @@ const REMINDERS = lines(
   ]),
 );
 
+const SET_REMINDERS = lines(
+  'Reminders:',
+  bullets([
+    'When they ask to be reminded of something, or say yes to a reminder you suggested for a ' +
+      'plan or a habit they want to build, call set_reminder with what it should say, the time, ' +
+      'and the days or the date. It sets the reminder at once; a card under your reply lets them ' +
+      'undo or edit it. Besides reading their data, setting reminders and check-ins is all you ' +
+      'can do.',
+    'Set only what they asked for or agreed to: never more reminders than that, and never one ' +
+      'they did not want. When you think a reminder would help, suggest it and wait for a yes.',
+    'Always say in your reply what you set: the words, the time, and the days or the date.',
+    'When the time, or the days or the date, are missing or unclear, ask them instead of ' +
+      'guessing. Work out a date or a time from today and the time now in the facts above.',
+    'When the tool reports a problem, say what it is in plain words and ask for what is needed.',
+  ]),
+);
+
+const CHECK_INS = lines(
+  'Check-ins:',
+  bullets([
+    'schedule_check_in sends them one short message from you later, within the next 14 days: ' +
+      'a notification that opens this chat, where the message then appears as yours.',
+    'Use it for a follow-up they would welcome: to ask how a plan they agreed to went, or how a ' +
+      'habit they are building is going. Set one only when they asked for it or said yes to it, ' +
+      'and never more than one for the same thing.',
+    'Write the message as you would say it then, in their language, at most 120 characters. At ' +
+      'most 3 can wait at once.',
+    'It comes even at night, so pick a time they would welcome, and always say in your reply ' +
+      'when you will check in.',
+  ]),
+);
+
 const SHAPES = lines(
   'Shaping answers:',
   bullets([
@@ -140,7 +182,8 @@ export function coachSystemPrompt(input: CoachPromptInput): string {
     TOOLS,
     input.activity === true && ACTIVITY,
     input.walks === true && WALKS,
-    input.reminders === true && REMINDERS,
+    input.reminders === true && (input.setsReminders === true ? SET_REMINDERS : REMINDERS),
+    input.checkIns === true && CHECK_INS,
     SHAPES,
   );
   return withNotes(system, input.notes ?? '');

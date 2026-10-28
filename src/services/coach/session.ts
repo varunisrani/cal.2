@@ -20,6 +20,11 @@
 // With the custom reminders service the Coach may propose reminders (P13, D-16.93): the answer is
 // stored with one card per proposal, and Add and Dismiss on a card go through here, one at a time,
 // so a card is added at most once (`reminderCards.ts`, loaded on first use like the engine).
+//
+// In the Android app (P17, D-16.102) the Coach may act by itself (`actions`): a reminder it set is
+// stored as a `set` card, whose Undo goes through here too; what it set follows the reply (taken
+// back when the reply is not stored); a deleted chat's check-ins go with it; and every stored
+// reply is reported (`onReply`), so a reply the person is not looking at can be announced.
 
 import type { AiFailure } from '../../ai/errors';
 import type { ImageBackend } from '../../ai/image';
@@ -34,6 +39,7 @@ import { newId as randomId, type IdSource } from '../../lib/ids';
 import { browserImageCodec, type ImageCodec } from '../../lib/imageCodec';
 import type { StoredAiAccess } from '../aiAccess';
 import type { CustomRemindersService } from '../reminders/customReminders';
+import type { CoachActions } from './ownTools';
 import type { ReminderCardOutcome, ReminderCards } from './reminderCards';
 import type { ReminderProposal } from './reminderTool';
 import { takeSnapshot, type SnapshotSources } from './snapshot';
@@ -91,6 +97,8 @@ export interface CoachSession {
   addReminder(messageId: string, index: number, on: boolean): Promise<ReminderCardOutcome>;
   /** Hides a reply's card for good; nothing is added. */
   dismissReminder(messageId: string, index: number): Promise<void>;
+  /** Takes away the reminder the Coach set on a reply's card; the card waits for Add again. */
+  undoReminder(messageId: string, index: number): Promise<void>;
 }
 
 export interface CoachSessionDeps {
@@ -111,7 +119,14 @@ export interface CoachSessionDeps {
    * The reminders the person writes (P13): checks the Coach's proposals and adds a card's
    * reminder. Without it the Coach proposes none.
    */
-  readonly reminders?: Pick<CustomRemindersService, 'problemWith' | 'addCustomReminder'>;
+  readonly reminders?: Pick<
+    CustomRemindersService,
+    'problemWith' | 'addCustomReminder' | 'removeCustomReminder'
+  >;
+  /** What the Coach may do by itself: the Android app's (P17, D-16.102). */
+  readonly actions?: CoachActions;
+  /** A reply was stored (P17: the Android app tells the person when they are not looking). */
+  readonly onReply?: (reply: CoachMessage) => void;
   /** Ids for new chats; random UUIDs by default. */
   readonly newId?: IdSource;
 }
@@ -159,13 +174,15 @@ function isFailedQuestion(message: CoachMessage, id: string): boolean {
   return message.id === id && message.role === 'user' && message.state?.status === 'failed';
 }
 
-/** The cards for a reply's proposals, each waiting for the person. */
+/** The cards for a reply's proposals, each waiting for the person, or set by the Coach (P17). */
 function cardsOf(proposals: readonly ReminderProposal[]): CoachReminderCard[] {
-  return proposals.map(({ text, time, days, date }) =>
-    days === undefined
-      ? { text, time, date: date!, status: 'proposed' }
-      : { text, time, days: [...days], status: 'proposed' },
-  );
+  return proposals.map(({ text, time, days, date, reminderId }) => {
+    const card: CoachReminderCard =
+      days === undefined
+        ? { text, time, date: date!, status: 'proposed' }
+        : { text, time, days: [...days], status: 'proposed' };
+    return reminderId === undefined ? card : { ...card, status: 'set', reminderId };
+  });
 }
 
 export function createCoachSession(deps: CoachSessionDeps): CoachSession {
@@ -256,6 +273,7 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
         ...(image === undefined ? {} : { image }),
         snapshot,
         ...(deps.reminders === undefined ? {} : { reminders: deps.reminders }),
+        ...(deps.actions === undefined ? {} : { actions: deps.actions, chatId: run.chatId }),
       },
       {
         settings: access.settings,
@@ -265,23 +283,31 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
         ...(deps.imageBackend === undefined ? {} : { imageBackend: deps.imageBackend }),
       },
     );
-    if (run.dropped) return 'dropped';
     if (!result.ok) {
       // Only a delete cancels a turn, and it has already let this one go.
-      if (result.error.kind === 'cancelled') return 'dropped';
+      if (run.dropped || result.error.kind === 'cancelled') return 'dropped';
       return markFailed(run, question, result.error, image);
     }
-    const { text, reminders } = result.value;
-    // Stored only while the chat still is: a chat deleted in another tab drops it.
-    const reply = await coachRepo.append({
-      chatId: run.chatId,
-      role: 'assistant',
-      text,
-      at: clock.now(),
-      ...(reminders.length === 0 ? {} : { reminders: cardsOf(reminders) }),
-    });
+    const { text, reminders, settle } = result.value;
+    let reply: CoachMessage | null = null;
+    try {
+      // Stored only while the chat still is: a chat deleted in another tab drops it.
+      if (!run.dropped) {
+        reply = await coachRepo.append({
+          chatId: run.chatId,
+          role: 'assistant',
+          text,
+          at: clock.now(),
+          ...(reminders.length === 0 ? {} : { reminders: cardsOf(reminders) }),
+        });
+      }
+    } finally {
+      // What the Coach set goes with its reply, and is taken back without one (P17).
+      await settle?.(reply);
+    }
     if (reply === null) return 'dropped';
     photos.delete(question.id);
+    deps.onReply?.(reply);
     return 'answered';
   }
 
@@ -358,6 +384,8 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
       }
       for (const [id, kept] of photos) if (kept.chatId === chatId) photos.delete(id);
       await coachRepo.remove(chatId);
+      // Its check-ins have no chat to come back to (P17).
+      await deps.actions?.checkIns.dropChat(chatId);
     },
 
     renameChat: (chatId, title) => coachRepo.rename(chatId, title),
@@ -365,5 +393,7 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
     addReminder: async (messageId, index, on) => (await reminderCards()).add(messageId, index, on),
 
     dismissReminder: async (messageId, index) => (await reminderCards()).dismiss(messageId, index),
+
+    undoReminder: async (messageId, index) => (await reminderCards()).undo(messageId, index),
   };
 }

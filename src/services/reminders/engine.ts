@@ -59,6 +59,8 @@ export const REMINDER_SETTING_KEYS = [
   'notify.quiet',
   'notify.onlyIfNotLogged',
   'water.goalMl',
+  // The Coach's check-ins (P17, D-16.102), handed to Android with the rest.
+  'coach.checkIns',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type ReminderSettings = Pick<Settings, (typeof REMINDER_SETTING_KEYS)[number]>;

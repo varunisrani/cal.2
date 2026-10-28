@@ -258,7 +258,7 @@ function YourReminders({ service, tracking, clock }: CardProps) {
   );
 }
 
-interface SheetProps {
+export interface SheetProps {
   /** The reminder to edit, or null for a new one. */
   readonly reminder: CustomReminder | null;
   readonly weekStart: 'mon' | 'sun';
@@ -295,9 +295,16 @@ function draftOf(reminder: CustomReminder | null, today: DayKey): Draft {
  * all seven to start) or comes once on a date (today or later). Save checks the fields first and
  * says what is wrong under the field it is about; a new reminder is saved on when notifications
  * are on or allowed in the same press, else off. Editing keeps the reminder's switch as it is and
- * offers Delete.
+ * offers Delete. The Coach's "Reminder set" card opens it too (P17).
  */
-function ReminderSheet({ reminder, weekStart, service, allowed, onClose, onDeleted }: SheetProps) {
+export function ReminderSheet({
+  reminder,
+  weekStart,
+  service,
+  allowed,
+  onClose,
+  onDeleted,
+}: SheetProps) {
   const today = useToday();
   const toast = useToast();
   const locale = currentLocale();

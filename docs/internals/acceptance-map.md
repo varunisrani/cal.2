@@ -969,6 +969,49 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-I14-7** Erase everything removes all chats
   - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > deletes everything, the nudge’s key too, and another open tab starts again on Welcome (ACC-K6-1)
 
+### I15 · The Coach's own reminders, check-ins and reply notices (P1 on Android, P17)
+
+- **ACC-I15-1** With Let the Coach set reminders on (Android app), the Coach's reminder tool adds the reminder at once with Settings' checks and the limit of 20, and the card says Reminder set; off, and on the web, the proposal with Add is unchanged
+  - Test: src/services/coach/ownTools.test.ts > set_reminder: the Coach sets a reminder at once (P17-03, D-16.102) > adds it with the same checks as Settings and tells the model it is set
+  - Test: src/services/coach/ownTools.test.ts > set_reminder: the Coach sets a reminder at once (P17-03, D-16.102) > refuses the 21st reminder: the limit of 20 holds
+  - Test: src/services/coach/session.test.ts > createCoachSession: what the Coach does itself in the Android app (P17-03, D-16.102) > sets a reminder at once while Let the Coach set reminders is on, its card set
+  - Test: src/services/coach/session.test.ts > createCoachSession: what the Coach does itself in the Android app (P17-03, D-16.102) > proposes as on the web while the switch is off
+  - Test: src/services/coach/engine.test.ts > runTurn: what the Coach does itself in the Android app (P17-03, D-16.102) > offers set_reminder and schedule_check_in with their rules; propose_reminder while it is off
+  - Test: src/features/settings/tracking/CoachSettings.test.tsx > Settings › Tracking & reminders: the Coach’s (P17-03, D-16.102) > has Let the Coach set reminders, on by default, and turns it off and on
+- **ACC-I15-2** Undo removes a reminder the Coach set and the card offers Add again; Edit opens the reminder's own editor
+  - Test: src/services/coach/reminderCards.test.ts > createReminderCards: Undo on a reminder the Coach set (P17, D-16.102) > takes the reminder away and leaves the card waiting for Add again
+  - Test: src/features/coach/ReminderCard.test.tsx > ReminderCard: a reminder the Coach set (P17-03, D-16.102) > shows it as set, as Your reminders keeps it, with Undo and Edit
+  - Test: src/features/coach/ReminderCard.test.tsx > ReminderCard: a reminder the Coach set (P17-03, D-16.102) > takes the reminder away on Undo; the card then waits for Add, which adds it again
+  - Test: src/features/coach/ReminderCard.test.tsx > ReminderCard: a reminder the Coach set (P17-03, D-16.102) > opens the reminder’s own editor on Edit; a change shows on the card
+- **ACC-I15-3** A check-in is in the future, at most 14 days ahead, at most 120 characters, with at most 3 waiting; it is planned in its own channel and id range and comes even in quiet hours
+  - Test: src/services/coach/checkIns.test.ts > checkCheckIn: a check-in the Coach may keep (P17-03, D-16.102) > keeps a time ahead within 14 days, its words tidied
+  - Test: src/services/coach/checkIns.test.ts > checkCheckIn: a check-in the Coach may keep (P17-03, D-16.102) > refuses %s
+  - Test: src/services/coach/checkIns.test.ts > createCheckIns: the waiting list (P17-03, D-16.102) > keeps at most 3 waiting, even when four are added at once
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan: the Coach’s check-ins (P17-03, D-16.102) > plans each waiting check-in once at its time, in its own channel, opening its chat
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan: the Coach’s check-ins (P17-03, D-16.102) > keeps a check-in at its time in quiet hours: the person agreed to it
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan: the Coach’s check-ins (P17-03, D-16.102) > gives each check-in its own id in 210–241, never one of any other notification
+- **ACC-I15-4** A tapped check-in opens its chat and its message appears there once, as the Coach's; its card has Cancel; Settings lists waiting check-ins with Delete
+  - Test: src/services/notifications/setup.test.ts > the Coach’s notifications in the Android app (P17-03, D-16.102) > plans a check-in in its channel; when it comes its message is in the chat, once, and in the inbox
+  - Test: src/services/notifications/setup.test.ts > the Coach’s notifications in the Android app (P17-03, D-16.102) > opens the Coach on the chat of a tapped reply or check-in
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: the Coach’s notifications (P17-03, D-16.102) > opens the chat a notification’s tap asked for, whether or not the Coach was on screen
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: the Coach’s notifications (P17-03, D-16.102) > shows a waiting check-in under the reply that set it; Cancel takes it away
+  - Test: src/features/settings/tracking/CoachSettings.test.tsx > Settings › Tracking & reminders: the Coach’s (P17-03, D-16.102) > lists the waiting check-ins, soonest first, each with Delete; and says they come in quiet hours
+- **ACC-I15-5** The Coach replied is posted only while the person is not looking at that chat, once per reply, and opens it; quiet hours and its switch apply
+  - Test: src/services/notifications/setup.test.ts > the Coach’s notifications in the Android app (P17-03, D-16.102) > posts The Coach replied only when the person is not looking at that chat, once a reply
+  - Test: src/services/notifications/setup.test.ts > the Coach’s notifications in the Android app (P17-03, D-16.102) > drops The Coach replied in quiet hours, and while its switch is off
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: the Coach’s notifications (P17-03, D-16.102) > says which chat it shows, so a reply there is not announced, and none once it is gone
+- **ACC-I15-6** A failed or dropped turn leaves nothing set
+  - Test: src/services/coach/engine.test.ts > runTurn: what the Coach does itself in the Android app (P17-03, D-16.102) > takes back what a failed attempt set, so the standby starts from nothing set
+  - Test: src/services/coach/engine.test.ts > runTurn: what the Coach does itself in the Android app (P17-03, D-16.102) > takes it all back when the turn fails for good
+  - Test: src/services/coach/session.test.ts > createCoachSession: what the Coach does itself in the Android app (P17-03, D-16.102) > takes back what it set when the reply is not stored: its chat was deleted meanwhile
+- **ACC-I15-7** The Coach's instructions say when to set a reminder or a check-in, never more than asked, and to say what was set; none of it on the web
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: what the Coach does itself (P17-03, D-16.102) > says to set a reminder the person asked for or agreed to, and nothing more
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: what the Coach does itself (P17-03, D-16.102) > says when a check-in is welcome, its limits, and to say when it comes
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: what the Coach does itself (P17-03, D-16.102) > adds none of it on the web
+  - Test: src/services/coach/session.test.ts > createCoachSession: what the Coach does itself in the Android app (P17-03, D-16.102) > offers neither tool on the web, where the app gives the Coach no actions
+- **ACC-I15-8** Check-ins and Coach replies appear in the notification panel and open their chat
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel: the Coach’s (P17-03, D-16.102) > lists a check-in and a Coach reply like other notices; a tap opens their chat
+
 ## J · Settings and configuration
 
 ### J1 · Settings hub with categories in a fixed order, back link, pages … (P0)

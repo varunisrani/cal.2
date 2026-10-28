@@ -38,6 +38,8 @@ describe('SETTING_SPECS', () => {
         'backup.autoState',
         'backup.drive',
         'backup.lastAt',
+        'coach.checkIns',
+        'coach.setsReminders',
         'display.accent',
         'display.appearance',
         'display.weekStart',

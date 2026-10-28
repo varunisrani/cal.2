@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import type { CoachMessage } from '../../domain/model';
 import { t } from '../../i18n/t';
+import type { CheckIn } from '../../services/coach/checkIns';
 import { Icon } from '../../ui/icons';
+import { CheckInCard } from './CheckInCard';
 import styles from './coach.module.css';
 import { CopyButton } from './CopyButton';
 import { MarkdownReply } from './markdown';
@@ -56,15 +58,18 @@ function SentPhoto({ photo }: { readonly photo: Blob }) {
 
 export interface BubbleProps {
   readonly message: CoachMessage;
+  /** The waiting check-ins this reply set (P17). */
+  readonly checkIns?: readonly CheckIn[];
 }
 
 /**
  * One message of the conversation (P08-10). The person's sit on the right in the accent colour,
  * their words exactly as typed, under the photo they attached. The Coach's sit on the left behind
  * a small badge, drawn from Markdown, with a button that copies the reply as written, and under
- * it a card for each reminder the reply proposed (P13), until the person dismisses it.
+ * it a card for each reminder the reply proposed (P13), until the person dismisses it, and for each
+ * check-in it set that still waits (P17).
  */
-export function Bubble({ message }: BubbleProps) {
+export function Bubble({ message, checkIns }: BubbleProps) {
   if (message.role === 'user') {
     return (
       <div className={styles.userRow} data-ui="coach.message" data-role="user">
@@ -85,6 +90,9 @@ export function Bubble({ message }: BubbleProps) {
         </div>
         {message.reminders?.map((card, index) => (
           <ReminderCard key={index} messageId={message.id} index={index} card={card} />
+        ))}
+        {checkIns?.map((checkIn) => (
+          <CheckInCard key={checkIn.id} checkIn={checkIn} />
         ))}
       </div>
     </div>

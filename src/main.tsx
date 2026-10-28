@@ -220,6 +220,7 @@ async function start(): Promise<void> {
       waterRepo: createWaterRepo(db),
       weightRepo,
       profileRepo,
+      coachRepo,
       live,
       app: { router, appState, analysis },
     },
@@ -414,6 +415,9 @@ async function start(): Promise<void> {
       photoOnlyText: () => t('coach.photoOnly'),
       // P13: the Coach proposes reminders; a card's Add adds one (D-16.93).
       reminders: customReminders,
+      // P17: in the Android app it sets reminders and check-ins, and a reply away is announced.
+      actions: native?.notify?.coach,
+      onReply: native?.notify?.replied,
     }),
     // Home's picked rows as one entry (P06-19); the name's words come from the catalogue.
     combine: createCombineService({

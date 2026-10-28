@@ -298,6 +298,11 @@ function readNames(stored: unknown): readonly string[] | undefined {
   return [...new Set(stored as string[])];
 }
 
+/** Records: the plain objects of an array; their fields belong to whoever wrote them. */
+function readRecords(stored: unknown): readonly StoredRecord[] | undefined {
+  return Array.isArray(stored) ? stored.filter(isFields) : undefined;
+}
+
 function readTextOrNull(stored: unknown): string | null | undefined {
   return stored === null || typeof stored === 'string' ? stored : undefined;
 }
@@ -440,6 +445,11 @@ export const SETTING_SPECS = {
   'notify.onlyIfNotLogged': setting(on, readFlag),
   'notify.inbox': setting<StoredRecord | null>(none, readRecordOrNull),
   'notify.device': setting<StoredRecord | null>(none, readRecordOrNull),
+  // The Coach's own (P17, D-16.102): it sets reminders at once (else it proposes them), and the
+  // check-ins it scheduled, waiting (their fields belong to src/services/coach/checkIns.ts). Both
+  // travel in backups, as the chats do.
+  'coach.setsReminders': setting(on, readFlag),
+  'coach.checkIns': setting<readonly StoredRecord[]>(() => [], readRecords),
 
   // Goals and the weekly tune-up
   'goals.nutrients': setting<Readonly<GoalValues>>(

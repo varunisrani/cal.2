@@ -6,7 +6,8 @@ import type { MessageTree } from '../catalogue';
  * reply (P08-13); `photoOnly` is the question a photo sent without words carries (P08-09); the
  * page, its empty state, the waiting dots and the error banner (P08-10) and the composer (P08-11)
  * have the rest. P13 adds "Jump to latest" over the conversation and the card under a reply that
- * proposes a reminder (D-16.93); P16 several chats: New chat, Chats, Rename, Delete chat (D-16.99).
+ * proposes a reminder (D-16.93); P16 several chats: New chat, Chats, Rename, Delete chat (D-16.99);
+ * P17 a reminder the Coach set (Undo) and a check-in it scheduled (D-16.102).
  */
 export const coach = {
   coach: {
@@ -52,6 +53,9 @@ export const coach = {
       settings: 'Settings › Tracking & reminders',
       notificationsOff: 'It shows once notifications are on.',
       failed: "The reminder couldn't be added. Try again.",
+      // The Coach set it itself, in the Android app (P17, D-16.102).
+      set: 'Reminder set',
+      undo: 'Undo',
       problems: {
         past: 'That time has passed. Ask the Coach for one still ahead.',
         full: 'You already have 20 reminders. Delete one in Settings to add this one.',
@@ -59,6 +63,10 @@ export const coach = {
         unavailable: "Reminders can't be added here.",
         invalid: "This reminder can't be added as it is. Ask the Coach again.",
       },
+    },
+    // A check-in the Coach scheduled, under its reply (P17, D-16.102).
+    checkIn: {
+      set: 'Check-in set for {when}',
     },
     page: {
       conversation: 'Conversation',

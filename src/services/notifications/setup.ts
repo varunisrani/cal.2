@@ -5,19 +5,31 @@
 // The reminders' engine gains the nudges' facts and their watch, a channel per kind, the inbox's
 // look at every plan handed over and at every notification Android shows while the app runs, and
 // taps that open the notification's target and mark its inbox item read.
+//
+// The Coach's own (D-16.102): what it may do by itself (set reminders, schedule check-ins), the
+// message of each check-in whose time has come put into its chat at the same moments the inbox
+// looks (start, return, every plan, a notification shown, a tap), and "The Coach replied" for a
+// reply the person is not looking at (the page hidden, or another screen or chat on it).
 
 import type { LiveSource } from '../../data/live';
+import type { CoachRepo } from '../../data/repos/coachRepo';
 import type { DiaryRepo } from '../../data/repos/diaryRepo';
 import type { ProfileRepo } from '../../data/repos/profileRepo';
 import type { SettingsRepo } from '../../data/repos/settingsRepo';
 import type { WaterRepo } from '../../data/repos/waterRepo';
 import type { WeightRepo } from '../../data/repos/weightRepo';
+import type { CoachMessage } from '../../domain/model';
 import { SMART_KINDS } from '../../domain/reminders/notices';
+import { preview } from '../../features/coach/chatsList';
 import { t } from '../../i18n/t';
 import type { AppStateStore } from '../../app/appState';
 import type { Router } from '../../app/router';
 import type { Clock } from '../../lib/clock';
 import type { AnalysisService } from '../analysis';
+import { createCheckIns } from '../coach/checkIns';
+import { coachScreen } from '../coach/onScreen';
+import type { CoachActions } from '../coach/ownTools';
+import { createCustomRemindersService } from '../reminders/customReminders';
 import type { PageVisibility } from '../reminders/engine';
 import type {
   NativeReminderDeps,
@@ -41,6 +53,8 @@ export interface NotifyBase {
   readonly waterRepo: Pick<WaterRepo, 'byDay'>;
   readonly weightRepo: Pick<WeightRepo, 'latest'>;
   readonly profileRepo: Pick<ProfileRepo, 'get'>;
+  /** Where a check-in's message goes when it comes (D-16.102). */
+  readonly coachRepo: Pick<CoachRepo, 'append'>;
   /** What a tap opens: the router, Home's day, and the analysis (its review; its events). */
   readonly app: {
     readonly router: Pick<Router, 'navigate'>;
@@ -56,6 +70,10 @@ export interface NotifyParts {
   readonly service: NotifyService;
   /** Starts the event watches once the services they read exist; returns the stop. */
   watchEvents(more: Pick<EventDeps, 'activityRepo' | 'walkRepo'>): () => void;
+  /** What the Coach may do by itself (D-16.102). */
+  readonly coach: CoachActions;
+  /** A Coach reply was stored: "The Coach replied" unless the person is looking at its chat. */
+  replied(reply: CoachMessage): void;
 }
 
 /** What the reminders' engine gains. */
@@ -77,6 +95,12 @@ export function kindChannels(): PluginChannel[] {
       id: channelOf('fastGoal'),
       name: t('reminders.settings.fastGoal'),
       description: t('reminders.settings.fastGoalHint'),
+      importance: 3,
+    },
+    {
+      id: channelOf('coachCheckIn'),
+      name: t('reminders.smart.coachCheckIn'),
+      description: t('reminders.smart.coachCheckInHint'),
       importance: 3,
     },
   ];
@@ -108,8 +132,21 @@ export function wireNotify(input: {
     openReview: () => {
       analysis.restore().catch(onError);
     },
+    openChat: (chatId) => coachScreen.ask(chatId),
   };
   const open = (target: OpenTarget) => openTarget(target, app);
+
+  const checkIns = createCheckIns({ settingsRepo: base.settingsRepo, clock });
+  /** Puts the message of each check-in whose time has come into its chat, once (none: gone). */
+  const deliver = async (): Promise<void> => {
+    for (const due of await checkIns.takeDue(clock.now())) {
+      const { chatId, text, at } = due;
+      await base.coachRepo.append({ chatId, role: 'assistant', text, at }).catch(onError);
+    }
+  };
+  const deliverSoon = (): void => {
+    deliver().catch(onError);
+  };
 
   const notices = createNotices({
     show: (request) => plugin.schedule({ notifications: [request] }),
@@ -143,17 +180,37 @@ export function wireNotify(input: {
           live: (query) => base.live(query),
           ...more,
         }),
+      coach: {
+        setsReminders: () => base.settingsRepo.get('coach.setsReminders'),
+        reminders: createCustomRemindersService({ settingsRepo: base.settingsRepo, clock }),
+        checkIns,
+      },
+      replied(reply) {
+        if (visibility.isVisible() && coachScreen.shown() === reply.chatId) return;
+        notices
+          .post({
+            kind: 'coachReplied',
+            title: t('reminders.notice.coachReplied'),
+            body: preview(reply.text),
+            open: { coachChat: reply.chatId },
+            onceKey: `coachReplied:${reply.id}`,
+          })
+          .catch(onError);
+      },
     },
     engine: {
       nudgeFacts: (_settings, now) => readNudgeFacts(base, now),
       channels: kindChannels(),
       onHandedOver: async (plan, now) => {
         await store.inbox.change((state) => withPlan(reconcile(state, now), plan, now));
+        deliverSoon();
       },
       onShown: () => {
         store.inbox.change((state) => reconcile(state, clock.now())).catch(onError);
+        deliverSoon();
       },
       onOpen: (target, id) => {
+        deliverSoon();
         open(target);
         if (id === undefined) return;
         const now = clock.now();

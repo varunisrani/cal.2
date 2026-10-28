@@ -6,6 +6,11 @@
 // with the reason in words so the model can ask the person again. Nothing is stored here: the
 // session puts the turn's proposals on the reply, and the reminder is added only when the person
 // taps Add on its card.
+//
+// P17 (D-16.102): in the Android app, while Let the Coach set reminders is on, `set_reminder` takes
+// its place: the same reading and checks, and the reminder is added at once through the custom
+// reminders service (its 20 limit too); the model hears that it is set. The turn's engine makes
+// that write before the round's results go back (`ownTools.ts`).
 
 import type { DayKey } from '../../domain/dates/dayKey';
 import {
@@ -18,6 +23,8 @@ import {
   type CustomReminderProblem,
   type Weekday,
 } from '../../domain/reminders/custom';
+import type { CustomReminderResult } from '../reminders/customReminders';
+import type { OwnDesk } from './ownTools';
 import { MAX_PROPOSALS } from './toolSchemas';
 
 /** What checks a proposal: the custom reminders service in the app. */
@@ -31,16 +38,22 @@ export interface ReminderProposal {
   readonly time: string;
   readonly days?: readonly Weekday[];
   readonly date?: DayKey;
+  /** The stored reminder, when the Coach set it at once (P17). */
+  readonly reminderId?: string;
 }
 
-/** One attempt's proposals: what checks them, and the good ones so far, in order. */
+/**
+ * One attempt's proposals: what checks them, and the good ones so far, in order (with the ones
+ * the Coach set, P17); and what the Coach may do by itself in the Android app.
+ */
 export interface ReminderDesk {
   readonly checks: ReminderChecks;
   readonly proposals: ReminderProposal[];
+  readonly own?: OwnDesk;
 }
 
-export function createReminderDesk(checks: ReminderChecks): ReminderDesk {
-  return { checks, proposals: [] };
+export function createReminderDesk(checks: ReminderChecks, own?: OwnDesk): ReminderDesk {
+  return own === undefined ? { checks, proposals: [] } : { checks, proposals: [], own };
 }
 
 type Args = Readonly<Record<string, unknown>>;
@@ -59,19 +72,19 @@ const DAY_SETS: Readonly<Record<string, readonly Weekday[]>> = {
 /** Words between day names that name nothing. */
 const FILLER: ReadonlySet<string> = new Set(['and', 'every', 'each', 'on']);
 
-function argsOf(raw: unknown): Args {
+export function argsOf(raw: unknown): Args {
   return typeof raw === 'object' && raw !== null && !Array.isArray(raw) ? (raw as Args) : {};
 }
 
 /** A string argument trimmed; a blank one counts as left out (models send "" for optional ones). */
-function textArg(value: unknown): string | undefined {
+export function textArg(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const trimmed = value.trim();
   return trimmed === '' ? undefined : trimmed;
 }
 
 /** `9:05` → `09:05`; anything else as it came, for the check to refuse. */
-function timeArg(value: unknown): string {
+export function timeArg(value: unknown): string {
   const raw = typeof value === 'string' ? value.trim() : '';
   const match = /^(\d{1,2})[:.](\d{2})$/.exec(raw);
   return match ? `${match[1]!.padStart(2, '0')}:${match[2]}` : raw;
@@ -185,28 +198,60 @@ const WAITING =
   'It is shown to the person as a card under your reply, with Add and Dismiss. Nothing is set ' +
   'until they tap Add, so do not say that the reminder is set: say you have proposed it.';
 
+const SET =
+  'It is set now. A card under your reply shows it, where the person can undo or edit it. Say ' +
+  'in your reply what you set: the words, the time, and the days or the date.';
+
+function problemResult(code: CustomReminderProblem): string {
+  return JSON.stringify({ error: PROBLEM_TEXT[code], problem: code });
+}
+
+const TOO_MANY = JSON.stringify({
+  error:
+    `Only ${MAX_PROPOSALS} reminders can be proposed or set in one reply. Do the rest after ` +
+    'the person has answered.',
+});
+
+/** The call's reminder, checked; or the answer that says what is wrong with it. */
+function checked(raw: unknown, desk: ReminderDesk): ReminderProposal | string {
+  const input = readProposal(raw);
+  const problem = desk.checks.problemWith(input);
+  const proposal = problem === null ? proposalOf(input) : null;
+  return proposal ?? problemResult(problem ?? 'noText');
+}
+
 /**
  * Runs one `propose_reminder` call: the answer for the model, as the text of one JSON object. A
  * good proposal is added to `desk.proposals` unless the same one is already there.
  */
 export function proposeReminder(raw: unknown, desk: ReminderDesk): string {
-  const input = readProposal(raw);
-  const problem = desk.checks.problemWith(input);
-  const proposal = problem === null ? proposalOf(input) : null;
-  if (proposal === null) {
-    const code = problem ?? 'noText';
-    return JSON.stringify({ error: PROBLEM_TEXT[code], problem: code });
-  }
-  if (desk.proposals.some((each) => sameProposal(each, proposal))) {
-    return JSON.stringify({ proposed: true, reminder: shown(proposal), note: WAITING });
-  }
-  if (desk.proposals.length >= MAX_PROPOSALS) {
-    return JSON.stringify({
-      error:
-        `Only ${MAX_PROPOSALS} reminders can be proposed in one reply. Propose the rest after ` +
-        'the person has answered.',
-    });
-  }
+  const proposal = checked(raw, desk);
+  if (typeof proposal === 'string') return proposal;
+  const answer = JSON.stringify({ proposed: true, reminder: shown(proposal), note: WAITING });
+  if (desk.proposals.some((each) => sameProposal(each, proposal))) return answer;
+  if (desk.proposals.length >= MAX_PROPOSALS) return TOO_MANY;
   desk.proposals.push(proposal);
-  return JSON.stringify({ proposed: true, reminder: shown(proposal), note: WAITING });
+  return answer;
+}
+
+/**
+ * Runs one `set_reminder` call (P17): checked as a proposal is, then added at once with `add`
+ * (the custom reminders service, which answers `full` at 20); the answer says it is set, or why
+ * not. The same reminder twice in one attempt is added once.
+ */
+export async function setReminder(
+  raw: unknown,
+  desk: ReminderDesk,
+  add: (input: CustomReminderInput) => Promise<CustomReminderResult>,
+): Promise<string> {
+  const proposal = checked(raw, desk);
+  if (typeof proposal === 'string') return proposal;
+  const answer = JSON.stringify({ set: true, reminder: shown(proposal), note: SET });
+  if (desk.proposals.some((each) => sameProposal(each, proposal))) return answer;
+  if (desk.proposals.length >= MAX_PROPOSALS) return TOO_MANY;
+  const { text, time, days, date } = proposal;
+  const added = await add(days === undefined ? { text, time, date } : { text, time, days });
+  if (!added.ok) return problemResult(added.error);
+  desk.proposals.push({ ...proposal, reminderId: added.value.id });
+  return answer;
 }

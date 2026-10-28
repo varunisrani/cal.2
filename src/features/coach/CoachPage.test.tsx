@@ -2,12 +2,17 @@ import { act, fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dexie } from 'dexie';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { live } from '../../data/live';
 import type { NewCoachMessage } from '../../data/repos/coachRepo';
 import { ai } from '../../i18n/en/ai';
 import { coach } from '../../i18n/en/coach';
 import { common } from '../../i18n/en/common';
+import { coachScreen } from '../../services/coach/onScreen';
 import type { CoachSession, CoachSessionState, TurnOutcome } from '../../services/coach/session';
 import { ServicesProvider } from '../../services/context';
+import { createNotifyService } from '../../services/notifications/service';
+import { createNotifyStore } from '../../services/notifications/store';
+import { FakeNotices } from '../../services/notifications/testing/fakeNotices';
 import { FACTORY_NOW, makeProfile } from '../../test/factories';
 import {
   closeHarnesses,
@@ -52,6 +57,7 @@ function fakeSession() {
     renameChat: vi.fn<CoachSession['renameChat']>(async () => null),
     addReminder: vi.fn<CoachSession['addReminder']>(async () => ({ ok: true, reminderId: 'r' })),
     dismissReminder: vi.fn<CoachSession['dismissReminder']>(async () => undefined),
+    undoReminder: vi.fn<CoachSession['undoReminder']>(async () => undefined),
   } satisfies CoachSession;
   /** Marks these chats as waiting for a reply (none: nothing waits). */
   const setWaiting = (...chats: string[]): void => {
@@ -94,20 +100,37 @@ afterEach(async () => {
 interface Open {
   readonly messages?: readonly NewCoachMessage[];
   readonly sources?: HarnessOptions['sources'];
+  /** The Android app's notifications (P17), over the harness's settings. */
+  readonly notify?: boolean;
 }
 
 /** The Coach page for a person losing weight, over the test database, with a fake session. */
-async function openCoach({ messages = [], sources }: Open = {}) {
+async function openCoach({ messages = [], sources, notify = false }: Open = {}) {
   const h: Harness = await openHarness({ hash: '#/coach', ...(sources ? { sources } : {}) });
   await h.repos.profileRepo.save(makeProfile({ goal: 'lose' }));
   for (const message of messages) await h.repos.coachRepo.append(message, { start: true });
   const fake = fakeSession();
-  h.mount(
-    <ServicesProvider services={{ ...h.services, coachSession: fake.session }}>
+  const notifyService = notify
+    ? createNotifyService({
+        notices: new FakeNotices(),
+        store: createNotifyStore(h.repos.settingsRepo),
+        settingsRepo: h.repos.settingsRepo,
+        open: vi.fn(),
+        live,
+      })
+    : undefined;
+  const view = h.mount(
+    <ServicesProvider
+      services={{
+        ...h.services,
+        coachSession: fake.session,
+        ...(notifyService ? { notify: notifyService } : {}),
+      }}
+    >
       <CoachPage />
     </ServicesProvider>,
   );
-  return { ...h, ...fake };
+  return { ...h, ...fake, view };
 }
 
 let minute = 0;
@@ -616,5 +639,76 @@ describe('CoachPage: keyboard', () => {
     expect(field()).toHaveFocus();
     fireEvent.touchMove(field());
     expect(field()).toHaveFocus();
+  });
+});
+
+describe('CoachPage: the Coach’s notifications (P17-03, D-16.102)', () => {
+  afterEach(() => {
+    coachScreen.show(null);
+    coachScreen.take();
+  });
+
+  const chats = () => [
+    asked('Older question', { chatId: 'chat-a' }),
+    answered('Older answer.', 'chat-a'),
+    asked('Newer question', { chatId: 'chat-b' }),
+  ];
+
+  it('opens the chat a notification’s tap asked for, whether or not the Coach was on screen', async () => {
+    coachScreen.ask('chat-a');
+    await openCoach({ messages: chats() });
+    await until(() => chatName() === 'Older question');
+    await untilMessages(2);
+    expect(coachScreen.asked()).toBeNull();
+
+    act(() => coachScreen.ask('chat-b'));
+    await until(() => chatName() === 'Newer question');
+    await untilMessages(1);
+    expect(shownTexts()).toEqual(['Newer question']);
+  });
+
+  it('says which chat it shows, so a reply there is not announced, and none once it is gone', async () => {
+    const { view } = await openCoach({ messages: chats() });
+    await until(() => chatName() === 'Newer question');
+    expect(coachScreen.shown()).toBe('chat-b');
+
+    view.unmount();
+    expect(coachScreen.shown()).toBeNull();
+  });
+
+  it('shows a waiting check-in under the reply that set it; Cancel takes it away', async () => {
+    const user = userEvent.setup();
+    const opened = await openCoach({ messages: chats().slice(0, 2), notify: true });
+    await untilMessages(2);
+    const [, reply] = await opened.repos.coachRepo.list('chat-a');
+    const at = new Date('2026-10-29T19:00:00').getTime();
+    await opened.repos.settingsRepo.set('coach.checkIns', [
+      { id: 'k1', chatId: 'chat-a', at, text: 'How was the new breakfast?', messageId: reply!.id },
+      { id: 'k2', chatId: 'chat-a', at, text: 'Not tied to a reply yet' },
+    ]);
+
+    await untilShown('[data-ui="coach.checkInCard"]');
+    const checkIn = document.querySelector<HTMLElement>('[data-ui="coach.checkInCard"]')!;
+    expect(document.querySelectorAll('[data-ui="coach.checkInCard"]')).toHaveLength(1);
+    expect(document.querySelector('[data-role="assistant"]')?.contains(checkIn)).toBe(true);
+    expect(checkIn).toHaveAccessibleName('Check-in set for Thu, Oct 29, 7:00 PM');
+    expect(within(checkIn).getByText('How was the new breakfast?')).toBeVisible();
+
+    await user.click(within(checkIn).getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="coach.checkInCard"]');
+    expect(await opened.repos.settingsRepo.get('coach.checkIns')).toEqual([
+      { id: 'k2', chatId: 'chat-a', at, text: 'Not tied to a reply yet' },
+    ]);
+  });
+
+  it('shows no check-in card on the web', async () => {
+    const opened = await openCoach({ messages: chats().slice(0, 2) });
+    await untilMessages(2);
+    const [, reply] = await opened.repos.coachRepo.list('chat-a');
+    await opened.repos.settingsRepo.set('coach.checkIns', [
+      { id: 'k1', chatId: 'chat-a', at: FACTORY_NOW + 3_600_000, text: 'Hi', messageId: reply!.id },
+    ]);
+    await untilMessages(2);
+    expect(document.querySelector('[data-ui="coach.checkInCard"]')).toBeNull();
   });
 });

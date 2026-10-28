@@ -13,7 +13,8 @@ import {
   weighInOn,
   workoutOn,
 } from './__fixtures__/snapshot';
-import { createReminderDesk } from './reminderTool';
+import { createOwnDesk } from './ownTools';
+import { createReminderDesk, type ReminderDesk } from './reminderTool';
 import type { CoachSnapshot } from './snapshot';
 import { LATER_TOOL_NAMES, NUTRITION_TOOL_NAMES } from './toolSchemas';
 import { activityRange, runCoachTool } from './tools';
@@ -664,6 +665,56 @@ describe('runCoachTool: propose_reminder (P13, D-16.93)', () => {
     expect(result).toEqual({ error: 'The reminder could not be checked, so it was not proposed.' });
     expect(desk.proposals).toEqual([]);
   });
+});
+
+describe('runCoachTool: the Coach’s own tools (P17-03, D-16.102)', () => {
+  const actions = {
+    setsReminders: async () => true,
+    reminders: { addCustomReminder: vi.fn(), removeCustomReminder: vi.fn() },
+    checkIns: {
+      add: vi.fn(),
+      remove: vi.fn(),
+      attach: vi.fn(),
+      dropChat: vi.fn(),
+      takeDue: vi.fn(),
+    },
+  };
+  const checks = { problemWith: () => null };
+  const daily = { text: 'Drink water', time: '10:00', days: 'daily' };
+
+  it('names set_reminder in place of propose_reminder, and schedule_check_in, where offered', () => {
+    const setting = createReminderDesk(checks, createOwnDesk(actions, 'chat-1', true));
+    const proposing = createReminderDesk(checks, createOwnDesk(actions, 'chat-1', false));
+    const names = `${NUTRITION_TOOL_NAMES.join(', ')}`;
+
+    expect(String(call2('meal_planner', setting).error)).toContain(
+      `${names}, set_reminder, schedule_check_in.`,
+    );
+    expect(String(call2('meal_planner', proposing).error)).toContain(
+      `${names}, propose_reminder, schedule_check_in.`,
+    );
+  });
+
+  it('answers a call of a tool the turn does not offer as not available, and writes nothing', () => {
+    const setting = createReminderDesk(checks, createOwnDesk(actions, 'chat-1', true));
+    const web = createReminderDesk(checks);
+
+    expect(String(call2('propose_reminder', setting, daily).error)).toContain(
+      'The tool "propose_reminder" is not available here.',
+    );
+    expect(setting.proposals).toEqual([]);
+    for (const name of ['set_reminder', 'schedule_check_in']) {
+      expect(String(call2(name, web, daily).error)).toBe(
+        `The tool "${name}" is not available here. Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}, propose_reminder.`,
+      );
+    }
+    expect(actions.reminders.addCustomReminder).not.toHaveBeenCalled();
+    expect(actions.checkIns.add).not.toHaveBeenCalled();
+  });
+
+  function call2(name: string, desk: ReminderDesk, args: unknown = {}): Json {
+    return JSON.parse(runCoachTool(name, args, makeSnapshot(), desk)) as Json;
+  }
 });
 
 describe('runCoachTool: walk_log (D-16.96)', () => {

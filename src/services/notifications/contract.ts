@@ -9,7 +9,7 @@ export type { NoticeKind, SmartKind } from '../../domain/reminders/notices';
 /**
  * Where a tap on a notification (or on its inbox item) opens the app: Home on today, the running
  * fast or the water there, Progress for a weigh-in, the meal's review, Settings › Your data, or a
- * Coach chat (P17 S2).
+ * Coach chat (a reply, a check-in: D-16.102).
  */
 export type OpenTarget =
   'home' | 'fast' | 'water' | 'weight' | 'review' | 'data' | { readonly coachChat: string };
@@ -64,7 +64,7 @@ export interface NotifyView {
 
 /** The Android app's notifications as screens use them (P17). Only the Android app has one. */
 export interface NotifyService {
-  /** The posting side, also for the Coach's notices (P17 S2). */
+  /** The posting side, also for "The Coach replied" (D-16.102). */
   readonly notices: Notices;
   /** The kinds with a switch in Smart notifications, in its order. */
   readonly kinds: readonly SmartKind[];
@@ -84,4 +84,8 @@ export interface NotifyService {
   setOnlyIfNotLogged(on: boolean): Promise<void>;
   /** Hides the Home card for good. */
   dismissCard(): Promise<void>;
+  /** Let the Coach set reminders (P17, D-16.102). */
+  setCoachSets(on: boolean): Promise<void>;
+  /** Takes a waiting check-in off the list; its notification goes with the next plan. */
+  cancelCheckIn(id: string): Promise<void>;
 }

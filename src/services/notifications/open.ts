@@ -22,15 +22,18 @@ export interface OpenApp {
   selectToday(): void;
   /** A finished analysis's review opens (again, after a restart: D-16.46). */
   openReview(): void;
+  /** The Coach screen opens on this chat when it shows (D-16.102). */
+  openChat(chatId: string): void;
 }
 
 /**
  * Opens `target`: Home on today for a meal, water, the fast or an empty day; Progress for a
- * weigh-in; the review on Home; Settings › Your data for a backup; the Coach for a chat (P17 S2
- * opens the chat itself).
+ * weigh-in; the review on Home; Settings › Your data for a backup; the Coach on its chat for a
+ * reply or a check-in.
  */
 export function openTarget(target: OpenTarget, app: OpenApp): void {
   if (typeof target === 'object') {
+    app.openChat(target.coachChat);
     app.navigate(tabRoute('coach'));
     return;
   }

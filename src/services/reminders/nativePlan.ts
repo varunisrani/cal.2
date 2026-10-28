@@ -16,13 +16,16 @@
 //
 // P17 (D-16.100) adds the nudges Platewise plans by itself (`nudgePlan.ts`), under their own
 // switches rather than the reminders' one, and, while Only if I haven't logged it is on, plans the
-// meal reminders day by day so a logged meal takes that day's back.
+// meal reminders day by day so a logged meal takes that day's back. The Coach's check-ins
+// (D-16.102) come once each at their time, in their own channel, opening their chat: they need
+// only Android's permission, and come in quiet hours too (the person agreed to each).
 
 import { addDays, dayKeyOf, dayNumberOf, type DayKey } from '../../domain/dates/dayKey';
 import type { Fast } from '../../domain/model';
 import { WEEKDAYS, type CustomReminder, type Weekday } from '../../domain/reminders/custom';
 import { afterQuiet } from '../../domain/reminders/notices';
 import { goalAt, isActive } from '../../domain/trackers/fasting';
+import { readCheckIns, type CheckIn } from '../coach/checkIns';
 import {
   customRemindersOn,
   dailyRemindersOn,
@@ -61,7 +64,7 @@ export const SUMMARY_DAYS = 7;
  * the next 7 never reuse the id of today's (which may still be in the shade); a written reminder
  * takes a block of 8 (its daily or once notification, then one per weekday) at a slot worked out
  * from its id, so deleting one leaves the others' ids alone. P17's nudges take 100–207
- * (`NUDGE_IDS`), its event notices 300–403.
+ * (`NUDGE_IDS`), the Coach's check-ins 210–241 (`CHECK_IN_IDS`), its event notices 300–403.
  */
 export const NATIVE_IDS = {
   breakfast: 11,
@@ -121,20 +124,44 @@ function hashOf(text: string): number {
   return hash;
 }
 
+/** Slots by id among `slots`, one each, in list order; a slot taken moves to the next free one. */
+function slotsOf(ids: readonly string[], slots: number): Map<string, number> {
+  const taken = new Set<number>();
+  const found = new Map<string, number>();
+  for (const id of ids) {
+    let slot = hashOf(id) % slots;
+    while (taken.has(slot)) slot = (slot + 1) % slots;
+    taken.add(slot);
+    found.set(id, slot);
+  }
+  return found;
+}
+
 /**
  * Each written reminder's first id, in list order: its slot comes from its id, and a slot already
  * taken by one earlier in the list moves to the next free one.
  */
 export function customBaseIds(list: readonly CustomReminder[]): Map<string, number> {
-  const taken = new Set<number>();
-  const bases = new Map<string, number>();
-  for (const reminder of list) {
-    let slot = hashOf(reminder.id) % CUSTOM_SLOTS;
-    while (taken.has(slot)) slot = (slot + 1) % CUSTOM_SLOTS;
-    taken.add(slot);
-    bases.set(reminder.id, NATIVE_IDS.custom + slot * CUSTOM_BLOCK);
-  }
-  return bases;
+  const slots = slotsOf(
+    list.map((reminder) => reminder.id),
+    CUSTOM_SLOTS,
+  );
+  return new Map([...slots].map(([id, slot]) => [id, NATIVE_IDS.custom + slot * CUSTOM_BLOCK]));
+}
+
+/**
+ * The Coach's check-ins (P17): 32 ids from 210, far more than the 3 waiting, so a new one seldom
+ * takes the id of one that just came and may still be in the notification shade.
+ */
+export const CHECK_IN_IDS = { first: 210, slots: 32 } as const;
+
+/** Each waiting check-in's id, by a slot from its own id. */
+export function checkInIds(list: readonly CheckIn[]): Map<string, number> {
+  const slots = slotsOf(
+    list.map((checkIn) => checkIn.id),
+    CHECK_IN_IDS.slots,
+  );
+  return new Map([...slots].map(([id, slot]) => [id, CHECK_IN_IDS.first + slot]));
 }
 
 function customRequests(
@@ -199,6 +226,19 @@ export function nativePlan(input: NativePlanInput, write: WriteMessage): NativeR
   }
 
   if (nudgeInput) list.push(...nudgeRequests(nudgeInput, write));
+
+  // The Coach's check-ins: each once at its time, whatever the reminders' switch and quiet hours.
+  const checkIns = readCheckIns(settings['coach.checkIns']);
+  const ids = checkInIds(checkIns);
+  for (const { id, at, text, chatId } of checkIns) {
+    if (at <= now) continue;
+    const words = write({
+      title: 'reminders.notice.coachCheckIn',
+      body: 'reminders.custom.body',
+      params: { text },
+    });
+    list.push(request(ids.get(id)!, words, once(at), { coachChat: chatId }, 'coachCheckIn'));
+  }
   return list;
 }
 

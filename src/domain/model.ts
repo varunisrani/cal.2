@@ -95,8 +95,11 @@ export const COACH_ROLES = ['user', 'assistant'] as const;
 export type CoachRole = (typeof COACH_ROLES)[number];
 export const isCoachRole = guardFor(COACH_ROLES);
 
-export const REMINDER_CARD_STATUSES = ['proposed', 'added', 'dismissed'] as const;
-/** What the person did with a reminder the Coach proposed: nothing yet, Add, or Dismiss. */
+export const REMINDER_CARD_STATUSES = ['proposed', 'added', 'dismissed', 'set'] as const;
+/**
+ * What the person did with a reminder the Coach proposed: nothing yet, Add, or Dismiss; or the
+ * Coach set it itself (P17, D-16.102).
+ */
 export type ReminderCardStatus = (typeof REMINDER_CARD_STATUSES)[number];
 export const isReminderCardStatus = guardFor(REMINDER_CARD_STATUSES);
 

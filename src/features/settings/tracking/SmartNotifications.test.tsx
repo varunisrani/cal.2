@@ -89,7 +89,8 @@ describe('Smart notifications (P17-02, D-16.100/101)', () => {
     const cards = Array.from(document.querySelectorAll('[data-ui="tracking"] > *')).map((card) =>
       card.getAttribute('data-ui'),
     );
-    expect(cards.slice(-2)).toEqual(['reminders.yours', 'notify.smart']);
+    // The Coach's card (P17-03) sits between Your reminders and Smart notifications.
+    expect(cards.slice(-3)).toEqual(['reminders.yours', 'coach.settings', 'notify.smart']);
   });
 
   it('is not on the Tracking page on the web', async () => {

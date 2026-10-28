@@ -97,11 +97,48 @@ again, and nothing from your other chats is sent.
 - anything outside Platewise.
 
 It cannot log, edit or delete food, or change your goals or settings. If it says it did, it did not:
-make the change yourself.
+make the change yourself. The only things it can set are reminders and check-ins (below).
 
 A day with nothing logged is unknown to the Coach, not a day of zero calories and not a fast. Only
 fasts you tracked with the fasting timer count as fasts. Regular logging and weigh-ins give it
 more to work with.
+
+## Reminders and check-ins
+
+**Reminders.** Ask the Coach to remind you of something, such as "remind me to drink water at 10
+every weekday". It needs what the reminder should say, the time, and the days or one date; when
+one of these is missing or unclear, it asks you.
+
+- In the Android app, while **Let the Coach set reminders** is on (Settings › Tracking &
+  reminders, under Coach; on to start with), the Coach sets the reminder at once and says in its
+  reply what it set. The card under the reply says **Reminder set**, with **Undo** (the reminder
+  is taken away, and the card offers **Add** again) and **Edit** (the same editor as in Your
+  reminders).
+- On the web, and in the Android app with the switch off, the Coach only proposes the reminder:
+  the card offers **Add** and **Dismiss**, and nothing is set until you tap Add.
+- Either way it becomes one of Your reminders (at most 20), with the same rules as one you write
+  yourself, and it shows only while Notifications is on.
+- The Coach sets a reminder only when you asked for one or said yes to one it suggested, and never
+  more than that.
+
+**Check-ins** (Android app). The Coach can follow up later, for example to ask on Thursday at 7 pm
+how the new breakfast went. A check-in is one short message (up to 120 characters) at a time within
+the next 14 days, and at most 3 wait at once. The Coach sets one only when you asked for it or said
+yes to it, and says in its reply when it will come.
+
+- The card under its reply says **Check-in set for Thu, Oct 29, 7:00 PM**, with **Cancel**.
+- At that time an Android notification, **Coach check-in**, brings the message; a tap opens that
+  chat, where the message now is, as the Coach's. If Platewise was closed, the message is in the
+  chat the next time you open it.
+- A check-in comes in quiet hours too: you agreed to its time.
+- Settings › Tracking & reminders lists the check-ins that wait, under Coach, each with
+  **Delete**. Deleting a chat deletes its check-ins. They are part of your backups, with your
+  chats.
+
+**When a reply comes while you are away** (Android app): if a reply arrives while Platewise is in
+the background, or while you are on another screen or in another chat, a notification **The Coach
+replied** shows the start of the reply, and a tap opens that chat. Nothing comes for the chat you
+are looking at. Its switch is **Coach replies** in Smart notifications, and quiet hours apply to it.
 
 ## When something goes wrong
 

@@ -3,6 +3,8 @@ import {
   ACTIVITY_DEFAULT_DAYS,
   ACTIVITY_MAX_DAYS,
   ACTIVITY_TOOL,
+  CHECK_IN_TOOL,
+  CHECK_IN_TOOL_NAME,
   LATER_TOOL_NAMES,
   MAX_PROPOSALS,
   NUTRITION_TOOLS,
@@ -10,6 +12,8 @@ import {
   REMINDER_TOOL,
   REMINDER_TOOL_NAME,
   ROW_LIMITS,
+  SET_REMINDER_TOOL,
+  SET_REMINDER_TOOL_NAME,
   WALK_TOOL,
   WALK_TOOL_NAME,
   coachTools,
@@ -280,6 +284,59 @@ describe('WALK_TOOL: the recorded walks (D-16.96)', () => {
       'the walk score 0 to 100',
       'activeKcal (burned by walking, on top of resting burn)',
       'no walk was recorded here, not that they did not move',
+    ]) {
+      expect(description).toContain(words);
+    }
+  });
+});
+
+describe('SET_REMINDER_TOOL and CHECK_IN_TOOL: what the Coach does itself (P17-03, D-16.102)', () => {
+  it('offers set_reminder in place of propose_reminder, and schedule_check_in last', () => {
+    expect(
+      coachTools(true, true, true, { setsReminders: true, checkIns: true }).map(
+        (schema) => schema.name,
+      ),
+    ).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'activity_log',
+      'walk_log',
+      'set_reminder',
+      'schedule_check_in',
+    ]);
+    expect(coachTools(false, true, false, { checkIns: true }).map((schema) => schema.name)).toEqual(
+      [...NUTRITION_TOOL_NAMES, 'propose_reminder', 'schedule_check_in'],
+    );
+    // Without reminders the switch offers nothing; on the web (no own tools) nothing changes.
+    expect(coachTools(false, false, false, { setsReminders: true })).toEqual(NUTRITION_TOOLS);
+    expect(coachTools(false, true)).toEqual([...NUTRITION_TOOLS, REMINDER_TOOL]);
+    expect(SET_REMINDER_TOOL.name).toBe(SET_REMINDER_TOOL_NAME);
+    expect(CHECK_IN_TOOL.name).toBe(CHECK_IN_TOOL_NAME);
+  });
+
+  it('takes a reminder as propose_reminder does, and says it is set at once, with undo and edit', () => {
+    expect(SET_REMINDER_TOOL.parameters).toEqual(REMINDER_TOOL.parameters);
+    const { description } = SET_REMINDER_TOOL;
+    expect(description).toContain('Sets a reminder for the person at once');
+    expect(description).toContain('only when they asked to be reminded');
+    expect(description).toContain('when any of these is missing or unclear, ask them instead');
+    expect(description).toContain('undo or edit');
+    expect(description).toContain(`At most ${MAX_PROPOSALS} per reply.`);
+  });
+
+  it('takes a day, a time and a message of at most 120 characters, with portable keywords only', () => {
+    const { parameters, description } = CHECK_IN_TOOL;
+    expect(Object.keys(parameters.properties)).toEqual(['date', 'time', 'message']);
+    expect(parameters.required).toEqual(['date', 'time', 'message']);
+    expect(parameters.properties.date?.description).toContain('YYYY-MM-DD');
+    expect(parameters.properties.time?.description).toContain('24 hours, HH:MM');
+    expect(parameters.properties.message?.description).toContain('1 to 120 characters');
+    for (const keyword of keywordsIn(parameters)) expect(PORTABLE_KEYWORDS.has(keyword)).toBe(true);
+    for (const words of [
+      'appears in this chat as yours',
+      'within the next 14 days',
+      'only for a follow-up they asked for or said yes to',
+      'It comes even at night',
+      'At most 3 can wait at once.',
     ]) {
       expect(description).toContain(words);
     }

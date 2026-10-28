@@ -5,6 +5,9 @@
 // double tap, a second tab's button in this app) finds the card added and answers the same
 // reminder instead of adding it again. A reminder added here is also remembered for the session,
 // so a mark that storage refused cannot lead to a second add. Loaded on the first card press.
+//
+// P17 (D-16.102): a card whose reminder the Coach set itself (`set`) has Undo: the reminder goes,
+// and the card waits as a proposal again, with Add and Dismiss.
 
 import type { CoachRepo } from '../../data/repos/coachRepo';
 import type { CoachReminderCard } from '../../domain/model';
@@ -26,11 +29,13 @@ export interface ReminderCards {
   add(messageId: string, index: number, on: boolean): Promise<ReminderCardOutcome>;
   /** Marks a card that is still waiting as dismissed. */
   dismiss(messageId: string, index: number): Promise<void>;
+  /** Takes away the reminder of a card the Coach set; the card waits as a proposal again. */
+  undo(messageId: string, index: number): Promise<void>;
 }
 
 export interface ReminderCardsDeps {
   readonly coachRepo: Pick<CoachRepo, 'get' | 'patch'>;
-  readonly reminders?: Pick<CustomRemindersService, 'addCustomReminder'>;
+  readonly reminders?: Pick<CustomRemindersService, 'addCustomReminder' | 'removeCustomReminder'>;
 }
 
 interface FoundCard {
@@ -112,6 +117,20 @@ export function createReminderCards({ coachRepo, reminders }: ReminderCardsDeps)
         const found = await find(messageId, index);
         if (found === null || found.card.status !== 'proposed') return;
         await mark(messageId, found, index, { status: 'dismissed' });
+      }),
+
+    undo: (messageId, index) =>
+      oneAtATime(async () => {
+        const found = await find(messageId, index);
+        if (found === null || found.card.status !== 'set' || reminders === undefined) return;
+        const { reminderId, ...card } = found.card;
+        if (reminderId !== undefined) await reminders.removeCustomReminder(reminderId);
+        added.delete(`${messageId}#${index}`);
+        await coachRepo.patch(messageId, {
+          reminders: found.cards.map((each, at) =>
+            at === index ? { ...card, status: 'proposed' } : each,
+          ),
+        });
       }),
   };
 }

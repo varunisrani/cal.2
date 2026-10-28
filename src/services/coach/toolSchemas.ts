@@ -6,10 +6,13 @@
 // Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94);
 // where the app records walks, `walk_log` reads them (D-16.96); and where the app can keep
 // reminders, `propose_reminder` puts one forward for the person to add (D-16.93): it sets nothing
-// by itself. The later workout and suggestion tools are named here so
-// a stray call can be told they are not available.
+// by itself. In the Android app (P17, D-16.102) `set_reminder` takes its place while Let the Coach
+// set reminders is on, and `schedule_check_in` sets one message from the Coach for later. The
+// later workout and suggestion tools are named here so a stray call can be told they are not
+// available.
 
 import { CUSTOM_TEXT_MAX } from '../../domain/reminders/custom';
+import { CHECK_IN_AHEAD_DAYS, CHECK_IN_LIMIT, CHECK_IN_TEXT_MAX } from './checkIns';
 
 /** The tools v1 offers, in the order the model sees them. */
 export const NUTRITION_TOOL_NAMES = [
@@ -40,8 +43,20 @@ export type WalkToolName = typeof WALK_TOOL_NAME;
 export const REMINDER_TOOL_NAME = 'propose_reminder';
 export type ReminderToolName = typeof REMINDER_TOOL_NAME;
 
+/** The tool that sets a reminder at once (P17, D-16.102), in place of `propose_reminder`. */
+export const SET_REMINDER_TOOL_NAME = 'set_reminder';
+
+/** The tool that schedules a check-in from the Coach (P17, D-16.102). */
+export const CHECK_IN_TOOL_NAME = 'schedule_check_in';
+
 /** Any tool the Coach can offer. */
-export type CoachToolName = NutritionToolName | ActivityToolName | WalkToolName | ReminderToolName;
+export type CoachToolName =
+  | NutritionToolName
+  | ActivityToolName
+  | WalkToolName
+  | ReminderToolName
+  | typeof SET_REMINDER_TOOL_NAME
+  | typeof CHECK_IN_TOOL_NAME;
 
 /** Workout and suggestion tools of a later phase (L3): never offered in v1. */
 export const LATER_TOOL_NAMES = [
@@ -250,6 +265,36 @@ export const WALK_TOOL: ToolSchema = {
   },
 };
 
+/** A reminder's words, time, and days or date, as both reminder tools take them. */
+const REMINDER_PARAMETERS: ToolParameters = {
+  type: 'object',
+  properties: {
+    text: {
+      type: 'string',
+      description:
+        'What the notification says, short and in the language of the conversation, 1 to ' +
+        `${CUSTOM_TEXT_MAX} characters.`,
+    },
+    time: {
+      type: 'string',
+      description: 'The local time of day in 24 hours, HH:MM, such as 07:30 or 18:00.',
+    },
+    days: {
+      type: 'string',
+      description:
+        'For a reminder that repeats: the weekdays as three-letter English names joined by ' +
+        'commas (mon,wed,fri), or "daily" for every day. Leave it out for a one-time reminder.',
+    },
+    date: {
+      type: 'string',
+      description:
+        'For a one-time reminder: the local day, YYYY-MM-DD, today or later. Leave it out for ' +
+        'a reminder that repeats.',
+    },
+  },
+  required: ['text', 'time'],
+};
+
 /** The reminder tool (D-16.93): a proposal the person adds, or not, from a card in the chat. */
 export const REMINDER_TOOL: ToolSchema = {
   name: REMINDER_TOOL_NAME,
@@ -261,49 +306,78 @@ export const REMINDER_TOOL: ToolSchema = {
     'time, and the days or the date; when any of these is missing or unclear, ask them instead. ' +
     'The result says that it is waiting for the person, or what is wrong with it so you can ask ' +
     `again. At most ${MAX_PROPOSALS} per reply.`,
+  parameters: REMINDER_PARAMETERS,
+};
+
+/** The reminder tool while the Coach may set reminders itself (P17, D-16.102). */
+export const SET_REMINDER_TOOL: ToolSchema = {
+  name: SET_REMINDER_TOOL_NAME,
+  description:
+    'Sets a reminder for the person at once: a notification at a local time of day, repeating ' +
+    'on some weekdays or coming once on one date. Call it only when they asked to be reminded, ' +
+    'or said yes to a reminder you suggested, and you know what it should say, the time, and ' +
+    'the days or the date; when any of these is missing or unclear, ask them instead. The app ' +
+    'shows it as a card under your reply, where they can undo or edit it. The result says that ' +
+    `it is set, or what is wrong with it so you can ask again. At most ${MAX_PROPOSALS} per reply.`,
+  parameters: REMINDER_PARAMETERS,
+};
+
+/** The check-in tool (P17, D-16.102): one message from the Coach, later, in this chat. */
+export const CHECK_IN_TOOL: ToolSchema = {
+  name: CHECK_IN_TOOL_NAME,
+  description:
+    'Schedules a check-in: one short message from you that reaches the person later as a ' +
+    'notification and then appears in this chat as yours, at a local day and time within the ' +
+    `next ${CHECK_IN_AHEAD_DAYS} days. Use it only for a follow-up they asked for or said yes to, ` +
+    'such as asking how a plan they agreed to went. It comes even at night, so pick a time they ' +
+    `would welcome. At most ${CHECK_IN_LIMIT} can wait at once. The result says that it is ` +
+    'scheduled, or what is wrong with it so you can ask again.',
   parameters: {
     type: 'object',
     properties: {
-      text: {
+      date: {
         type: 'string',
-        description:
-          'What the notification says, short and in the language of the conversation, 1 to ' +
-          `${CUSTOM_TEXT_MAX} characters.`,
+        description: 'The local day it comes, YYYY-MM-DD, today or later.',
       },
       time: {
         type: 'string',
-        description: 'The local time of day in 24 hours, HH:MM, such as 07:30 or 18:00.',
+        description: 'The local time of day in 24 hours, HH:MM, still ahead.',
       },
-      days: {
+      message: {
         type: 'string',
         description:
-          'For a reminder that repeats: the weekdays as three-letter English names joined by ' +
-          'commas (mon,wed,fri), or "daily" for every day. Leave it out for a one-time reminder.',
-      },
-      date: {
-        type: 'string',
-        description:
-          'For a one-time reminder: the local day, YYYY-MM-DD, today or later. Leave it out for ' +
-          'a reminder that repeats.',
+          'What you will say then, short, personal and in the language of the conversation, 1 ' +
+          `to ${CHECK_IN_TEXT_MAX} characters.`,
       },
     },
-    required: ['text', 'time'],
+    required: ['date', 'time', 'message'],
   },
 };
 
+/** What the Coach may do by itself in one turn (P17, the Android app). */
+export interface OwnTools {
+  /** `set_reminder` in place of `propose_reminder`. */
+  readonly setsReminders?: boolean;
+  /** `schedule_check_in`. */
+  readonly checkIns?: boolean;
+}
+
 /**
  * The tools one turn offers, in the order the model sees them: activity after the six when Health
- * Connect is connected, then the walks where the app records them, the reminder tool last when
- * the turn can take proposals.
+ * Connect is connected, then the walks where the app records them, the reminder tool when the
+ * turn can take proposals (`set_reminder` when the Coach sets them itself), and last the
+ * check-in tool where the Coach can schedule one.
  */
 export function coachTools(
   activity: boolean,
   reminders = false,
   walks = false,
+  own: OwnTools = {},
 ): readonly ToolSchema[] {
   const tools: ToolSchema[] = [...NUTRITION_TOOLS];
   if (activity) tools.push(ACTIVITY_TOOL);
   if (walks) tools.push(WALK_TOOL);
-  if (reminders) tools.push(REMINDER_TOOL);
+  if (reminders) tools.push(own.setsReminders ? SET_REMINDER_TOOL : REMINDER_TOOL);
+  if (own.checkIns) tools.push(CHECK_IN_TOOL);
   return tools;
 }

@@ -1,8 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import type { ImageBackend } from '../../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings, type ProviderKeys } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
-import { openAiToolCalls } from '../../ai/testing/toolWire';
+import { anthropicToolUse, openAiToolCalls } from '../../ai/testing/toolWire';
 import {
   anthropicAnswer,
   anthropicError,
@@ -10,8 +10,10 @@ import {
   openAiError,
   type JsonObject,
 } from '../../ai/testing/wire';
+import type { PlatewiseDb } from '../../data/schema';
 import { addDays } from '../../domain/dates/dayKey';
 import type { CoachMessage } from '../../domain/model';
+import { WEEKDAYS } from '../../domain/reminders/custom';
 import { makeCoachMessage, makeWalk } from '../../test/factories';
 import { advanceAsync, useFakeTime } from '../../test/time';
 import {
@@ -23,6 +25,9 @@ import {
   makeSnapshot,
   workoutOn,
 } from './__fixtures__/snapshot';
+import { storedActions } from './__fixtures__/actions';
+import { closeAll, openCoachStores } from './__fixtures__/stores';
+import { readCheckIns } from './checkIns';
 import { MAX_ROUNDS, runTurn, type TurnInput } from './engine';
 import { TOOL_RESULT_MAX_CHARS } from './limiter';
 import type { ReminderChecks } from './reminderTool';
@@ -624,6 +629,167 @@ describe('runTurn: reminders the Coach proposes (P13, D-16.93)', () => {
     expect(await ask(fake)).toEqual(answered('I cannot set reminders here.'));
     const [stray] = toolResults(fake.requests[1]);
     expect(String(stray?.result.error)).toContain('is not available here');
+  });
+});
+
+describe('runTurn: what the Coach does itself in the Android app (P17-03, D-16.102)', () => {
+  const opened: PlatewiseDb[] = [];
+  afterEach(() => closeAll(opened));
+
+  /** The app's actions over a test store, and the turn's input for chat-1. */
+  async function android(setsReminders = true) {
+    const stores = await openCoachStores();
+    opened.push(stores.db);
+    await stores.settingsRepo.set('coach.setsReminders', setsReminders);
+    const actions = storedActions(stores);
+    return {
+      stores,
+      changes: {
+        reminders: { problemWith: actions.reminders.problemWith },
+        actions,
+        chatId: 'chat-1',
+      } satisfies Partial<TurnInput>,
+      reminders: () => stores.settingsRepo.get('remind.custom'),
+      checkIns: async () => readCheckIns(await stores.settingsRepo.get('coach.checkIns')),
+    };
+  }
+
+  const DAILY = { text: 'Drink a glass of water', time: '10:00', days: 'daily' };
+  const CHECK_IN = { date: '2026-10-29', time: '19:00', message: 'How was the new breakfast?' };
+
+  function offered(request: RecordedRequest | undefined) {
+    return {
+      tools: (bodyOf(request).tools as { function: { name: string } }[]).map(
+        (tool) => tool.function.name,
+      ),
+      system: String(messagesOf(request)[0]?.content),
+    };
+  }
+
+  it('offers set_reminder and schedule_check_in with their rules; propose_reminder while it is off', async () => {
+    const on = await android(true);
+    const off = await android(false);
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiAnswer('Sure.') },
+      { json: openAiAnswer('Sure.') },
+    );
+
+    await ask(fake, on.changes);
+    await ask(fake, off.changes);
+
+    const [setting, proposing] = fake.requests.map(offered);
+    expect(setting?.tools).toEqual([...NUTRITION_TOOL_NAMES, 'set_reminder', 'schedule_check_in']);
+    expect(setting?.system).toContain('call set_reminder');
+    expect(setting?.system).toContain('Check-ins:');
+    expect(setting?.system).not.toContain('propose_reminder');
+    expect(proposing?.tools).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'propose_reminder',
+      'schedule_check_in',
+    ]);
+    expect(proposing?.system).toContain('call propose_reminder');
+  });
+
+  it('sets a reminder in a round, tells the model it is set, and ends with it as set', async () => {
+    const a = await android();
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'r1', name: 'set_reminder', args: DAILY }]) },
+      { json: openAiAnswer('Done: a reminder to drink a glass of water every day at 10:00.') },
+    );
+
+    const result = await ask(fake, a.changes);
+
+    expect(result.ok && result.value.reminders).toEqual([
+      { text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, reminderId: 'set-1' },
+    ]);
+    expect(result.ok && typeof result.value.settle).toBe('function');
+    expect(toolResults(fake.requests[1])[0]?.result).toMatchObject({ set: true });
+    expect(await a.reminders()).toHaveLength(1);
+  });
+
+  it('schedules a check-in in a round for its chat, tied to the reply once it is stored', async () => {
+    const a = await android();
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'k1', name: 'schedule_check_in', args: CHECK_IN }]) },
+      { json: openAiAnswer('I will check in on Thursday at 7 pm.') },
+    );
+
+    const result = await ask(fake, a.changes);
+    expect(toolResults(fake.requests[1])[0]).toMatchObject({
+      id: 'k1',
+      result: { scheduled: true, checkIn: CHECK_IN },
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) await result.value.settle?.({ id: 'reply-1' });
+
+    expect(await a.checkIns()).toEqual([
+      {
+        id: 'check-1',
+        chatId: 'chat-1',
+        at: new Date('2026-10-29T19:00:00').getTime(),
+        text: 'How was the new breakfast?',
+        messageId: 'reply-1',
+      },
+    ]);
+  });
+
+  it('takes back what a failed attempt set, so the standby starts from nothing set', async () => {
+    const a = await android();
+    const fake = fakeFetch()
+      .on(
+        MISTRAL,
+        {
+          json: openAiToolCalls([
+            { id: 'r1', name: 'set_reminder', args: DAILY },
+            { id: 'k1', name: 'schedule_check_in', args: CHECK_IN },
+          ]),
+        },
+        { status: 401, json: openAiError('Unauthorized') },
+      )
+      .on(
+        ANTHROPIC,
+        { json: anthropicToolUse([{ id: 'r2', name: 'set_reminder', args: DAILY }]) },
+        { json: anthropicAnswer('Your reminder is set for 10:00 every day.') },
+      );
+
+    const result = await ask(fake, a.changes, WITH_STANDBY);
+
+    expect(result.ok && result.value.text).toBe('Your reminder is set for 10:00 every day.');
+    expect((await a.reminders()).map(({ id }) => id)).toEqual(['set-2']);
+    expect(await a.checkIns()).toEqual([]);
+  });
+
+  it('takes it all back when the turn fails for good', async () => {
+    const a = await android();
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'k1', name: 'schedule_check_in', args: CHECK_IN }]) },
+      { status: 401, json: openAiError('Unauthorized') },
+    );
+
+    expect((await ask(fake, a.changes)).ok).toBe(false);
+    expect(await a.checkIns()).toEqual([]);
+  });
+
+  it('offers neither without a chat to come back to, nor on the web', async () => {
+    const a = await android();
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiAnswer('Sure.') },
+      { json: openAiAnswer('Sure.') },
+    );
+    const { chatId: _chatId, ...withoutChat } = a.changes;
+
+    await ask(fake, withoutChat);
+    await ask(fake, { reminders: a.changes.reminders });
+
+    for (const request of fake.requests) {
+      expect(offered(request).tools).toEqual([...NUTRITION_TOOL_NAMES, 'propose_reminder']);
+      expect(offered(request).system).not.toMatch(/set_reminder|schedule_check_in|Check-ins:/);
+    }
   });
 });
 

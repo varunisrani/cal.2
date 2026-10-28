@@ -39,7 +39,7 @@ describe('createReminderCards (P13, D-16.93)', () => {
     );
     const cards = createReminderCards({
       coachRepo: coachRepo as never,
-      reminders: { addCustomReminder },
+      reminders: { addCustomReminder, removeCustomReminder: vi.fn() },
     });
 
     await cards.add('reply', 0, true);
@@ -60,7 +60,7 @@ describe('createReminderCards (P13, D-16.93)', () => {
     );
     const cards = createReminderCards({
       coachRepo: coachRepo as never,
-      reminders: { addCustomReminder },
+      reminders: { addCustomReminder, removeCustomReminder: vi.fn() },
     });
 
     expect(await cards.add('reply', 0, true)).toEqual({ ok: true, reminderId: 'r1' });
@@ -77,7 +77,10 @@ describe('createReminderCards (P13, D-16.93)', () => {
     const { coachRepo, stored } = storedReply([CARD]);
     const refusing = createReminderCards({
       coachRepo: coachRepo as never,
-      reminders: { addCustomReminder: async () => err('past' as const) },
+      reminders: {
+        addCustomReminder: async () => err('past' as const),
+        removeCustomReminder: vi.fn(),
+      },
     });
     const without = createReminderCards({ coachRepo: coachRepo as never });
 
@@ -86,5 +89,47 @@ describe('createReminderCards (P13, D-16.93)', () => {
     expect(await without.add('reply', 5, true)).toEqual({ ok: false, problem: 'gone' });
     expect(stored()).toEqual([CARD]);
     expect(coachRepo.patch).not.toHaveBeenCalled();
+  });
+});
+
+describe('createReminderCards: Undo on a reminder the Coach set (P17, D-16.102)', () => {
+  const SET: CoachReminderCard = { ...CARD, status: 'set', reminderId: 'r7' };
+
+  it('takes the reminder away and leaves the card waiting for Add again', async () => {
+    const { coachRepo, stored } = storedReply([CARD, SET]);
+    const removeCustomReminder = vi.fn(async () => true);
+    const addCustomReminder = vi.fn(async () =>
+      ok({ id: 'r8', text: 'Drink water', time: '10:00', days: ['mon' as const], on: true }),
+    );
+    const cards = createReminderCards({
+      coachRepo: coachRepo as never,
+      reminders: { addCustomReminder, removeCustomReminder },
+    });
+
+    await cards.undo('reply', 1);
+
+    expect(removeCustomReminder.mock.calls).toEqual([['r7']]);
+    expect(stored()).toEqual([CARD, CARD]);
+    // Add adds it again as a new reminder, once.
+    expect(await cards.add('reply', 1, true)).toEqual({ ok: true, reminderId: 'r8' });
+    expect(addCustomReminder).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves proposals, added cards and a card that is gone alone', async () => {
+    const added: CoachReminderCard = { ...CARD, status: 'added', reminderId: 'r1' };
+    const { coachRepo, stored } = storedReply([CARD, added]);
+    const removeCustomReminder = vi.fn(async () => true);
+    const cards = createReminderCards({
+      coachRepo: coachRepo as never,
+      reminders: { addCustomReminder: vi.fn(), removeCustomReminder },
+    });
+
+    await cards.undo('reply', 0);
+    await cards.undo('reply', 1);
+    await cards.undo('reply', 4);
+    await cards.undo('elsewhere', 0);
+
+    expect(removeCustomReminder).not.toHaveBeenCalled();
+    expect(stored()).toEqual([CARD, added]);
   });
 });

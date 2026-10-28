@@ -2,8 +2,9 @@
 // inbox and the taps, over real repositories on a test database and a stand-in for the plugin.
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { HOME_ROUTE } from '../../app/router';
+import { HOME_ROUTE, tabRoute } from '../../app/router';
 import { live } from '../../data/live';
+import { createCoachRepo } from '../../data/repos/coachRepo';
 import { createDiaryRepo } from '../../data/repos/diaryRepo';
 import { createFastRepo } from '../../data/repos/fastRepo';
 import { createProfileRepo } from '../../data/repos/profileRepo';
@@ -14,6 +15,8 @@ import type { PlatewiseDb } from '../../data/schema';
 import type { Clock } from '../../lib/clock';
 import { openTestDb } from '../../test/db';
 import { FACTORY_NOW, makeEntry } from '../../test/factories';
+import { checkInIds } from '../reminders/nativePlan';
+import { coachScreen } from '../coach/onScreen';
 import type { PageVisibility } from '../reminders/engine';
 import { setUpNativeReminders } from '../reminders/native';
 import { writeMessage } from '../reminders/notifier';
@@ -31,6 +34,8 @@ const local = (text: string) => new Date(text).getTime();
 const opened: PlatewiseDb[] = [];
 afterEach(() => {
   for (const db of opened.splice(0)) db.close();
+  coachScreen.show(null);
+  coachScreen.take();
 });
 
 async function until(ready: () => boolean | Promise<boolean>): Promise<void> {
@@ -72,6 +77,7 @@ async function rig() {
     subscribe: () => () => undefined,
     getSnapshot: () => ({ phase: 'idle' as const }),
   };
+  const coachRepo = createCoachRepo(db);
   const sources = storedReminderSources({ settingsRepo, fastRepo, diaryRepo, profileRepo });
   const parts = await setUpNativeReminders(
     {
@@ -87,6 +93,7 @@ async function rig() {
         waterRepo: createWaterRepo(db),
         weightRepo: createWeightRepo(db),
         profileRepo,
+        coachRepo,
         app: { router, appState, analysis },
         live,
       },
@@ -96,6 +103,7 @@ async function rig() {
   return {
     settingsRepo,
     diaryRepo,
+    coachRepo,
     plugin,
     visibility,
     router,
@@ -198,5 +206,173 @@ describe('the Android app’s notifications together (P17)', () => {
       open: 'data',
     });
     stop();
+  });
+});
+
+describe('the Coach’s notifications in the Android app (P17-03, D-16.102)', () => {
+  /** A stored chat with one exchange, and a check-in from it for Thursday at 19:00. */
+  async function withCheckIn(r: Awaited<ReturnType<typeof rig>>, at = '19:00') {
+    await r.coachRepo.append(
+      { chatId: 'chat-1', role: 'user', text: 'Check on me Thursday.', at: FACTORY_NOW },
+      { start: true },
+    );
+    const added = await r.notify.coach.checkIns.add({
+      chatId: 'chat-1',
+      date: '2026-10-29',
+      time: at,
+      text: 'How did the new breakfast go?',
+    });
+    if (!added.ok) throw new Error(added.error);
+    return added.value;
+  }
+
+  it('plans a check-in in its channel; when it comes its message is in the chat, once, and in the inbox', async () => {
+    const r = await rig();
+    const checkIn = await withCheckIn(r);
+    r.parts.engine.start();
+    await r.parts.engine.settled();
+    const id = checkInIds([checkIn]).get(checkIn.id)!;
+
+    expect(r.plugin.held.get(id)).toMatchObject({
+      title: 'Coach check-in',
+      body: 'How did the new breakfast go?',
+      channelId: channelOf('coachCheckIn'),
+      extra: { open: { coachChat: 'chat-1' }, kind: 'coachCheckIn' },
+    });
+    expect(r.plugin.channels).toContainEqual(
+      expect.objectContaining({ id: channelOf('coachCheckIn'), name: 'Check-ins' }),
+    );
+
+    // It came while the app was away; the app comes back twice.
+    r.visibility.set(false);
+    r.setNow(local('2026-10-29T20:00:00'));
+    r.visibility.set(true);
+    r.visibility.set(false);
+    r.visibility.set(true);
+    await r.parts.engine.settled();
+    await until(async () => (await r.coachRepo.list('chat-1')).length === 2);
+    await r.parts.engine.refresh();
+    await r.parts.engine.settled();
+
+    const messages = await r.coachRepo.list('chat-1');
+    expect(messages.map(({ role, text, at }) => ({ role, text, at }))).toEqual([
+      { role: 'user', text: 'Check on me Thursday.', at: FACTORY_NOW },
+      {
+        role: 'assistant',
+        text: 'How did the new breakfast go?',
+        at: local('2026-10-29T19:00:00'),
+      },
+    ]);
+    expect(await r.settingsRepo.get('coach.checkIns')).toEqual([]);
+    expect(r.plugin.held.has(id)).toBe(false);
+    await until(async () => (await r.inbox()).items.some((item) => item.kind === 'coachCheckIn'));
+    expect((await r.inbox()).items.find((item) => item.kind === 'coachCheckIn')).toMatchObject({
+      title: 'Coach check-in',
+      open: { coachChat: 'chat-1' },
+      at: local('2026-10-29T19:00:00'),
+    });
+    r.parts.engine.stop();
+  });
+
+  it('puts the message in when Android shows the check-in while the app runs', async () => {
+    const r = await rig();
+    const checkIn = await withCheckIn(r);
+    r.parts.engine.start();
+    await r.parts.engine.settled();
+
+    r.setNow(local('2026-10-29T19:00:00'));
+    r.plugin.shown(checkInIds([checkIn]).get(checkIn.id)!);
+    await until(async () => (await r.coachRepo.list('chat-1')).length === 2);
+    r.parts.engine.stop();
+  });
+
+  it('keeps a check-in at its time in quiet hours', async () => {
+    const r = await rig();
+    const checkIn = await withCheckIn(r, '23:15');
+    r.parts.engine.start();
+    await r.parts.engine.settled();
+    expect(r.plugin.held.get(checkInIds([checkIn]).get(checkIn.id)!)?.schedule).toEqual({
+      at: new Date(local('2026-10-29T23:15:00')),
+      allowWhileIdle: true,
+    });
+    r.parts.engine.stop();
+  });
+
+  it('opens the Coach on the chat of a tapped reply or check-in', async () => {
+    const r = await rig();
+    r.parts.engine.start();
+    await r.parts.engine.settled();
+
+    r.plugin.tap({ open: { coachChat: 'chat-9' }, key: 'k', kind: 'coachReplied' }, 390);
+
+    expect(coachScreen.asked()).toBe('chat-9');
+    expect(r.router.navigate).toHaveBeenCalledWith(tabRoute('coach'));
+    r.parts.engine.stop();
+  });
+
+  it('posts The Coach replied only when the person is not looking at that chat, once a reply', async () => {
+    const r = await rig();
+    const reply = (id: string, chatId: string) => ({
+      id,
+      chatId,
+      role: 'assistant' as const,
+      text: '**Good news:** you are on pace.\n\n- Keep lunch as it is.',
+      at: FACTORY_NOW,
+    });
+    const shown = () => r.plugin.shownAtOnce.filter((each) => each.extra.kind === 'coachReplied');
+
+    // On the Coach, in chat-1: a reply there is seen, one in chat-2 is not.
+    coachScreen.show('chat-1');
+    r.notify.replied(reply('m1', 'chat-1'));
+    r.notify.replied(reply('m2', 'chat-2'));
+    await until(() => shown().length === 1);
+    expect(shown()[0]).toMatchObject({
+      title: 'The Coach replied',
+      body: 'Good news: you are on pace. Keep lunch as it is.',
+      channelId: channelOf('coachReplied'),
+      extra: { open: { coachChat: 'chat-2' }, kind: 'coachReplied' },
+    });
+
+    // In the background, even chat-1's reply is announced; each reply once.
+    r.setNow(FACTORY_NOW + 60_000);
+    r.visibility.set(false);
+    r.notify.replied(reply('m3', 'chat-1'));
+    r.notify.replied(reply('m3', 'chat-1'));
+    await until(() => shown().length === 2);
+    // Another screen: the Coach screen shows nothing.
+    r.setNow(FACTORY_NOW + 120_000);
+    r.visibility.set(true);
+    coachScreen.show(null);
+    r.notify.replied(reply('m4', 'chat-1'));
+    await until(() => shown().length === 3);
+    expect(shown().map((each) => each.extra.open)).toEqual([
+      { coachChat: 'chat-2' },
+      { coachChat: 'chat-1' },
+      { coachChat: 'chat-1' },
+    ]);
+    await until(
+      async () =>
+        (await r.inbox()).items.filter((item) => item.kind === 'coachReplied').length === 3,
+    );
+  });
+
+  it('drops The Coach replied in quiet hours, and while its switch is off', async () => {
+    const r = await rig();
+    const reply = { id: 'm1', chatId: 'c', role: 'assistant' as const, text: 'Hi', at: 1 };
+    r.setNow(local('2026-10-26T23:00:00'));
+    r.notify.replied(reply);
+    r.setNow(local('2026-10-27T09:00:00'));
+    await r.settingsRepo.set('notify.off', ['coachReplied']);
+    r.notify.replied({ ...reply, id: 'm2' });
+    await expect(
+      r.notify.service.notices.post({
+        kind: 'coachReplied',
+        title: 't',
+        body: 'b',
+        open: { coachChat: 'c' },
+        onceKey: 'probe',
+      }),
+    ).resolves.toBe('off');
+    expect(r.plugin.shownAtOnce).toEqual([]);
   });
 });

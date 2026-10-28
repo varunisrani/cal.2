@@ -16,7 +16,7 @@ export const NOTICE_KINDS = [
   'fastGoal',
   'analysisReady',
   'backupFailed',
-  // The Coach's (D-16.102), wired by P17 S2.
+  // The Coach's (D-16.102).
   'coachReplied',
   'coachCheckIn',
 ] as const;
@@ -24,7 +24,8 @@ export type NoticeKind = (typeof NOTICE_KINDS)[number];
 
 /**
  * The kinds with a switch in Smart notifications, in its order. The fasting goal keeps its own
- * switch among the reminders; the Coach's come with P17 S2.
+ * switch among the reminders; the Coach's check-ins have none (each was agreed to, and Settings
+ * lists them with Delete).
  */
 export const SMART_KINDS = [
   'mealCheck',
@@ -37,6 +38,7 @@ export const SMART_KINDS = [
   'activeWeek',
   'analysisReady',
   'backupFailed',
+  'coachReplied',
 ] as const satisfies readonly NoticeKind[];
 export type SmartKind = (typeof SMART_KINDS)[number];
 

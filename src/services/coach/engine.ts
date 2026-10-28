@@ -7,7 +7,11 @@
 // Health Connect's activity (the Android app, connected: D-16.94), `walk_log` with what the walk
 // score means when the snapshot holds the recorded walks (D-16.96), and `propose_reminder` with its
 // rules when the turn can take reminder proposals (D-16.93). The answer comes back with the
-// proposals of the attempt that gave it, for the cards under the reply.
+// proposals of the attempt that gave it, for the cards under the reply. In the Android app (P17,
+// D-16.102) the turn may also act: `set_reminder` in place of `propose_reminder` while Let the
+// Coach set reminders is on, and `schedule_check_in`; their writes are made before the round's
+// results go back, an attempt that fails takes them back, and the answer carries `settle` for what
+// follows the stored reply (`ownTools.ts`).
 //
 // A turn is a short run of rounds on the provider's wire. Each round sends everything so far;
 // tool calls are answered locally, every result cut to the 60 000-character limit (D-16.32), and
@@ -40,6 +44,7 @@ import { err, ok, type Result } from '../../lib/result';
 import { coachContext } from './context';
 import { coachHistory, type TurnQuestion } from './history';
 import { limitToolResult } from './limiter';
+import { createOwnDesk, runOwnCalls, settleOwn, undoOwn, type CoachActions } from './ownTools';
 import {
   createReminderDesk,
   type ReminderChecks,
@@ -47,7 +52,7 @@ import {
   type ReminderProposal,
 } from './reminderTool';
 import type { CoachSnapshot } from './snapshot';
-import { coachTools } from './toolSchemas';
+import { coachTools, type OwnTools } from './toolSchemas';
 import { runCoachTool } from './tools';
 
 /** Requests one attempt may send, the one that brings the answer included (R04.19). */
@@ -64,12 +69,24 @@ export interface TurnInput {
   readonly snapshot: CoachSnapshot;
   /** Checks reminder proposals; without it `propose_reminder` is not offered (D-16.93). */
   readonly reminders?: ReminderChecks;
+  /** The chat the turn runs in: a check-in comes back to it (P17). */
+  readonly chatId?: string;
+  /**
+   * What the Coach may do by itself (the Android app, P17): set reminders at once, schedule
+   * check-ins. Used only with `reminders` and `chatId`.
+   */
+  readonly actions?: CoachActions;
 }
 
-/** A turn's answer: the trimmed text, and the reminders it proposed, in order (none: empty). */
+/**
+ * A turn's answer: the trimmed text, and the reminders it proposed or set, in order (none:
+ * empty); with what the Coach set itself (P17), what follows the reply: call it with the stored
+ * reply, or null when it was not stored.
+ */
 export interface CoachAnswer {
   readonly text: string;
   readonly reminders: readonly ReminderProposal[];
+  readonly settle?: (reply: { readonly id: string } | null) => Promise<void>;
 }
 
 /** What a role that is not set up fails with, before any request (as every AI request does). */
@@ -80,8 +97,13 @@ const NOT_SET_UP: Readonly<Record<Missing, SingleFailure['kind']>> = {
 };
 
 /** The tools a turn offers, in the shape the chat wires take. */
-function chatTools(activity: boolean, reminders: boolean, walks: boolean): readonly ToolSchema[] {
-  return coachTools(activity, reminders, walks).map((tool) => ({
+function chatTools(
+  activity: boolean,
+  reminders: boolean,
+  walks: boolean,
+  own: OwnTools,
+): readonly ToolSchema[] {
+  return coachTools(activity, reminders, walks, own).map((tool) => ({
     name: tool.name,
     description: tool.description,
     parameters: { ...tool.parameters },
@@ -100,6 +122,8 @@ interface Turn {
   readonly secrets: readonly string[];
   /** Runs one call; each attempt hands in its own reminder desk. */
   readonly runTool: (call: ToolCall, desk: ReminderDesk | undefined) => string;
+  /** Makes a desk for one attempt; undefined when the turn takes no reminders. */
+  readonly desk: () => ReminderDesk | undefined;
 }
 
 /**
@@ -134,10 +158,16 @@ async function turn(
     if (!prepared.ok) return prepared;
     photo = prepared.value.base64;
   }
-  const { snapshot } = input;
+  const { snapshot, actions, chatId } = input;
   const activity = snapshot.activity !== null;
   const walks = snapshot.walks !== null;
   const reminders = input.reminders !== undefined;
+  // The Coach's own tools (P17): only where the app gave it actions, in a chat it can come back to.
+  const acting = reminders && actions !== undefined && chatId !== undefined ? actions : null;
+  const own: OwnTools = {
+    setsReminders: acting !== null && (await acting.setsReminders().catch(() => false)),
+    checkIns: acting !== null,
+  };
   const plan: Turn = {
     input,
     deps,
@@ -148,11 +178,20 @@ async function turn(
       activity,
       reminders,
       walks,
+      ...own,
     }),
-    tools: chatTools(activity, reminders, walks),
+    tools: chatTools(activity, reminders, walks, own),
     photo,
     secrets: storedKeys(keys),
     runTool: (call, desk) => limitToolResult(runCoachTool(call.name, call.args, snapshot, desk)),
+    desk: () => {
+      if (input.reminders === undefined) return undefined;
+      const ownDesk =
+        acting === null || chatId === undefined
+          ? undefined
+          : createOwnDesk(acting, chatId, own.setsReminders === true);
+      return createReminderDesk(input.reminders, ownDesk);
+    },
   };
 
   const first = await attempt(plan, role);
@@ -170,14 +209,28 @@ async function turn(
 /**
  * One provider's go at the turn, from its first round: its own wire, a conversation built from
  * the stored messages in its own format, its own reminder desk, and nothing from any earlier
- * attempt.
+ * attempt. What it set by itself is taken back when it fails (P17).
  */
 async function attempt(
   plan: Turn,
   target: RoleTarget,
 ): Promise<Result<CoachAnswer, SingleFailure>> {
+  const desk = plan.desk();
+  const result = await rounds(plan, target, desk);
+  if (!result.ok) {
+    await undoOwn(desk);
+    return result;
+  }
+  return desk?.own === undefined ? result : ok({ ...result.value, settle: settleOwn(desk) });
+}
+
+/** The rounds of one attempt, until the answer or a failure. */
+async function rounds(
+  plan: Turn,
+  target: RoleTarget,
+  desk: ReminderDesk | undefined,
+): Promise<Result<CoachAnswer, SingleFailure>> {
   const { input, deps, deadline } = plan;
-  const desk = input.reminders === undefined ? undefined : createReminderDesk(input.reminders);
   const runTool: RunTool = (call) => plan.runTool(call, desk);
   try {
     const wire = chatWireFor(target.provider);
@@ -215,7 +268,13 @@ async function attempt(
       }
       // The last round asked for more tools: their results could never be read (R04.11).
       if (round >= MAX_ROUNDS) return err({ kind: 'roundLimit' });
-      transcript = wire.continueWith(transcript, reply.value, runTool);
+      // The writes the round asks for are made first, in call order (P17).
+      const written = await runOwnCalls(reply.value.calls, desk);
+      transcript = wire.continueWith(
+        transcript,
+        reply.value,
+        (call) => written.get(call) ?? runTool(call),
+      );
     }
   } catch (error) {
     return err(thrownFailure(error, deadline));

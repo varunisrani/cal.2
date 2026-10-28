@@ -1,7 +1,7 @@
 # P17 · Smart notifications: nudges Platewise works out, event notices, and the Coach's own
 
 **Weeks:** 1 · **Tracks:** notifications (rules, scheduling, settings); Coach (reminders it sets, check-ins, reply
-ready) · **Depends on:** P00–P16 (S2 after P16's Coach chats) · **Status:** 🔨 in progress: P17-01, P17-02, P17-04 landed (2026-10-28); P17-03 (the Coach) building · **Ships as:** 1.5.0
+ready) · **Depends on:** P00–P16 (S2 after P16's Coach chats) · **Status:** ✅ done: P17-01..04 landed (2026-10-28); device tests are the owner's · **Ships as:** 1.5.0
 
 ## Goal
 

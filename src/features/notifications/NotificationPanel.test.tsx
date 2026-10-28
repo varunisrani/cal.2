@@ -140,3 +140,40 @@ describe('the notification panel (P17-04, D-16.103)', () => {
     await until(() => p.host.hash() === '#/settings/tracking');
   });
 });
+
+describe('the notification panel: the Coach’s (P17-03, D-16.102)', () => {
+  it('lists a check-in and a Coach reply like other notices; a tap opens their chat', async () => {
+    const user = userEvent.setup();
+    const h = await openNotify();
+    await h.keep(
+      inboxItem(local('2026-10-26T09:00:00'), {
+        id: 215,
+        kind: 'coachCheckIn',
+        title: reminders.reminders.notice.coachCheckIn,
+        body: 'How did the new breakfast go?',
+        open: { coachChat: 'chat-a' },
+      }),
+      inboxItem(local('2026-10-26T11:40:00'), {
+        id: 390,
+        kind: 'coachReplied',
+        title: reminders.reminders.notice.coachReplied,
+        body: 'Good news: you are on pace.',
+        open: { coachChat: 'chat-b' },
+      }),
+    );
+    h.mount(<Open notify={h.notify} />);
+    await until(() => document.querySelectorAll(ITEM).length === 2);
+
+    const items = Array.from(document.querySelectorAll<HTMLElement>(ITEM));
+    expect(
+      items.map((item) => item.querySelector('[data-icon]')?.getAttribute('data-icon')),
+    ).toEqual(['chat', 'chat']);
+    expect(items.map((item) => within(item).getAllByRole('button')[0]?.textContent)).toEqual([
+      'The Coach repliedGood news: you are on pace.11:40 AMUnread',
+      'Coach check-inHow did the new breakfast go?9:00 AMUnread',
+    ]);
+
+    await user.click(within(items[1]!).getByText('Coach check-in'));
+    expect(h.open).toHaveBeenCalledWith({ coachChat: 'chat-a' });
+  });
+});

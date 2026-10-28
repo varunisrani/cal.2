@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { COACH_THUMBNAIL, type ImageBackend } from '../../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
@@ -17,7 +17,9 @@ import {
   entryOn,
   fixtureDiary,
 } from './__fixtures__/snapshot';
+import { storedActions } from './__fixtures__/actions';
 import { closeAll, openCoachStores, type CoachStores } from './__fixtures__/stores';
+import { readCheckIns } from './checkIns';
 import type { StoredAiAccess } from '../aiAccess';
 import { createCustomRemindersService } from '../reminders/customReminders';
 import { COACH_THUMB, createCoachSession, type CoachSession } from './session';
@@ -142,6 +144,8 @@ interface Harness {
   readonly gate?: ReturnType<typeof gatedFetch>;
   /** The activity copy, when `activityCopy` asked for one. */
   readonly activityRepo?: ReturnType<typeof createHealthRepo>;
+  /** Every reply the session reported stored (P17). */
+  readonly onReply: ReturnType<typeof vi.fn>;
   /** How often subscribers heard a change. */
   changes(): number;
 }
@@ -161,6 +165,8 @@ interface SetUpOptions {
   readonly activityCopy?: boolean;
   /** Give the session the custom reminders service, as the app does (none by default). */
   readonly reminders?: boolean;
+  /** What the Android app lets the Coach do, with `reminders` (P17; none by default: the web). */
+  readonly android?: boolean;
 }
 
 async function setUp(options: SetUpOptions = {}): Promise<Harness> {
@@ -181,6 +187,7 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
   const activityRepo = options.activityCopy
     ? createHealthRepo(stores.db, { clock: stores.clock })
     : undefined;
+  const onReply = vi.fn();
   const session = createCoachSession({
     coachRepo: stores.coachRepo,
     data: activityRepo === undefined ? stores.sources : { ...stores.sources, activityRepo },
@@ -198,13 +205,26 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
           }),
         }
       : {}),
+    ...(options.android ? { actions: storedActions(stores) } : {}),
+    onReply,
     newId: withIdSequence('chat'),
   });
   let changes = 0;
   session.subscribe(() => {
     changes += 1;
   });
-  return { stores, session, fake, codec, drawn, hold, gate, activityRepo, changes: () => changes };
+  return {
+    stores,
+    session,
+    fake,
+    codec,
+    drawn,
+    hold,
+    gate,
+    activityRepo,
+    onReply,
+    changes: () => changes,
+  };
 }
 
 /** A chat's stored messages (the main test chat's by default) as side, words and failure mark. */
@@ -865,5 +885,155 @@ describe('createCoachSession: reminders the Coach proposes (P13, D-16.93)', () =
       ok: false,
       problem: 'gone',
     });
+  });
+});
+
+describe('createCoachSession: what the Coach does itself in the Android app (P17-03, D-16.102)', () => {
+  const DAILY = { text: 'Drink a glass of water', time: '10:00', days: 'daily' };
+  const CHECK_IN = { date: '2026-10-29', time: '19:00', message: 'How was the new breakfast?' };
+
+  /** A turn in which the fake calls `name` with `args`, then answers. */
+  function acts(h: Harness, calls: { name: string; args: JsonObject }[], answer = 'Done.') {
+    h.fake.on(
+      MISTRAL,
+      { json: openAiToolCalls(calls.map((one, index) => ({ id: `t${index}`, ...one }))) },
+      { json: openAiAnswer(answer) },
+    );
+  }
+
+  const reply = async (h: Harness) => (await h.stores.coachRepo.list(CHAT)).at(-1);
+  const reminders = (h: Harness) => h.stores.settingsRepo.get('remind.custom');
+  const checkIns = async (h: Harness) =>
+    readCheckIns(await h.stores.settingsRepo.get('coach.checkIns'));
+
+  it('sets a reminder at once while Let the Coach set reminders is on, its card set', async () => {
+    const h = await setUp({ reminders: true, android: true });
+    acts(h, [{ name: 'set_reminder', args: DAILY }], 'Set: water every day at 10:00.');
+
+    expect(await h.session.send(CHAT, 'Remind me to drink water at 10 every day.')).toBe(
+      'answered',
+    );
+
+    expect(await reminders(h)).toEqual([
+      { id: 'set-1', text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, on: true },
+    ]);
+    expect((await reply(h))?.reminders).toEqual([
+      {
+        text: 'Drink a glass of water',
+        time: '10:00',
+        days: WEEKDAYS,
+        status: 'set',
+        reminderId: 'set-1',
+      },
+    ]);
+  });
+
+  it('proposes as on the web while the switch is off', async () => {
+    const h = await setUp({ reminders: true, android: true });
+    await h.stores.settingsRepo.set('coach.setsReminders', false);
+    acts(h, [{ name: 'propose_reminder', args: DAILY }], 'Tap Add to set it.');
+
+    expect(await h.session.send(CHAT, 'Remind me to drink water at 10.')).toBe('answered');
+
+    expect(await reminders(h)).toEqual([]);
+    expect((await reply(h))?.reminders?.[0]?.status).toBe('proposed');
+  });
+
+  it('takes the reminder away on Undo, and the card waits for Add again', async () => {
+    const h = await setUp({ reminders: true, android: true });
+    acts(h, [{ name: 'set_reminder', args: DAILY }]);
+    await h.session.send(CHAT, 'Remind me to drink water at 10 every day.');
+    const id = (await reply(h))!.id;
+
+    await h.session.undoReminder(id, 0);
+
+    expect(await reminders(h)).toEqual([]);
+    expect((await reply(h))?.reminders).toEqual([
+      { text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, status: 'proposed' },
+    ]);
+    expect(await h.session.addReminder(id, 0, true)).toEqual({
+      ok: true,
+      reminderId: 'reminder-1',
+    });
+  });
+
+  it('ties a check-in to the reply that set it, and a deleted chat’s check-ins go with it', async () => {
+    const h = await setUp({ reminders: true, android: true });
+    acts(h, [{ name: 'schedule_check_in', args: CHECK_IN }], 'I will check in on Thursday.');
+
+    expect(await h.session.send(CHAT, 'Check on me Thursday evening.')).toBe('answered');
+    const stored = await reply(h);
+    expect(await checkIns(h)).toEqual([
+      {
+        id: 'check-1',
+        chatId: CHAT,
+        at: new Date('2026-10-29T19:00:00').getTime(),
+        text: 'How was the new breakfast?',
+        messageId: stored?.id,
+      },
+    ]);
+
+    await h.session.deleteChat(CHAT);
+    expect(await checkIns(h)).toEqual([]);
+  });
+
+  it('takes back what it set when the reply is not stored: its chat was deleted meanwhile', async () => {
+    const h = await setUp({ reminders: true, android: true, hold: true });
+    h.fake.on(
+      MISTRAL,
+      {
+        json: openAiToolCalls([
+          { id: 't0', name: 'set_reminder', args: DAILY },
+          { id: 't1', name: 'schedule_check_in', args: CHECK_IN },
+        ]),
+      },
+      { json: openAiAnswer('Done.') },
+    );
+    const turn = h.session.send(CHAT, 'Remind me and check on me.');
+    await h.hold?.reached;
+    // Another tab deletes the chat while the answer is on its way: this session never hears of it.
+    await h.stores.coachRepo.remove(CHAT);
+    h.hold?.release();
+
+    expect(await turn).toBe('dropped');
+    // The Coach did set both on its way to the answer.
+    expect(h.fake.requests).toHaveLength(2);
+    expect(await reminders(h)).toEqual([]);
+    expect(await checkIns(h)).toEqual([]);
+    expect(h.onReply).not.toHaveBeenCalled();
+  });
+
+  it('reports each stored reply, and nothing for a failed turn', async () => {
+    const h = await setUp();
+    h.fake.on(
+      MISTRAL,
+      { json: openAiAnswer('About 1 650 kcal so far today.') },
+      { status: 500, json: openAiError('Internal error') },
+    );
+
+    await h.session.send(CHAT, 'How am I doing today?');
+    expect(h.onReply).toHaveBeenCalledTimes(1);
+    expect(h.onReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chatId: CHAT,
+        role: 'assistant',
+        text: 'About 1 650 kcal so far today.',
+      }),
+    );
+
+    expect(await h.session.send(CHAT, 'And now?')).toBe('failed');
+    expect(h.onReply).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers neither tool on the web, where the app gives the Coach no actions', async () => {
+    const h = await setUp({ reminders: true });
+    h.fake.on(MISTRAL, { json: openAiAnswer('Sure.') });
+    await h.session.send(CHAT, 'Hello');
+    const tools = (
+      (h.fake.requests[0]?.body as Json).tools as { function: { name: string } }[]
+    ).map((tool) => tool.function.name);
+    expect(tools).toContain('propose_reminder');
+    expect(tools).not.toContain('set_reminder');
+    expect(tools).not.toContain('schedule_check_in');
   });
 });

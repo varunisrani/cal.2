@@ -1,15 +1,18 @@
 import {
   Suspense,
   useEffect,
+  useMemo,
   useRef,
   useState,
   useSyncExternalStore,
   type CSSProperties,
 } from 'react';
 import { onDemand } from '../../app/onDemand';
-import { useCoachChats, useCoachMessages } from '../../data/hooks';
+import { useCoachChats, useCoachMessages, useSettings } from '../../data/hooks';
 import type { CoachChat } from '../../domain/model';
 import { t } from '../../i18n/t';
+import { readCheckIns, type CheckIn } from '../../services/coach/checkIns';
+import { coachScreen } from '../../services/coach/onScreen';
 import type { CoachSession } from '../../services/coach/session';
 import { useServices } from '../../services/context';
 import { IconButton } from '../../ui/Button';
@@ -33,6 +36,22 @@ const RenameChatSheet = onDemand(() =>
 
 const NO_CHATS: readonly CoachChat[] = [];
 
+const CHECK_INS = ['coach.checkIns'] as const;
+
+/** The waiting check-ins by the reply that set them (P17, D-16.102). */
+function useCheckIns(): ReadonlyMap<string, readonly CheckIn[]> {
+  const stored = useSettings(CHECK_INS);
+  const list = stored.status === 'ready' ? stored.value['coach.checkIns'] : null;
+  return useMemo(() => {
+    const byReply = new Map<string, CheckIn[]>();
+    for (const checkIn of readCheckIns(list ?? [])) {
+      if (checkIn.messageId === undefined) continue;
+      byReply.set(checkIn.messageId, [...(byReply.get(checkIn.messageId) ?? []), checkIn]);
+    }
+    return byReply;
+  }, [list]);
+}
+
 function useCoachSession(): CoachSession {
   const { coachSession } = useServices();
   if (!coachSession) throw new Error('CoachPage: no coach session above it');
@@ -47,7 +66,9 @@ function useCoachSession(): CoachSession {
  * conversation scrolls: the heading and the composer stay put, the composer above the tab bar, or
  * with the on-screen keyboard open just above it (P13, P14). Replies in flight live in the app's
  * coach session, one per chat, so they survive switching tabs and chats; the messages come from
- * storage, live.
+ * storage, live. In the Android app (P17) the screen says which chat it shows, so a reply there is
+ * not announced, opens the chat a notification's tap asked for, and shows the waiting check-ins
+ * under the replies that set them.
  */
 export function CoachPage() {
   const session = useCoachSession();
@@ -72,7 +93,20 @@ export function CoachPage() {
     if (stored !== null) setOpen((now) => nextOpen(now, stored, session.newChatId));
   }, [stored, session]);
 
+  // A tap on a reply's or a check-in's notification asked for its chat (P17).
+  const asked = useSyncExternalStore(coachScreen.subscribe, coachScreen.asked);
+  useEffect(() => {
+    if (asked === null) return;
+    coachScreen.take();
+    setOpen({ id: asked, stored: true });
+  }, [asked]);
+
   const chatId = open?.id ?? null;
+  const checkIns = useCheckIns();
+  useEffect(() => {
+    coachScreen.show(chatId);
+    return () => coachScreen.show(null);
+  }, [chatId]);
   const openChat = open?.stored ? stored?.find((chat) => chat.id === open.id) : undefined;
   const pending = chatId !== null && waiting.includes(chatId);
   const conversation = chatId !== null && messages.status === 'ready' ? messages.value : null;
@@ -204,6 +238,7 @@ export function CoachPage() {
               if (chatId !== null) void session.retry(chatId, id);
             }}
             keyboardInset={keyboardInset}
+            checkIns={checkIns}
           />
         ) : (
           <EmptyCoach

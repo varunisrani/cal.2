@@ -1,6 +1,7 @@
 import { useRef, type MouseEvent } from 'react';
 import type { CoachMessage } from '../../domain/model';
 import { t } from '../../i18n/t';
+import type { CheckIn } from '../../services/coach/checkIns';
 import { Icon } from '../../ui/icons';
 import { AssistantBadge, Bubble } from './Bubble';
 import styles from './coach.module.css';
@@ -17,6 +18,8 @@ export interface MessageListProps {
   readonly onRetry: (id: string) => void;
   /** How much of the screen the on-screen keyboard covers; the list follows the end when it moves. */
   readonly keyboardInset: number;
+  /** The waiting check-ins, by the reply that set them (P17). */
+  readonly checkIns?: ReadonlyMap<string, readonly CheckIn[]>;
 }
 
 /** The newest message when it is a question whose turn failed, and nothing is pending. */
@@ -34,7 +37,13 @@ function failedQuestion(messages: readonly CoachMessage[], pending: boolean): Co
  * "Jump to latest" floats over its bottom edge with the count of new messages (P13). Their own
  * question always brings the end back.
  */
-export function MessageList({ messages, pending, onRetry, keyboardInset }: MessageListProps) {
+export function MessageList({
+  messages,
+  pending,
+  onRetry,
+  keyboardInset,
+  checkIns,
+}: MessageListProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const failed = failedQuestion(messages, pending);
@@ -65,7 +74,7 @@ export function MessageList({ messages, pending, onRetry, keyboardInset }: Messa
       >
         <div ref={threadRef} className={styles.thread}>
           {messages.map((message) => (
-            <Bubble key={message.id} message={message} />
+            <Bubble key={message.id} message={message} checkIns={checkIns?.get(message.id)} />
           ))}
           {pending ? (
             <div className={styles.assistantRow}>

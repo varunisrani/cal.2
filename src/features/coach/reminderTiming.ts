@@ -23,7 +23,7 @@ function minutesOf(time: string): number {
 
 /** The line under a card's words saying when the reminder comes. */
 export function reminderTiming(
-  card: Pick<CoachReminderCard, 'time' | 'days' | 'date'>,
+  card: Pick<CoachReminderCard, 'time' | 'date'> & { readonly days?: readonly Weekday[] },
   locale: string = currentLocale(),
 ): string {
   const time = clockText(minutesOf(card.time), locale);
