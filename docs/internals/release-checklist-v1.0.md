@@ -79,8 +79,8 @@ loop and the APK are in the rows below; device checks are the owner's.
 
 | # | Gate | Command | Result | Date, where |
 |---|---|---|---|---|
-| C1 | Release loop | `scripts/ci-local.sh` on the 1.3.0 stack | see the 1.3.0 release commit's message | 2026-10-28, lead's loop |
-| C2 | 1.3.0 APK | `PLATEWISE_BUILD_NUMBER=4 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| C1 | Release loop | `scripts/ci-local.sh` on the stack that landed as c21acf2, 8e43f4f, 108a53d, 9330c0c | **ci=0**: unit **5 862 passed + 2 expected-fail in 414 files**; `check --require-ref --strict` 6/6; check:bundle **245.88 kB** of 250; e2e **51 passed + 1 skipped by design**; `./gradlew testDebugUnitTest` 134/134 | 2026-10-28, lead's loop |
+| C2 | 1.3.0 APK | `PLATEWISE_BUILD_NUMBER=4 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` on the 9330c0c tree | OK: **10 075 650 bytes**, sha256 `4920c88eaa4d287273eb589c21b64729617a07005f25be52f14abf7c6e093026`; versionName **1.3.0**, versionCode **4**; 27 permissions (adds READ_HEART_RATE, WRITE_EXERCISE/DISTANCE/ACTIVE_CALORIES_BURNED/STEPS, ACCESS_FINE/COARSE_LOCATION, ACTIVITY_RECOGNITION, FOREGROUND_SERVICE, _LOCATION, _HEALTH; no background location); same debug key (SHA-1 48:AD:E7:…:5F:EA). Sent to the owner | 2026-10-28, lead |
 | C3 | A walk on a device | Start a walk (allow location and physical activity), walk 10 minutes with the screen off, pause from the notification, resume, stop; check the summary, Save, Progress › Walks, Home's burn line; with Health Connect connected and sending on, the walk in Health Connect | **Open: the owner's phone** | — |
 | C4 | Walk survives the app closing | Start a walk, swipe Platewise away, walk, open it again (the walk carries on); stop from the notification with the app closed, open it (the summary) | **Open: the owner's phone** | — |
 | C5 | Google Drive setup | The one-time Google Cloud setup (`docs/user/backup.md`, Google Drive): Drive API, consent screen with `drive.file`, Android OAuth client for `app.platewise.android` and the APK's SHA-1 | **Open: the owner** | — |

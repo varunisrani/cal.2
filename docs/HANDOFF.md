@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-28 14:20 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 released at 42aefc8
-(automatic backup, the keyboard fix). 1.1.0 holds:
+Updated: 2026-10-28 18:30 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 (42aefc8,
+automatic backup, the keyboard fix); 1.3.0 released at 9330c0c (walks with a walk score, Google Drive backup). 1.1.0 holds:
 the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
 reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
@@ -164,6 +164,12 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**1.3.0 RELEASED (2026-10-28):** c21acf2 P15-01 native (WalkTracker plugin and service, Health Connect writeWalk and
+readHeartRate, the Drive authorize plugin with Play services auth 22.0.0 under a reasoned licence exception), 8e43f4f
+P15-04 Google Drive backup (inventory M16 now P1 on Android, ACC-M16-1..5; keep 7 per install, never another phone's),
+108a53d P15-02/03 walks (inventory M18, new, ACC-M18-1..12; METs checked against pacompendium.com), 9330c0c the 1.3.0
+release. APK 1.3.0 (build 4) and en-IN screenshots sent. Open: the owner's Google Cloud setup (C5) and device checks
+C3/C4/C6 (plus A4/A5/A8, B3/B4); tag/release, `main`, the attribution URL.
 **P15 (the user asked 14:35 IST): walk recorder with a walk score, and Google Drive backup → 1.3.0.** Plan
 `docs/plan/phases/P15-walks-and-drive-backup.md` (D-16.96, D-16.97, plugin contracts). Wave 21 builders at 648e6ca:
 S1 native (`/root/wt/wt-p15s1`), S2 walks web (`wt-p15s2`), S3 Drive web (`wt-p15s3`); prompts `docs/handoff/wave21/`.
