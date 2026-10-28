@@ -33,7 +33,7 @@ describe('defaults (03 §3.3)', () => {
       textStandby: { on: false, provider: 'gemini', model: defaultModel('gemini', 'text') },
       endpoints: {},
       instructions: '',
-      maxTokens: 1024,
+      maxTokens: 8192,
       timeoutSec: 180,
       openRouterEffort: 'auto',
     });
@@ -75,12 +75,12 @@ describe('decodeAiSettings: each field on its own', () => {
     }
   });
 
-  it('keeps the answer token limit whole and at least 1, with no upper bound (D-16.65)', () => {
+  it('keeps the answer token limit whole and at least 1, with no upper bound; 8 192 when unreadable (D-16.65, D-16.104)', () => {
     expect(readMaxTokens(0)).toBe(1);
     expect(readMaxTokens(-50)).toBe(1);
     expect(readMaxTokens(1500.9)).toBe(1500);
     expect(readMaxTokens(65_536)).toBe(65_536);
-    for (const junk of ['2048', undefined, Number.NaN]) expect(readMaxTokens(junk)).toBe(1024);
+    for (const junk of ['2048', undefined, Number.NaN]) expect(readMaxTokens(junk)).toBe(8192);
   });
 
   it('reads the reasoning effort, auto for anything unknown', () => {

@@ -68,7 +68,13 @@ export interface AiSettings {
   readonly openRouterEffort: OpenRouterEffort;
 }
 
-export const DEFAULT_MAX_TOKENS = 1_024;
+/**
+ * The answer token limit when none is chosen (D-16.104). Thinking models (Claude 5, GPT reasoning
+ * models, Gemini thinking models) count their thinking toward it, so 1 024 cut food answers off.
+ */
+export const DEFAULT_MAX_TOKENS = 8_192;
+/** The default before 1.5.0 (D-16.65): a stored limit still at it is raised once (D-16.104). */
+export const OLD_DEFAULT_MAX_TOKENS = 1_024;
 export const MIN_MAX_TOKENS = 1;
 export const DEFAULT_TIMEOUT_SEC = 180;
 export const MIN_TIMEOUT_SEC = 30;

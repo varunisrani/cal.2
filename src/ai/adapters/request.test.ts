@@ -31,13 +31,13 @@ describe('shared adapter helpers', () => {
     expect(keyOf(input(undefined))).toBeUndefined();
   });
 
-  it('sends the token limit as a whole number, falling back to 1 024 (D-16.65)', () => {
+  it('sends the token limit as a whole number, falling back to 8 192 (D-16.65, D-16.104)', () => {
     expect(tokenCap(1)).toBe(1);
     expect(tokenCap(4_096)).toBe(4_096);
     expect(tokenCap(512.7)).toBe(512);
-    expect(tokenCap(0)).toBe(1_024);
-    expect(tokenCap(-5)).toBe(1_024);
-    expect(tokenCap(Number.NaN)).toBe(1_024);
+    expect(tokenCap(0)).toBe(8_192);
+    expect(tokenCap(-5)).toBe(8_192);
+    expect(tokenCap(Number.NaN)).toBe(8_192);
   });
 
   it('cuts a model id to its last segment, lower-cased and trimmed', () => {

@@ -82,7 +82,10 @@ Once saved, it shows as its first and last four characters (a short key shows as
 - **Requests:**
   - "Give up after" sets the time limit for the whole request, retries and the standby included:
     30 to 600 seconds, 180 by default.
-  - "Answer length limit" is the most a model may write in one answer, 1 024 tokens by default.
+  - "Answer length limit" is the most a model may write in one answer, 8 192 tokens by default.
+    Models that think before answering (Claude 5, the GPT and Gemini thinking models) count their
+    thinking toward it. Before 1.5.0 the default was 1 024, which those models often used up; a
+    limit still at 1 024 is raised to 8 192 once when you update.
     Raise it if long meals come back cut off.
   - "OpenRouter reasoning effort" appears while OpenRouter serves any of the four roles above. More
     effort takes longer and costs more.

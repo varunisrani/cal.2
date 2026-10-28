@@ -329,8 +329,8 @@ describe('complete: a cut-off answer is asked for once more (03 §3.8)', () => {
 
     expect(result).toEqual({ ok: true, value: 'Lentil soup' });
     const [first, again] = fake.requests;
-    const note = compactRetryNote(1_024, 'json');
-    expect(note).toContain('1024');
+    const note = compactRetryNote(8_192, 'json');
+    expect(note).toContain('8192');
     expect(geminiPrompt(first)).not.toContain(note);
     expect(geminiPrompt(again)).toBe(`${PROMPT}\n\n${note}`);
     expect(geminiPhotos(again)).toEqual([jpegOf(3)]);

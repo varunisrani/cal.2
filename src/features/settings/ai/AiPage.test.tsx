@@ -83,7 +83,7 @@ describe('AiPage', () => {
     expect(pickers(card(pageWords.roles.primary.heading)).provider).toHaveValue('gemini');
     const limit = field(pageWords.limits.maxTokens.label);
     expect(limit).toBeVisible();
-    expect(limit).toHaveValue('1024');
+    expect(limit).toHaveValue('8192');
 
     await user.clear(limit);
     await user.type(limit, '2048');

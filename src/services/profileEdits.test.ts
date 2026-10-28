@@ -33,6 +33,8 @@ async function setUp(profile: Profile | null = PLANNED) {
     weightRepo: createWeightRepo(db, { bus }),
   };
   if (profile) await repos.profileRepo.save(profile);
+  // Listen once the settings have loaded, so their "loaded" message is not counted.
+  await repos.settingsRepo.loaded;
   const posted: BusMessage[] = [];
   closers.push(bus.subscribe((message) => posted.push(message)));
   const clock = fixedClock(FACTORY_NOW, 'America/New_York');

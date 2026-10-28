@@ -32,7 +32,7 @@ export const ai = {
         'The AI service is busy right now. We tried a few times. Try again later, or choose another model or provider.',
       generic: "The AI request didn't work. Try again or choose another provider.",
       truncated:
-        'The answer was cut off twice. Shorten the request, raise the answer length limit, or try another model.',
+        'The answer was cut off twice: the model reached the answer length limit (thinking models count their thinking too). Raise it in Settings › AI, or try another model.',
       tooLarge: 'The request is too big for this provider. Send fewer photos or smaller ones.',
       roundLimit:
         'The Coach needed too many steps for this question. Try asking something narrower.',

@@ -30,6 +30,7 @@ describe('SETTING_SPECS', () => {
   it('has exactly the v1 keys of the naming table', () => {
     expect([...SETTING_KEYS].sort()).toEqual(
       [
+        'ai.answerLimitRaised',
         'ai.settings',
         'alerts.goalReached',
         'backup.auto',

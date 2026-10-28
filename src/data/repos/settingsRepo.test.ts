@@ -1,3 +1,4 @@
+import { DEFAULT_AI_SETTINGS } from '../../ai/settings';
 import { Dexie } from 'dexie';
 import { afterEach, describe, expect, it } from 'vitest';
 import { fixedClock } from '../../lib/clock';
@@ -194,6 +195,38 @@ describe('values an earlier build stored', () => {
     expect(await db.quarantine.count()).toBe(0);
     expect(await hasUnreadableData(db)).toBe(false);
     await finish(db);
+  });
+
+  it('raises an AI answer limit still at the old 1 024 to 8 192 once, keeping the rest (D-16.104)', async () => {
+    const { db } = await openTestDb();
+    const ai = { ...DEFAULT_AI_SETTINGS, instructions: 'No pork.', maxTokens: 1_024 };
+    await plant(db, [{ key: 'ai.settings', value: ai }]);
+    const repo = createSettingsRepo(db, { ...env, clock });
+    expect((await repo.loaded)['ai.settings']).toEqual({ ...ai, maxTokens: 8_192 });
+    expect(await db.settings.get('ai.answerLimitRaised')).toEqual({
+      key: 'ai.answerLimitRaised',
+      value: true,
+    });
+
+    // Chosen again afterwards, 1 024 stays: the raise happens once.
+    await repo.set('ai.settings', ai);
+    const again = await repoOn(db);
+    expect(await again.get('ai.settings')).toEqual(ai);
+    await finish(db);
+  });
+
+  it('leaves another answer limit as it is, and writes nothing before AI is set up (D-16.104)', async () => {
+    const { db } = await openTestDb();
+    const ai = { ...DEFAULT_AI_SETTINGS, maxTokens: 2_048 };
+    await plant(db, [{ key: 'ai.settings', value: ai }]);
+    const repo = await repoOn(db);
+    expect(await repo.get('ai.settings')).toEqual(ai);
+
+    const empty = await openTestDb();
+    await repoOn(empty.db);
+    expect(await empty.db.settings.count()).toBe(0);
+    await finish(db);
+    await finish(empty.db);
   });
 
   it('reads any other stored weight unit as kg as well, and writes no row that was not there', async () => {

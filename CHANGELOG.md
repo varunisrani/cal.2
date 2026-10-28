@@ -5,6 +5,13 @@ What changed in each release of Platewise, newest first. Version numbers follow
 
 ## Unreleased (1.5.0)
 
+### Fixes
+
+- Food analysis with Claude Haiku 5.5 (and other models that think before answering) no longer stops with "The answer
+  was cut off twice". Those models count their thinking toward the answer length limit, and the old default of 1 024
+  tokens was used up before the answer. The default is now 8 192; a limit still at 1 024 is raised to 8 192 once when
+  you update (a limit you chose yourself stays). The message, if it ever comes, now says where to raise the limit.
+
 ### Smart notifications in the Android app
 
 - Platewise now nudges you when it helps. A meal check comes about an hour after your usual meal time if nothing is

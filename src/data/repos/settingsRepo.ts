@@ -5,8 +5,10 @@
 // aside first, in the same transaction, or is refused (R06.1, R05.6). `loaded` resolves once the
 // first snapshot has been read, so pages never show switches at their defaults (R06.22). Before
 // that first read, a value an earlier build stored and this one reads differently is rewritten
-// as it reads (D-16.91: a stored `lb` weight unit becomes `kg`).
+// as it reads (D-16.91: a stored `lb` weight unit becomes `kg`), and once, an AI answer limit
+// still at an earlier build's default is raised to today's (D-16.104).
 
+import { DEFAULT_MAX_TOKENS, OLD_DEFAULT_MAX_TOKENS } from '../../ai/settings';
 import { systemClock, type Clock } from '../../lib/clock';
 import { appBus, type Bus } from '../bus';
 import type { Codec } from '../codecs';
@@ -80,6 +82,10 @@ interface Boxed<K extends SettingKey> {
   value: SettingValue<K>;
 }
 
+function isRecordValue(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 function isRow(raw: unknown): raw is KeyValueRow {
   return typeof raw === 'object' && raw !== null && 'key' in raw && 'value' in raw;
 }
@@ -149,6 +155,25 @@ export function createSettingsRepo(
     });
   }
 
+  /**
+   * D-16.104, once per database: an answer limit still at 1 024 (the default before 1.5.0, which
+   * thinking models used up before answering) becomes 8 192. A limit chosen later stays.
+   */
+  async function raiseOldAnswerLimit(): Promise<void> {
+    const done: unknown = await db.settings.get('ai.answerLimitRaised');
+    if (isRow(done) && done.value === true) return;
+    const ai: unknown = await db.settings.get('ai.settings');
+    // Nothing set up yet: the limit will start at today's default, and no row is written.
+    if (!isRow(ai) || !isRecordValue(ai.value)) return;
+    if (ai.value.maxTokens === OLD_DEFAULT_MAX_TOKENS) {
+      await db.settings.put({
+        key: 'ai.settings',
+        value: { ...ai.value, maxTokens: DEFAULT_MAX_TOKENS },
+      });
+    }
+    await db.settings.put({ key: 'ai.answerLimitRaised', value: true });
+  }
+
   // Best effort: a rewrite that fails leaves the old value, which still reads the new way.
   async function rewriteRetired(): Promise<void> {
     try {
@@ -159,6 +184,7 @@ export function createSettingsRepo(
           const value = readSetting(key, stored.value);
           if (value !== undefined && value !== stored.value) await db.settings.put({ key, value });
         }
+        await raiseOldAnswerLimit();
       });
     } catch (error) {
       console.warn('Rewriting older settings failed', error);

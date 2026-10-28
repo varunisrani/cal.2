@@ -459,6 +459,8 @@ export const SETTING_SPECS = {
   // AI (never keys: those live in `secrets`); null until the person sets AI up, which reads as
   // the AI layer's defaults (P03-04)
   'ai.settings': setting<AiSettings | null>(none, readAiSettings),
+  // D-16.104: set once the answer limit of an earlier build's default (1 024) was raised to 8 192.
+  'ai.answerLimitRaised': setting(off, readFlag),
 
   // Health Connect, on the Android app only (P11-03, D-16.89). Counting the day's active calories
   // in its energy target is on once connected; sending entries and weigh-ins back is off.

@@ -60,7 +60,7 @@ export interface Adapter {
 export const JPEG = 'image/jpeg';
 
 /** The answer limit when the given one is unusable (D-16.65). */
-const FALLBACK_TOKEN_CAP = 1_024;
+const FALLBACK_TOKEN_CAP = 8_192;
 
 export type JsonRecord = Readonly<Record<string, unknown>>;
 

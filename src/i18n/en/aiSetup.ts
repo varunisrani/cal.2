@@ -122,7 +122,7 @@ export const aiSetup = {
         maxTokens: {
           label: 'Answer length limit',
           unit: 'tokens',
-          hint: 'The longest answer a model may send, with every provider. Raise it if long meals come back cut off.',
+          hint: 'The longest answer a model may send, thinking included, with every provider. Raise it if answers come back cut off.',
         },
         effort: {
           label: 'OpenRouter reasoning effort',
