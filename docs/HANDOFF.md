@@ -164,6 +164,11 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**Landed (2026-10-28 evening):** 7852a19 P16-01 sugar on Home; b9c4ec5 P16-02/03 several Coach chats (schema 4;
+`openWater` settle now time-bounded). 1.4.0 release in progress (APK build 5). P17 S1 (nudges, notices, panel) is
+done in `/root/wt/wt-p17s1`, patch `/root/wt/patches/p17s1.patch`; rebased on b9c4ec5 as
+`/root/wt/patches/p17s1-rebased.patch` (context.tsx conflict resolved), ledger script `/root/wt/msgs/ledger_w23_p17s1.py`.
+P17 S2 (the Coach's notifications) builds in `/root/wt/wt-p17s2` on a local commit f6dc89b (= b9c4ec5 + P17 S1).
 **P17 (the user asked 19:30 IST): smart notifications → 1.5.0.** Plan `docs/plan/phases/P17-smart-notifications.md`
 (D-16.100 planned nudges, D-16.101 event notices, D-16.102 the Coach's own). Wave 23: S1 nudges and notices
 (`/root/wt/wt-p17s1` at 775e1d4, prompt `docs/handoff/wave23/`); S2 (the Coach: auto reminders, check-ins, reply
