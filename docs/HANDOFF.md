@@ -164,6 +164,13 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P15 (the user asked 14:35 IST): walk recorder with a walk score, and Google Drive backup → 1.3.0.** Plan
+`docs/plan/phases/P15-walks-and-drive-backup.md` (D-16.96, D-16.97, plugin contracts). Wave 21 builders at 648e6ca:
+S1 native (`/root/wt/wt-p15s1`), S2 walks web (`wt-p15s2`), S3 Drive web (`wt-p15s3`); prompts `docs/handoff/wave21/`.
+Drive needs the owner's one-time Google Cloud OAuth client (package `app.platewise.android`, SHA-1
+`48:AD:E7:7C:11:20:78:A6:D6:4E:98:D4:83:79:F3:D1:07:71:5F:EA` = this container's debug key at
+`/root/.android/debug.keystore`; a copy was sent to the owner: losing it changes the SHA-1 and stops APKs updating in
+place).
 **1.2.0 RELEASED (14:20 IST, 2026-10-28):** fb88c1c the keyboard fix (adjustResize + our own IME/system-bar insets,
 Capacitor's edge-to-edge off; the tab bar hides while typing), 94f8fe3 automatic backup (D-16.95), e47ef60 the test
 fixes (time-bounded waits where WebCrypto is involved; the HealthPage Sync-now race), 42aefc8 the 1.2.0 release. Loop:
