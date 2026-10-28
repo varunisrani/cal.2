@@ -153,6 +153,37 @@ describe('makeBackup', () => {
     expect(keys).not.toContain('backup.lastAt');
   });
 
+  it('leaves this device’s automatic backup state out of the file, and keeps the switch and frequency in it (P14)', async () => {
+    const db = await freshDb();
+    await seedStore(db);
+    const settingsRepo = createSettingsRepo(db, { locale: 'en-US' });
+    await settingsRepo.set('backup.autoEvery', 'weekly');
+    const first = await made(db);
+    await settingsRepo.set('backup.autoState', {
+      files: [{ name: 'platewise-backup-2026-10-26-1230.zip', madeAt: first.madeAt }],
+      lastAt: first.madeAt,
+      problem: null,
+      asked: true,
+    });
+
+    const second = await made(db);
+
+    const opened = await unpackBackup(second.file);
+    const document = opened.document as {
+      contentHash: string;
+      payload: { tables: { settings: { key: string; value: unknown }[] } };
+    };
+    const keys = document.payload.tables.settings.map((row) => row.key);
+    expect(keys).not.toContain('backup.autoState');
+    expect(document.payload.tables.settings).toContainEqual({
+      key: 'backup.autoEvery',
+      value: 'weekly',
+    });
+    const firstHash = ((await unpackBackup(first.file)).document as { contentHash: string })
+      .contentHash;
+    expect(document.contentHash).toBe(firstHash);
+  });
+
   it('gives the same hash again after the last backup time was recorded (R06.7)', async () => {
     const db = await freshDb();
     await seedStore(db);

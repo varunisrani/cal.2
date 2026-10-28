@@ -115,6 +115,51 @@ export const REMINDER_KEYS = [
 /** A record whose fields another module owns (the add-menu layout). */
 export type StoredRecord = Readonly<Record<string, unknown>>;
 
+/** How often the Android app saves a backup by itself (D-16.95). */
+export const AUTO_BACKUP_EVERY = ['daily', 'weekly'] as const;
+export type AutoBackupEvery = (typeof AUTO_BACKUP_EVERY)[number];
+
+/** Why an automatic backup was not saved (P14-01). */
+export const AUTO_BACKUP_PROBLEMS = [
+  /** The phone's storage is full. */
+  'noSpace',
+  /** Android did not let the app write to Documents (Android 8–10 ask first). */
+  'denied',
+  /** A photo could not be read while the backup was made. */
+  'photoUnreadable',
+  /** More than one backup file can hold. */
+  'tooLarge',
+  /** Anything else: the file could not be made or written. */
+  'failed',
+] as const;
+export type AutoBackupProblem = (typeof AUTO_BACKUP_PROBLEMS)[number];
+
+/** An automatic backup this install wrote: its file name in the folder and when it was made. */
+export interface AutoBackupRecord {
+  readonly name: string;
+  /** Epoch ms. */
+  readonly madeAt: number;
+}
+
+/** This device's automatic backups (P14-01): device state, never in a backup. */
+export interface AutoBackupState {
+  /** The files this install wrote and has not deleted, newest first. */
+  readonly files: readonly AutoBackupRecord[];
+  /** When the newest automatic backup was made, epoch ms; null before the first. */
+  readonly lastAt: number | null;
+  /** Why the last try failed, and when; null once one succeeds. */
+  readonly problem: { readonly kind: AutoBackupProblem; readonly at: number } | null;
+  /** Android's storage question was asked (Android 8–10 ask only once by themselves). */
+  readonly asked: boolean;
+}
+
+/**
+ * The names automatic backups are written under: `platewise-backup-YYYY-MM-DD-HHmm.zip`, with
+ * `-2`, `-3` … when a file this install did not write already has the name. Only such names are
+ * ever deleted, so a damaged state can never name another file.
+ */
+export const AUTO_BACKUP_NAME = /^platewise-backup-\d{4}-\d{2}-\d{2}-\d{4}(?:-\d{1,3})?\.zip$/;
+
 // ---- Readers ----------------------------------------------------------------------------------
 
 type Fields = Record<string, unknown>;
@@ -226,6 +271,31 @@ function readRecordOrNull(stored: unknown): StoredRecord | null | undefined {
   return isFields(stored) ? stored : undefined;
 }
 
+function isInstant(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+// Device state: each part is read on its own, and a bad part goes back to its empty value, so a
+// damaged row never loses the list of files this install wrote.
+function readAutoBackupState(stored: unknown): AutoBackupState | undefined {
+  if (!isFields(stored)) return undefined;
+  const files: AutoBackupRecord[] = [];
+  for (const raw of Array.isArray(stored.files) ? (stored.files as unknown[]) : []) {
+    if (!isFields(raw) || typeof raw.name !== 'string' || !isInstant(raw.madeAt)) continue;
+    if (!AUTO_BACKUP_NAME.test(raw.name) || files.some((file) => file.name === raw.name)) continue;
+    files.push({ name: raw.name, madeAt: raw.madeAt });
+  }
+  files.sort((a, b) => b.madeAt - a.madeAt);
+  const problem = isFields(stored.problem) ? stored.problem : null;
+  const kind = problem ? oneOf(AUTO_BACKUP_PROBLEMS)(problem.kind) : undefined;
+  return {
+    files,
+    lastAt: isInstant(stored.lastAt) ? stored.lastAt : null,
+    problem: kind && problem && isInstant(problem.at) ? { kind, at: problem.at } : null,
+    asked: stored.asked === true,
+  };
+}
+
 // The AI layer reads each field on its own and gives a bad one its default (P03-04).
 function readAiSettings(stored: unknown): AiSettings | null | undefined {
   if (stored === null) return null;
@@ -332,6 +402,14 @@ export const SETTING_SPECS = {
   'storage.nudgeDone': setting(off, readFlag),
   /** When the last backup file was made, epoch ms. */
   'backup.lastAt': setting<number | null>(none, readInstantOrNull),
+  // Automatic backup, in the Android app only (P14, D-16.95): on, daily, by default. The state is
+  // this device's own (`LOCAL_SETTINGS`).
+  'backup.auto': setting(on, readFlag),
+  'backup.autoEvery': setting<AutoBackupEvery>(() => 'daily', oneOf(AUTO_BACKUP_EVERY)),
+  'backup.autoState': setting<AutoBackupState>(
+    () => ({ files: [], lastAt: null, problem: null, asked: false }),
+    readAutoBackupState,
+  ),
 } as const;
 
 export type SettingKey = keyof typeof SETTING_SPECS;

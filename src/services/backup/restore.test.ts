@@ -361,6 +361,35 @@ describe('inspectBackup and applyBackup', () => {
     expect(await settings.get('display.accent')).toBe('ember');
   });
 
+  it('keeps this device’s automatic backup state, even from a file that carries one, and takes the switch and frequency from the backup (P14)', async () => {
+    const source = await seededBackup(async (db) => {
+      const settings = createSettingsRepo(db, { locale: 'en-US' });
+      await settings.set('backup.auto', false);
+      await settings.set('backup.autoEvery', 'weekly');
+    });
+    const crafted = await rewrite(source.file, (doc) => {
+      doc.payload.tables.settings!.push({
+        key: 'backup.autoState',
+        value: { files: [{ name: 'platewise-backup-2026-01-01-0000.zip', madeAt: 1 }] },
+      });
+    });
+    const target = await otherStore();
+    const settings = createSettingsRepo(target.db, { locale: 'en-US' });
+    const mine = {
+      files: [{ name: 'platewise-backup-2026-10-25-0900.zip', madeAt: FACTORY_NOW - 27 * HOUR }],
+      lastAt: FACTORY_NOW - 27 * HOUR,
+      problem: null,
+      asked: true,
+    };
+    await settings.set('backup.autoState', mine);
+
+    expect((await applyBackup(await checked(crafted), applyDeps(target.db))).ok).toBe(true);
+
+    expect(await settings.get('backup.autoState')).toEqual(mine);
+    expect(await settings.get('backup.auto')).toBe(false);
+    expect(await settings.get('backup.autoEvery')).toBe('weekly');
+  });
+
   it('removes photos nothing uses afterwards, clears the flag and runs the follow-up', async () => {
     const source = await seededBackup();
     const target = await otherStore();

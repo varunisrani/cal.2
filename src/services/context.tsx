@@ -3,6 +3,7 @@ import type { Clock } from '../lib/clock';
 import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
 import type { AppSettingsService } from './appSettings';
+import type { AutoBackupService } from './backup/auto';
 import type { BackupService } from './backup/service';
 import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
@@ -102,6 +103,11 @@ export interface Services {
   readonly appSettings?: AppSettingsService;
   /** Backup files and restoring them (P09-13); optional for the same reason. */
   readonly backup?: BackupService;
+  /**
+   * Automatic backups into Documents/Platewise (P14, D-16.95): only the Android app has it.
+   * Without it Your data shows no Automatic backup card, as on the web.
+   */
+  readonly autoBackup?: AutoBackupService;
   /** Settings › Your data: the storage card, Clear diary, Erase everything (P09-15); likewise. */
   readonly yourData?: YourDataService;
   /** The persistent-storage request and Home's storage cards (P09-15); optional likewise. */

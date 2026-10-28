@@ -40,8 +40,9 @@ Backups need Platewise to be opened over a secure (https) address.
 ### What is not in it
 
 - **Your API keys.** You paste them again after a restore on another device.
-- A few things that belong to the device, such as when the last backup was made and whether the
-  browser was already asked to keep the data.
+- A few things that belong to the device, such as when the last backup was made, the list of
+  automatic backups the Android app wrote, and whether the browser was already asked to keep the
+  data.
 
 ### Keep it safe
 
@@ -51,6 +52,53 @@ would store other private files.
 
 Make a backup regularly, for example once a week, and keep at least one copy off the device.
 Platewise reminds you in Settings › Your data when your last backup is more than 14 days old.
+
+## Automatic backup (Android app)
+
+The Android app also makes backups by itself. (A browser cannot save a file without you, so the
+web app keeps backups by hand.)
+
+- **When:** each time you open Platewise or come back to it, if the newest backup, made by hand or
+  automatically, is a day old (**Daily**, the default) or a week old (**Weekly**). Platewise does
+  nothing while it is closed, and starts only once the setup is finished.
+- **What:** the same file as Back up now, named `platewise-backup-YYYY-MM-DD-HHmm.zip`.
+- **Where:** in **Documents › Platewise** on the phone. The Files app, Google Drive and a computer
+  connected by cable can reach that folder, and it stays when you uninstall Platewise.
+- **How many:** the newest 7 automatic backups. Older ones that Platewise wrote are deleted;
+  Platewise never deletes a file it did not write, such as a backup you copied into the folder.
+- **Last backup** counts automatic backups, and so does the reminder after 14 days.
+
+Settings › Your data › **Automatic backup** has the switch (on until you turn it off), Daily or
+Weekly, when the last automatic backup was made, and the automatic backups still in the folder,
+each with its date, its size and **Restore**. Restore checks the file and asks before replacing
+anything, as Restore from a file does.
+
+On Android 8, 9 and 10, Platewise asks once for access to your files, the first time it backs up,
+and again when you turn the switch on. From Android 11 it needs no permission: it only writes and
+reads its own files in that folder.
+
+### When an automatic backup fails
+
+The card says why the last one failed, and Platewise tries again the next time you open it or come
+back to it. Nothing else in Platewise is affected.
+
+| The card says                         | What to do                                                                                          |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| this phone is out of storage          | Free up some space on the phone.                                                                    |
+| Platewise may not save files          | In Android Settings › Apps › Platewise › Permissions, allow access to files (Android 8 to 10 only). |
+| a photo couldn't be read              | Nothing; it tries again.                                                                            |
+| there is too much for one backup file | Export your diary to keep a copy of your entries.                                                   |
+| couldn't be saved                     | Nothing; it tries again.                                                                            |
+
+### After reinstalling, or on a new phone
+
+An automatic backup is an ordinary backup file. After you reinstall Platewise, choose **Restore
+from a backup file** on the first screen and pick the newest file in Documents › Platewise. On a
+new phone, copy the folder over first (or pick the file from Google Drive).
+
+A reinstalled app does not list the files the old one wrote, because Android ties each file to the
+app that made it. Those files stay in the folder until you delete them, and the list starts again
+with the next automatic backup.
 
 ## Restore a backup
 
@@ -71,7 +119,8 @@ sheet cannot be closed until it is done. It never leaves half of your data repla
 
 After a restore:
 
-- "Last backup" shows the time of the backup you restored.
+- "Last backup" shows the time of the backup you restored. In the Android app, if that is a day
+  (or a week) old, an automatic backup follows the next time you open Platewise.
 - This device's own settings, such as whether the browser was already asked to keep the data,
   stay as they were.
 - If a fast was running in the backup but fasting tracking is off in it, that fast is ended, so

@@ -1,6 +1,6 @@
 # P14 · Automatic backup in the Android app
 
-**Weeks:** 0.5 · **Tracks:** backup service, native files, Settings › Your data · **Depends on:** P00–P13 · **Status:** 🔨 in progress: P14-03 the keyboard landed (2026-10-28)
+**Weeks:** 0.5 · **Tracks:** backup service, native files, Settings › Your data · **Depends on:** P00–P13 · **Status:** ✅ done: P14-01..03 (2026-10-28); device tests are the owner's
 
 ## Goal
 

@@ -45,7 +45,9 @@ package ships are in `src/generated/notices.json` and on the app's Licences and 
 that a package bundles under a licence of its own is listed under its own name.
 
 - `@capacitor/core` 7.6.9: MIT, <https://capacitorjs.com>
+- `@capacitor/filesystem` 7.1.9: MIT
 - `@capacitor/local-notifications` 7.0.7: MIT
+- `@capacitor/synapse` 1.0.4: ISC
 - `@types/emscripten` 1.41.6: MIT, <https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/emscripten>
 - `dexie` 4.4.6: Apache-2.0, <https://dexie.org>
 - `react` 19.3.0: MIT, <https://react.dev/>

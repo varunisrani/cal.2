@@ -142,6 +142,10 @@ These are two different things:
   sends weigh-ins, such as rebuilding your plan (see [Privacy and storage](privacy-and-storage.md)).
 - Android's cloud backup is off for Platewise: your diary and your AI keys are not copied to your
   Google account. A phone-to-phone transfer when you set up a new phone may still move them.
+- Automatic backups (Settings › Your data) are files in Documents › Platewise, outside Platewise's
+  own storage: apps that may read your files, and Google Drive if you sync that folder, can read
+  them, and they stay after you uninstall Platewise. Like every backup they hold your diary and
+  photos, not your AI keys, and they are not encrypted (see [Backup and restore](backup.md)).
 - Platewise's backup files leave out the daily activity read from Health Connect, because Health
   Connect keeps it; after a restore, connect again and it is read back. Imported weigh-ins are in
   your weight history, so backups keep them. The connection itself is not in a backup.

@@ -3,6 +3,23 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.2.0)
+
+### Automatic backup in the Android app
+
+- The Android app saves a full backup by itself: when you open it or come back to it and the
+  newest backup is a day old (Daily, the default) or a week old (Weekly). It is the same file as
+  Back up now, saved in Documents › Platewise on the phone, where the Files app and Google Drive
+  can reach it and where it stays if you uninstall Platewise. The newest 7 are kept; Platewise
+  never deletes a file it did not write.
+- Settings › Your data › Automatic backup: the switch, Daily or Weekly, the last automatic
+  backup, the files with their date, size and Restore (checked and confirmed like Restore from a
+  file), and why the last one failed with what to do. "Last backup" and the 14-day reminder count
+  automatic backups.
+- Android 8 to 10 ask once for access to your files; Android 11 and newer need no permission.
+  The web app keeps backups by hand. How it works:
+  [docs/user/backup.md](docs/user/backup.md#automatic-backup-android-app).
+
 ## 1.1.0 (2026-10-28)
 
 Platewise 1.1 has a new orange look in a light and a dark theme, shows weight in kilograms only,

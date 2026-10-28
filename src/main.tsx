@@ -38,6 +38,7 @@ import { systemClock } from './lib/clock';
 import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
 import { createAppSettingsService } from './services/appSettings';
+import { loadAutoBackup } from './services/backup/autoLoad';
 import { createBackupService } from './services/backup/service';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
@@ -249,6 +250,29 @@ async function start(): Promise<void> {
   // P13: the reminders the person writes; Settings and the Coach's reminder cards share it.
   const customReminders = createCustomRemindersService({ settingsRepo, clock: systemClock });
 
+  const backup = createBackupService({
+    backupRepo,
+    settingsRepo,
+    fastRepo,
+    photoRepo,
+    storage,
+    clock: systemClock,
+    // P09-16: package.json's version, written into the build.
+    appVersion: APP_VERSION,
+  });
+  // P14: automatic backups into Documents/Platewise in the Android app only (D-16.95); the web
+  // build fetches none of its code.
+  const autoBackup = await loadAutoBackup({
+    backup,
+    settingsRepo,
+    clock: systemClock,
+    visibility: documentVisibility,
+    fetch: browserFetch,
+  }).catch((error: unknown) => {
+    console.error('Platewise: automatic backup could not be set up', error);
+    return undefined;
+  });
+
   const services: Services = {
     // D-16.8: ask the browser to keep our data once, after the first entry is logged.
     diary: createDiaryService({
@@ -362,23 +386,15 @@ async function start(): Promise<void> {
     // The diary file (P09-10, P09-11): its modules load on first use.
     transfer: createTransferService({ transferRepo: createTransferRepo(db), photoRepo }),
     appSettings: createAppSettingsService({ settingsRepo }),
-    backup: createBackupService({
-      backupRepo,
-      settingsRepo,
-      fastRepo,
-      photoRepo,
-      storage,
-      clock: systemClock,
-      // P09-16: package.json's version, written into the build.
-      appVersion: APP_VERSION,
-    }),
+    backup,
+    autoBackup,
     // Settings › Your data (P09-15): Erase tells the backup, stops the reminders, then deletes.
     yourData: createYourDataService({
       transferRepo: createTransferRepo(db),
       photoRepo,
       storage,
-      // Looked up when Erase runs: the backup service is built in this same object.
-      backup: { invalidate: () => services.backup?.invalidate() },
+      // Erase tells the backup service; a running automatic backup then records nothing.
+      backup,
       reminders,
       erase: () => eraseEverything({ db }),
     }),
@@ -406,6 +422,7 @@ async function start(): Promise<void> {
   render(createShellPorts({ profileRepo, settingsRepo }), services, data);
   reminders.start();
   health?.service.start();
+  autoBackup?.start();
   // D-16.46: an analysis that finished before a reload opens its review again.
   analysis.restore().catch((error: unknown) => {
     console.error('Platewise: the stored analysis could not be read', error);

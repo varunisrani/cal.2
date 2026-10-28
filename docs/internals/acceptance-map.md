@@ -1048,6 +1048,24 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/backup/backup.test.ts > makeBackup > makes one file with the diary, its photos and the Coach chat (ACC-K3-1)
   - Test: src/features/settings/data/BackupSection.test.tsx > BackupSection > says there is no backup yet, then hands one file over and shows its time (ACC-K3-1)
   - Test: e2e/settings-data.spec.ts > settings and data (Demo 6) > backs up, erases everything and restores from Welcome to the same diary, chat and settings (ACC-K3-1, ACC-K4-1, ACC-K6-1, ACC-B10-1, R06.8)
+- **ACC-K3-3** In the Android app a backup is saved by itself into Documents › Platewise daily or weekly, and "Last backup" moves to it
+  - Test: src/services/backup/auto.test.ts > automatic backup: when it runs (P14-01) > saves the same file as Back up now into the folder and moves Last backup (ACC-K3-3)
+  - Test: src/services/backup/auto.test.ts > automatic backup: when it runs (P14-01) > is due a day after the newest backup when Daily, and not before
+  - Test: src/services/backup/auto.test.ts > automatic backup: when it runs (P14-01) > is due a week after the newest backup when Weekly, and not before
+  - Test: src/features/settings/data/AutoBackupCard.test.tsx > AutoBackupCard (P14-02) > shows the switch on, Daily, no automatic backup yet and where the files go (ACC-K3-3)
+- **ACC-K3-4** Only the newest 7 automatic backups are kept, and a file Platewise did not write is never deleted or overwritten
+  - Test: src/services/backup/auto.test.ts > automatic backup: keeping 7 (P14-01) > keeps the newest 7 it wrote and never deletes a file it did not write (ACC-K3-4)
+  - Test: src/services/backup/auto.test.ts > automatic backup: keeping 7 (P14-01) > writes next to a file of the same name it did not write, never over it
+- **ACC-K3-5** A failed automatic backup says why on the card and is tried again next time
+  - Test: src/services/backup/auto.test.ts > automatic backup: failures (P14-01) > keeps %s as the problem, changes no Last backup, and tries again next time (ACC-K3-5)
+  - Test: src/features/settings/data/AutoBackupCard.test.tsx > AutoBackupCard (P14-02) > says why the last automatic backup failed and what to do (%s, ACC-K3-5)
+- **ACC-K3-6** A listed automatic backup restores through the same check and question
+  - Test: src/features/settings/data/AutoBackupCard.test.tsx > AutoBackupCard (P14-02) > restores a listed backup through the restore sheet’s check and question (ACC-K3-6)
+  - Test: src/features/settings/data/AutoBackupCard.test.tsx > AutoBackupCard (P14-02) > lists this install’s automatic backups, newest first, with their date and size (ACC-K3-6)
+  - Test: src/services/backup/auto.test.ts > automatic backup: triggers and the card (P14-01) > reads a listed backup back for the restore check, and refuses a file it did not write (ACC-K3-6)
+- **ACC-K3-7** The web app shows no automatic backup and loads none of its code
+  - Test: src/features/settings/data/AutoBackupCard.test.tsx > AutoBackupCard (P14-02) > draws nothing on the web, where there is no automatic backup
+  - Test: src/services/backup/autoLoad.test.ts > loadAutoBackup (P14-01, D-16.95) > fetches nothing and builds nothing on the web, where there is no Capacitor bridge
 
 ### K4 · Restore from a file (P1)
 

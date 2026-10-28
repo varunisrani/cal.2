@@ -34,6 +34,10 @@ export interface BackupService {
   apply(checked: CheckedBackup): Promise<Result<BackupSummary, RestoreProblem>>;
   /** Everything is about to be erased: backups already running never record success. */
   invalidate(): void;
+  /** True from the moment a restore is asked for until it settles (automatic backup waits). */
+  restoring(): boolean;
+  /** False once everything was erased after `made` started (R06.5). */
+  isCurrent(made: HeldBackup): boolean;
 }
 
 export interface BackupServiceDeps {
@@ -57,6 +61,7 @@ export interface BackupServiceDeps {
 
 export function createBackupService(deps: BackupServiceDeps): BackupService {
   let generation = 0;
+  let applying = 0;
   let tail: Promise<unknown> = Promise.resolve();
 
   /** Runs `work` after every queued operation has settled. */
@@ -98,14 +103,25 @@ export function createBackupService(deps: BackupServiceDeps): BackupService {
     },
 
     apply(checked) {
+      applying++;
       return queued(async () => {
         const { applyBackup } = await import('./restore');
         return applyBackup(checked, deps);
+      }).finally(() => {
+        applying--;
       });
     },
 
     invalidate() {
       generation++;
+    },
+
+    restoring() {
+      return applying > 0;
+    },
+
+    isCurrent(made) {
+      return made.generation === generation;
     },
   };
 }

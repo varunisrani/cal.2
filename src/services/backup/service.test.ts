@@ -107,4 +107,39 @@ describe('createBackupService', () => {
 
     expect(order).toEqual(['made', 'checked']);
   });
+
+  it('reports a restore from the moment it is asked for until it settles (P14)', async () => {
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    const s = await setup((real) => ({
+      ...real,
+      async restore(plan) {
+        await held;
+        return real.restore(plan);
+      },
+    }));
+    const made = await s.service.make();
+    if (!made.ok) throw new Error(made.error);
+    const checked = await s.service.inspect(made.value.file);
+    if (!checked.ok) throw new Error(checked.error);
+    expect(s.service.restoring()).toBe(false);
+
+    const restoring = s.service.apply(checked.value);
+    expect(s.service.restoring()).toBe(true);
+    release();
+    expect((await restoring).ok).toBe(true);
+
+    expect(s.service.restoring()).toBe(false);
+  });
+
+  it('says whether a made backup is still current, false once everything was erased (P14, R06.5)', async () => {
+    const s = await setup();
+    const made = await s.service.make();
+    if (!made.ok) throw new Error(made.error);
+    expect(s.service.isCurrent(made.value)).toBe(true);
+
+    s.service.invalidate();
+
+    expect(s.service.isCurrent(made.value)).toBe(false);
+  });
 });

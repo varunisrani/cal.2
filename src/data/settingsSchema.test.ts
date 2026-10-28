@@ -32,6 +32,9 @@ describe('SETTING_SPECS', () => {
       [
         'ai.settings',
         'alerts.goalReached',
+        'backup.auto',
+        'backup.autoEvery',
+        'backup.autoState',
         'backup.lastAt',
         'display.accent',
         'display.appearance',
@@ -362,5 +365,61 @@ describe('readSetting', () => {
     expect(readSetting('backup.lastAt', null)).toBeNull();
     expect(readSetting('backup.lastAt', '2026-10-26')).toBeUndefined();
     expect(readSetting('backup.lastAt', -1)).toBeUndefined();
+  });
+
+  it('starts automatic backup on, daily, with no files, no problem and nothing asked (P14, D-16.95)', () => {
+    const settings = defaultSettings(metric);
+    expect(settings['backup.auto']).toBe(true);
+    expect(settings['backup.autoEvery']).toBe('daily');
+    expect(settings['backup.autoState']).toEqual({
+      files: [],
+      lastAt: null,
+      problem: null,
+      asked: false,
+    });
+    expect(readSetting('backup.auto', 'yes')).toBeUndefined();
+    expect(readSetting('backup.autoEvery', 'weekly')).toBe('weekly');
+    expect(readSetting('backup.autoEvery', 'monthly')).toBeUndefined();
+    expectTypeOf<SettingValue<'backup.autoEvery'>>().toEqualTypeOf<'daily' | 'weekly'>();
+  });
+
+  it('reads the automatic backup state part by part, keeping only names it may delete (P14)', () => {
+    const name = (time: string) => `platewise-backup-2026-10-26-${time}.zip`;
+    expect(
+      readSetting('backup.autoState', {
+        files: [
+          { name: name('0900'), madeAt: 1_000 },
+          { name: name('1230'), madeAt: 2_000 },
+          { name: name('1230'), madeAt: 3_000 },
+          { name: 'platewise-backup-2026-10-26-1230-2.zip', madeAt: 4_000 },
+          { name: '../DCIM/photo.jpg', madeAt: 5_000 },
+          { name: 'notes.txt', madeAt: 6_000 },
+          { name: name('1300'), madeAt: -1 },
+          'odd',
+        ],
+        lastAt: 2_000,
+        problem: { kind: 'noSpace', at: 2_500 },
+        asked: true,
+      }),
+    ).toEqual({
+      files: [
+        { name: 'platewise-backup-2026-10-26-1230-2.zip', madeAt: 4_000 },
+        { name: name('1230'), madeAt: 2_000 },
+        { name: name('0900'), madeAt: 1_000 },
+      ],
+      lastAt: 2_000,
+      problem: { kind: 'noSpace', at: 2_500 },
+      asked: true,
+    });
+    expect(
+      readSetting('backup.autoState', {
+        files: 'all of them',
+        lastAt: 'yesterday',
+        problem: { kind: 'gremlins', at: 1 },
+        asked: 'yes',
+      }),
+    ).toEqual({ files: [], lastAt: null, problem: null, asked: false });
+    expect(readSetting('backup.autoState', null)).toBeUndefined();
+    expect(readSetting('backup.autoState', [])).toBeUndefined();
   });
 });

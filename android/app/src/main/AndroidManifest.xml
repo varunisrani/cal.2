@@ -32,6 +32,13 @@
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
 
+    <!-- Automatic backups (P14) go to Documents/Platewise. Up to Android 10 that folder needs the
+         storage permission (asked once, at the first automatic backup), and Android 10 also the
+         legacy storage flag on <application>; from Android 11 the app writes and reads its own
+         files there without either. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
+
     <!-- Up to Android 13 Health Connect is a separate app, which the client must be able to see. -->
     <queries>
         <package android:name="com.google.android.apps.healthdata" />
@@ -39,6 +46,7 @@
 
     <application
         android:allowBackup="false"
+        android:requestLegacyExternalStorage="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"

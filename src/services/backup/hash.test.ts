@@ -104,6 +104,27 @@ describe('contentHash', () => {
     expect(await contentHash(deviceState)).toBe(before);
   });
 
+  it('keeps the automatic backup’s switch and frequency in the hash, and this device’s state out (P14)', async () => {
+    const before = await contentHash(content());
+    const state = content({
+      settings: [
+        { key: 'display.accent', value: 'basil' },
+        { key: 'backup.autoState', value: { files: [], lastAt: 1, problem: null, asked: true } },
+      ],
+    });
+    expect(await contentHash(state)).toBe(before);
+    const weekly = content({
+      settings: [
+        { key: 'display.accent', value: 'basil' },
+        { key: 'backup.autoEvery', value: 'weekly' },
+      ],
+    });
+    expect(await contentHash(weekly)).not.toBe(before);
+    expect(LOCAL_SETTINGS).toContain('backup.autoState');
+    expect(LOCAL_SETTINGS).not.toContain('backup.auto');
+    expect(LOCAL_SETTINGS).not.toContain('backup.autoEvery');
+  });
+
   it('changes when an entry, a setting or a photo changes', async () => {
     const before = await contentHash(content());
     const changed = [

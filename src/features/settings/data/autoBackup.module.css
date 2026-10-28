@@ -1,0 +1,81 @@
+/*
+ * The Automatic backup card of Your data (P14-02), in the Android app only: the switch, the
+ * frequency, the last automatic backup, where the files are, the failure line and the list of
+ * files with Restore. Every value comes from tokens.css; logical properties throughout.
+ */
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.choice {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.choiceLabel {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.last,
+.note,
+.status,
+.problem {
+  margin: 0;
+  line-height: var(--leading-body);
+}
+
+.last {
+  font-weight: var(--weight-medium);
+}
+
+.note,
+.status {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.problem {
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+/* ---- The files ------------------------------------------------------------------------------ */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--line);
+}
+
+.rowText {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.rowWhen {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.rowSize {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
