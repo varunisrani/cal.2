@@ -1,6 +1,7 @@
 # Handoff: state of the Platewise build
 
-Updated: 2026-10-28 05:30 IST (Agent 1, session 3). v1.0 complete (176/176, 1fa1f1b); 1.1.0 released at e94f7a7:
+Updated: 2026-10-28 14:20 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 released at 42aefc8
+(automatic backup, the keyboard fix). 1.1.0 holds:
 the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
 reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
@@ -163,6 +164,12 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**1.2.0 RELEASED (14:20 IST, 2026-10-28):** fb88c1c the keyboard fix (adjustResize + our own IME/system-bar insets,
+Capacitor's edge-to-edge off; the tab bar hides while typing), 94f8fe3 automatic backup (D-16.95), e47ef60 the test
+fixes (time-bounded waits where WebCrypto is involved; the HealthPage Sync-now race), 42aefc8 the 1.2.0 release. Loop:
+unit 5 610 + 2 expected-fail, strict 6/6, bundle 241.74 kB, e2e 51 + 1 skipped. APK 1.2.0 (build 3) sent. Open: device
+checks B3/B4 (and A4/A5/A8); the user's answer on the walk recorder (proposed for 1.3.0 with a walk score and a weekly
+activity goal) and on more features; tag/release, `main`, the attribution URL.
 **P14 (the user asked 11:30 IST):** automatic backup in the Android app (D-16.95: daily/weekly on start and return,
 Documents/Platewise, keep 7, restore from the list) and the keyboard covering the Coach composer (no
 windowSoftInputMode; edge-to-edge API 35 never resized the WebView). Plan `docs/plan/phases/P14-auto-backup.md`; builders

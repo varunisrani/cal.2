@@ -66,8 +66,8 @@ below; device checks are the owner's.
 
 | # | Gate | Command | Result | Date, where |
 |---|---|---|---|---|
-| B1 | Release loop | `scripts/ci-local.sh` on the 1.2.0 stack | see the 1.2.0 release commit's message | 2026-10-28, lead's loop |
-| B2 | 1.2.0 APK | `PLATEWISE_BUILD_NUMBER=3 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| B1 | Release loop | `scripts/ci-local.sh` on the stack that landed as fb88c1c, 94f8fe3, e47ef60, 42aefc8 | **ci=0**: unit **5 610 passed + 2 expected-fail in 393 files**; `check --require-ref --strict` 6/6; check:bundle **241.74 kB** of 250; e2e **51 passed + 1 skipped by design** | 2026-10-28, lead's loop |
+| B2 | 1.2.0 APK | `PLATEWISE_BUILD_NUMBER=3 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` at 42aefc8 | OK: **9 223 784 bytes**, sha256 `b8c00a41afb77d3a9cfc076ff2d38fff0c12685c7cdd25672c278a42f4cff5b2`; versionName **1.2.0**, versionCode **3**; 16 permissions (READ/WRITE_EXTERNAL_STORAGE with maxSdkVersion 29 added); MainActivity `windowSoftInputMode` adjustResize; same debug key as 1.1.0. Sent to the owner | 2026-10-28, lead |
 | B3 | Keyboard on a device | Open the Coach and type; open Log › Manual and type in the last field; on Android 15+ and on an older phone | **Open: the owner's phone** | — |
 | B4 | Automatic backup on a device | Install 1.2.0, open it, check Documents › Platewise has a backup; next day open it again; Restore one from the list; on Android 8–10 the storage question | **Open: the owner's phone** | — |
 
