@@ -1,7 +1,9 @@
 // How much of the window the on-screen keyboard covers, so the Coach's composer can stay just
-// above it. Chrome on Android and the Android app's WebView shrink the visual viewport, not the
-// window, when the keyboard opens: the covered part is the window's height less the visible
-// height and how far the visible part has been scrolled down.
+// above it. Chrome on Android shrinks the visual viewport, not the window, when the keyboard
+// opens: the covered part is the window's height less the visible height and how far the visible
+// part has been scrolled down. The Android app's WebView is resized to end at the keyboard
+// instead (MainActivity, P14), so nothing is covered there and this reads 0; whether the keyboard
+// is open at all is src/app/useKeyboardOpen.ts's to say.
 
 import { useEffect, useState } from 'react';
 

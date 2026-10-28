@@ -9,8 +9,10 @@
 /*
  * The page fills the shell's content area exactly, so only the conversation scrolls and the
  * composer stays above the floating tab bar. The two paddings repeat the content area's own
- * (src/app/shell.module.css). With the on-screen keyboard open the bar is under the keyboard, so
- * the page ends just above the keyboard instead (`--coach-keyboard`, from `visualViewport`).
+ * (src/app/shell.module.css). With the on-screen keyboard open the bar steps aside (the shell's
+ * `data-keyboard`, P14), so the page runs down to the keyboard: in the Android app the view
+ * itself ends there; in Chrome on a phone the keyboard covers the bottom of the view instead,
+ * and `--coach-keyboard` (from `visualViewport`, P13) says how much.
  */
 .page {
   --coach-top: calc(var(--safe-top) + var(--space-4));
@@ -18,12 +20,14 @@
     var(--tabbar-height, calc(var(--space-8) * 2)) + var(--tabbar-gap, var(--space-3)) * 2 +
       var(--safe-bottom) + var(--space-6)
   );
+  --coach-keyboard: 0px;
   display: flex;
   flex-direction: column;
   block-size: calc(100dvh - var(--coach-top) - var(--coach-bottom));
   min-block-size: 0;
 }
 
+[data-keyboard='open'] .page,
 .page[data-keyboard='open'] {
   block-size: calc(100dvh - var(--coach-top) - var(--coach-keyboard) - var(--space-2));
 }

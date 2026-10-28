@@ -22,6 +22,7 @@ import { TabBar } from './TabBar';
 import { ThemeProvider } from './ThemeProvider';
 import { TodayProvider } from './TodayProvider';
 import { UpdateBanner } from './UpdateBanner';
+import { useKeyboardOpen } from './useKeyboardOpen';
 import { RouterProvider, useRoute } from './useRoute';
 import { useTuneUp } from './useTuneUp';
 
@@ -69,15 +70,17 @@ function TuneUp({ runner }: { readonly runner: TuneUpRunner }) {
 /**
  * The screen for the route: the onboarding wizard alone, or a tab screen over the tab bar with
  * the goal-reached dialog, which every weigh-in path raises (R01.11), the weekly tune-up, and the
- * one food-analysis overlay, whichever tab started it.
+ * one food-analysis overlay, whichever tab started it. While the on-screen keyboard is open the
+ * frame says so (`data-keyboard="open"`), and the tab bar steps aside (P14).
  */
 function Shell() {
   const route = useRoute();
   const services = useOptionalServices();
+  const keyboard = useKeyboardOpen();
   const tuneUp = services?.tuneUp;
   if (route.kind === 'onboarding') return <OnboardingRoute />;
   return (
-    <div className={styles.shell}>
+    <div className={styles.shell} data-keyboard={keyboard ? 'open' : undefined}>
       <main className={styles.content} data-ui="shell.content">
         {/* Some saved data could not be read and was kept aside (K9), above the screen. */}
         <DamagedDataNotice />

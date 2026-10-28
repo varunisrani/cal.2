@@ -219,6 +219,11 @@
   );
 }
 
+/* It goes with the tab bar while the on-screen keyboard is open (the shell's data-keyboard). */
+[data-keyboard='open'] .fabSlot {
+  display: none;
+}
+
 /* Two classes, so the round button wins over the menu's own trigger style. */
 .fabSlot .fab {
   justify-content: center;

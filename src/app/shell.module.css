@@ -28,6 +28,11 @@
   );
 }
 
+/* With the on-screen keyboard open the bar steps aside (below), so no room is kept for it. */
+.shell[data-keyboard='open'] .content {
+  padding-block-end: var(--space-2);
+}
+
 .screenTitle {
   margin: 0 0 var(--space-4);
   font-size: var(--type-heading);
@@ -72,6 +77,15 @@
   border-radius: var(--radius-pill);
   background: var(--raised);
   box-shadow: var(--shadow-raised);
+}
+
+/*
+ * The on-screen keyboard is open (`data-keyboard`, from useKeyboardOpen; P14): the bar would sit
+ * on top of the keyboard and push what the person types into upwards, so it goes until the
+ * keyboard closes.
+ */
+.shell[data-keyboard='open'] .tabBar {
+  display: none;
 }
 
 /*
