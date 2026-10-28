@@ -99,6 +99,20 @@ the rows below; device checks are the owner's.
 | D3 | Upgrade on a device | Install 1.4.0 over 1.3.0: the Coach's conversation is the first chat in Chats; Home shows the Sugar line | **Open: the owner's phone** | — |
 | D4 | Chats on a device | New chat, ask, switch to another chat while it answers, come back; rename; delete; the keyboard stays below the composer | **Open: the owner's phone** | — |
 
+## 1.5.0 (2026-10-28): smart notifications, the notification panel, the Coach's own notifications
+
+P17 (`docs/plan/phases/P17-smart-notifications.md`, D-16.100–D-16.103) and the answer-limit fix (D-16.104).
+`CHANGELOG.md` describes 1.5.0. Results of the release loop and the APK are in the rows below; device checks are the
+owner's.
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| E1 | Release loop | `scripts/ci-local.sh` on the 1.5.0 stack | see the 1.5.0 release commit's message | 2026-10-28, lead's loop |
+| E2 | 1.5.0 APK | `PLATEWISE_BUILD_NUMBER=6 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| E3 | Haiku 5.5 analysis | With Claude Haiku 5.5, a photo of a full plate: no "cut off twice"; Settings › AI shows 8192 after the update | **Open: the owner's phone** | — |
+| E4 | Nudges and notices | Home's card asks for notifications; skip lunch past the usual time (meal check); pass the sugar limit (notice); the bell and the panel; quiet hours | **Open: the owner's phone** | — |
+| E5 | The Coach's notifications | Ask the Coach for a reminder (Reminder set, Undo); ask for a check-in tomorrow (notification opens the chat); leave the app while the Coach replies (The Coach replied) | **Open: the owner's phone** | — |
+
 ## Release files
 
 | File | State |

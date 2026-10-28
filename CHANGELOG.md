@@ -3,7 +3,10 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.5.0)
+## 1.5.0 (2026-10-28)
+
+Platewise 1.5 nudges you when it helps, keeps what it sent in a notification panel, lets the Coach set reminders and
+check-ins itself, and no longer cuts thinking models off.
 
 ### Fixes
 
