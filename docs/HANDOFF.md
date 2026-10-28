@@ -164,6 +164,10 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**P16 (the user asked 19:00 IST): sugar on Home and several Coach chats → 1.4.0.** Plan
+`docs/plan/phases/P16-sugar-and-coach-chats.md` (D-16.98 sugar line, D-16.99 chats). Wave 22 builders at e56d804: S1
+sugar (`/root/wt/wt-p16s1`), S2 chats (`/root/wt/wt-p16s2`); prompts `docs/handoff/wave22/`. Ledgers at landing:
+inventory F14 (sugar) and I14 (chats), ACC rows, D-16.98/99, CHANGELOG 1.4.0 (written by the lead).
 **1.3.0 RELEASED (2026-10-28):** c21acf2 P15-01 native (WalkTracker plugin and service, Health Connect writeWalk and
 readHeartRate, the Drive authorize plugin with Play services auth 22.0.0 under a reasoned licence exception), 8e43f4f
 P15-04 Google Drive backup (inventory M16 now P1 on Android, ACC-M16-1..5; keep 7 per install, never another phone's),

@@ -1,0 +1,20 @@
+Read /root/wt/builder-rules.md first and follow it.
+
+Your worktree: /root/wt/wt-p16s1 (detached at <BASE>, dependencies installed). Work only there.
+
+Task: P16 S1 (P16-01), sugar on Home. Spec: docs/plan/phases/P16-sugar-and-coach-chats.md (Goal, D-16.98). Read first: Home (src/features/home/**: HomePage, DaySummary, PillarRow, dayNutrients.ts, DayNutrientsSheet), the nutrient model and goals (src/domain/model.ts NUTRIENT_KEYS, src/domain/nutrients/** goalDefaults (sugar is a 50 g limit), pillars.ts), settings (src/data/settingsSchema.ts), the Coach's fresh context (src/services/coach/context.ts and its test, I6), i18n (src/i18n/en/home.ts), the orange design tokens (src/ui/tokens.css), how missing nutrient figures are treated today (an entry without a sugar figure must never count as 0 g).
+Task notes (before the code): docs/notes/P16/sugar-on-home.md.
+
+Do:
+1. Pure sums (tested): for a day's entries, the sugar total over the foods that have a sugar figure, how many foods have one out of how many foods, and the added-sugar total when any food has it.
+2. The Sugar line on Home, under the pillars, for the shown day: "Sugar", the grams against the Sugar limit from Nutrient goals ("32 g of 50 g") with a thin bar; past the limit "8 g over" in the warning colour (bar full, warning colour); with the limit off, the grams alone; "from 4 of 6 foods" when some foods lack a figure; "No sugar figures" when the day has foods but none has a figure; nothing at all on a day with no foods (or a quiet "0 g", your call, say which); "12 g added" when the day has added-sugar figures. A tap opens All nutrients. Hidden while Sugar is one of the chosen pillars. Accessible text that reads the whole state; data-ui hooks (home.sugar.*); tokens only; both themes.
+3. A "Sugar on Home" switch in the All nutrients sheet (setting `home.sugarLine`, default true; settings schema with a test).
+4. The Coach's fresh context: today's sugar and the limit, saying how many foods had a figure when not all did (tests in context.test.ts). Touch only those lines of src/services/coach/context.ts.
+5. Docs: the Home part of docs/user/getting-started.md (or wherever Home is described in docs/user) gets the Sugar line and the switch. Do not edit CHANGELOG.md: put two or three proposed CHANGELOG lines in your report.
+
+You own: src/features/home/** (the sugar line and its wiring), a new pure module for the sums (e.g. src/domain/nutrients/sugar.ts), src/data/settingsSchema.ts (the one setting), the sugar lines of src/services/coach/context.ts, src/i18n/en/home.ts lines, docs/user lines for Home, tests, the note.
+Do not touch: src/features/coach/**, src/services/coach/** except those context lines, src/data/schema.ts, src/services/backup/**, android/**, package.json, pnpm-lock.yaml, CHANGELOG.md, docs/** except the note and the user doc.
+
+Tests and checks: the files you touch with --maxWorkers=1; `pnpm test` once; lint, fmt:check, typecheck; `PLATEWISE_REF=/root/reference/fud-ai pnpm check --require-ref`; `pnpm build`; `pnpm check:bundle` (report the size); `pnpm e2e` once on PLATEWISE_E2E_PORT=4196 PLATEWISE_FAKE_AI_PORT=4346 (extend the Home e2e with the sugar line if cheap). Screenshots of Home with the sugar line (under, over, partial figures; light and dark) into /tmp/claude-0/-home-user-cal-2/82b7eac2-eae5-54f3-b6f6-4c688abdda05/scratchpad/p16-sugar-shots/ (locale en-IN, time zone Asia/Kolkata; scratchpad/p15-shots-in/shots.mts shows how to drive the app).
+
+Final report as the rules file says (tests, proposed acceptance rows under a new F14 feature "Sugar on Home against the sugar limit", proposed CHANGELOG lines, the screenshot paths). Leave everything uncommitted.
