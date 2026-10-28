@@ -1,8 +1,9 @@
 import { lookupMessage, type MessageAt, type MessageKey, type MessageTree } from './catalogue';
-import { en } from './en';
+import type { en } from './en';
 import { numberFormat, pluralRules } from './format';
 import { currentLocale } from './locale';
 import { parseMessage, renderMessage, type MessageParams, type ParsedMessage } from './message';
+import { appCatalogue, fetchMissed, pendingPartition } from './onDemand';
 
 export type { MessageParams } from './message';
 
@@ -27,11 +28,17 @@ export interface TranslatorOptions {
   readonly strict?: boolean;
   /** The locale numbers in messages follow (default: the browser locale). */
   readonly locale?: () => string;
+  /**
+   * For a key the catalogue does not have: the partition it belongs to when that partition is
+   * fetched on demand and not registered yet (P18-00), else `undefined`.
+   */
+  readonly pending?: (key: string) => string | undefined;
 }
 
 /**
- * A `t()` over any catalogue. Unknown key: throws when strict, else returns the key. Missing
- * param: throws when strict, else leaves `{name}` in the text.
+ * A `t()` over any catalogue. Unknown key: throws when strict, else returns the key. A key of a
+ * partition not registered yet: throws when strict, else draws nothing (never the raw key).
+ * Missing param: throws when strict, else leaves `{name}` in the text.
  */
 export function createTranslator<C extends MessageTree>(
   catalogue: C,
@@ -64,7 +71,17 @@ export function createTranslator<C extends MessageTree>(
 
   const translate = (key: string, params?: MessageParams): string => {
     const message = messageFor(key);
-    if (!message) return problem(`Unknown message key "${key}"`, key);
+    if (!message) {
+      const partition = options.pending?.(key);
+      if (partition !== undefined) {
+        return problem(
+          `Message "${key}" is in the partition "${partition}", which is not registered yet: ` +
+            'name it where its screen or service is fetched (withPartitions)',
+          '',
+        );
+      }
+      return problem(`Unknown message key "${key}"`, key);
+    }
     return renderMessage(message, {
       params,
       plural: pluralRules(CATALOGUE_LANGUAGE),
@@ -78,5 +95,15 @@ export function createTranslator<C extends MessageTree>(
 /** Any key of the app's catalogue, for props and tables that carry a key instead of text. */
 export type TKey = MessageKey<typeof en>;
 
-/** The app's text: `t('common.save')`, `t('area.key', { name })`. */
-export const t = createTranslator(en);
+/**
+ * The app's text: `t('common.save')`, `t('area.key', { name })`. It reads the partitions
+ * registered so far (onDemand.ts) but is typed over the whole catalogue, so every key compiles; a
+ * key of a partition not fetched yet is the case above, and also fetches that partition.
+ */
+export const t = createTranslator(appCatalogue.tree as typeof en, {
+  pending(key) {
+    const partition = pendingPartition(key);
+    if (partition !== undefined) fetchMissed(partition);
+    return partition;
+  },
+});

@@ -1,61 +1,13 @@
 import type { MessageTree } from '../catalogue';
 
 /**
- * Words of the reminders (src/services/reminders): the title and body of each notice the engine
- * hands to the notifier, as a system notification or an in-app banner. Energy amounts arrive as
- * whole numbers in the person's unit; `{goal}` of the fasting goal is a short length ("16h").
- * Also the banners' own words, the Notifications card of Settings › Tracking & reminders, the
- * Android app's notification channel, and the reminders the person writes (P13).
+ * Words of the reminders' settings and the Android app's notices: the Notifications card of
+ * Settings › Tracking & reminders, the reminders the person writes (P13), and the nudges, notices,
+ * Smart notifications, Home's card and the notification panel (P17). The reminders the engine
+ * shows, the banners and the channel are `reminderTexts`, in the start-up download.
  */
 export const reminders = {
   reminders: {
-    breakfast: {
-      title: 'Breakfast',
-      body: 'Time to log your breakfast.',
-    },
-    lunch: {
-      title: 'Lunch',
-      body: 'Time to log your lunch.',
-    },
-    dinner: {
-      title: 'Dinner',
-      body: 'Time to log your dinner.',
-    },
-    summary: {
-      title: 'Your day so far',
-      kcal: 'Eaten {eaten} of {goal} kcal, {left} left.',
-      kJ: 'Eaten {eaten} of {goal} kJ, {left} left.',
-      noGoalKcal: 'Eaten {eaten} kcal today.',
-      noGoalKJ: 'Eaten {eaten} kJ today.',
-      unread: 'Open Platewise to see how today adds up.',
-    },
-    water: {
-      title: 'Water',
-      body: 'A good moment for a glass of water. Add it once you have had it.',
-    },
-    fastGoal: {
-      title: 'Fasting goal met',
-      body: '{goal} done. Your fast keeps running until you end it.',
-    },
-    // A reminder the person wrote (P13, D-16.93): `{text}` is their own words.
-    custom: {
-      title: 'Reminder',
-      body: '{text}',
-    },
-    // The Android app's notification channel, as Android's settings list it (P13, D-16.92).
-    channel: {
-      name: 'Reminders',
-      description: 'Meal, water, summary and fasting reminders, and the ones you write.',
-    },
-    // The notifier (P09-09): the goal-weight alert and the banners in the app.
-    goalReached: {
-      title: 'Goal weight reached',
-      body: 'Your latest weigh-in reached your goal weight. Well done!',
-    },
-    banner: {
-      missed: 'Due at {time}, while Platewise was closed.',
-      dismiss: 'Dismiss',
-    },
     // The Notifications card of Settings › Tracking & reminders (P09-09).
     settings: {
       heading: 'Notifications',

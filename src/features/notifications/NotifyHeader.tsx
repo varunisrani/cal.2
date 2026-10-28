@@ -1,10 +1,13 @@
 import { Suspense, type ReactNode } from 'react';
 import { onDemand } from '../../app/onDemand';
+import { withPartitions } from '../../i18n/onDemand';
 import { useOptionalServices } from '../../services/context';
 
 // Only the Android app has these; fetched the first time Home is drawn there.
 const HomeNotifyParts = onDemand(() =>
-  import('./HomeNotifyParts').then((module) => module.HomeNotifyParts),
+  withPartitions(['reminders'], import('./HomeNotifyParts')).then(
+    (module) => module.HomeNotifyParts,
+  ),
 );
 
 /**

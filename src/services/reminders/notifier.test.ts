@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBus } from '../../data/bus';
 import { defaultSettings } from '../../data/settingsSchema';
-import { reminders } from '../../i18n/en/reminders';
+import { reminderTexts } from '../../i18n/en/reminderTexts';
 import { systemClock } from '../../lib/clock';
 import { fakeNotifications } from '../../test/notifications';
 import {
@@ -24,7 +24,7 @@ import {
   type WorkerRegistrationLike,
 } from './notifier';
 
-const words = reminders.reminders;
+const words = reminderTexts.reminders;
 
 /** Lets the promise chains started meanwhile run to their end (no timer is involved). */
 async function drain(): Promise<void> {

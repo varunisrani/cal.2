@@ -1,7 +1,7 @@
 import { Suspense, useLayoutEffect, useSyncExternalStore } from 'react';
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
-import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
 import { StorageNudge } from '../features/settings/data/StorageNudge';
+import { withPartitions } from '../i18n/onDemand';
 import { systemClock, type Clock } from '../lib/clock';
 import type { AnalysisService } from '../services/analysis';
 import type { TuneUpRunner } from '../services/goals/tuneUp';
@@ -18,6 +18,7 @@ import { ShellPortsContext, type ShellPorts } from './ports';
 import { HOME_ROUTE, type Router } from './router';
 import { Screen } from './Screen';
 import styles from './shell.module.css';
+import { Skeleton } from './Skeleton';
 import { TabBar } from './TabBar';
 import { ThemeProvider } from './ThemeProvider';
 import { TodayProvider } from './TodayProvider';
@@ -36,12 +37,23 @@ export interface AppProps {
   readonly onReload?: () => void;
 }
 
+// Onboarding runs once, on the first start: fetched then, with its words (P18-00).
+const OnboardingRoute = onDemand(() =>
+  withPartitions(
+    ['onboarding', 'aiSetup', 'about'],
+    import('../features/onboarding/OnboardingRoute'),
+  ).then((module) => module.OnboardingRoute),
+);
+
 // Fetched the first time an analysis starts or a draft waits for review.
 const AnalysisOverlay = onDemand(() =>
   import('../features/log/AnalysisOverlay').then((module) => module.AnalysisOverlay),
 );
 const AnalysisReview = onDemand(() =>
-  import('../features/log/review/ReviewSheet').then((module) => module.AnalysisReview),
+  withPartitions(
+    ['review', 'editor', 'ingredients', 'fitCheck'],
+    import('../features/log/review/ReviewSheet'),
+  ).then((module) => module.AnalysisReview),
 );
 
 /**
@@ -63,7 +75,9 @@ function AnalysisLayers({ analysis }: { readonly analysis: AnalysisService }) {
 
 // The walk recorder (P15): only the Android app has it; fetched the first time it opens.
 const WalkScreen = onDemand(() =>
-  import('../features/walk/WalkScreen').then((module) => module.WalkScreen),
+  withPartitions(['walk', 'health'], import('../features/walk/WalkScreen')).then(
+    (module) => module.WalkScreen,
+  ),
 );
 
 /** `#/walk` where nothing records walks (the web): Home instead, and nothing is fetched. */
@@ -93,7 +107,13 @@ function Shell() {
   const services = useOptionalServices();
   const keyboard = useKeyboardOpen();
   const tuneUp = services?.tuneUp;
-  if (route.kind === 'onboarding') return <OnboardingRoute />;
+  if (route.kind === 'onboarding') {
+    return (
+      <Suspense fallback={<Skeleton page data-ui="shell.screenLoading" />}>
+        <OnboardingRoute />
+      </Suspense>
+    );
+  }
   return (
     <div className={styles.shell} data-keyboard={keyboard ? 'open' : undefined}>
       <main className={styles.content} data-ui="shell.content">

@@ -5,6 +5,7 @@
 
 import { registerPlugin } from '@capacitor/core';
 import type { LocalNotificationsPlugin } from '@capacitor/local-notifications';
+import { withPartitions } from '../../i18n/onDemand';
 import type { NotifyBase, NotifyParts } from '../notifications/setup';
 import {
   createNativeReminders,
@@ -46,7 +47,7 @@ export async function setUpNativeReminders(
 ): Promise<NativeParts> {
   const { notify, ...deps } = base;
   if (!notify) return createNativeReminders({ ...deps, plugin });
-  const { wireNotify } = await import('../notifications/setup');
+  const { wireNotify } = await withPartitions(['reminders'], import('../notifications/setup'));
   const wiring = wireNotify({
     base: notify,
     plugin,

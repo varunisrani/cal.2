@@ -5,6 +5,7 @@ import { useRouter, useSheet } from '../../app/useRoute';
 import { useSettings } from '../../data/hooks';
 import type { Settings } from '../../data/settingsSchema';
 import type { CoachReminderCard } from '../../domain/model';
+import { withPartitions } from '../../i18n/onDemand';
 import { t, type TKey } from '../../i18n/t';
 import type { CoachSession } from '../../services/coach/session';
 import type { ReminderCardProblem } from '../../services/coach/reminderCards';
@@ -20,7 +21,9 @@ const SETTINGS = ['remind.master', 'remind.custom', 'display.weekStart'] as cons
 
 // The reminder's own editor, as Settings › Tracking & reminders has it: fetched on Edit (P17).
 const ReminderSheet = onDemand(() =>
-  import('../settings/tracking/CustomReminders').then((module) => module.ReminderSheet),
+  withPartitions(['reminders'], import('../settings/tracking/CustomReminders')).then(
+    (module) => module.ReminderSheet,
+  ),
 );
 
 /** Settings › Tracking & reminders, where "Your reminders" lists what Add added. */

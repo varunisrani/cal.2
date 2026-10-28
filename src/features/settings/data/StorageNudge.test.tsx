@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { routeHash } from '../../../app/router';
 import { createStorageAccess } from '../../../data/storage';
-import { data as words } from '../../../i18n/en/data';
+import { storageNudge as words } from '../../../i18n/en/storageNudge';
 import { ServicesProvider, type Services } from '../../../services/context';
 import { createStorageNudge, localNudgeMemory } from '../../../services/storageNudge';
 import { FACTORY_NOW } from '../../../test/factories';

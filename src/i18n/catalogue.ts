@@ -4,7 +4,8 @@
  * A catalogue is a tree: inner nodes group messages, leaves are message texts. A key is the
  * dotted path to a leaf (`common.tabs.home`). A partition is a tree rooted at its area namespace
  * (`{ common: { … } }`), so one area can be spread over several partition files; `en.ts`
- * merges them.
+ * merges them all for the tools, and the app's `t()` reads a live catalogue of the partitions
+ * registered so far (onDemand.ts).
  */
 
 export interface MessageTree {
@@ -47,6 +48,32 @@ export function mergePartitions<P extends Readonly<Record<string, MessageTree>>>
   const merged: Group = {};
   for (const tree of Object.values(partitions)) mergeInto(merged, tree);
   return merged as MergedPartitions<P>;
+}
+
+/**
+ * A catalogue that grows while the app runs (P18-00): it starts from the partitions of the
+ * start-up download and takes in each partition fetched on demand as it arrives. `tree` is one
+ * object for the catalogue's whole life, so a translator made over it sees every later partition.
+ */
+export interface LiveCatalogue {
+  readonly tree: MessageTree;
+  /** Merges a partition in, once: a name already registered is left as it is. */
+  register(name: string, partition: MessageTree): void;
+  has(name: string): boolean;
+}
+
+export function createLiveCatalogue(
+  partitions: Readonly<Record<string, MessageTree>>,
+): LiveCatalogue {
+  const tree: Group = {};
+  const names = new Set<string>();
+  const register = (name: string, partition: MessageTree): void => {
+    if (names.has(name)) return;
+    names.add(name);
+    mergeInto(tree, partition);
+  };
+  for (const [name, partition] of Object.entries(partitions)) register(name, partition);
+  return { tree, register, has: (name) => names.has(name) };
 }
 
 /** The message text at a dotted key, or `undefined` when the key does not name a message. */

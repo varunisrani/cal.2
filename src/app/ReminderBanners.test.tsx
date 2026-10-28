@@ -2,7 +2,7 @@ import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it } from 'vitest';
 import { formatTime } from '../i18n/format';
-import { reminders } from '../i18n/en/reminders';
+import { reminderTexts } from '../i18n/en/reminderTexts';
 import { ServicesProvider } from '../services/context';
 import type { ReminderNotice } from '../services/reminders/engine';
 import { createNotifier } from '../services/reminders/notifier';
@@ -12,7 +12,7 @@ import { ReminderBanners } from './ReminderBanners';
 
 afterEach(closeHarnesses);
 
-const words = reminders.reminders;
+const words = reminderTexts.reminders;
 
 /** The banners on show (the harness's toast region is a status too). */
 const banners = (): HTMLElement[] =>

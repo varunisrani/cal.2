@@ -8,6 +8,7 @@ import type { Targets } from '../../domain/model';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import type { PhotoRepo } from '../../data/repos/photoRepo';
 import type { TransferRepo } from '../../data/repos/transferRepo';
+import { withPartitions } from '../../i18n/onDemand';
 import { newId as randomId, type IdSource } from '../../lib/ids';
 import type {
   DiaryFile,
@@ -64,7 +65,7 @@ export function createTransferService(deps: TransferDeps): TransferService {
     async exportDiary(request) {
       const [{ buildDocument, resolveRange }, { diaryFile }] = await Promise.all([
         import('./exportDiary'),
-        import('./exportFormats'),
+        withPartitions(['transfer', 'review'], import('./exportFormats')),
       ]);
       const firstDay = request.range.kind === 'all' ? await transferRepo.firstDay() : null;
       const range = resolveRange(request.range, request.today, request.weekStart, firstDay);

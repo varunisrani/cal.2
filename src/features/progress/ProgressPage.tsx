@@ -19,6 +19,7 @@ import {
 } from '../../domain/progress/ranges';
 import { latestWeighIn } from '../../domain/trackers/goalCrossing';
 import { formatPeriod } from '../../i18n/format';
+import { withPartitions } from '../../i18n/onDemand';
 import { t } from '../../i18n/t';
 import { useServices } from '../../services/context';
 import { Card } from '../../ui/Card';
@@ -46,11 +47,17 @@ const SETTINGS = ['units.weight', 'progress.countToday', 'health.connected'] as 
 
 // Health Connect's card (P11-04) exists only in the Android app; fetched when it is first drawn.
 const ActivityHistoryCard = onDemand(() =>
-  import('./ActivityHistoryCard').then((module) => module.ActivityHistoryCard),
+  withPartitions(['charts', 'health'], import('./ActivityHistoryCard')).then(
+    (module) => module.ActivityHistoryCard,
+  ),
 );
 
 // Progress › Walks (P15-03) exists only where the app records walks; fetched when first drawn.
-const WalksCard = onDemand(() => import('../walk/WalksCard').then((module) => module.WalksCard));
+const WalksCard = onDemand(() =>
+  withPartitions(['walk', 'health'], import('../walk/WalksCard')).then(
+    (module) => module.WalksCard,
+  ),
+);
 
 const NO_WEIGH_INS: readonly WeighIn[] = [];
 const NO_BODY_FAT: readonly BodyFatReading[] = [];

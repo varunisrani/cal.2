@@ -2,9 +2,9 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of Health Connect on the Android app (P11-04): Settings › Health Connect
- * (src/features/settings/health), Home's activity card and budget line (src/features/home) and
- * Progress's activity card (src/features/progress). Energy amounts come in already written with
- * their unit (`home.energy`); the web app never shows any of these.
+ * (src/features/settings/health), Home's activity card (src/features/home) and Progress's
+ * activity card (src/features/progress); Home's budget line is `healthBudget`. Energy amounts come
+ * in already written with their unit (`home.energy`); the web app never shows any of these.
  */
 export const health = {
   health: {
@@ -90,7 +90,6 @@ export const health = {
       workout: '{name}, {length}',
       workoutEnergy: '{name}, {length}, {amount}',
       empty: 'No Health Connect data for this day.',
-      budget: '{goal} goal + {burned} burned',
       type: {
         running: 'Running',
         walking: 'Walking',

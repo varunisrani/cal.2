@@ -11,6 +11,7 @@ import { about } from '../../i18n/en/about';
 import { onboarding } from '../../i18n/en/onboarding';
 import { settings } from '../../i18n/en/settings';
 import { makeProfile } from '../../test/factories';
+import { registerEveryPartition } from '../../test/partitions';
 import { SETTINGS_CATEGORIES } from '../settings/registry';
 import { SettingsScreen } from '../settings/SettingsScreen';
 import { katchFigures, mifflinFigures } from './methodsFigures';
@@ -25,9 +26,11 @@ function part(ui: string): HTMLElement {
   return found;
 }
 
-afterEach(() => {
+afterEach(async () => {
   vi.doUnmock('../../domain/goals/formulas');
   vi.resetModules();
+  // A page fetched after the reset gets fresh i18n modules (P18-00).
+  await registerEveryPartition();
 });
 
 describe('MethodsPage', () => {
@@ -60,6 +63,7 @@ describe('MethodsPage', () => {
         },
       };
     });
+    await registerEveryPartition();
     const { MethodsPage: Changed } = await import('./MethodsPage');
     render(<Changed />);
 

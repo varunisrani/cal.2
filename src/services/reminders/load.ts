@@ -3,6 +3,7 @@
 // core: they sit behind the one dynamic import below, in chunks only the Android app asks for. The
 // web keeps the reminder engine and the browser's notifications.
 
+import { withPartitions } from '../../i18n/onDemand';
 import { isHealthAvailable } from '../health/platform';
 import type { NativeParts, NativeRemindersBase } from './native';
 
@@ -14,7 +15,7 @@ export type NativeRemindersModule = () => Promise<{
   setUpNativeReminders(base: NativeRemindersBase): NativeParts | Promise<NativeParts>;
 }>;
 
-const APP_SETUP: NativeRemindersModule = () => import('./native');
+const APP_SETUP: NativeRemindersModule = () => withPartitions(['reminders'], import('./native'));
 
 /**
  * The Android app's notifications, with the permission read once so the first screen shows it

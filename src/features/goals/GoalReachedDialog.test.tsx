@@ -15,14 +15,14 @@ import { createSavedMealsRepo } from '../../data/repos/savedMealsRepo';
 import { createSettingsRepo } from '../../data/repos/settingsRepo';
 import { createWaterRepo } from '../../data/repos/waterRepo';
 import { createWeightRepo } from '../../data/repos/weightRepo';
-import { goals } from '../../i18n/en/goals';
+import { goalReached } from '../../i18n/en/goalReached';
 import { fixedClock } from '../../lib/clock';
 import { openTestDb } from '../../test/db';
 import { FACTORY_NOW, makeProfile } from '../../test/factories';
 import { until, untilShown } from '../../test/screenHarness';
 import { GoalReachedDialog } from './GoalReachedDialog';
 
-const words = goals.goals.reached;
+const words = goalReached.goals.reached;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const closers: Array<() => Promise<void>> = [];

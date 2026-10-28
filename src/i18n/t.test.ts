@@ -79,6 +79,32 @@ describe('t', () => {
   });
 });
 
+describe('t and partitions fetched on demand (P18-00)', () => {
+  // `later` stands for an on-demand partition that is not registered yet.
+  const pending = (key: string) => (key.startsWith('later.') ? 'later' : undefined);
+  const strictPending = createTranslator(fixture, { strict: true, pending }) as unknown as Loose;
+  const productionPending = createTranslator(fixture, {
+    strict: false,
+    pending,
+  }) as unknown as Loose;
+
+  it('throws for a key of a partition not registered yet when strict, naming the partition', () => {
+    expect(() => strictPending('later.title')).toThrow(
+      'Message "later.title" is in the partition "later", which is not registered yet',
+    );
+  });
+
+  it('draws nothing for it in production, never the raw key', () => {
+    expect(productionPending('later.title')).toBe('');
+  });
+
+  it('keeps the unknown-key behaviour for a key of no partition, and reads registered ones', () => {
+    expect(() => strictPending('greet.nope')).toThrow('Unknown message key "greet.nope"');
+    expect(productionPending('greet.nope')).toBe('greet.nope');
+    expect(productionPending('greet.plain')).toBe('Nothing to fill');
+  });
+});
+
 describe('t interpolation', () => {
   it('replaces {name} with the param', () => {
     expect(strict('greet.hello', { name: 'Sam' })).toBe('Hello, Sam!');

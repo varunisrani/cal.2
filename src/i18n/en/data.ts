@@ -2,9 +2,9 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of Settings › Your data (src/features/settings/data, P09-15): the page's own cards, the
- * Storage card, Clear diary and Erase everything with their questions, and the two storage nudges
- * Home shows. The Backup card and the diary-file sheets keep their own words (`backup`,
- * `transfer`).
+ * Storage card, Clear diary and Erase everything with their questions. The two storage nudges
+ * Home shows (`storageNudge`), the Backup card and the diary-file sheets keep their own words
+ * (`backup`, `transfer`).
  */
 export const data = {
   data: {
@@ -59,23 +59,6 @@ export const data = {
       blocked: 'Platewise is open in another tab. Close it there to finish erasing.',
       failed: 'Not everything could be erased. Reload Platewise and try again.',
       reload: 'Reload',
-    },
-    nudge: {
-      keepSafe: {
-        title: 'Keep your diary safe',
-        install:
-          'Your diary is stored only in this browser, which may clear it. Install Platewise and make a backup now and then.',
-        backUp:
-          'This browser may clear Platewise’s data when space runs low. Make a backup now and then to keep your diary safe.',
-      },
-      backupDue: {
-        title: 'Time for a backup',
-        last: 'Your last backup was {days, plural, one {# day} other {# days}} ago.',
-        never:
-          'You haven’t made a backup yet. A backup file keeps your diary if this browser clears it.',
-      },
-      open: 'Back up',
-      later: 'Not now',
     },
   },
 } as const satisfies MessageTree;

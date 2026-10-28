@@ -5,6 +5,7 @@ import { useToday } from '../../app/TodayProvider';
 import type { DayKey } from '../../domain/dates/dayKey';
 import { defaultUnits } from '../../domain/units/defaults';
 import { currentLocale } from '../../i18n/locale';
+import { withPartitions } from '../../i18n/onDemand';
 import { t } from '../../i18n/t';
 import { useServices } from '../../services/context';
 import type { OnboardingAnswers } from '../../services/onboarding';
@@ -30,12 +31,16 @@ const LATE_STEPS: LateSteps = {
 
 // Fetched when a backup file is picked on Welcome (P09-14), with the restore sheet it opens.
 const RestoreFromFile = onDemand(() =>
-  import('./RestoreFromFile').then((module) => module.RestoreFromFile),
+  withPartitions(['backup', 'onboarding'], import('./RestoreFromFile')).then(
+    (module) => module.RestoreFromFile,
+  ),
 );
 
 // Fetched when Welcome's "Restore from Google Drive" is pressed (P15-04, the Android app only).
 const RestoreFromDrive = onDemand(() =>
-  import('./RestoreFromDrive').then((module) => module.RestoreFromDrive),
+  withPartitions(['backup', 'data', 'onboarding'], import('./RestoreFromDrive')).then(
+    (module) => module.RestoreFromDrive,
+  ),
 );
 
 /** A backup file picked on Welcome; each pick (Try again too) starts a restore of its own. */

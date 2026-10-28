@@ -5,7 +5,7 @@ import { createBus } from '../data/bus';
 import { DataProvider, type DataSources } from '../data/DataProvider';
 import { capture } from '../i18n/en/capture';
 import { common } from '../i18n/en/common';
-import { goals } from '../i18n/en/goals';
+import { goalReached } from '../i18n/en/goalReached';
 import { onboarding } from '../i18n/en/onboarding';
 import { review } from '../i18n/en/review';
 import { shell } from '../i18n/en/shell';
@@ -70,6 +70,7 @@ beforeAll(async () => {
     import('../features/log/AnalysisOverlay'),
     import('../features/log/review/ReviewSheet'),
     import('../features/walk/WalkScreen'),
+    import('../features/onboarding/OnboardingRoute'),
   ]);
 });
 
@@ -88,11 +89,12 @@ function renderApp(ports: ShellPorts, initialHash = '', withServices: Services =
 }
 
 describe('App', () => {
-  it("boots to onboarding with the temporary source and opens the wizard's Welcome", () => {
+  it("boots to onboarding with the temporary source and opens the wizard's Welcome", async () => {
     const { host } = renderApp(temporaryPorts());
     const { headlineTop, headlineBottom, start } = onboarding.onboarding.welcome;
+    // Onboarding is fetched on the first start, with its words (P18-00).
     expect(
-      screen.getByRole('heading', { level: 1, name: `${headlineTop} ${headlineBottom}` }),
+      await screen.findByRole('heading', { level: 1, name: `${headlineTop} ${headlineBottom}` }),
     ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: start })).toHaveAttribute('data-ui', 'wizard.start');
     expect(document.querySelector('[data-ui="screen.onboarding"]')).toHaveAttribute(
@@ -103,9 +105,10 @@ describe('App', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
-  it('shows only text from the catalogue', () => {
+  it('shows only text from the catalogue', async () => {
     const { container } = renderApp(temporaryPorts());
     const welcome = onboarding.onboarding.welcome;
+    await screen.findByRole('button', { name: welcome.start });
     const tour = Object.values(welcome.tour).join('');
     expect(container.textContent).toBe(
       `${welcome.headlineTop} ${welcome.headlineBottom}${welcome.lead}${tour}` +
@@ -172,7 +175,7 @@ describe('App', () => {
       bus.post({ type: 'goal-reached', kg: 79.4 });
       bus.post({ type: 'goal-reached', kg: 79.4 });
     });
-    const dialog = screen.getByRole('alertdialog', { name: goals.goals.reached.title });
+    const dialog = screen.getByRole('alertdialog', { name: goalReached.goals.reached.title });
     expect(dialog).toBeVisible();
     expect(screen.getAllByRole('alertdialog')).toHaveLength(1);
     // The tab screen stays underneath (it is fetched on first open).

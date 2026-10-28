@@ -9,6 +9,7 @@ import type { ComponentType } from 'react';
 import { onDemand } from '../../app/onDemand';
 import { tabRoute, type TabRoute } from '../../app/router';
 import { LINKS } from '../../config/links';
+import { withPartitions } from '../../i18n/onDemand';
 import { isHealthAvailable } from '../../services/health/platform';
 import type { IconName } from '../../ui/icons';
 import type { TxKey } from '../home/text';
@@ -86,7 +87,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'profile.title',
     icon: 'heart',
     group: 'prefs',
-    page: onDemand(() => import('./profile/ProfilePage').then((module) => module.ProfilePage)),
+    page: onDemand(() =>
+      withPartitions(['profile', 'onboarding'], import('./profile/ProfilePage')).then(
+        (module) => module.ProfilePage,
+      ),
+    ),
   },
   // Targets and locks, the rebuild, the weekly tune-up, nutrient goals and alerts (P05-11).
   {
@@ -94,7 +99,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'goals.page.title',
     icon: 'chart',
     group: 'prefs',
-    page: onDemand(() => import('./goals/GoalsPage').then((module) => module.GoalsPage)),
+    page: onDemand(() =>
+      withPartitions(['goals', 'about'], import('./goals/GoalsPage')).then(
+        (module) => module.GoalsPage,
+      ),
+    ),
   },
   // Water and fasting tracking (P07-06, P07-07); meal times and reminders join in P09.
   {
@@ -102,7 +111,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'trackers.page.title',
     icon: 'clock',
     group: 'prefs',
-    page: onDemand(() => import('./tracking/TrackingPage').then((module) => module.TrackingPage)),
+    page: onDemand(() =>
+      withPartitions(['reminders'], import('./tracking/TrackingPage')).then(
+        (module) => module.TrackingPage,
+      ),
+    ),
   },
   // Health Connect: connection, data allowed, counting, import and write-back, sync (P11-04).
   // Only the Android app offers it (D-16.89).
@@ -112,7 +125,9 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     icon: 'heart',
     group: 'prefs',
     offered: isHealthAvailable,
-    page: onDemand(() => import('./health/HealthPage').then((module) => module.HealthPage)),
+    page: onDemand(() =>
+      withPartitions(['health'], import('./health/HealthPage')).then((module) => module.HealthPage),
+    ),
   },
   // The AI providers and standbys, the request limits, notes and the food-database key (P09-07).
   {
@@ -120,7 +135,9 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'aiSetup.page.title',
     icon: 'chat',
     group: 'prefs',
-    page: onDemand(() => import('./ai/AiPage').then((module) => module.AiPage)),
+    page: onDemand(() =>
+      withPartitions(['aiSetup'], import('./ai/AiPage')).then((module) => module.AiPage),
+    ),
   },
   // Look, grams first, week start and units, with links to the pages below it (P09-02).
   {
@@ -128,7 +145,13 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'appSettings.title',
     icon: 'gear',
     group: 'prefs',
-    page: onDemand(() => import('./app/AppPage').then((module) => module.AppPage)),
+    page: onDemand(() =>
+      // It links to the other pages through the registry, so it needs their titles too.
+      withPartitions(
+        ['settings', 'profile', 'goals', 'health', 'aiSetup', 'data', 'about'],
+        import('./app/AppPage'),
+      ).then((module) => module.AppPage),
+    ),
   },
   // Opened from App settings: the groups and methods of the + menu (P09-05).
   {
@@ -137,7 +160,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     icon: 'plus',
     group: 'prefs',
     parent: 'app',
-    page: onDemand(() => import('./app/MenuEditorPage').then((module) => module.MenuEditorPage)),
+    page: onDemand(() =>
+      withPartitions(['settings'], import('./app/MenuEditorPage')).then(
+        (module) => module.MenuEditorPage,
+      ),
+    ),
   },
   // Opened from App settings: what the product block of a review shows (P09-06).
   {
@@ -147,7 +174,9 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     group: 'prefs',
     parent: 'app',
     page: onDemand(() =>
-      import('./app/ProductFieldsPage').then((module) => module.ProductFieldsPage),
+      withPartitions(['review'], import('./app/ProductFieldsPage')).then(
+        (module) => module.ProductFieldsPage,
+      ),
     ),
   },
   // Opened from App settings: hide Progress or Coach (P09-04).
@@ -165,7 +194,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'data.page.title',
     icon: 'lock',
     group: 'prefs',
-    page: onDemand(() => import('./data/DataPage').then((module) => module.DataPage)),
+    page: onDemand(() =>
+      withPartitions(['data', 'backup', 'transfer'], import('./data/DataPage')).then(
+        (module) => module.DataPage,
+      ),
+    ),
   },
   // The mark, version, update status, sharing, help links and the pages below (P09-16).
   {
@@ -173,7 +206,13 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'about.page.title',
     icon: 'info',
     group: 'info',
-    page: onDemand(() => import('../about/AboutPage').then((module) => module.AboutPage)),
+    page: onDemand(() =>
+      // It links to the other pages through the registry, so it needs their titles too.
+      withPartitions(
+        ['about', 'settings', 'profile', 'goals', 'health', 'aiSetup', 'data'],
+        import('../about/AboutPage'),
+      ).then((module) => module.AboutPage),
+    ),
     // It shows no stored setting, so it opens without waiting for them.
     waitForSettings: false,
   },
@@ -183,7 +222,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     titleKey: 'about.credits.title',
     icon: 'text',
     group: 'info',
-    page: onDemand(() => import('../about/CreditsPage').then((module) => module.CreditsPage)),
+    page: onDemand(() =>
+      withPartitions(['about'], import('../about/CreditsPage')).then(
+        (module) => module.CreditsPage,
+      ),
+    ),
     parent: 'about',
     waitForSettings: false,
   },
@@ -195,7 +238,11 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     icon: 'info',
     group: 'info',
     waitForSettings: false,
-    page: onDemand(() => import('../about/MethodsPage').then((module) => module.MethodsPage)),
+    page: onDemand(() =>
+      withPartitions(['about', 'onboarding'], import('../about/MethodsPage')).then(
+        (module) => module.MethodsPage,
+      ),
+    ),
   },
 ]);
 

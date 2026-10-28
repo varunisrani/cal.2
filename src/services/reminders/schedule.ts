@@ -24,6 +24,7 @@ import { clampFastGoal, formatFast, goalAt, isActive } from '../../domain/tracke
 import { toDisplay, type EnergyDisplayUnit } from '../../domain/units/energy';
 import type { MessageKey } from '../../i18n/catalogue';
 import type { reminders } from '../../i18n/en/reminders';
+import type { reminderTexts } from '../../i18n/en/reminderTexts';
 import type { MessageParams } from '../../i18n/message';
 
 /** The reminders at a time of day, in the order Settings lists them (D-16.41). */
@@ -299,8 +300,8 @@ export function planCustom(
 
 // ---- What a notice says -------------------------------------------------------------------------
 
-/** A key of the reminders' catalogue partition (src/i18n/en/reminders.ts). */
-export type ReminderTextKey = MessageKey<typeof reminders>;
+/** A key of the reminders' catalogue partitions (src/i18n/en/reminderTexts.ts, reminders.ts). */
+export type ReminderTextKey = MessageKey<typeof reminderTexts & typeof reminders>;
 
 /** A notice's words as catalogue keys; the notifier renders them with `t()`. */
 export interface ReminderMessage {

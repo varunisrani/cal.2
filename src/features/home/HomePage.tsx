@@ -20,6 +20,7 @@ import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
 import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
 import type { DiaryEntry, Fast } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
+import { withPartitions } from '../../i18n/onDemand';
 import { useServices } from '../../services/context';
 import type { WalkPhase, WalkService } from '../../services/walks/service';
 import { Card } from '../../ui/Card';
@@ -78,18 +79,28 @@ const StartFastSheet = onDemand(() =>
   import('../fasting/StartFastSheet').then((module) => module.StartFastSheet),
 );
 const FastEditor = onDemand(() =>
-  import('../fasting/FastEditor').then((module) => module.FastEditor),
+  withPartitions(
+    ['editor', 'review', 'ingredients', 'fitCheck'],
+    import('../fasting/FastEditor'),
+  ).then((module) => module.FastEditor),
 );
 
 // The Health Connect card (P11-04) exists only in the Android app; fetched when it is first drawn.
-const ActivityCard = onDemand(() => import('./ActivityCard').then((module) => module.ActivityCard));
+const ActivityCard = onDemand(() =>
+  withPartitions(['health', 'walk'], import('./ActivityCard')).then(
+    (module) => module.ActivityCard,
+  ),
+);
 
 /** The entry editor a row's tap opens (P06-19). */
 export const EDITOR_SHEET = 'entry';
 
 // Fetched the first time a row is tapped.
 const EntryEditor = onDemand(() =>
-  import('../log/EntryEditor').then((module) => module.EntryEditor),
+  withPartitions(
+    ['editor', 'review', 'ingredients', 'fitCheck'],
+    import('../log/EntryEditor'),
+  ).then((module) => module.EntryEditor),
 );
 
 const NO_ENTRIES: readonly DiaryEntry[] = [];
