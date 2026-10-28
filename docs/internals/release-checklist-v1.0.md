@@ -107,8 +107,8 @@ owner's.
 
 | # | Gate | Command | Result | Date, where |
 |---|---|---|---|---|
-| E1 | Release loop | `scripts/ci-local.sh` on the 1.5.0 stack | see the 1.5.0 release commit's message | 2026-10-28, lead's loop |
-| E2 | 1.5.0 APK | `PLATEWISE_BUILD_NUMBER=6 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| E1 | Release loop | `scripts/ci-local.sh` on the stack that landed as 3da2487, 6ea3851, 83e51b2, 2667f03 | **ci=0**: unit **6 136 passed + 2 expected-fail in 440 files**; `check --require-ref --strict` 6/6; check:bundle **249.30 kB** of 250; e2e **52 passed + 1 skipped by design** | 2026-10-28, lead's loop |
+| E2 | 1.5.0 APK | `PLATEWISE_BUILD_NUMBER=6 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` on a tree with the same `src/`, `android/app/src` and `package.json` as 2667f03 | OK: **10 201 269 bytes**, sha256 `040fd8b0d2b1a17b28defaef0db4fce77abef025b641b10038e7f0e2e87921e8`; versionName **1.5.0**, versionCode **6**; 27 permissions, as 1.3.0; same debug key. Sent to the owner | 2026-10-28, lead |
 | E3 | Haiku 5.5 analysis | With Claude Haiku 5.5, a photo of a full plate: no "cut off twice"; Settings › AI shows 8192 after the update | **Open: the owner's phone** | — |
 | E4 | Nudges and notices | Home's card asks for notifications; skip lunch past the usual time (meal check); pass the sugar limit (notice); the bell and the panel; quiet hours | **Open: the owner's phone** | — |
 | E5 | The Coach's notifications | Ask the Coach for a reminder (Reminder set, Undo); ask for a check-in tomorrow (notification opens the chat); leave the app while the Coach replies (The Coach replied) | **Open: the owner's phone** | — |

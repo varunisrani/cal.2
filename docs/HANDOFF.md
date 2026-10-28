@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
 Updated: 2026-10-28 18:30 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 (42aefc8,
-automatic backup, the keyboard fix); 1.3.0 (9330c0c, walks and the walk score, Google Drive backup); 1.4.0 released at 5fbabb3 (sugar on Home, several Coach chats). 1.1.0 holds:
+automatic backup, the keyboard fix); 1.3.0 (9330c0c, walks and the walk score, Google Drive backup); 1.4.0 (5fbabb3, sugar on Home, several Coach chats); 1.5.0 released at 2667f03 (smart notifications, the panel, the Coach's own notifications, the answer-limit fix). 1.1.0 holds:
 the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
 reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
@@ -168,8 +168,8 @@ answers 429 here) and sent to the user with the web build as a zip. No emulator 
 Plan `docs/plan/phases/P18-sources-streaming-spending.md` (P18-00 catalogue on demand for the bundle budget; D-16.105..108).
 Wave 24 builders at 83e51b2: S0 catalogue (`/root/wt/wt-p18s0`), S1 sources (`wt-p18s1`), S2 streaming (`wt-p18s2`),
 S3 prices and spending (`wt-p18s3`); prompts `docs/handoff/wave24/`. Land S0 first (bundle 249.30 kB of 250).
-**1.5.0:** P17 S2 landed at 83e51b2, the limit fix (D-16.104) at 6ea3851; APK 1.5.0 (build 6) sent; the release commit's
-loop was running at handoff time.
+**1.5.0 RELEASED at 2667f03:** P17 S2 at 83e51b2, the limit fix (D-16.104) at 6ea3851; APK 1.5.0 (build 6) sent; E1/E2
+filled; device checks E3–E5 open.
 **Landed (2026-10-28 evening):** 7852a19 P16-01 sugar on Home; b9c4ec5 P16-02/03 several Coach chats (schema 4;
 `openWater` settle now time-bounded). **1.4.0 RELEASED at 5fbabb3** (APK build 5 sent; D1/D2 filled; device checks D3/D4 open). P17 S1 (nudges, notices, panel) LANDED at 3da2487 (bundle 248.80 kB of 250: Android-only catalogue partitions loaded
 lazily would win back ~1–3 kB; do it before the next feature that adds strings). P17 S2 (the Coach's notifications) builds in `/root/wt/wt-p17s2` on a local commit f6dc89b (= b9c4ec5 + P17 S1).
