@@ -94,8 +94,8 @@ the rows below; device checks are the owner's.
 
 | # | Gate | Command | Result | Date, where |
 |---|---|---|---|---|
-| D1 | Release loop | `scripts/ci-local.sh` on the 1.4.0 stack | see the 1.4.0 release commit's message | 2026-10-28, lead's loop |
-| D2 | 1.4.0 APK | `PLATEWISE_BUILD_NUMBER=5 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| D1 | Release loop | `scripts/ci-local.sh` on the stack that landed as 7852a19, b9c4ec5, 5fbabb3 | **ci=0**: unit **5 951 passed + 2 expected-fail in 420 files**; `check --require-ref --strict` 6/6; check:bundle **247.78 kB** of 250; e2e **52 passed + 1 skipped by design** | 2026-10-28, lead's loop |
+| D2 | 1.4.0 APK | `PLATEWISE_BUILD_NUMBER=5 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` on the 5fbabb3 tree | OK: **10 097 944 bytes**, sha256 `ee0bcb6cb83d076de67ae40be16f53328e91ba98478fe08fc44dc263862d8c27`; versionName **1.4.0**, versionCode **5**; same permissions and debug key as 1.3.0. Sent to the owner | 2026-10-28, lead |
 | D3 | Upgrade on a device | Install 1.4.0 over 1.3.0: the Coach's conversation is the first chat in Chats; Home shows the Sugar line | **Open: the owner's phone** | — |
 | D4 | Chats on a device | New chat, ask, switch to another chat while it answers, come back; rename; delete; the keyboard stays below the composer | **Open: the owner's phone** | — |
 

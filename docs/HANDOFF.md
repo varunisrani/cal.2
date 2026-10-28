@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
 Updated: 2026-10-28 18:30 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 (42aefc8,
-automatic backup, the keyboard fix); 1.3.0 released at 9330c0c (walks with a walk score, Google Drive backup). 1.1.0 holds:
+automatic backup, the keyboard fix); 1.3.0 (9330c0c, walks and the walk score, Google Drive backup); 1.4.0 released at 5fbabb3 (sugar on Home, several Coach chats). 1.1.0 holds:
 the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
 reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
@@ -165,7 +165,7 @@ shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Centr
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
 **Landed (2026-10-28 evening):** 7852a19 P16-01 sugar on Home; b9c4ec5 P16-02/03 several Coach chats (schema 4;
-`openWater` settle now time-bounded). 1.4.0 release in progress (APK build 5). P17 S1 (nudges, notices, panel) is
+`openWater` settle now time-bounded). **1.4.0 RELEASED at 5fbabb3** (APK build 5 sent; D1/D2 filled; device checks D3/D4 open). P17 S1 (nudges, notices, panel) is
 done in `/root/wt/wt-p17s1`, patch `/root/wt/patches/p17s1.patch`; rebased on b9c4ec5 as
 `/root/wt/patches/p17s1-rebased.patch` (context.tsx conflict resolved), ledger script `/root/wt/msgs/ledger_w23_p17s1.py`.
 P17 S2 (the Coach's notifications) builds in `/root/wt/wt-p17s2` on a local commit f6dc89b (= b9c4ec5 + P17 S1).
