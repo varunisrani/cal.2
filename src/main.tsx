@@ -39,6 +39,7 @@ import { createAiSetupService } from './services/aiSetup';
 import { createAnalysisService } from './services/analysis';
 import { createAppSettingsService } from './services/appSettings';
 import { loadAutoBackup } from './services/backup/autoLoad';
+import { loadDriveBackup } from './services/backup/driveLoad';
 import { createBackupService } from './services/backup/service';
 import { createBarcodeService } from './services/barcode/lookup';
 import { createCaptureDraftService } from './services/captureDrafts';
@@ -260,14 +261,26 @@ async function start(): Promise<void> {
     // P09-16: package.json's version, written into the build.
     appVersion: APP_VERSION,
   });
+  // P15: copies of backups in the person's Google Drive, in the Android app only (D-16.97); the
+  // web build fetches none of its code.
+  const drive = await loadDriveBackup({
+    backup,
+    settingsRepo,
+    clock: systemClock,
+    fetch: browserFetch,
+  }).catch((error: unknown) => {
+    console.error('Platewise: Google Drive backup could not be set up', error);
+    return undefined;
+  });
   // P14: automatic backups into Documents/Platewise in the Android app only (D-16.95); the web
-  // build fetches none of its code.
+  // build fetches none of its code. After each check the Drive copy follows (P15).
   const autoBackup = await loadAutoBackup({
     backup,
     settingsRepo,
     clock: systemClock,
     visibility: documentVisibility,
     fetch: browserFetch,
+    onChecked: (written) => void drive?.afterCheck(written),
   }).catch((error: unknown) => {
     console.error('Platewise: automatic backup could not be set up', error);
     return undefined;
@@ -388,6 +401,7 @@ async function start(): Promise<void> {
     appSettings: createAppSettingsService({ settingsRepo }),
     backup,
     autoBackup,
+    drive,
     // Settings › Your data (P09-15): Erase tells the backup, stops the reminders, then deletes.
     yourData: createYourDataService({
       transferRepo: createTransferRepo(db),

@@ -33,10 +33,17 @@ const RestoreFromFile = onDemand(() =>
   import('./RestoreFromFile').then((module) => module.RestoreFromFile),
 );
 
+// Fetched when Welcome's "Restore from Google Drive" is pressed (P15-04, the Android app only).
+const RestoreFromDrive = onDemand(() =>
+  import('./RestoreFromDrive').then((module) => module.RestoreFromDrive),
+);
+
 /** A backup file picked on Welcome; each pick (Try again too) starts a restore of its own. */
 interface PickedBackup {
   readonly key: number;
   readonly file: File;
+  /** Where it came from: Try again and Back return there (the picker, or the Drive list). */
+  readonly source: 'file' | 'drive';
 }
 
 /** The wizard on its first question, as Get started leaves it, for this browser's units. */
@@ -81,13 +88,15 @@ interface Reopened {
  * Plan ready's last button finishes the wizard, onboarding completes; the start-up gate then
  * moves the app to Home once the done flag is stored, so this screen never navigates itself. A
  * save that fails says so and opens Plan ready again with the same answers, to try once more.
- * Welcome's restore link picks a backup file and shows the restore screen (P09-14); after a
- * restore without a finished setup, or a refused file, the wizard goes on from its first question.
+ * Welcome's restore link picks a backup file and shows the restore screen (P09-14); in the Android
+ * app its Google Drive link lists the backups in Drive and hands the one picked to the same screen
+ * (P15-04). After a restore without a finished setup, or a refused file, the wizard goes on from
+ * its first question.
  * Its completion then fills only what is empty (the first weigh-in) and starts the new plan's
  * tune-up week, over the restored diary.
  */
 export function OnboardingRoute() {
-  const { onboarding, clock, trackingSettings } = useServices();
+  const { onboarding, clock, trackingSettings, drive } = useServices();
   // P13: through the service, so the Android app asks Android, as Settings does.
   const requestNotifications = useMemo(
     () => (trackingSettings ? () => trackingSettings.requestPermission() : askNotifications),
@@ -99,6 +108,7 @@ export function OnboardingRoute() {
   const saving = useRef(false);
   const picker = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<PickedBackup | null>(null);
+  const [fromDrive, setFromDrive] = useState(false);
 
   const onStateChange = useCallback(
     (state: WizardState) => {
@@ -123,11 +133,17 @@ export function OnboardingRoute() {
     const file = event.target.files?.[0] ?? null;
     // Cleared, so picking the same file again still reports a change.
     event.target.value = '';
-    if (file) setPicked((last) => ({ key: (last?.key ?? 0) + 1, file }));
+    if (file) setPicked((last) => ({ key: (last?.key ?? 0) + 1, file, source: 'file' }));
   };
+  const pickedFromDrive = useCallback((file: File) => {
+    setPicked((last) => ({ key: (last?.key ?? 0) + 1, file, source: 'drive' }));
+  }, []);
+  const openDrive = useCallback(() => setFromDrive(true), []);
+  const leaveDrive = useCallback(() => setFromDrive(false), []);
   const leaveRestore = useCallback(() => setPicked(null), []);
   const setUp = useCallback(() => {
     setPicked(null);
+    setFromDrive(false);
     setReopened((last) => ({ key: (last?.key ?? 0) + 1, state: firstQuestion(today) }));
   }, [today]);
 
@@ -149,10 +165,20 @@ export function OnboardingRoute() {
           <RestoreFromFile
             key={picked.key}
             file={picked.file}
-            onPickAgain={pickBackup}
+            onPickAgain={picked.source === 'drive' ? leaveRestore : pickBackup}
             onLeave={leaveRestore}
             onSetUp={setUp}
           />
+        </Suspense>
+        {input}
+      </>
+    );
+  }
+  if (fromDrive) {
+    return (
+      <>
+        <Suspense fallback={<Skeleton page data-ui="shell.screenLoading" />}>
+          <RestoreFromDrive onPicked={pickedFromDrive} onLeave={leaveDrive} />
         </Suspense>
         {input}
       </>
@@ -165,6 +191,7 @@ export function OnboardingRoute() {
         today={today}
         requestNotifications={requestNotifications}
         onRestore={pickBackup}
+        onRestoreDrive={drive ? openDrive : undefined}
         lateSteps={LATE_STEPS}
         initialState={reopened?.state}
         onStateChange={onStateChange}

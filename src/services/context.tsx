@@ -4,6 +4,7 @@ import type { AiSetupService } from './aiSetup';
 import type { AnalysisService } from './analysis';
 import type { AppSettingsService } from './appSettings';
 import type { AutoBackupService } from './backup/auto';
+import type { DriveBackupService } from './backup/drive';
 import type { BackupService } from './backup/service';
 import type { BarcodeService } from './barcode/lookup';
 import type { CaptureDraftService } from './captureDrafts';
@@ -108,6 +109,11 @@ export interface Services {
    * Without it Your data shows no Automatic backup card, as on the web.
    */
   readonly autoBackup?: AutoBackupService;
+  /**
+   * Copies of backups in Google Drive (P15, D-16.97): only the Android app has it. Without it Your
+   * data shows no Google Drive card and Welcome no Drive restore, as on the web.
+   */
+  readonly drive?: DriveBackupService;
   /** Settings › Your data: the storage card, Clear diary, Erase everything (P09-15); likewise. */
   readonly yourData?: YourDataService;
   /** The persistent-storage request and Home's storage cards (P09-15); optional likewise. */

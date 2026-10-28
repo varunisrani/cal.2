@@ -35,6 +35,7 @@ describe('SETTING_SPECS', () => {
         'backup.auto',
         'backup.autoEvery',
         'backup.autoState',
+        'backup.drive',
         'backup.lastAt',
         'display.accent',
         'display.appearance',
@@ -421,5 +422,43 @@ describe('readSetting', () => {
     ).toEqual({ files: [], lastAt: null, problem: null, asked: false });
     expect(readSetting('backup.autoState', null)).toBeUndefined();
     expect(readSetting('backup.autoState', [])).toBeUndefined();
+  });
+
+  it('starts Google Drive disconnected and reads its state part by part (P15-04)', () => {
+    expect(defaultSettings(metric)['backup.drive']).toEqual({
+      connected: false,
+      email: null,
+      lastUploadAt: null,
+      problem: null,
+      installId: null,
+    });
+    const stored = {
+      connected: true,
+      email: 'sam@example.com',
+      lastUploadAt: 2_000,
+      problem: { kind: 'quota', at: 2_500 },
+      installId: '7d4f0a6e-3b1c-4e2a-9f58-1c2d3e4f5a6b',
+    };
+    expect(readSetting('backup.drive', stored)).toEqual(stored);
+    expect(
+      readSetting('backup.drive', {
+        connected: 'yes',
+        email: '',
+        lastUploadAt: -5,
+        problem: { kind: 'noSpace', at: 1 },
+        installId: "'; drop the folder",
+      }),
+    ).toEqual({
+      connected: false,
+      email: null,
+      lastUploadAt: null,
+      problem: null,
+      installId: null,
+    });
+    expect(readSetting('backup.drive', null)).toBeUndefined();
+    expectTypeOf<SettingValue<'backup.drive'>['problem']>().toEqualTypeOf<{
+      readonly kind: 'offline' | 'signIn' | 'quota' | 'failed';
+      readonly at: number;
+    } | null>();
   });
 });

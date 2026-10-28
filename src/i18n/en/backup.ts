@@ -3,7 +3,7 @@ import type { MessageTree } from '../catalogue';
 /**
  * Words of the backup section and the restore sheet (src/features/settings/data, P09-13): the
  * last backup line, Back up now and its problems, and every step and refusal of a restore; and
- * the Android app's Automatic backup card (P14-02).
+ * the Android app's Automatic backup card (P14-02) and Google Drive card (P15-04).
  */
 export const backup = {
   backup: {
@@ -75,6 +75,52 @@ export const backup = {
           'The last automatic backup failed: there is too much to fit in one backup file. Export your diary below to keep a copy of your entries.',
         failed:
           "The last automatic backup couldn't be saved. Platewise tries again the next time you open it.",
+      },
+    },
+    // The Google Drive card, in the Android app only (P15-04, D-16.97); Welcome's Drive restore
+    // reuses its words.
+    drive: {
+      heading: 'Google Drive',
+      intro:
+        'Each backup is also copied to a Platewise backups folder in your Google Drive. Platewise sees only the files it made there. It keeps the newest 7 from this phone and never deletes another phone’s.',
+      connect: 'Connect Google Drive',
+      connecting: 'Connecting…',
+      account: 'Connected as {email}',
+      connected: 'Connected',
+      lastUploadAt: 'Last upload: {when}',
+      never: 'No upload yet',
+      uploading: 'Uploading…',
+      uploadNow: 'Upload now',
+      list: 'Backups in Google Drive',
+      empty: 'No backups in your Google Drive yet.',
+      restore: 'Restore',
+      restoreLabel: 'Restore the Google Drive backup from {when}',
+      thisPhone: 'This phone',
+      downloading: 'Downloading the backup…',
+      reconnect: 'Connect again',
+      disconnect: 'Disconnect',
+      disconnected: 'Google Drive is disconnected. Your backups stay in your Drive.',
+      listProblem: "Your backups in Google Drive couldn't be listed. Check your connection.",
+      connectProblem: {
+        notConfigured:
+          "This copy of Platewise isn't registered with Google yet, so it can't use Google Drive. Whoever built it can register it with the steps in docs/user/backup.md (Google Drive).",
+        unavailable:
+          'Google Drive needs Google Play services, which are missing or out of date on this phone.',
+        failed: "Google Drive couldn't be connected. Please try again.",
+      },
+      problem: {
+        offline:
+          'The last upload failed: no connection. Platewise tries again the next time you open it.',
+        signIn: 'The last upload failed: Google no longer lets Platewise in. Connect again.',
+        quota:
+          'The last upload failed: your Google Drive is full. Free up space there; Platewise tries again the next time you open it.',
+        failed: 'The last upload failed. Platewise tries again the next time you open it.',
+      },
+      openProblem: {
+        offline: "This backup couldn't be downloaded: no connection.",
+        signIn: 'Google no longer lets Platewise in. Connect again, then try once more.',
+        missing: 'This backup is no longer in your Google Drive.',
+        failed: "This backup couldn't be downloaded. Please try again.",
       },
     },
   },

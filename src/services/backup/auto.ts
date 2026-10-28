@@ -33,7 +33,7 @@ import { err, ok, type Result } from '../../lib/result';
 import type { PageVisibility } from '../reminders/engine';
 import type { BackupProblem } from './backup';
 import { folderProblemOf, type BackupFolder, type FolderFile } from './folder';
-import type { BackupService } from './service';
+import type { BackupService, HeldBackup } from './service';
 
 /** How many automatic backups are kept in the folder. */
 export const AUTO_BACKUPS_KEPT = 7;
@@ -130,6 +130,11 @@ export interface AutoBackupDeps {
   readonly visibility: PageVisibility;
   /** Where a failure is reported; the console by default. */
   readonly onError?: (message: string, error?: unknown) => void;
+  /**
+   * After each check that ran (not one dropped as busy): the backup it wrote, or null. The Google
+   * Drive copy follows from here (P15-04).
+   */
+  readonly onChecked?: (written: HeldBackup | null) => void;
 }
 
 const MADE_PROBLEMS: Readonly<Record<BackupProblem, AutoBackupProblem>> = {
@@ -163,6 +168,8 @@ export function createAutoBackup(deps: AutoBackupDeps): AutoBackupService {
   const listeners = new Set<() => void>();
   let status: AutoBackupStatus = { running: false, files: null };
   let checking = false;
+  /** The backup the running check wrote, for `onChecked`. */
+  let lastWritten: HeldBackup | null = null;
 
   function show(change: Partial<AutoBackupStatus>): void {
     status = { ...status, ...change };
@@ -266,6 +273,7 @@ export function createAutoBackup(deps: AutoBackupDeps): AutoBackupService {
     await settingsRepo.set('backup.lastAt', madeAt).catch((error: unknown) => {
       report('the backup time could not be saved', error);
     });
+    lastWritten = made.value;
     const written: FolderFile = { name, size: file.size, modifiedAt: madeAt };
     await prune(before ? new Map(before).set(name, written) : null).catch((error: unknown) => {
       report('old automatic backups could not be pruned', error);
@@ -291,6 +299,7 @@ export function createAutoBackup(deps: AutoBackupDeps): AutoBackupService {
   async function check(options: CheckOptions = {}): Promise<AutoBackupOutcome> {
     if (checking) return 'busy';
     checking = true;
+    lastWritten = null;
     let outcome: AutoBackupOutcome = 'failed';
     try {
       outcome = await run(options);
@@ -304,6 +313,11 @@ export function createAutoBackup(deps: AutoBackupDeps): AutoBackupService {
       if (status.running) show({ running: false });
     }
     if (outcome === 'written') await refresh();
+    try {
+      deps.onChecked?.(outcome === 'written' ? lastWritten : null);
+    } catch (error) {
+      report('the step after the automatic backup failed', error);
+    }
     return outcome;
   }
 

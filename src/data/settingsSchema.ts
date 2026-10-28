@@ -160,6 +160,39 @@ export interface AutoBackupState {
  */
 export const AUTO_BACKUP_NAME = /^platewise-backup-\d{4}-\d{2}-\d{2}-\d{4}(?:-\d{1,3})?\.zip$/;
 
+/** Why the last copy to Google Drive did not go up (P15-04). */
+export const DRIVE_UPLOAD_PROBLEMS = [
+  /** No connection. */
+  'offline',
+  /** Google no longer lets Platewise in: connect again. */
+  'signIn',
+  /** The person's Drive is full. */
+  'quota',
+  /** Anything else: the backup could not be made or sent. */
+  'failed',
+] as const;
+export type DriveUploadProblem = (typeof DRIVE_UPLOAD_PROBLEMS)[number];
+
+/** This device's Google Drive connection (P15-04, D-16.97): device state, never in a backup. */
+export interface DriveBackupState {
+  /** Backups are copied to Drive. */
+  readonly connected: boolean;
+  /** The account's address, when Google gave one. */
+  readonly email: string | null;
+  /** When the last copy went up, epoch ms; null before the first. */
+  readonly lastUploadAt: number | null;
+  /** Why the last copy did not go up, and when; null once one does. A copy is owed meanwhile. */
+  readonly problem: { readonly kind: DriveUploadProblem; readonly at: number } | null;
+  /**
+   * This install's id, on each copy it uploads: pruning counts only this install's own copies.
+   * Made at the first upload; kept through Disconnect, gone with Erase everything.
+   */
+  readonly installId: string | null;
+}
+
+/** An install id as stored: letters, digits and dashes (a UUID). */
+const INSTALL_ID = /^[A-Za-z0-9-]{1,64}$/;
+
 // ---- Readers ----------------------------------------------------------------------------------
 
 type Fields = Record<string, unknown>;
@@ -296,6 +329,23 @@ function readAutoBackupState(stored: unknown): AutoBackupState | undefined {
   };
 }
 
+// Device state, read field by field like the automatic backup's.
+function readDriveBackupState(stored: unknown): DriveBackupState | undefined {
+  if (!isFields(stored)) return undefined;
+  const problem = isFields(stored.problem) ? stored.problem : null;
+  const kind = problem ? oneOf(DRIVE_UPLOAD_PROBLEMS)(problem.kind) : undefined;
+  return {
+    connected: stored.connected === true,
+    email: typeof stored.email === 'string' && stored.email !== '' ? stored.email : null,
+    lastUploadAt: isInstant(stored.lastUploadAt) ? stored.lastUploadAt : null,
+    problem: kind && problem && isInstant(problem.at) ? { kind, at: problem.at } : null,
+    installId:
+      typeof stored.installId === 'string' && INSTALL_ID.test(stored.installId)
+        ? stored.installId
+        : null,
+  };
+}
+
 // The AI layer reads each field on its own and gives a bad one its default (P03-04).
 function readAiSettings(stored: unknown): AiSettings | null | undefined {
   if (stored === null) return null;
@@ -409,6 +459,12 @@ export const SETTING_SPECS = {
   'backup.autoState': setting<AutoBackupState>(
     () => ({ files: [], lastAt: null, problem: null, asked: false }),
     readAutoBackupState,
+  ),
+  // Copies of backups in Google Drive, in the Android app only (P15, D-16.97): this device's own
+  // connection (`LOCAL_SETTINGS`).
+  'backup.drive': setting<DriveBackupState>(
+    () => ({ connected: false, email: null, lastUploadAt: null, problem: null, installId: null }),
+    readDriveBackupState,
   ),
 } as const;
 

@@ -184,6 +184,25 @@ describe('makeBackup', () => {
     expect(document.contentHash).toBe(firstHash);
   });
 
+  it('leaves this device’s Google Drive connection out of the file (P15-04)', async () => {
+    const db = await freshDb();
+    await seedStore(db);
+    await createSettingsRepo(db, { locale: 'en-US' }).set('backup.drive', {
+      connected: true,
+      email: 'sam@example.com',
+      lastUploadAt: FACTORY_NOW,
+      problem: null,
+      installId: '7d4f0a6e-3b1c-4e2a-9f58-1c2d3e4f5a6b',
+    });
+
+    const opened = await unpackBackup((await made(db)).file);
+
+    const document = opened.document as {
+      payload: { tables: { settings: { key: string }[] } };
+    };
+    expect(document.payload.tables.settings.map((row) => row.key)).not.toContain('backup.drive');
+  });
+
   it('gives the same hash again after the last backup time was recorded (R06.7)', async () => {
     const db = await freshDb();
     await seedStore(db);

@@ -73,3 +73,22 @@ if [[ -z "$apk" ]]; then
   fail "Gradle finished but no APK is in $out_dir"
 fi
 echo "build-apk: $apk ($(du -h "$apk" | cut -f1))"
+
+# The SHA-1 of the key the APK was signed with: Google Drive backup's Android OAuth client in
+# Google Cloud needs it (docs/user/backup.md). apksigner from the SDK's newest build-tools reads
+# every signature scheme; the JDK's keytool is the fallback.
+sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$(sed -n 's/^sdk.dir=//p' android/local.properties 2>/dev/null || true)}}"
+apksigner="$(ls -d "$sdk"/build-tools/*/apksigner 2>/dev/null | sort -V | tail -n 1 || true)"
+sha1=""
+if [[ -n "$apksigner" ]]; then
+  sha1="$("$apksigner" verify --print-certs "$apk" 2>/dev/null | sed -n 's/^Signer #1 certificate SHA-1 digest: //p' | head -n 1 || true)"
+fi
+if [[ -z "$sha1" ]]; then
+  sha1="$(keytool -printcert -jarfile "$apk" 2>/dev/null | sed -n 's/^[[:space:]]*SHA1: //p' | head -n 1 || true)"
+fi
+if [[ -n "$sha1" ]]; then
+  sha1="$(echo "$sha1" | tr -d ': ' | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')"
+  echo "build-apk: signing key SHA-1 $sha1 (for the Android OAuth client of Google Drive backup)"
+else
+  echo "build-apk: no signing key SHA-1 (an unsigned APK, or neither apksigner nor keytool found)"
+fi

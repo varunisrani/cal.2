@@ -51,6 +51,8 @@ export interface WizardPageProps {
   readonly requestNotifications: AskNotifications;
   /** The Welcome step's "Restore from a backup file" (P09-14). */
   readonly onRestore?: () => void;
+  /** The Welcome step's "Restore from Google Drive", in the Android app only (P15-04). */
+  readonly onRestoreDrive?: () => void;
   /** Views for the AI access, Building plan and Plan ready steps (the onboarding route's). */
   readonly lateSteps: LateSteps;
   /** Where the wizard starts instead of a fresh Welcome. */
@@ -75,6 +77,7 @@ export function WizardPage({
   locale,
   requestNotifications,
   onRestore,
+  onRestoreDrive,
   lateSteps,
   initialState,
   onStateChange,
@@ -105,7 +108,7 @@ export function WizardPage({
     const props = { state, dispatch };
     switch (state.step) {
       case 'welcome':
-        return <Welcome {...props} onRestore={onRestore} />;
+        return <Welcome {...props} onRestore={onRestore} onRestoreDrive={onRestoreDrive} />;
       case 'sex':
         return <Sex {...props} />;
       case 'birthday':

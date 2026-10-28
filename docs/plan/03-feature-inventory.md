@@ -257,7 +257,7 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | M13 | Widgets, watch app, Siri and share extension | P3 (D-16.3) | — | 07 §3.7 |
 | M14 | On-device speech model | P3 (optional with L4) | M D | 07 §3.7 |
 | M15 | Workout illustrations of our own | P3 | M D | 07 §3.1a |
-| M16 | Cloud backup (Google Drive) and the welcome-back cloud restore | P3 (N-4) | M D | 06 §3.17; 01 §3.5 |
+| M16 | Cloud backup (Google Drive) and the welcome-back cloud restore | P1 on Android (P15, D-16.97) | M D | 06 §3.17; 01 §3.5 |
 | M17 | Passphrase lock for API keys | P3 (N-6) | M D | 03 Q7; 06 Q4 |
 
 ## Counting it up
@@ -265,9 +265,9 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 134 |
+| Tier P1 | 136 |
 | Tier P2 | 8 |
-| Tier P3 | 24 |
+| Tier P3 | 22 |
 | All tiers | 184 |
 
-Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 under P1). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.
+Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11 and M16 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

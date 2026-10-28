@@ -1,0 +1,89 @@
+/*
+ * The Google Drive card of Your data (P15-04), in the Android app only: Connect or the account,
+ * the last upload and why it failed, Upload now, the copies in Drive with Restore, Disconnect.
+ * Every value comes from tokens.css; logical properties throughout.
+ */
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.intro,
+.account,
+.last,
+.status,
+.problem,
+.note {
+  margin: 0;
+  line-height: var(--leading-body);
+}
+
+.intro,
+.status,
+.note {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.account,
+.last {
+  font-weight: var(--weight-medium);
+}
+
+.problem {
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+.actions {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* ---- The copies in Drive -------------------------------------------------------------------- */
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block: var(--space-2);
+}
+
+.row + .row {
+  border-block-start: 1px solid var(--line);
+}
+
+.rowText {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.rowWhen {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+}
+
+.rowSize {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* This install's own copies, after the size. */
+.rowMine {
+  margin-inline-start: var(--space-2);
+  padding-inline-start: var(--space-2);
+  border-inline-start: 1px solid var(--line);
+  color: var(--text);
+  font-weight: var(--weight-medium);
+}

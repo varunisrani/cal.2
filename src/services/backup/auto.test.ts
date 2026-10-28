@@ -73,6 +73,8 @@ interface RigOptions {
   readonly wrap?: (real: BackupService) => Pick<BackupService, 'make' | 'restoring' | 'isCurrent'>;
   /** Replaces the settings the service reads and writes. */
   readonly settings?: (real: SettingsRepo) => AutoBackupDeps['settingsRepo'];
+  /** Told after each check that ran (the Google Drive copy, P15-04). */
+  readonly onChecked?: AutoBackupDeps['onChecked'];
 }
 
 async function rig(options: RigOptions = {}) {
@@ -95,6 +97,7 @@ async function rig(options: RigOptions = {}) {
     clock,
     visibility,
     onError: (message) => errors.push(message),
+    onChecked: options.onChecked,
   });
   return {
     db,
@@ -479,6 +482,20 @@ describe('automatic backup: one at a time (P14-01)', () => {
 });
 
 describe('automatic backup: triggers and the card (P14-01)', () => {
+  it('tells the Google Drive copy after each check that ran: the backup it wrote, or none (P15-04)', async () => {
+    const seen: (number | null)[] = [];
+    const s = await rig({ onChecked: (written) => seen.push(written?.madeAt ?? null) });
+
+    const first = s.service.check();
+    expect(await s.service.check()).toBe('busy');
+    expect(await first).toBe('written');
+    expect(await s.service.check()).toBe('notDue');
+    await s.settingsRepo.set('backup.auto', false);
+    expect(await s.service.check()).toBe('off');
+
+    expect(seen).toEqual([FACTORY_NOW, null, null]);
+  });
+
   it('checks when it starts and each time the app comes back to the front', async () => {
     const s = await rig();
 

@@ -125,6 +125,21 @@ describe('contentHash', () => {
     expect(LOCAL_SETTINGS).not.toContain('backup.autoEvery');
   });
 
+  it('keeps this device’s Google Drive connection out of the hash (P15-04)', async () => {
+    const before = await contentHash(content());
+    const connected = content({
+      settings: [
+        { key: 'display.accent', value: 'basil' },
+        {
+          key: 'backup.drive',
+          value: { connected: true, email: 'sam@example.com', lastUploadAt: 1, problem: null },
+        },
+      ],
+    });
+    expect(await contentHash(connected)).toBe(before);
+    expect(LOCAL_SETTINGS).toContain('backup.drive');
+  });
+
   it('changes when an entry, a setting or a photo changes', async () => {
     const before = await contentHash(content());
     const changed = [

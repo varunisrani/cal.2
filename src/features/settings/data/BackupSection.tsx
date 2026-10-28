@@ -32,12 +32,13 @@ const IDLE: State = { kind: 'idle' };
 
 /**
  * The Backup card of Settings › Your data (06 §3.17, D-16.30): when the last backup was made, Back
- * up now (one file, shared or downloaded), and Restore from a file, which opens the restore
- * sheet. The last backup line waits for the stored value (R06.22).
+ * up now (one file, shared or downloaded, and copied to a connected Google Drive in the Android
+ * app), and Restore from a file, which opens the restore sheet. The last backup line waits for the
+ * stored value (R06.22).
  */
 export function BackupSection() {
   const settings = useSettings(SETTINGS);
-  const { backup } = useServices();
+  const { backup, drive } = useServices();
   const toast = useToast();
   const restoreSheet = useSheet(RESTORE_SHEET);
   const picker = useRef<HTMLInputElement>(null);
@@ -58,8 +59,13 @@ export function BackupSection() {
   const backUp = async (): Promise<void> => {
     setState(IDLE);
     const made = await service().make();
-    if (made.ok) await handOver(made.value, false);
-    else setState({ kind: 'failed', problem: made.error });
+    if (!made.ok) {
+      setState({ kind: 'failed', problem: made.error });
+      return;
+    }
+    // P15-04: in the Android app a connected Google Drive gets a copy too, in the background.
+    void drive?.afterBackup(made.value);
+    await handOver(made.value, false);
   };
 
   const pickedFile = (event: ChangeEvent<HTMLInputElement>): void => {

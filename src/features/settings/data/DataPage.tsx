@@ -10,6 +10,7 @@ import { Icon } from '../../../ui/icons';
 import { useToast } from '../../../ui/Toast';
 import { AutoBackupCard } from './AutoBackupCard';
 import { BackupSection } from './BackupSection';
+import { DriveCard } from './DriveCard';
 import { ExportSheet } from './ExportSheet';
 import { ImportSheet } from './ImportSheet';
 import { StorageCard } from './StorageCard';
@@ -21,8 +22,8 @@ export const IMPORT_SHEET = 'data-import';
 
 /**
  * Settings › Your data (06 §3.15–3.17): the Backup card with Restore from a file, the Automatic
- * backup card in the Android app (P14-02), the diary file (Export and Import), the Storage card,
- * then Clear diary and Erase everything, each asking first.
+ * backup and Google Drive cards in the Android app (P14-02, P15-04), the diary file (Export and
+ * Import), the Storage card, then Clear diary and Erase everything, each asking first.
  */
 export function DataPage() {
   const { yourData } = useServices();
@@ -37,6 +38,7 @@ export function DataPage() {
     <div className={styles.page} data-ui="data">
       <BackupSection />
       <AutoBackupCard />
+      <DriveCard />
       <DiaryFileCard />
       <StorageCard service={yourData} />
       <StartOverCard service={yourData} />

@@ -30,6 +30,8 @@ export const LOCAL_SETTINGS = [
   'health.connected',
   // The automatic backups this install wrote into its folder (P14-01).
   'backup.autoState',
+  // This device's Google Drive connection (P15-04).
+  'backup.drive',
 ] as const satisfies readonly SettingKey[];
 
 /** The table whose rows are counted as photo files instead. */

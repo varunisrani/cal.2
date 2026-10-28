@@ -1169,7 +1169,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: scripts/bundle-budget.test.ts > measureBundle > passes under budget, counting the entry and its static imports once each
   - Test: scripts/bundle-budget.test.ts > measureBundle > fails over budget and names every counted file
 
-## M · Android app (P11)
+## M · Android app (P11, P15)
 
 ### M11 · Health-store sync, steps, burn line and the measured-energy anchor (P1)
 
@@ -1228,6 +1228,33 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > says total calories include resting burn and are no extra food
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > points questions on steps, workouts, burn and trends to activity_log
   - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: Health Connect activity (D-16.94) > adds none of it without activity, as on the web
+
+### M16 · Cloud backup (Google Drive) and the welcome-back cloud restore (P1 on Android, P15)
+
+- **ACC-M16-1** With Google Drive connected (Android app), each automatic backup and Back up now is also uploaded to the person's own Drive, into "Platewise backups" (one request up to 5 MiB, a resumable upload above)
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: uploads (P15-04, D-16.97) > copies a backup made by Back up now into Drive, and lists it (ACC-M16-1)
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: uploads (P15-04, D-16.97) > copies the file an automatic backup wrote, without making another (onChecked, ACC-M16-1)
+  - Test: src/services/backup/driveClient.test.ts > the Drive client: uploads (P15-04) > sends a backup of 5 MiB or less in one multipart request, tagged as a backup (ACC-M16-1)
+  - Test: src/services/backup/driveClient.test.ts > the Drive client: uploads (P15-04) > sends a larger backup through a resumable session (ACC-M16-1)
+  - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > copies a backup made with Back up now to Google Drive (ACC-M16-1)
+- **ACC-M16-2** Only the newest 7 copies this phone made are kept; copies from another phone and other files are never deleted
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: uploads (P15-04, D-16.97) > keeps this phone’s newest 7 copies and never deletes a file it did not make (ACC-M16-2)
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: uploads (P15-04, D-16.97) > a new phone’s uploads never push out the old phone’s copies (ACC-M16-2)
+  - Test: src/services/backup/driveClient.test.ts > the Drive client: listing, downloading, deleting and keeping 7 (P15-04) > keeps this phone’s newest 7 and never deletes another phone’s copies or a file it did not make (ACC-M16-2)
+- **ACC-M16-3** A failed upload says why on the card and is retried at the next start or return; a refused token is refreshed once
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: uploads (P15-04, D-16.97) > refreshes the token once when Drive refuses it, then sends (ACC-M16-3)
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: failures and retries (P15-04) > keeps an offline failure as the status, and the next start sends a fresh backup (ACC-M16-3)
+  - Test: src/services/backup/driveClient.test.ts > the Drive client: tokens (P15-04) > refreshes the token once on a 401 and repeats the request (ACC-M16-3)
+  - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > shows the last upload and why the last one failed (%s, ACC-M16-3)
+- **ACC-M16-4** A Drive copy restores through the same check and question, from Settings and from Welcome
+  - Test: src/features/onboarding/RestoreFromDrive.test.tsx > RestoreFromDrive on Welcome (P15-04) > connects, lists the Drive backups and restores the one picked through the same check and question (ACC-M16-4)
+  - Test: src/services/backup/drive.test.ts > Google Drive copies: the list and restoring from it (P15-04) > downloads a listed copy for the restore check, and refuses one it did not list (ACC-M16-4)
+  - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > restores a Drive backup through the restore sheet’s check and question (ACC-M16-4)
+- **ACC-M16-5** Connect says plainly when this copy of Platewise is not registered with Google; the web app shows no Drive backup and loads none of its code
+  - Test: src/features/onboarding/RestoreFromDrive.test.tsx > RestoreFromDrive on Welcome (P15-04) > is not offered on the web (ACC-M16-5)
+  - Test: src/services/backup/driveLoad.test.ts > loadDriveBackup (P15-04, D-16.97) > fetches nothing and builds nothing on the web, where there is no Capacitor bridge (ACC-M16-5)
+  - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > draws nothing on the web, where there is no Google Drive backup (ACC-M16-5)
+  - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > says plainly when this copy of Platewise is not registered with Google (ACC-M16-5)
 
 ## Known gaps
 

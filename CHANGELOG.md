@@ -3,6 +3,28 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.3.0)
+
+### Google Drive backup in the Android app
+
+- Connect your Google Drive in Settings › Your data › Google Drive, through Google's own sign-in
+  screens: every backup the app makes (each automatic backup and each Back up now) is then also
+  copied into a "Platewise backups" folder in your Drive. Each phone keeps its own newest 7
+  copies and never deletes another phone's, so a lost phone's backups stay. Platewise can see only
+  the files it made there (Google's `drive.file` access), never the rest of your Drive.
+- The card shows the account, when the last copy went up and why the last one failed, Upload now,
+  the copies in Drive with their date, size, "This phone" on this phone's own, and Restore
+  (checked and confirmed like Restore from a file), and Disconnect (the copies stay in Drive). A failed upload (no connection, a full Drive,
+  Google asking to connect again) never stops the app or the backup on the phone; it is tried
+  again the next time you open Platewise.
+- The first screen of a new install offers **Restore from Google Drive** next to Restore from a
+  backup file.
+- Whoever builds the app registers it once in Google Cloud (the Drive API, a consent screen with
+  the `drive.file` scope, an Android OAuth client with the package name and the signing key's
+  SHA-1, which `pnpm android:apk` now prints). Until then, Connect says that this copy is not
+  registered. Steps: [docs/user/backup.md](docs/user/backup.md#google-drive-android-app). The web
+  app has no Google Drive backup.
+
 ## 1.2.0 (2026-10-28)
 
 Platewise 1.2 backs itself up in the Android app, and the keyboard no longer covers what you

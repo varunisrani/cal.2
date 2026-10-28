@@ -390,6 +390,24 @@ describe('inspectBackup and applyBackup', () => {
     expect(await settings.get('backup.autoEvery')).toBe('weekly');
   });
 
+  it('keeps this device’s Google Drive connection through a restore (P15-04)', async () => {
+    const source = await seededBackup();
+    const target = await otherStore();
+    const settings = createSettingsRepo(target.db, { locale: 'en-US' });
+    const mine = {
+      connected: true,
+      email: 'sam@example.com',
+      lastUploadAt: FACTORY_NOW - HOUR,
+      problem: null,
+      installId: '7d4f0a6e-3b1c-4e2a-9f58-1c2d3e4f5a6b',
+    };
+    await settings.set('backup.drive', mine);
+
+    expect((await applyBackup(await checked(source.file), applyDeps(target.db))).ok).toBe(true);
+
+    expect(await settings.get('backup.drive')).toEqual(mine);
+  });
+
   it('removes photos nothing uses afterwards, clears the flag and runs the follow-up', async () => {
     const source = await seededBackup();
     const target = await otherStore();

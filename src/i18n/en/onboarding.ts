@@ -38,6 +38,8 @@ export const onboarding = {
       },
       start: 'Get started',
       restore: 'Restore from a backup file',
+      // The Android app only (P15-04).
+      restoreDrive: 'Restore from Google Drive',
     },
     restore: {
       title: 'Restore your data',
@@ -51,6 +53,13 @@ export const onboarding = {
       failedTitle: 'Nothing was restored',
       tryAgain: 'Try again',
       startFresh: 'Start fresh',
+    },
+    // Welcome's restore from Google Drive, in the Android app only (P15-04).
+    restoreDrive: {
+      title: 'Restore from Google Drive',
+      lead: 'Connect the Google account your backups went to, then pick one. Nothing changes until you confirm.',
+      looking: 'Looking for your backups…',
+      tryAgain: 'Try again',
     },
     sex: {
       title: 'Which body should we plan for?',

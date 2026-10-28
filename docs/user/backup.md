@@ -41,8 +41,8 @@ Backups need Platewise to be opened over a secure (https) address.
 
 - **Your API keys.** You paste them again after a restore on another device.
 - A few things that belong to the device, such as when the last backup was made, the list of
-  automatic backups the Android app wrote, and whether the browser was already asked to keep the
-  data.
+  automatic backups the Android app wrote, the Google Drive account it copies them to, and whether
+  the browser was already asked to keep the data.
 
 ### Keep it safe
 
@@ -94,11 +94,99 @@ back to it. Nothing else in Platewise is affected.
 
 An automatic backup is an ordinary backup file. After you reinstall Platewise, choose **Restore
 from a backup file** on the first screen and pick the newest file in Documents › Platewise. On a
-new phone, copy the folder over first (or pick the file from Google Drive).
+new phone, copy the folder over first, or, if Google Drive was connected, choose **Restore from
+Google Drive** (see below).
 
 A reinstalled app does not list the files the old one wrote, because Android ties each file to the
 app that made it. Those files stay in the folder until you delete them, and the list starts again
 with the next automatic backup.
+
+## Google Drive (Android app)
+
+The Android app can also copy every backup it makes into your own Google Drive, so a lost or reset
+phone loses nothing. The web app has no Google Drive backup.
+
+### Connect
+
+1. Open Settings › Your data and find the **Google Drive** card.
+2. Press **Connect Google Drive**. Google's own screens ask which account to use and whether
+   Platewise may keep the files it makes in your Drive. Platewise never sees your Google password.
+
+Once connected, the card shows the account. Connecting uploads nothing by itself; the first copy
+goes up with the next backup, or when you press **Upload now**.
+
+### What goes up, and where
+
+- **When:** after each automatic backup is saved on the phone, and after each **Back up now**.
+  **Upload now** makes a fresh backup and uploads it at once.
+- **Where:** a folder called **Platewise backups** in your Drive. The copies have the same names as
+  the automatic backups (`platewise-backup-YYYY-MM-DD-HHmm.zip`).
+- **How many:** the newest 7 copies this phone uploaded. Older ones from this phone are deleted
+  from Drive. Copies another phone uploaded (an old or a lost one) are listed and can be restored,
+  but Platewise never deletes them: delete them in Drive when you no longer need them.
+- **What Platewise can see:** only the files it made itself (Google's `drive.file` access). It
+  cannot open, list, change or delete anything else in your Drive, even in that folder.
+- The copies are the same unencrypted backup files as on the phone. Anyone who can open your Drive
+  can open them.
+
+The card shows when the last copy went up, and lists the copies in Drive, from every phone, with
+their date, their size, **This phone** on the ones this phone uploaded, and **Restore**. Restore downloads the copy, checks it and asks before replacing anything, as
+Restore from a file does.
+
+### When an upload fails
+
+An upload never stops Platewise or the backup on the phone. The card says why the last one failed,
+and Platewise tries again (with a fresh backup) the next time you open it or come back to it. A
+request Google does not answer in time (30 seconds, or 2 minutes for each 8 MB piece of an upload
+and for a download) counts as a failed upload.
+
+| The card says                           | What to do                                                       |
+| --------------------------------------- | ---------------------------------------------------------------- |
+| no connection                           | Nothing; it tries again once the phone is online.                |
+| Google no longer lets Platewise in      | Press **Connect again** on the card.                             |
+| your Google Drive is full               | Free up space in Google Drive.                                   |
+| the last upload failed                  | Nothing; it tries again.                                         |
+
+### Disconnect
+
+**Disconnect** signs Platewise out of Google on this phone and stops the uploads. The copies stay in
+your Drive; delete them there if you no longer want them. **Erase everything** in Settings also
+forgets the connection.
+
+### Restore on a new phone
+
+On the first screen of a new install, choose **Restore from Google Drive**, connect the same Google
+account, and pick a backup from the list. Platewise downloads it, shows what it holds and asks
+before restoring, as with a file. The phone stays connected afterwards, so its backups go to the
+same Drive. The old phone's copies stay there next to the new phone's: the new phone keeps its own
+newest 7 and never deletes the old phone's. Your AI keys are never in a backup: add them again in Settings › AI providers.
+
+### One-time setup in Google Cloud (whoever builds the app)
+
+Google lets an Android app ask for Drive access only when the app is registered in a Google Cloud
+project. Until that is done, **Connect Google Drive** says that this copy of Platewise is not
+registered with Google yet. Nothing has to be added to Platewise's code: Google recognises the app
+by its package name and the key it was signed with.
+
+1. Open the [Google Cloud console](https://console.cloud.google.com/) and create a project (for
+   example "Platewise").
+2. **Enable the Google Drive API:** APIs & Services › Library › Google Drive API › Enable.
+3. **OAuth consent screen** (Google Auth Platform):
+   - User type **External**; fill in the app name (Platewise), a support email and a developer
+     contact email.
+   - Under the scopes (Data access), add `https://www.googleapis.com/auth/drive.file` and nothing
+     else.
+   - Set the publishing status to **In production** (Audience › Publish app). `drive.file` is a
+     non-sensitive scope, so Google does not need to verify the app; while it stays in Testing,
+     only the test users you list can connect.
+4. **Credentials › Create credentials › OAuth client ID**, application type **Android**:
+   - Package name: `app.platewise.android`.
+   - SHA-1 certificate fingerprint: the SHA-1 of the key the APK was signed with. `pnpm
+     android:apk` prints it at the end of the build (`build-apk: signing key SHA-1 …`).
+   - A debug build and a release build are signed with different keys: create one Android client
+     for each key whose APKs people install.
+5. Wait a few minutes for Google to take the new client into account, then press **Connect Google
+   Drive** again.
 
 ## Restore a backup
 

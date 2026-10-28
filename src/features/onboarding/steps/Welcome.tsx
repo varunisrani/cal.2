@@ -15,13 +15,16 @@ const TOUR: readonly { readonly key: TKey; readonly icon: IconName }[] = [
 export interface WelcomeProps extends StepProps {
   /** Opens restoring from a backup file (P09-14); the link does nothing until it is passed. */
   readonly onRestore?: () => void;
+  /** Opens restoring from Google Drive (P15-04); only the Android app passes it. */
+  readonly onRestoreDrive?: () => void;
 }
 
 /**
  * Step 0: the Platewise mark, a two-line headline, one line about the app, a four-point tour,
- * "Get started" into the wizard and a text button for restoring a backup instead.
+ * "Get started" into the wizard and a text button for restoring a backup instead (and, in the
+ * Android app, one for restoring from Google Drive).
  */
-export function Welcome({ dispatch, onRestore }: WelcomeProps) {
+export function Welcome({ dispatch, onRestore, onRestoreDrive }: WelcomeProps) {
   return (
     <div className={styles.welcome}>
       <img className={styles.mark} src={`${import.meta.env.BASE_URL}icons/mark.svg`} alt="" />
@@ -50,6 +53,11 @@ export function Welcome({ dispatch, onRestore }: WelcomeProps) {
         <Button variant="quiet" block data-ui="wizard.restore" onClick={() => onRestore?.()}>
           {t('onboarding.welcome.restore')}
         </Button>
+        {onRestoreDrive ? (
+          <Button variant="quiet" block data-ui="wizard.restoreDrive" onClick={onRestoreDrive}>
+            {t('onboarding.welcome.restoreDrive')}
+          </Button>
+        ) : null}
       </div>
     </div>
   );
