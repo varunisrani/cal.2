@@ -120,8 +120,8 @@ Results of the release loop and the APK are in the rows below; device checks are
 
 | # | Gate | Command | Result | Date, where |
 |---|---|---|---|---|
-| F1 | Release loop | `scripts/ci-local.sh` on the 1.6.0 stack | see the 1.6.0 release commit's message | 2026-10-29, lead's loop |
-| F2 | 1.6.0 APK | `PLATEWISE_BUILD_NUMBER=7 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-29, lead |
+| F1 | Release loop | `scripts/ci-local.sh` on the stack that landed as c4c6a26, 1c4fb8d, f25fae4, ab73a91, 533dd91 | **ci=0**: unit **6 413 passed + 2 expected-fail in 455 files**; `check --require-ref --strict` 6/6; check:bundle **221.57 kB** of 250; e2e **56 passed + 1 skipped by design** | 2026-10-29, lead's loop |
+| F2 | 1.6.0 APK | `PLATEWISE_BUILD_NUMBER=7 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` on a tree with the same `src/` as 533dd91 | OK: **10 319 722 bytes**, sha256 `dabaf03e41b4686c103c15fb0c6848ca1882069a437db51ebb6c7ff528bd0a4e`; versionName **1.6.0**, versionCode **7**; same permissions and debug key as 1.5.0. Sent to the owner | 2026-10-29, lead |
 | F3 | Sources on a device | Tap the Sugar line, a pillar and a row of All nutrients; open a food from the list | **Open: the owner's phone** | — |
 | F4 | Streaming on a device | Ask the Coach with Claude, GPT and Gemini; the reply grows as it comes; switch chats while it streams | **Open: the owner's phone** | — |
 | F5 | Prices on a device | Describe "paneer roll, ₹120"; the review shows ₹120; Home's spend line; Progress › Spending; add a price to an older food in its editor | **Open: the owner's phone** | — |

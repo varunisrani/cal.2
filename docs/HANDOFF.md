@@ -1,7 +1,7 @@
 # Handoff: state of the Platewise build
 
 Updated: 2026-10-28 18:30 IST (Agent 1, session 3). v1.0 (176/176, 1fa1f1b); 1.1.0 (e94f7a7); 1.2.0 (42aefc8,
-automatic backup, the keyboard fix); 1.3.0 (9330c0c, walks and the walk score, Google Drive backup); 1.4.0 (5fbabb3, sugar on Home, several Coach chats); 1.5.0 released at 2667f03 (smart notifications, the panel, the Coach's own notifications, the answer-limit fix). 1.1.0 holds:
+automatic backup, the keyboard fix); 1.3.0 (9330c0c, walks and the walk score, Google Drive backup); 1.4.0 (5fbabb3, sugar on Home, several Coach chats); 1.5.0 (2667f03, smart notifications, the panel, the Coach's own notifications, the answer-limit fix); 1.6.0 released at 533dd91 (nutrient sources, live Coach replies, food prices and spending). 1.1.0 holds:
 the Android app with Health Connect (P11), the orange redesign (P12), kg only, the Coach with Health Connect and
 reminders, reminders as Android notifications (P13).
 Session 3 works on `claude/sleepy-euler-3qif2i` (started at `main` = d53111e); `main` is not
@@ -164,6 +164,13 @@ password values (scenarios type only made-up keys).
 shell in the lead's scratchpad, Android SDK at `scratchpad/apk/sdk`, Maven Central via Google's mirror because Central
 answers 429 here) and sent to the user with the web build as a zip. No emulator here (no KVM): not run on a device.
 
+**1.6.0 RELEASED at 533dd91 (2026-10-29):** c4c6a26 P18-00 catalogue on demand (initial JS 249.30 → 219.47 kB;
+add a lazy partition: `onDemandPartitions` in en.ts, a loader in onDemand.ts, `withPartitions([...], import(...))` where
+its screen is fetched; onDemandCoverage.test lists what is missing), 1c4fb8d P18-01 nutrient sources (F15), f25fae4
+P18-02 Coach streaming (I13 now P1, D-16.106), ab73a91 P18-03/04 prices and spending (M19). Loop: unit 6 413, e2e 56,
+bundle 221.57 kB. APK 1.6.0 (build 7) sent; F1/F2 filled; device checks F3–F5 open. Follow-ups: streaming's open
+items in docs/notes/P18/coach-streaming.md (a server pinging forever; a first-event error on the retry ladder);
+prices in the CSV/Markdown exports; splitting coach/trackers/appSettings partitions (~1.7 kB).
 **P18 (the user asked 2026-10-29 00:30 IST): nutrient sources, live Coach replies, food prices and spending → 1.6.0.**
 Plan `docs/plan/phases/P18-sources-streaming-spending.md` (P18-00 catalogue on demand for the bundle budget; D-16.105..108).
 Wave 24 builders at 83e51b2: S0 catalogue (`/root/wt/wt-p18s0`), S1 sources (`wt-p18s1`), S2 streaming (`wt-p18s2`),

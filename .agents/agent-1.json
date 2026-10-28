@@ -4,8 +4,8 @@
   "state": "ACTIVE",
   "usage_pct": 9,
   "remaining_pct": 91,
-  "resets_at": "2026-10-29T02:30:00+05:30",
-  "last_check": "2026-10-29T00:35:00+05:30",
-  "current_step": "1.5.0 releasing; P18 (1.6.0): four builders",
-  "last_commit": "83e51b2"
+  "resets_at": "2026-10-29T07:30:00+05:30",
+  "last_check": "2026-10-29T03:20:00+05:30",
+  "current_step": "1.6.0 released (533dd91); waiting for the owner",
+  "last_commit": "533dd91"
 }
