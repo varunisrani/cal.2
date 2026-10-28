@@ -100,6 +100,7 @@ function snapshotNow(): CoachSnapshot {
     fasts: [],
     water: { on: false, goalMl: 2000, unit: 'ml', logs: [] },
     activity: null,
+    walks: null,
   };
 }
 

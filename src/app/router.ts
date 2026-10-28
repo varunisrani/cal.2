@@ -25,7 +25,12 @@ export interface OnboardingRoute {
   readonly kind: 'onboarding';
 }
 
-export type Route = TabRoute | OnboardingRoute;
+/** The walk recorder (P15, D-16.96): pushed over the screen it was opened from, no tab bar. */
+export interface WalkRoute {
+  readonly kind: 'walk';
+}
+
+export type Route = TabRoute | OnboardingRoute | WalkRoute;
 
 export function tabRoute(tab: TabId, ...nested: string[]): TabRoute {
   return { kind: 'tab', tab, nested };
@@ -33,6 +38,7 @@ export function tabRoute(tab: TabId, ...nested: string[]): TabRoute {
 
 export const HOME_ROUTE: TabRoute = tabRoute('home');
 export const ONBOARDING_ROUTE: OnboardingRoute = { kind: 'onboarding' };
+export const WALK_ROUTE: WalkRoute = { kind: 'walk' };
 
 /** How many segments each tab takes below it: `#/settings/<page>/<sub>`. */
 const NESTING: Readonly<Record<TabId, number>> = { home: 0, progress: 0, coach: 0, settings: 2 };
@@ -56,6 +62,7 @@ export function parseHash(hash: string): Route | null {
   if (parts.length > 1 && parts[parts.length - 1] === '') parts.pop();
   const [head, ...nested] = parts;
   if (head === 'onboarding') return nested.length === 0 ? ONBOARDING_ROUTE : null;
+  if (head === 'walk') return nested.length === 0 ? WALK_ROUTE : null;
   if (!isTabId(head)) return null;
   if (nested.length > NESTING[head] || !nested.every((part) => SEGMENT.test(part))) return null;
   return tabRoute(head, ...nested);
@@ -63,7 +70,7 @@ export function parseHash(hash: string): Route | null {
 
 /** The canonical hash of a route: `#/home`, `#/settings/units`. */
 export function routeHash(route: Route): string {
-  const parts = route.kind === 'onboarding' ? ['onboarding'] : [route.tab, ...route.nested];
+  const parts = route.kind === 'tab' ? [route.tab, ...route.nested] : [route.kind];
   return `#/${parts.join('/')}`;
 }
 
@@ -327,6 +334,38 @@ export function createRouter(host: HistoryHost): Router {
         write('replace', to, entry);
         const scroll = to.kind === 'tab' && !sameTab ? savedScroll(to.tab) : 0;
         commit(to, [], sameRoute(from, to) ? null : scroll);
+      });
+      return;
+    }
+    if (to.kind === 'walk') {
+      if (from.kind === 'walk') {
+        stepBack(open, arrive);
+        return;
+      }
+      // Pushed over the screen it was opened from, so Back goes there.
+      keepScrollOf(from);
+      stepBack(open, () => {
+        const here = record();
+        write('replace', from, { ...here, sheets: [], scroll: host.scrollY() });
+        write('push', to, {
+          sheets: [],
+          depth: here.depth + 1,
+          overHome: here.overHome,
+          from: routeHash(from),
+        });
+        commit(to, [], 0);
+      });
+      return;
+    }
+    if (from.kind === 'walk') {
+      // Back to the screen the walk was opened from, else in the walk's place.
+      if (record().from === routeHash(to)) {
+        stepBack(open + 1, () => land(to, (entry) => entry.scroll ?? 0));
+        return;
+      }
+      stepBack(open, () => {
+        write('replace', to, FRESH);
+        commit(to, [], to.kind === 'tab' ? savedScroll(to.tab) : 0);
       });
       return;
     }

@@ -9,6 +9,7 @@ import {
   decodePhoto,
   decodeProfile,
   decodeSavedMeal,
+  decodeWalk,
   decodeWater,
   decodeWeighIn,
   type Codec,
@@ -27,6 +28,7 @@ import {
   makeProfile,
   makeProfileRow,
   makeSavedMeal,
+  makeWalk,
   makeWater,
   makeWeighIn,
   nextId,
@@ -48,6 +50,7 @@ const builders: Array<[string, () => unknown, Codec<unknown>]> = [
   ['makeBodyFat', () => makeBodyFat(), decodeBodyFat],
   ['makeWater', () => makeWater(), decodeWater],
   ['makeFast', () => makeFast(), decodeFast],
+  ['makeWalk', () => makeWalk(), decodeWalk],
   ['makeFast running', () => makeFast({ end: null }), decodeFast],
   [
     'makeCoachMessage',

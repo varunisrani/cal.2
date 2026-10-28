@@ -37,7 +37,10 @@ import { fakeHealthPlugin } from '../../services/health/testing/fakeHealthPlugin
 import { health as healthWords } from '../../i18n/en/health';
 import { formatDay } from '../../i18n/format';
 import type { PhotoService } from '../../services/photos';
-import { FACTORY_NOW, makeEntry, makeFast, makeProfile } from '../../test/factories';
+import { FACTORY_NOW, makeEntry, makeFast, makeProfile, makeWalk } from '../../test/factories';
+import { createWalkRepo } from '../../data/repos/walkRepo';
+import type { WalkPhase, WalkService } from '../../services/walks/service';
+import { walk as walkWords } from '../../i18n/en/walk';
 import { reuse } from '../../i18n/en/reuse';
 import { review } from '../../i18n/en/review';
 import { trackers } from '../../i18n/en/trackers';
@@ -1528,5 +1531,110 @@ describe('HomePage: Health Connect on the Android app (P11-04)', () => {
     expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}02,000 left`);
     expect(document.querySelector('[data-ui="home.activity"]')).toBeNull();
     expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
+  });
+});
+
+describe('HomePage: walks on the Android app (P15-03)', () => {
+  beforeAll(async () => {
+    // The card is fetched on demand: load it once before any wait includes its transform.
+    await import('./ActivityCard');
+  });
+
+  /** A walk recorder that is idle, or holds a walk in progress. */
+  function standInWalks(kind: WalkPhase['kind'] = 'idle'): WalkService {
+    const phase = { kind } as WalkPhase;
+    return { subscribe: () => () => undefined, getSnapshot: () => phase } as unknown as WalkService;
+  }
+
+  /**
+   * Home where the app records walks: a 90 kcal walk this morning and a 300 kcal one two days ago,
+   * 1 200 kcal eaten today against a 2 000 kcal goal; Health Connect connected (its day: 350 kcal
+   * active) only when asked.
+   */
+  async function openWithWalks({
+    connected = false,
+    counting = true,
+    phase = 'idle',
+  }: { connected?: boolean; counting?: boolean; phase?: WalkPhase['kind'] } = {}) {
+    const h = await openHarness();
+    await h.repos.profileRepo.save(makeProfile({ saved: { kcal: 2_000 } }));
+    await h.repos.diaryRepo.add(makeEntry({ kcal: 1_200, loggedAt: FACTORY_NOW - HOUR }));
+    await h.repos.settingsRepo.set('health.connected', connected);
+    await h.repos.settingsRepo.set('health.countActiveCalories', counting);
+    await h.repos.settingsRepo.set('units.height', 'cm');
+    const walkRepo = createWalkRepo(h.db);
+    await walkRepo.put(makeWalk({ startedAt: FACTORY_NOW - 3 * HOUR, activeKcal: 90 }));
+    await walkRepo.put(makeWalk({ startedAt: FACTORY_NOW - 48 * HOUR, activeKcal: 300 }));
+    const walks = standInWalks(phase);
+    const healthRepo = createHealthRepo(h.db);
+    const health = createHealthService({
+      plugin: fakeHealthPlugin({
+        days: [
+          {
+            day: '2026-10-26',
+            steps: 8_040,
+            activeKcal: 349.7,
+            totalKcal: 2_310,
+            distanceM: 6_100,
+          },
+        ],
+      }),
+      healthRepo,
+      settingsRepo: h.repos.settingsRepo,
+      diaryRepo: h.repos.diaryRepo,
+      weightRepo: h.repos.weightRepo,
+      clock: h.clock,
+      visibility: { isVisible: () => true, subscribe: () => () => undefined },
+      watch: () => () => undefined,
+    });
+    if (connected) await health.sync();
+    h.mount(
+      <ServicesProvider services={{ ...h.services, health, walks }}>
+        <DataProvider sources={{ ...h.sources, activityRepo: healthRepo, walkRepo }}>
+          <HomePage />
+        </DataProvider>
+      </ServicesProvider>,
+    );
+    await untilShown('[data-ui="home.gauge"]');
+    await waitFor(() => expect(document.querySelector('[data-ui="home.activity"]')).not.toBeNull());
+    return h;
+  }
+
+  it("counts the day's recorded walks without Health Connect, lists them and opens the Walk screen", async () => {
+    const h = await openWithWalks();
+    // 2 000 + 90 = 2 090 kcal target; 1 200 eaten.
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,200890 left`);
+    expect(textOf('home.burn')).toBe('2,000 goal + 90 burned');
+    const card = within(screen.getByRole('region', { name: healthWords.health.home.title }));
+    expect(card.getByRole('list', { name: walkWords.walk.home.heading })).toHaveTextContent(
+      '9:30 AM: 30m, 2.6 km, 90 kcal active',
+    );
+    // Health Connect is not connected: none of its lines.
+    expect(card.queryByText(healthWords.health.home.empty)).toBeNull();
+
+    fireEvent.click(card.getByRole('button', { name: walkWords.walk.home.start }));
+    expect(h.router.current().route).toEqual({ kind: 'walk' });
+  });
+
+  it("keeps Health Connect's burn alone while it is connected: the walks are written there", async () => {
+    await openWithWalks({ connected: true });
+    await waitFor(() => expect(textOf('home.burn')).toBe('2,000 goal + 350 burned'));
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,2001,150 left`);
+    const card = within(screen.getByRole('region', { name: healthWords.health.home.title }));
+    expect(card.getByText('8,040 steps')).toBeVisible();
+    expect(card.getByRole('list', { name: walkWords.walk.home.heading })).toBeVisible();
+  });
+
+  it('counts no walk while counting is off', async () => {
+    await openWithWalks({ counting: false });
+    expect(textOf('home.gauge')).toBe(`${words.gauge.heading.kcal}1,200800 left`);
+    expect(document.querySelector('[data-ui="home.burn"]')).toBeNull();
+  });
+
+  it('says a day without walks has none, and goes back to a walk in progress', async () => {
+    await openWithWalks({ phase: 'active' });
+    fireEvent.click(dayTile('2026-10-25'));
+    await waitFor(() => expect(screen.getByText(walkWords.walk.home.none)).toBeVisible());
+    expect(screen.getByRole('button', { name: walkWords.walk.home.back })).toBeVisible();
   });
 });

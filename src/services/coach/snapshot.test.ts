@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { createHealthRepo } from '../../data/repos/healthRepo';
 import type { PlatewiseDb } from '../../data/schema';
-import { makeProfile } from '../../test/factories';
+import { createWalkRepo } from '../../data/repos/walkRepo';
+import { makeProfile, makeWalk } from '../../test/factories';
 import {
   SNAPSHOT_NOW,
   SNAPSHOT_TODAY,
@@ -148,5 +149,33 @@ describe('takeSnapshot: Health Connect activity (D-16.94)', () => {
 
     expect(snapshot?.profile).toBeDefined();
     expect(snapshot?.activity).toBeNull();
+  });
+});
+
+describe('takeSnapshot: recorded walks (D-16.96)', () => {
+  it('copies every recorded walk, newest first, where the app records walks', async () => {
+    const s = await stores();
+    await s.profileRepo.save(makeProfile());
+    const walkRepo = createWalkRepo(s.db, { clock: s.clock });
+    const older = makeWalk({ startedAt: at('2026-10-20', '07:00') });
+    const newer = makeWalk({ startedAt: at('2026-10-26', '07:00') });
+    await walkRepo.put(older);
+    await walkRepo.put(newer);
+
+    await s.settingsRepo.set('health.countActiveCalories', false);
+    expect((await takeSnapshot({ ...s.sources, walkRepo }))?.walks).toEqual({
+      countActive: false,
+      items: [newer, older],
+    });
+  });
+
+  it('has no walks where nothing records them (the web), and none when they cannot be read', async () => {
+    const s = await stores();
+    await s.profileRepo.save(makeProfile());
+    expect((await takeSnapshot(s.sources))?.walks).toBeNull();
+    const broken = { list: () => Promise.reject(new Error('gone')) };
+    const snapshot = await takeSnapshot({ ...s.sources, walkRepo: broken as never });
+    expect(snapshot?.profile).toBeDefined();
+    expect(snapshot?.walks).toBeNull();
   });
 });

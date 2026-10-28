@@ -129,6 +129,13 @@ const SHAPES = {
       <path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.9-.8M12 14.5v2" />
     </>
   ),
+  // P15: a person walking, for the walk recorder.
+  walk: (
+    <>
+      <circle cx="13.5" cy="4.5" r="2" />
+      <path d="M12.5 8L11 14l2.5 3-.5 4M11 14l-2.5 6.5M7.5 11.5L10 9l2.5-1 2.5 2.5 2.5 1" />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type IconName = keyof typeof SHAPES;

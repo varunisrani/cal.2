@@ -11,7 +11,7 @@ import type { StorageEstimateResult } from '../../data/storage';
 import { eraseEverything } from '../../data/wipe';
 import { bytesOf, storableBlob } from '../../test/blobs';
 import { openTestDb } from '../../test/db';
-import { FACTORY_NOW, makeEntry, makeFast, makePhoto } from '../../test/factories';
+import { FACTORY_NOW, makeEntry, makeFast, makePhoto, makeWalk } from '../../test/factories';
 import { packBackup, unpackBackup } from './archive';
 import { makeBackup } from './backup';
 import { contentHash } from './hash';
@@ -141,7 +141,15 @@ describe('inspectBackup and applyBackup', () => {
 
     expect(result.ok).toBe(true);
     const after = await storedTables(target.db);
-    for (const table of ['profile', 'entries', 'savedMeals', 'weighIns', 'bodyFat', 'water']) {
+    for (const table of [
+      'profile',
+      'entries',
+      'savedMeals',
+      'weighIns',
+      'bodyFat',
+      'water',
+      'walks',
+    ]) {
       expect(after[table], table).toEqual(before[table]);
     }
     expect(after.fasts).toEqual(before.fasts);
@@ -162,6 +170,22 @@ describe('inspectBackup and applyBackup', () => {
     expect(await target.db.secrets.count()).toBe(0);
     expect(await target.db.quarantine.count()).toBe(0);
     expect(await target.db.meta.get(RESTORING_FLAG)).toBeUndefined();
+    // The walks came back (P15-02); Health Connect's copy is read again, never restored.
+    expect((after.walks as { id: string }[]).map((walk) => walk.id)).toEqual(['walk-1']);
+    expect(await target.db.activity.count()).toBe(0);
+  });
+
+  it('restores a file made before walks were recorded, leaving no walks (P15-02)', async () => {
+    const source = await seededBackup(async (db) => {
+      await db.walks.clear();
+    });
+    const target = await otherStore();
+    await target.db.walks.put(makeWalk({ id: 'walk-here' }));
+
+    const result = await applyBackup(await checked(source.file), applyDeps(target.db));
+
+    expect(result.ok).toBe(true);
+    expect(await target.db.walks.count()).toBe(0);
   });
 
   it('shows what the file holds before anything changes (R06.8, ACC-K4-1)', async () => {

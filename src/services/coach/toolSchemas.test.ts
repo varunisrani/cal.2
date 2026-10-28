@@ -10,6 +10,8 @@ import {
   REMINDER_TOOL,
   REMINDER_TOOL_NAME,
   ROW_LIMITS,
+  WALK_TOOL,
+  WALK_TOOL_NAME,
   coachTools,
   isLaterToolName,
   isNutritionToolName,
@@ -239,5 +241,47 @@ describe('REMINDER_TOOL: a reminder for the person to add (P13, D-16.93)', () =>
     expect(description).toContain('when any of these is missing or unclear, ask them instead');
     expect(description).toContain(`At most ${MAX_PROPOSALS} per reply.`);
     expect(MAX_PROPOSALS).toBe(5);
+  });
+});
+
+describe('WALK_TOOL: the recorded walks (D-16.96)', () => {
+  it('is offered after activity and before the reminder tool, only where the app records walks', () => {
+    expect(coachTools(false, false, false)).toEqual(NUTRITION_TOOLS);
+    expect(coachTools(false, false, true).map((schema) => schema.name)).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'walk_log',
+    ]);
+    expect(coachTools(true, true, true).map((schema) => schema.name)).toEqual([
+      ...NUTRITION_TOOL_NAMES,
+      'activity_log',
+      'walk_log',
+      'propose_reminder',
+    ]);
+    expect(WALK_TOOL.name).toBe(WALK_TOOL_NAME);
+    expect(isNutritionToolName(WALK_TOOL_NAME)).toBe(false);
+    expect(isLaterToolName(WALK_TOOL_NAME)).toBe(false);
+  });
+
+  it('takes a from and to day range like activity_log, at most 90 days, portable keywords only', () => {
+    const { parameters, description } = WALK_TOOL;
+    expect(parameters.required).toEqual(['from', 'to']);
+    expect(Object.keys(parameters.properties)).toEqual(['from', 'to']);
+    expect(parameters.properties.from).toEqual(ACTIVITY_TOOL.parameters.properties.from);
+    expect(description).toContain(`At most ${ACTIVITY_MAX_DAYS} days`);
+    for (const keyword of keywordsIn(parameters)) expect(PORTABLE_KEYWORDS.has(keyword)).toBe(true);
+  });
+
+  it('says what a row holds and that a missing day means no walk recorded', () => {
+    const { description } = WALK_TOOL;
+    for (const words of [
+      'minutes walked (pauses left out)',
+      'km (left out when location was off)',
+      'brisk minutes',
+      'the walk score 0 to 100',
+      'activeKcal (burned by walking, on top of resting burn)',
+      'no walk was recorded here, not that they did not move',
+    ]) {
+      expect(description).toContain(words);
+    }
   });
 });

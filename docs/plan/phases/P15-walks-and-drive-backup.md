@@ -1,6 +1,6 @@
 # P15 · Walk recorder with a walk score, and Google Drive backup
 
-**Weeks:** 1 · **Tracks:** native (walk tracker, Health Connect writes, Google sign-in); web (walk domain, screens, Coach, Drive client) · **Depends on:** P00–P14 · **Status:** 📋 planned (2026-10-28, at the owner's request) · **Ships as:** 1.3.0
+**Weeks:** 1 · **Tracks:** native (walk tracker, Health Connect writes, Google sign-in); web (walk domain, screens, Coach, Drive client) · **Depends on:** P00–P14 · **Status:** ✅ done: P15-01..04 landed (2026-10-28, at the owner's request); device tests are the owner's (release checklist) · **Ships as:** 1.3.0
 
 ## Goal
 

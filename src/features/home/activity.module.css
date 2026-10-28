@@ -59,3 +59,10 @@
   font-size: var(--type-caption);
   line-height: var(--leading-body);
 }
+
+/* The Walk button (P15-03): the icon centred beside its word. */
+.walkLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}

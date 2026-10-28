@@ -1,6 +1,7 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { onDemand } from '../../app/onDemand';
 import { useToday } from '../../app/TodayProvider';
+import { WALK_ROUTE } from '../../app/router';
 import { useRouter, useSheet } from '../../app/useRoute';
 import {
   useActiveFast,
@@ -11,6 +12,7 @@ import {
   useSavedMeals,
   useSettings,
   useTargets,
+  useWalks,
   type LiveState,
 } from '../../data/hooks';
 import type { DayKey } from '../../domain/dates/dayKey';
@@ -19,10 +21,11 @@ import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
 import type { DiaryEntry, Fast } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { useServices } from '../../services/context';
+import type { WalkPhase, WalkService } from '../../services/walks/service';
 import { Card } from '../../ui/Card';
 import { useToast } from '../../ui/Toast';
 import { AddMenu } from '../log/AddMenu';
-import { countedBurn, withBurn } from './burn';
+import { burnSource, countedBurn, walkBurn, withBurn } from './burn';
 import { CaptureSheet, type CapturePicker, type CaptureRequest } from '../log/capture/CaptureSheet';
 import { CopyDaySheet } from '../log/CopyDaySheet';
 import { DescribeSheet } from '../log/DescribeSheet';
@@ -113,6 +116,17 @@ const SETTINGS = [
   'units.height',
 ] as const;
 
+const NO_WALK_PHASE: WalkPhase = { kind: 'idle' };
+const NO_SUBSCRIPTION = () => () => undefined;
+
+/** The walk recorder's phase, or idle where there is none (the web). */
+function useWalkPhase(walks: WalkService | undefined): WalkPhase {
+  return useSyncExternalStore(
+    walks ? walks.subscribe : NO_SUBSCRIPTION,
+    walks ? walks.getSnapshot : () => NO_WALK_PHASE,
+  );
+}
+
 /**
  * `read`, except that while a new read is on its way the last one that arrived stays on screen:
  * moving to another day keeps the page, and the week bar under the person's finger, until that
@@ -138,7 +152,9 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
  * to combine them takes the "+" button's place (P06-19); each row's heart keeps a copy in the
  * saved meals. On the Android app with Health Connect connected (P11-04), an activity card follows
  * the gauge and, while counting is on, the day's energy target is the goal plus its active
- * calories.
+ * calories. Where the app records walks (P15-03) the card lists the day's walks and has the Walk
+ * button, the + menu has a Walk row, and without Health Connect the day's walks' active calories
+ * are what counting adds.
  */
 export function HomePage() {
   const today = useToday();
@@ -152,11 +168,14 @@ export function HomePage() {
   const fasts = useSteadyRead(fastsRead);
   const activityRead = useActivity(dayKey, dayKey);
   const activity = useSteadyRead(activityRead);
+  const walksRead = useWalks(dayKey, dayKey);
+  const dayWalks = useSteadyRead(walksRead);
   const activeFast = useActiveFast();
   const targets = useTargets(today);
   const settings = useSettings(SETTINGS);
   const router = useRouter();
-  const { captureDrafts, analysis, barcode, homePrefs, health } = useServices();
+  const { captureDrafts, analysis, barcode, homePrefs, health, walks } = useServices();
+  const walkPhase = useWalkPhase(walks);
   const toast = useToast();
   const manual = useSheet(MANUAL_SHEET);
   const capture = useSheet(CAPTURE_SHEET);
@@ -309,8 +328,10 @@ export function HomePage() {
     entries.status === 'ready' &&
     waterLogs.status === 'ready' &&
     fasts.status === 'ready' &&
-    // Health Connect's copy is waited for, but a failed read of it never keeps the diary away.
+    // Health Connect's copy and the walks are waited for, but a failed read of either never keeps
+    // the diary away.
     activity.status !== 'loading' &&
+    dayWalks.status !== 'loading' &&
     activeFast.status === 'ready' &&
     targets.status === 'ready' &&
     settings.status === 'ready'
@@ -334,10 +355,16 @@ export function HomePage() {
     // Health Connect (P11-04): the day's activity, and its burn counted in the energy target.
     const connected = health !== undefined && settings.value['health.connected'];
     const shownDay = connected && activity.status === 'ready' ? (activity.value[0] ?? null) : null;
-    const burned =
-      plan && connected && settings.value['health.countActiveCalories']
-        ? countedBurn(plan.kcal, shownDay)
-        : null;
+    // P15-03: without Health Connect the day's recorded walks count instead (burn.ts says why).
+    const walksOfDay = dayWalks.status === 'ready' ? dayWalks.value : [];
+    const source = burnSource(connected, walks !== undefined);
+    let burned: number | null = null;
+    if (plan && settings.value['health.countActiveCalories']) {
+      if (source === 'health') burned = countedBurn(plan.kcal, shownDay);
+      else if (source === 'walks') burned = walkBurn(plan.kcal, walksOfDay);
+    }
+    const walking = walkPhase.kind !== 'idle' && walkPhase.kind !== 'failed';
+    const openWalk = (): void => router.navigate(WALK_ROUTE);
     const dayPlan = plan && withBurn(plan, burned);
     body = (
       <>
@@ -364,12 +391,14 @@ export function HomePage() {
             burn={plan && burned !== null ? { goalKcal: plan.kcal, burnedKcal: burned } : null}
           />
         </DaySwipe>
-        {connected ? (
+        {connected || walks ? (
           <Suspense fallback={null}>
             <ActivityCard
               day={shownDay}
               energyUnit={unit}
               lengthUnit={settings.value['units.height']}
+              healthConnected={connected}
+              {...(walks ? { walks: walksOfDay, onWalk: openWalk, walking } : {})}
             />
           </Suspense>
         ) : null}
@@ -403,6 +432,8 @@ export function HomePage() {
               activeFast: activeFast.value,
               onCustomWater: waterSheet.show,
               onStartFast: startFast.show,
+              // P15-03: the walk recorder, in the Android app only.
+              ...(walks ? { onWalk: openWalk, walking } : {}),
             }}
             triggerClassName={styles.fab}
             data-ui="home.add"
@@ -456,7 +487,9 @@ export function HomePage() {
   return (
     <section
       className={styles.page}
-      aria-busy={[...reads, activityRead].some((read) => read.status === 'loading') || undefined}
+      aria-busy={
+        [...reads, activityRead, walksRead].some((read) => read.status === 'loading') || undefined
+      }
       data-ui="screen.home"
     >
       <h1 className={styles.title}>{tx('common.tabs.home')}</h1>

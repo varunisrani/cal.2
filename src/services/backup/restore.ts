@@ -18,7 +18,7 @@ import { CryptoUnavailableError } from '../../data/crypto';
 import type { BackupRepo, BackupTable, RestorePlan } from '../../data/repos/backupRepo';
 import type { FastRepo } from '../../data/repos/fastRepo';
 import type { PhotoRepo } from '../../data/repos/photoRepo';
-import { TABLES, type PhotoRow } from '../../data/schema';
+import { ADDED_TABLES, TABLES, type PhotoRow } from '../../data/schema';
 import type { StorageAccess } from '../../data/storage';
 import type { Clock } from '../../lib/clock';
 import { err, ok, type Result } from '../../lib/result';
@@ -117,7 +117,8 @@ function archiveProblem(error: unknown): RestoreProblem {
 
 /** The primary key field of a table, from its schema string. */
 function keyField(table: BackupTable): string {
-  return TABLES[table].split(',')[0]!.trim();
+  const schemas: Readonly<Record<BackupTable, string>> = { ...TABLES, ...ADDED_TABLES };
+  return schemas[table].split(',')[0]!.trim();
 }
 
 /** The rows of every table but `photos`, shaped; null when any row is bad or a key repeats. */

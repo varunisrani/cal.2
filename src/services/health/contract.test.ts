@@ -18,8 +18,9 @@ describe('the plugin contract', () => {
       distance: true,
       exercise: true,
       weight: true,
+      heartRate: true,
     };
-    const writes: Record<HealthWriteKind, true> = { nutrition: true, weight: true };
+    const writes: Record<HealthWriteKind, true> = { nutrition: true, weight: true, walk: true };
     expect([...HEALTH_READ_KINDS].sort()).toEqual(Object.keys(reads).sort());
     expect([...HEALTH_WRITE_KINDS].sort()).toEqual(Object.keys(writes).sort());
   });
@@ -37,8 +38,11 @@ describe('the plugin contract', () => {
       deleteNutrition: true,
       writeWeight: true,
       deleteWeight: true,
+      // P15.
+      writeWalk: true,
+      readHeartRate: true,
     };
-    expect(Object.keys(methods)).toHaveLength(11);
+    expect(Object.keys(methods)).toHaveLength(13);
   });
 
   it('reads the code a rejection carries, and calls anything else unknown', () => {

@@ -4,7 +4,8 @@
 // the snapshot taken when the person pressed Send, and the tools of the turn read only that
 // snapshot, so a meal logged while the reply runs shows up on the next question (R04.22). The
 // turn offers the six nutrition tools, `activity_log` with its rules when the snapshot holds
-// Health Connect's activity (the Android app, connected: D-16.94), and `propose_reminder` with its
+// Health Connect's activity (the Android app, connected: D-16.94), `walk_log` with what the walk
+// score means when the snapshot holds the recorded walks (D-16.96), and `propose_reminder` with its
 // rules when the turn can take reminder proposals (D-16.93). The answer comes back with the
 // proposals of the attempt that gave it, for the cards under the reply.
 //
@@ -79,8 +80,8 @@ const NOT_SET_UP: Readonly<Record<Missing, SingleFailure['kind']>> = {
 };
 
 /** The tools a turn offers, in the shape the chat wires take. */
-function chatTools(activity: boolean, reminders: boolean): readonly ToolSchema[] {
-  return coachTools(activity, reminders).map((tool) => ({
+function chatTools(activity: boolean, reminders: boolean, walks: boolean): readonly ToolSchema[] {
+  return coachTools(activity, reminders, walks).map((tool) => ({
     name: tool.name,
     description: tool.description,
     parameters: { ...tool.parameters },
@@ -135,6 +136,7 @@ async function turn(
   }
   const { snapshot } = input;
   const activity = snapshot.activity !== null;
+  const walks = snapshot.walks !== null;
   const reminders = input.reminders !== undefined;
   const plan: Turn = {
     input,
@@ -145,8 +147,9 @@ async function turn(
       notes: settings.instructions,
       activity,
       reminders,
+      walks,
     }),
-    tools: chatTools(activity, reminders),
+    tools: chatTools(activity, reminders, walks),
     photo,
     secrets: storedKeys(keys),
     runTool: (call, desk) => limitToolResult(runCoachTool(call.name, call.args, snapshot, desk)),

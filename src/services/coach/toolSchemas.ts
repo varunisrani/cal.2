@@ -3,9 +3,10 @@
 // three chat wires wrap these unchanged (OpenAI `parameters`, Anthropic `input_schema`, Gemini
 // `functionDeclarations`), so the schemas use only the keywords all three accept: `type`,
 // `description`, `properties` and `required`. The six nutrition tools are always offered; in the
-// Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94); and
-// where the app can keep reminders, `propose_reminder` puts one forward for the person to add
-// (D-16.93): it sets nothing by itself. The later workout and suggestion tools are named here so
+// Android app, while Health Connect is connected, a seventh reads its activity copy (D-16.94);
+// where the app records walks, `walk_log` reads them (D-16.96); and where the app can keep
+// reminders, `propose_reminder` puts one forward for the person to add (D-16.93): it sets nothing
+// by itself. The later workout and suggestion tools are named here so
 // a stray call can be told they are not available.
 
 import { CUSTOM_TEXT_MAX } from '../../domain/reminders/custom';
@@ -31,12 +32,16 @@ export function isNutritionToolName(value: unknown): value is NutritionToolName 
 export const ACTIVITY_TOOL_NAME = 'activity_log';
 export type ActivityToolName = typeof ACTIVITY_TOOL_NAME;
 
+/** The tool over the recorded walks (D-16.96): offered where the app records walks. */
+export const WALK_TOOL_NAME = 'walk_log';
+export type WalkToolName = typeof WALK_TOOL_NAME;
+
 /** The tool that proposes a reminder for the person to add (D-16.93). */
 export const REMINDER_TOOL_NAME = 'propose_reminder';
 export type ReminderToolName = typeof REMINDER_TOOL_NAME;
 
 /** Any tool the Coach can offer. */
-export type CoachToolName = NutritionToolName | ActivityToolName | ReminderToolName;
+export type CoachToolName = NutritionToolName | ActivityToolName | WalkToolName | ReminderToolName;
 
 /** Workout and suggestion tools of a later phase (L3): never offered in v1. */
 export const LATER_TOOL_NAMES = [
@@ -218,6 +223,33 @@ export const ACTIVITY_TOOL: ToolSchema = {
   },
 };
 
+/** The walk tool (D-16.96): the walks recorded in Platewise, one row each. */
+export const WALK_TOOL: ToolSchema = {
+  name: WALK_TOOL_NAME,
+  description:
+    'Walks the person recorded with the walk recorder in Platewise, from one local day to ' +
+    'another, oldest first: the date, the start time, minutes walked (pauses left out), km ' +
+    '(left out when location was off), steps (left out when step counting was off), brisk ' +
+    'minutes (minutes at 100 steps a minute or more, or 4.8 km/h without steps), the walk score ' +
+    '0 to 100 (left out when it could not be measured) and activeKcal (burned by walking, on top ' +
+    `of resting burn). At most ${ACTIVITY_MAX_DAYS} days: a longer range keeps its newest days ` +
+    'and "omittedOlderDays" says how many older days it left out. A day without a row means no ' +
+    'walk was recorded here, not that they did not move. Every result repeats the range it used.',
+  parameters: {
+    type: 'object',
+    properties: {
+      from: {
+        type: 'string',
+        description:
+          'First day of the range, YYYY-MM-DD, a local day, included. A day that cannot be read ' +
+          `gives the ${ACTIVITY_DEFAULT_DAYS} days ending on "to".`,
+      },
+      to: TO,
+    },
+    required: ['from', 'to'],
+  },
+};
+
 /** The reminder tool (D-16.93): a proposal the person adds, or not, from a card in the chat. */
 export const REMINDER_TOOL: ToolSchema = {
   name: REMINDER_TOOL_NAME,
@@ -261,9 +293,17 @@ export const REMINDER_TOOL: ToolSchema = {
 
 /**
  * The tools one turn offers, in the order the model sees them: activity after the six when Health
- * Connect is connected, the reminder tool last when the turn can take proposals.
+ * Connect is connected, then the walks where the app records them, the reminder tool last when
+ * the turn can take proposals.
  */
-export function coachTools(activity: boolean, reminders = false): readonly ToolSchema[] {
-  const tools = activity ? [...NUTRITION_TOOLS, ACTIVITY_TOOL] : NUTRITION_TOOLS;
-  return reminders ? [...tools, REMINDER_TOOL] : tools;
+export function coachTools(
+  activity: boolean,
+  reminders = false,
+  walks = false,
+): readonly ToolSchema[] {
+  const tools: ToolSchema[] = [...NUTRITION_TOOLS];
+  if (activity) tools.push(ACTIVITY_TOOL);
+  if (walks) tools.push(WALK_TOOL);
+  if (reminders) tools.push(REMINDER_TOOL);
+  return tools;
 }

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { addDays } from '../../domain/dates/dayKey';
-import { makeBodyFat, makeEntry } from '../../test/factories';
+import { makeBodyFat, makeEntry, makeWalk } from '../../test/factories';
 import {
   SNAPSHOT_TODAY,
   activityOn,
@@ -663,5 +663,80 @@ describe('runCoachTool: propose_reminder (P13, D-16.93)', () => {
     ) as Json;
     expect(result).toEqual({ error: 'The reminder could not be checked, so it was not proposed.' });
     expect(desk.proposals).toEqual([]);
+  });
+});
+
+describe('runCoachTool: walk_log (D-16.96)', () => {
+  const walks = [
+    makeWalk({ id: 'w-old', startedAt: at('2026-07-01', '07:00') }),
+    makeWalk({ id: 'w-mon', startedAt: at('2026-10-19', '18:00') }),
+    makeWalk({
+      id: 'w-thu',
+      startedAt: at('2026-10-22', '07:30'),
+      activeSeconds: 1_260,
+      distanceM: null,
+      steps: null,
+      briskMinutes: 0,
+      briskKnown: false,
+      score: null,
+      activeKcal: 61,
+    }),
+    makeWalk({ id: 'w-today', startedAt: at('2026-10-26', '08:05'), distanceM: 2_614 }),
+  ];
+  const snapshot = makeSnapshot({ walks: { countActive: true, items: walks } });
+
+  it('gives the walks of the last 7 days by default, oldest first, one row each', () => {
+    expect(call('walk_log', {}, snapshot)).toEqual({
+      from: '2026-10-20',
+      to: '2026-10-26',
+      count: 2,
+      items: [
+        { date: '2026-10-22', start: '2026-10-22T07:30:00-04:00', minutes: 21, activeKcal: 61 },
+        {
+          date: '2026-10-26',
+          start: '2026-10-26T08:05:00-04:00',
+          minutes: 30,
+          km: 2.61,
+          steps: 3300,
+          briskMinutes: 25,
+          score: 81,
+          activeKcal: 90,
+        },
+      ],
+    });
+  });
+
+  it('holds at most the newest 90 days of a longer range and says how many it left out', () => {
+    const result = call('walk_log', { from: '2026-01-01', to: SNAPSHOT_TODAY }, snapshot);
+    expect(result).toMatchObject({
+      from: '2026-07-29',
+      to: SNAPSHOT_TODAY,
+      limited: true,
+      omittedOlderDays: 209,
+      count: 3,
+    });
+    expect(items(result).map((row) => row.date)).toEqual([
+      '2026-10-19',
+      '2026-10-22',
+      '2026-10-26',
+    ]);
+  });
+
+  it('says it needs the walk recorder where there is none (the web)', () => {
+    expect(call('walk_log', {}, makeSnapshot())).toEqual({
+      error:
+        'The tool "walk_log" needs the walk recorder, which is only in the Android app. ' +
+        `Available tools: ${NUTRITION_TOOL_NAMES.join(', ')}.`,
+    });
+    expect(call('meal_planner', {}, snapshot).error).toContain('walk_log');
+  });
+
+  it('answers {error} instead of throwing when the walks cannot be read', () => {
+    const broken = makeSnapshot({
+      walks: { countActive: true, items: [null] } as unknown as CoachSnapshot['walks'],
+    });
+    expect(call('walk_log', {}, broken)).toEqual({
+      error: 'The stored data for this tool could not be read.',
+    });
   });
 });

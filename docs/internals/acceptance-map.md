@@ -1256,6 +1256,169 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > draws nothing on the web, where there is no Google Drive backup (ACC-M16-5)
   - Test: src/features/settings/data/DriveCard.test.tsx > DriveCard (P15-04) > says plainly when this copy of Platewise is not registered with Google (ACC-M16-5)
 
+### M18 · Walk recorder and walk score (P1 on Android, P15)
+
+- **ACC-M18-1** In the Android app the Walk screen explains each permission before Android asks, then records the walk live (time, distance, pace, steps, cadence, active calories, the route as a line), pauses and resumes, and stops after a question
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > explains each permission before Android asks, then starts the walk
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > goes back to Start from the explanation
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > shows the time, distance, pace, steps, cadence, active calories and the route live
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > pauses and resumes
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > says what is missing without location and steps
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > asks before stopping, keeps walking on Keep walking, and shows the summary on Stop
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > saves on Save and goes Home
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > removes the walk on Discard, after asking
+  - Test: src/features/walk/WalkScreen.test.tsx > WalkScreen (P15-03) > keeps the walk when the summary is left with Back (Save is the default)
+  - Test: src/services/walks/service.test.ts > starting a walk > explains first when Android has not been asked, then asks and starts with the route
+  - Test: src/services/walks/service.test.ts > starting a walk > starts at once when Android was asked before, without the route when location was refused
+  - Test: src/services/walks/service.test.ts > starting a walk > starts with what was allowed when the person refuses in Android
+  - Test: src/services/walks/service.test.ts > starting a walk > goes back to idle from the explanation, and says so when the tracker cannot start
+  - Test: src/services/walks/service.test.ts > while walking > follows the tracker’s updates, and pauses and resumes
+  - Test: src/services/walks/service.test.ts > while walking > reads the walk again when the page comes back, finishing one stopped from the notification
+- **ACC-M18-2** A finished walk shows its score out of 100 with its four parts (brisk minutes, duration, intensity, pace) and what each means; a part that was not measured is left out
+  - Test: src/domain/walks/score.test.ts > walkScore > weighs brisk share 40, duration 25, intensity 20 and pace 15
+  - Test: src/domain/walks/score.test.ts > walkScore > gives each part its share
+  - Test: src/domain/walks/score.test.ts > walkScore > keeps the duration full past 30 minutes and every part within its weight
+  - Test: src/domain/walks/score.test.ts > walkScore > gives no pace points at 85 % of the average or slower
+  - Test: src/domain/walks/score.test.ts > walkScore > leaves the pace out with nothing to compare, and scales the rest to 100
+  - Test: src/domain/walks/score.test.ts > walkScore > leaves brisk out without steps or a route, and intensity out without a speed
+  - Test: src/domain/walks/score.test.ts > walkScore > gives no score when neither brisk minutes nor intensity was measured
+  - Test: src/domain/walks/score.test.ts > walkScore > scores an empty walk 0
+  - Test: src/domain/walks/score.test.ts > effortOf > reads under 3 METs as light, 3 to 6 as moderate, 6 and up as vigorous
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > shows the score large with its four parts and what each means
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > says why there is no score when nothing about the effort was measured
+- **ACC-M18-3** Distance leaves out poor fixes and the line across a pause; a minute is brisk at 100 steps a minute or more (4.8 km/h without steps); METs come from the 2024 Adult Compendium walking codes; calories are MET × kg × hours, active calories (MET − 1) × kg × hours
+  - Test: src/domain/walks/geo.test.ts > metresBetween > measures great-circle metres
+  - Test: src/domain/walks/geo.test.ts > countedMoves > adds up a steady walk
+  - Test: src/domain/walks/geo.test.ts > countedMoves > leaves out fixes worse than 50 m and positions that are not real
+  - Test: src/domain/walks/geo.test.ts > countedMoves > never adds up jitter while standing still
+  - Test: src/domain/walks/geo.test.ts > countedMoves > counts slow progress from the last counted point, not hop by hop
+  - Test: src/domain/walks/geo.test.ts > countedMoves > leaves out a jump faster than walking and keeps the anchor
+  - Test: src/domain/walks/geo.test.ts > countedMoves > does not count across a gap of more than a minute (a pause or a lost fix)
+  - Test: src/domain/walks/geo.test.ts > countedMoves > reads fixes in time order
+  - Test: src/domain/walks/stats.test.ts > walkStats on a steady walk > measures the distance, the active time and the pace
+  - Test: src/domain/walks/stats.test.ts > walkStats on a steady walk > counts the steps and the cadence, overall and minute by minute
+  - Test: src/domain/walks/stats.test.ts > walkStats on a steady walk > counts every minute as brisk at 110 steps a minute
+  - Test: src/domain/walks/stats.test.ts > walkStats on a steady walk > takes the speed from the route and the METs from the Compendium band
+  - Test: src/domain/walks/stats.test.ts > walkStats on a steady walk > works out the energy as MET × kg × hours and the active part as (MET − 1) × kg × hours
+  - Test: src/domain/walks/stats.test.ts > walkStats: brisk minutes > counts no brisk minute at 90 steps a minute
+  - Test: src/domain/walks/stats.test.ts > walkStats: brisk minutes > counts only the brisk part of a walk
+  - Test: src/domain/walks/stats.test.ts > walkStats: brisk minutes > uses 4.8 km/h along the route when steps are missing
+  - Test: src/domain/walks/stats.test.ts > walkStats with a pause > keeps the paused minutes out of the brisk minutes and the distance
+  - Test: src/domain/walks/stats.test.ts > walkStats without sensors > takes the speed from the steps and the height without location
+  - Test: src/domain/walks/stats.test.ts > walkStats without sensors > measures time only without both, at the METs of an ordinary walk, brisk unknown
+  - Test: src/domain/walks/stats.test.ts > walkStats without sensors > falls back to the steps when location was allowed but no fix came
+  - Test: src/domain/walks/stats.test.ts > walkStats: odd input > keeps the highest step count when a count goes down
+  - Test: src/domain/walks/stats.test.ts > walkStats: odd input > measures a live walk up to now, its last minute partial
+  - Test: src/domain/walks/stats.test.ts > walkStats: odd input > gives no energy without a weight and no cadence under 30 s
+  - Test: src/domain/walks/mets.test.ts > metForSpeed (2024 Adult Compendium walking codes) > lists the eight level-walking codes, slowest first, with their values
+  - Test: src/domain/walks/mets.test.ts > metForSpeed (2024 Adult Compendium walking codes) > reads each band from its lower speed in km/h
+  - Test: src/domain/walks/mets.test.ts > metForSpeed (2024 Adult Compendium walking codes) > reads the slowest band for no speed
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > explains brisk minutes by speed when there were no steps, in the person's unit
+- **ACC-M18-4** The week's moderate minutes (brisk minutes of recorded walks and other walking sessions in Health Connect that do not overlap them) are shown against 150 as a ring
+  - Test: src/domain/walks/week.test.ts > weekWalkingMinutes > aims at the WHO 150 minutes a week
+  - Test: src/domain/walks/week.test.ts > weekWalkingMinutes > adds the brisk minutes of recorded walks in the week
+  - Test: src/domain/walks/week.test.ts > weekWalkingMinutes > adds other apps' walking sessions whole, never one overlapping a recorded walk
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > shows the figures in the person’s units and the week’s moderate minutes as a ring
+- **ACC-M18-5** Heart-rate zones by % of 220 − age show only when Health Connect holds heart rate for the walk
+  - Test: src/domain/walks/heartRate.test.ts > heart-rate zones > takes 220 − age as the top and starts zones at 50, 60, 70, 80 and 90 %
+  - Test: src/domain/walks/heartRate.test.ts > heart-rate zones > adds each sample up to the next one, the last up to the end
+  - Test: src/domain/walks/heartRate.test.ts > heart-rate zones > lets one sample stand for 30 s at most, and leaves out samples outside the walk or the range
+  - Test: src/domain/walks/heartRate.test.ts > heart-rate zones > is null without a sample in the walk
+  - Test: src/services/walks/service.test.ts > stopping > keeps the heart-rate zones Health Connect holds for the walk while it is connected
+  - Test: src/services/walks/service.test.ts > stopping > reads no heart rate while Health Connect is not connected
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > shows the heart-rate zones only when Health Connect had heart rate for the walk
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > has no zones without heart rate
+- **ACC-M18-6** Walks are stored in a walks table (schema version 3) and travel in backups; a backup made before walks restores with none
+  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > is the current version and adds the walks table, keyed by id with an index on the start
+  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > carries the walks in backups and leaves the activity copy out
+  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > moves a version 2 database with rows in every table to version 3, every row kept and the walks table empty
+  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > moves a version 1 database straight to version 3
+  - Test: src/data/repos/walkRepo.test.ts > walkRepo (P15-02) > stores a walk and reads it back
+  - Test: src/data/repos/walkRepo.test.ts > walkRepo (P15-02) > lists every walk newest first, and the walks of some local days oldest first
+  - Test: src/data/repos/walkRepo.test.ts > walkRepo (P15-02) > refuses a walk that ends before it starts
+  - Test: src/data/repos/walkRepo.test.ts > walkRepo (P15-02) > removes a walk and marks one written to Health Connect
+  - Test: src/data/repos/walkRepo.test.ts > walkRepo (P15-02) > leaves an unreadable row out of every read and keeps it aside, never deleting it
+  - Test: src/data/codecs.test.ts > decodeWalk (P15-02) > reads a stored walk as it was written, unknown fields left behind
+  - Test: src/data/codecs.test.ts > decodeWalk (P15-02) > cannot read a walk without its id, start and end in order, or its active time
+  - Test: src/data/codecs.test.ts > decodeWalk (P15-02) > reads damaged figures leniently: unknown, default or left out
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > restores a file made before walks were recorded, leaving no walks (P15-02)
+  - Test: src/domain/walks/route.test.ts > thinRoute > keeps short routes whole and thins long ones to the cap, first and last kept
+  - Test: src/domain/walks/route.test.ts > encodeRoute and decodeRoute > round-trips a route to a metre and a second
+  - Test: src/domain/walks/route.test.ts > encodeRoute and decodeRoute > keeps negative and large changes
+  - Test: src/domain/walks/route.test.ts > encodeRoute and decodeRoute > is short: a 10-minute walk takes a few bytes a fix
+  - Test: src/domain/walks/route.test.ts > encodeRoute and decodeRoute > reads empty text as no route and refuses text it did not write
+  - Test: src/domain/walks/route.test.ts > routeShape > fits the route into the box, north up, and marks its start and end
+  - Test: src/domain/walks/route.test.ts > routeShape > draws no line for fewer than two fixes
+- **ACC-M18-7** Burn is never counted twice: with Health Connect connected the day's burn is Health Connect's alone (walks are written to it); without it the day's walks' active calories count in "goal + burned" when the switch is on
+  - Test: src/features/home/burn.test.ts > countedBurn > adds the day's active calories, rounded to whole kcal
+  - Test: src/features/home/burn.test.ts > countedBurn > adds nothing without active calories, for 0 or less, without a day or without a goal
+  - Test: src/features/home/burn.test.ts > walkBurn (P15-03) > adds the active calories of the day's recorded walks, rounded to whole kcal
+  - Test: src/features/home/burn.test.ts > walkBurn (P15-03) > adds nothing without walks, for 0 or less, or without a goal
+  - Test: src/features/home/burn.test.ts > burnSource (D-16.96) > counts Health Connect's day whenever it is connected, never the walks on top
+  - Test: src/features/home/burn.test.ts > burnSource (D-16.96) > counts the recorded walks without Health Connect, and nothing on the web
+  - Test: src/features/home/burn.test.ts > withBurn > raises only the energy target
+  - Test: src/features/home/HomePage.test.tsx > HomePage: walks on the Android app (P15-03) > counts the day's recorded walks without Health Connect, lists them and opens the Walk screen
+  - Test: src/features/home/HomePage.test.tsx > HomePage: walks on the Android app (P15-03) > keeps Health Connect's burn alone while it is connected: the walks are written there
+  - Test: src/features/home/HomePage.test.tsx > HomePage: walks on the Android app (P15-03) > counts no walk while counting is off
+  - Test: src/features/home/HomePage.test.tsx > HomePage: walks on the Android app (P15-03) > says a day without walks has none, and goes back to a walk in progress
+  - Test: src/features/home/ActivityCard.test.tsx > ActivityCard: walks (P15-03) > lists the day’s walks without Health Connect and has the Walk button, in miles for feet
+  - Test: src/features/home/ActivityCard.test.tsx > ActivityCard: walks (P15-03) > says there are no walks without Health Connect, and adds no line with it
+  - Test: src/features/home/ActivityCard.test.tsx > ActivityCard: walks (P15-03) > leaves out the distance of a walk without a route
+  - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage: walks (P15-03) > offers Count active calories for the recorded walks before Health Connect is connected
+- **ACC-M18-8** Save keeps the walk (and writes it to Health Connect when connected with write-back on); Discard removes it; walks Health Connect has not been given yet are written at start
+  - Test: src/services/walks/service.test.ts > Save and Discard > writes the walk to Health Connect on Save while connected with writing on
+  - Test: src/services/walks/service.test.ts > Save and Discard > keeps the walk without writing it when writing is off or Health Connect is not connected
+  - Test: src/services/walks/service.test.ts > Save and Discard > keeps the walk unwritten when Health Connect refuses it
+  - Test: src/services/walks/service.test.ts > Save and Discard > removes the walk on Discard
+  - Test: src/services/walks/service.test.ts > stopping > works the walk out, stores it and lets the tracker’s copy go
+  - Test: src/services/walks/service.test.ts > stopping > keeps the tracker’s copy when the walk cannot be stored, and finishes it on Try again
+  - Test: src/services/walks/healthLink.test.ts > healthWalkLink (P15-02) > writes only while connected with writing on
+  - Test: src/services/walks/healthLink.test.ts > healthWalkLink (P15-02) > writes a walk under its id, 0 m when it had no route
+  - Test: src/services/walks/healthLink.test.ts > healthWalkLink (P15-02) > reads heart rate as instants, none while not connected or when refused
+  - Test: src/services/walks/healthLink.test.ts > healthWalkLink (P15-02) > reads at most the first 24 h of a longer walk, as Health Connect answers no more
+  - Test: src/services/walks/healthLink.test.ts > healthWalkLink (P15-02) > reports a write Health Connect refused as not written, never throwing
+- **ACC-M18-9** A walk in progress is picked up when the app opens again, and a walk stopped from its notification opens its summary
+  - Test: src/services/walks/service.test.ts > open at start-up > finds nothing when the tracker holds no walk
+  - Test: src/services/walks/service.test.ts > open at start-up > picks up a walk in progress and follows it
+  - Test: src/services/walks/service.test.ts > open at start-up > finishes and shows a walk stopped from the notification while the app was away
+  - Test: src/services/walks/service.test.ts > open at start-up > writes the walks of the last ${CATCH_UP_DAYS} days Health Connect has not been given
+  - Test: src/services/walks/service.test.ts > open at start-up > never writes the walk the summary shows before Save or Discard
+  - Test: src/services/walks/service.test.ts > the tracker’s own rules > takes up the walk the tracker still holds when Start is pressed again
+  - Test: src/services/walks/service.test.ts > the tracker’s own rules > goes back to idle when Pause finds no walk (it was let go elsewhere)
+- **ACC-M18-10** Progress › Walks shows the week ring and the walks, each opening its summary; the summary compares the walk with the person's earlier walks
+  - Test: src/features/walk/WalkSummary.test.tsx > Progress › Walks (P15-03) > lists every walk newest first with its date, time, distance and score, and the week ring
+  - Test: src/features/walk/WalkSummary.test.tsx > Progress › Walks (P15-03) > opens a walk’s summary in a sheet
+  - Test: src/features/walk/WalkSummary.test.tsx > Progress › Walks (P15-03) > says there are no walks yet
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > compares the walk with the walks before it, or says it is the first
+  - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > says this is the first walk when there is none before it
+  - Test: src/domain/walks/record.test.ts > buildWalk > keeps every figure, the score and the route of a stopped walk
+  - Test: src/domain/walks/record.test.ts > buildWalk > compares the pace with the last earlier walks only
+  - Test: src/domain/walks/record.test.ts > earlierWalks and walkAverages > takes the 10 newest walks that ended before this one started
+  - Test: src/domain/walks/record.test.ts > earlierWalks and walkAverages > averages their minutes, distance, speed and score
+- **ACC-M18-11** The Coach reads recorded walks through a walk_log tool (the last 7 days by default, at most 90) and knows what the score means
+  - Test: src/services/coach/tools.test.ts > runCoachTool: walk_log (D-16.96) > gives the walks of the last 7 days by default, oldest first, one row each
+  - Test: src/services/coach/tools.test.ts > runCoachTool: walk_log (D-16.96) > holds at most the newest 90 days of a longer range and says how many it left out
+  - Test: src/services/coach/tools.test.ts > runCoachTool: walk_log (D-16.96) > says it needs the walk recorder where there is none (the web)
+  - Test: src/services/coach/tools.test.ts > runCoachTool: walk_log (D-16.96) > answers {error} instead of throwing when the walks cannot be read
+  - Test: src/services/coach/toolSchemas.test.ts > WALK_TOOL: the recorded walks (D-16.96) > is offered after activity and before the reminder tool, only where the app records walks
+  - Test: src/services/coach/toolSchemas.test.ts > WALK_TOOL: the recorded walks (D-16.96) > takes a from and to day range like activity_log, at most 90 days, portable keywords only
+  - Test: src/services/coach/toolSchemas.test.ts > WALK_TOOL: the recorded walks (D-16.96) > says what a row holds and that a missing day means no walk recorded
+  - Test: src/services/coach/engine.test.ts > runTurn: recorded walks (D-16.96) > offers walk_log with what the walk score means only when the snapshot holds walks
+  - Test: src/services/coach/context.test.ts > coachContext: recorded walks without Health Connect (D-16.96) > lists today's walks and counts their active calories in the target, as Home does
+  - Test: src/services/coach/context.test.ts > coachContext: recorded walks without Health Connect (D-16.96) > keeps the goal while counting is off, and says when no walk is recorded today
+  - Test: src/services/coach/context.test.ts > coachContext: recorded walks without Health Connect (D-16.96) > counts Health Connect's burn alone while it is connected
+  - Test: src/services/coach/context.test.ts > coachContext: recorded walks without Health Connect (D-16.96) > counts today's walks the way Home does (P15-03)
+  - Test: src/services/coach/snapshot.test.ts > takeSnapshot: recorded walks (D-16.96) > copies every recorded walk, newest first, where the app records walks
+  - Test: src/services/coach/snapshot.test.ts > takeSnapshot: recorded walks (D-16.96) > has no walks where nothing records them (the web), and none when they cannot be read
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: walks (P15, D-16.96) > says what walk_log gives and what the walk score means
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: walks (P15, D-16.96) > names exactly the tools offered with it
+  - Test: src/ai/prompts/coach.test.ts > coachSystemPrompt: walks (P15, D-16.96) > adds none of it where the app records no walks
+- **ACC-M18-12** The web app shows no walk recorder and fetches none of its code
+  - Test: src/services/walks/load.test.ts > loadWalks (P15-02) > fetches nothing and builds nothing on the web, where there is no Capacitor bridge
+  - Test: src/app/App.test.tsx > App > goes Home from #/walk where nothing records walks, as on the web (P15-03)
+  - Test: src/features/log/AddMenu.test.tsx > AddMenu: the walk recorder (P15-03) > has no Walk row without the walk recorder, as on the web
+  - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage: walks (P15-03) > keeps the options away before connecting where nothing records walks
+
 ## Known gaps
 
 Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and recorded in `docs/plan/16-what-we-change.md` §2.8 (N-ids) or §2.6 (D-ids). None of these is a P0/P1 row.

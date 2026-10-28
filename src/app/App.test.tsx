@@ -9,9 +9,11 @@ import { goals } from '../i18n/en/goals';
 import { onboarding } from '../i18n/en/onboarding';
 import { review } from '../i18n/en/review';
 import { shell } from '../i18n/en/shell';
+import { walk } from '../i18n/en/walk';
 import { fixedClock } from '../lib/clock';
 import type { AnalysisService, AnalysisState } from '../services/analysis';
 import { ServicesProvider, type Services } from '../services/context';
+import type { WalkService } from '../services/walks/service';
 import { makeAnalysisDraft } from '../test/factories';
 import { App } from './App';
 import { createAppState } from './appState';
@@ -67,6 +69,7 @@ beforeAll(async () => {
     import('../features/progress/ProgressPage'),
     import('../features/log/AnalysisOverlay'),
     import('../features/log/review/ReviewSheet'),
+    import('../features/walk/WalkScreen'),
   ]);
 });
 
@@ -125,6 +128,36 @@ describe('App', () => {
     expect(screen.getByRole('navigation')).toBeInTheDocument();
     expect(screen.getAllByRole('button')).toHaveLength(4);
     expect(document.documentElement.dataset.accent).toBe('ember');
+  });
+
+  it('goes Home from #/walk where nothing records walks, as on the web (P15-03)', () => {
+    const boot = controlledStore<BootState>();
+    const settings = controlledStore<ShellSettings>();
+    const { host } = renderApp({ boot, settings }, '#/walk');
+    act(() => {
+      settings.set(DEFAULT_SHELL_SETTINGS);
+      boot.set({ status: 'ready' });
+    });
+    expect(host.hash()).toBe('#/home');
+    expect(screen.getByRole('heading', { level: 1, name: common.common.tabs.home })).toBeVisible();
+    expect(document.querySelector('[data-ui="screen.walk"]')).toBeNull();
+  });
+
+  it('draws the walk screen without the tab bar where the app records walks (P15-03)', async () => {
+    const boot = controlledStore<BootState>();
+    const settings = controlledStore<ShellSettings>();
+    const idle = { kind: 'idle' };
+    const walks = {
+      subscribe: () => () => undefined,
+      getSnapshot: () => idle,
+    } as unknown as WalkService;
+    renderApp({ boot, settings }, '#/walk', { ...services, walks });
+    act(() => {
+      settings.set(DEFAULT_SHELL_SETTINGS);
+      boot.set({ status: 'ready' });
+    });
+    expect(await screen.findByRole('heading', { level: 1, name: walk.walk.title })).toBeVisible();
+    expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('shows the goal-reached dialog over a tab screen when a weigh-in reaches the goal', async () => {

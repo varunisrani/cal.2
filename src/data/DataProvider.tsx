@@ -9,6 +9,7 @@ import type { HealthRepo } from './repos/healthRepo';
 import type { ProfileRepo } from './repos/profileRepo';
 import type { SavedMealsRepo } from './repos/savedMealsRepo';
 import type { SettingsRepo } from './repos/settingsRepo';
+import type { WalkRepo } from './repos/walkRepo';
 import type { WaterRepo } from './repos/waterRepo';
 import type { WeightRepo } from './repos/weightRepo';
 
@@ -29,6 +30,8 @@ export interface DataSources {
   readonly coachRepo: Pick<CoachRepo, 'list'>;
   /** Health Connect's activity copy (P11-03): only the Android app has one. */
   readonly activityRepo?: Pick<HealthRepo, 'between'>;
+  /** The recorded walks (P15-02): only the Android app records them. */
+  readonly walkRepo?: Pick<WalkRepo, 'between' | 'list'>;
   /** Reads `meta.unreadableData`: true once anything stored could not be read. */
   readonly unreadableFlag: () => Promise<boolean>;
   /** Where "today" comes from when a hook is not given a day. */

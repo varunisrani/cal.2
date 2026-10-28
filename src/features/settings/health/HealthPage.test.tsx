@@ -6,6 +6,7 @@ import { health as healthCatalogue } from '../../../i18n/en/health';
 import { formatDay, formatTime } from '../../../i18n/format';
 import { ServicesProvider } from '../../../services/context';
 import { createHealthService, type HealthService } from '../../../services/health/service';
+import type { WalkService } from '../../../services/walks/service';
 import {
   fakeHealthPlugin,
   type FakeHealthPlugin,
@@ -23,12 +24,15 @@ interface PageSetup {
   readonly connected?: boolean;
   /** No health service at all, as on the web. */
   readonly withoutService?: boolean;
+  /** The app records walks (P15). */
+  readonly walks?: boolean;
 }
 
 async function openPage({
   plugin = fakeHealthPlugin(),
   connected = false,
   withoutService = false,
+  walks = false,
 }: PageSetup = {}) {
   const h = await openHarness({ hash: '#/settings/health-connect' });
   await h.repos.settingsRepo.set('health.connected', connected);
@@ -42,7 +46,8 @@ async function openPage({
     visibility: { isVisible: () => true, subscribe: () => () => undefined },
     watch: () => () => undefined,
   });
-  const services = withoutService ? h.services : { ...h.services, health: service };
+  const base = withoutService ? h.services : { ...h.services, health: service };
+  const services = walks ? { ...base, walks: {} as WalkService } : base;
   h.mount(
     <ServicesProvider services={services}>
       <HealthPage />
@@ -173,7 +178,7 @@ describe('HealthPage (P11-04)', () => {
     fireEvent.click(toggle(words.options.writeBack));
     await until(() => screen.queryByText(words.options.writeRefused) !== null);
     expect(plugin.callsOf('requestPermissions')).toEqual([
-      { read: [], write: ['nutrition', 'weight'] },
+      { read: [], write: ['nutrition', 'weight', 'walk'] },
     ]);
     expect(toggle(words.options.writeBack)).toHaveAttribute('aria-checked', 'false');
     expect(await h.repos.settingsRepo.get('health.writeBack')).toBe(false);
@@ -224,5 +229,25 @@ describe('HealthPage (P11-04)', () => {
     await openPage({ withoutService: true });
     await untilShown('[data-ui="health.unavailable"]');
     expect(stateOf('health.unavailable')).toBe(words.status.notSupported);
+  });
+});
+
+describe('HealthPage: walks (P15-03)', () => {
+  it('offers Count active calories for the recorded walks before Health Connect is connected', async () => {
+    const { h } = await openPage({ walks: true });
+    await untilStatus(words.status.notConnected);
+    await untilShown('[data-ui="health.countActive"]');
+    expect(screen.getByText(words.options.countWalksHint)).toBeVisible();
+    expect(screen.queryByRole('switch', { name: words.options.importWeights })).toBeNull();
+    expect(screen.queryByRole('switch', { name: words.options.writeBack })).toBeNull();
+    fireEvent.click(toggle(words.options.count));
+    await until(() => toggle(words.options.count).getAttribute('aria-checked') === 'false');
+    expect(await h.repos.settingsRepo.get('health.countActiveCalories')).toBe(false);
+  });
+
+  it('keeps the options away before connecting where nothing records walks', async () => {
+    await openPage();
+    await untilStatus(words.status.notConnected);
+    expect(document.querySelector('[data-ui="health.options"]')).toBeNull();
   });
 });

@@ -15,9 +15,12 @@
 // any overlap with the range. A day without entries is simply absent: no 0 kcal rows, no fasts
 // inferred from an empty day. Activity ranges default to the last 7 days and hold at most 90, the
 // newest kept; a day Health Connect had nothing for is absent too, and a value it did not have is
-// left out rather than written as 0.
+// left out rather than written as 0. `walk_log` (D-16.96) reads the recorded walks over the same
+// kind of range (last 7 days by default, at most the newest 90), a walk counting on the local day
+// it started; a figure that was not measured is left out.
 
 import type { ActivityRow, ActivitySession } from '../../data/schema';
+import type { Walk } from '../../domain/walks/model';
 import {
   addDays,
   dayKeyOf,
@@ -41,6 +44,7 @@ import {
   NUTRITION_TOOL_NAMES,
   REMINDER_TOOL_NAME,
   ROW_LIMITS,
+  WALK_TOOL_NAME,
   isLaterToolName,
   isNutritionToolName,
   type NutritionToolName,
@@ -68,6 +72,7 @@ const MS_PER_MINUTE = 60_000;
 function availableTools(snapshot: CoachSnapshot, desk: ReminderDesk | undefined): string {
   const names: string[] = [...NUTRITION_TOOL_NAMES];
   if (snapshot.activity !== null) names.push(ACTIVITY_TOOL_NAME);
+  if (snapshot.walks !== null) names.push(WALK_TOOL_NAME);
   if (desk !== undefined) names.push(REMINDER_TOOL_NAME);
   return `Available tools: ${names.join(', ')}.`;
 }
@@ -284,6 +289,39 @@ function activityLog(args: Args, activity: CoachActivity, today: DayKey): Payloa
   };
 }
 
+// ---- Walks ------------------------------------------------------------------------------------
+
+function walkRow(walk: Walk): Payload {
+  const row: Payload = {
+    date: dayKeyOf(walk.startedAt),
+    start: localTimestamp(walk.startedAt),
+    minutes: Math.round(walk.activeSeconds / 60),
+  };
+  if (walk.distanceM !== null) row.km = round(walk.distanceM / 1000, 2);
+  if (walk.steps !== null) row.steps = Math.round(walk.steps);
+  if (walk.briskKnown) row.briskMinutes = Math.round(walk.briskMinutes);
+  if (walk.score !== null) row.score = Math.round(walk.score);
+  row.activeKcal = Math.round(walk.activeKcal);
+  return row;
+}
+
+/** The recorded walks in the range, oldest first, one row each. */
+function walkLog(args: Args, walks: readonly Walk[], today: DayKey): Payload {
+  const range = activityRange(args, today);
+  const inRange = walks
+    .filter((walk) => inDays(walk.startedAt, range.from, range.to))
+    .sort((a, b) => a.startedAt - b.startedAt || compareText(a.id, b.id));
+  return {
+    from: range.from,
+    to: range.to,
+    count: inRange.length,
+    ...(range.omittedOlderDays > 0
+      ? { limited: true, omittedOlderDays: range.omittedOlderDays }
+      : {}),
+    items: inRange.map(walkRow),
+  };
+}
+
 // ---- The tools ------------------------------------------------------------------------------
 
 type Tool = (args: Args, snapshot: CoachSnapshot, today: DayKey) => Payload;
@@ -393,6 +431,13 @@ export function runCoachTool(
       return problem(UNREADABLE);
     }
   }
+  if (name === WALK_TOOL_NAME && snapshot.walks !== null) {
+    try {
+      return JSON.stringify(walkLog(argsOf(args), snapshot.walks.items, snapshotDay(snapshot)));
+    } catch {
+      return problem(UNREADABLE);
+    }
+  }
   if (name === REMINDER_TOOL_NAME && desk !== undefined) {
     try {
       return proposeReminder(args, desk);
@@ -408,6 +453,11 @@ export function runCoachTool(
     return problem(
       `The tool "${name}" needs Health Connect, which is only in the Android app and is not ` +
         `connected here. ${available}`,
+    );
+  }
+  if (name === WALK_TOOL_NAME) {
+    return problem(
+      `The tool "${name}" needs the walk recorder, which is only in the Android app. ${available}`,
     );
   }
   if (isLaterToolName(name)) {

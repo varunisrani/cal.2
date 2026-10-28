@@ -354,7 +354,15 @@ describe('connect and disconnect', () => {
 
     expect(plugin.callsOf('requestPermissions')).toEqual([
       {
-        read: ['steps', 'activeCalories', 'totalCalories', 'distance', 'exercise', 'weight'],
+        read: [
+          'steps',
+          'activeCalories',
+          'totalCalories',
+          'distance',
+          'exercise',
+          'weight',
+          'heartRate',
+        ],
         write: [],
       },
     ]);
@@ -440,7 +448,7 @@ describe('write-back (D-16.89)', () => {
     });
     expect(await service.setWriteBack(true)).toEqual({ kind: 'refused' });
     expect(plugin.callsOf('requestPermissions')).toEqual([
-      { read: [], write: ['nutrition', 'weight'] },
+      { read: [], write: ['nutrition', 'weight', 'walk'] },
     ]);
     expect(await settingsRepo.get('health.writeBack')).toBe(false);
   });

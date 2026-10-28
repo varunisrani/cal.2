@@ -19,6 +19,8 @@ import type {
   WaterLog,
   WeighIn,
 } from '../domain/model';
+import type { Walk } from '../domain/walks/model';
+import { encodeRoute } from '../domain/walks/route';
 import { PROFILE_KEY, type PhotoRow, type ProfileRow } from '../data/schema';
 
 /** The instant records default to: Monday 26 October 2026, 12:30 in New York (the test zone). */
@@ -188,6 +190,46 @@ export function makePhoto(overrides: Partial<PhotoRow> = {}): PhotoRow {
     height: 1536,
     bytes: blob.size,
     createdAt: FACTORY_NOW,
+    ...overrides,
+  };
+}
+
+/**
+ * A 30-minute recorded walk (P15-02) starting at `FACTORY_NOW`: 2.6 km, 3 300 steps, 25 brisk
+ * minutes, scored 81, a short route of three fixes; not written to Health Connect.
+ */
+export function makeWalk(overrides: Partial<Walk> = {}): Walk {
+  const startedAt = overrides.startedAt ?? FACTORY_NOW;
+  return {
+    id: nextId('walk'),
+    startedAt,
+    endedAt: startedAt + 32 * 60_000,
+    activeSeconds: 1_800,
+    distanceM: 2_600,
+    steps: 3_300,
+    speedFrom: 'route',
+    speedKmh: 5.2,
+    cadence: 110,
+    briskMinutes: 25,
+    briskKnown: true,
+    met: 3.8,
+    weightKg: 64,
+    kcal: 122,
+    activeKcal: 90,
+    score: 81,
+    parts: { brisk: 33.3, duration: 25, intensity: 9.4, pace: null },
+    paceRatio: null,
+    splits: {
+      metres: Array.from({ length: 32 }, () => 81),
+      steps: Array.from({ length: 32 }, () => 103),
+    },
+    route: encodeRoute([
+      { lat: 40.7128, lon: -74.006, sec: 0 },
+      { lat: 40.7178, lon: -74.004, sec: 600 },
+      { lat: 40.7201, lon: -73.997, sec: 1_800 },
+    ]),
+    heartRate: null,
+    writtenToHealth: false,
     ...overrides,
   };
 }

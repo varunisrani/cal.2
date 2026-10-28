@@ -16,6 +16,7 @@ import type {
   WaterLog,
   WeighIn,
 } from '../domain/model';
+import type { Walk } from '../domain/walks/model';
 
 export const DB_NAME = 'platewise';
 
@@ -42,16 +43,24 @@ export type TableName = keyof typeof TABLES;
 export const TABLE_NAMES = Object.keys(TABLES) as TableName[];
 
 /**
- * Tables added after version 1, each by its upgrade step below. They hold copies of data read from
- * elsewhere, so backups leave them out (`TABLE_NAMES` lists version 1's tables only).
+ * Tables added after version 1, each by its upgrade step below (`TABLE_NAMES` lists version 1's
+ * tables only). Backups carry only those in `KEPT_ADDED_TABLES`; the others hold copies of data
+ * read from elsewhere.
  */
 export const ADDED_TABLES = {
   /** Version 2 (P11-03): one row per local day of activity read from Health Connect. */
   activity: 'day',
+  /** Version 3 (P15-02): the walks recorded in the Android app, by start. */
+  walks: 'id, startedAt',
 } as const;
 
+export type AddedTableName = keyof typeof ADDED_TABLES;
+
+/** Added tables that hold the person's own records: backups carry them like version 1's. */
+export const KEPT_ADDED_TABLES = ['walks'] as const satisfies readonly AddedTableName[];
+
 /** Every table the current schema holds. */
-export type StoreName = TableName | keyof typeof ADDED_TABLES;
+export type StoreName = TableName | AddedTableName;
 
 // ---- Rows -----------------------------------------------------------------------------------
 
@@ -128,6 +137,9 @@ export interface ActivityRow {
   syncedAt: number;
 }
 
+/** A recorded walk as stored (P15-02): the record itself, keyed by its id. */
+export type WalkRow = Walk;
+
 /** The database with typed tables. */
 export type PlatewiseDb = Dexie & {
   profile: Table<ProfileRow, string>;
@@ -145,6 +157,7 @@ export type PlatewiseDb = Dexie & {
   quarantine: EntityTable<QuarantineRow, 'seq'>;
   meta: Table<KeyValueRow, string>;
   activity: Table<ActivityRow, string>;
+  walks: Table<WalkRow, string>;
 };
 
 // ---- Upgrades -------------------------------------------------------------------------------
@@ -165,6 +178,8 @@ export interface UpgradeStep {
 export const UPGRADES: readonly UpgradeStep[] = [
   // P11-03: the Health Connect activity copy. A new, empty table: nothing to move.
   { version: 2, stores: { activity: ADDED_TABLES.activity } },
+  // P15-02: the recorded walks. A new, empty table: nothing to move.
+  { version: 3, stores: { walks: ADDED_TABLES.walks } },
 ];
 
 /** The schema version the given steps lead to (1 with no steps). */

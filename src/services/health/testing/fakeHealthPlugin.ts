@@ -12,7 +12,9 @@ import type {
   HealthReadKind,
   HealthWeight,
   HealthWriteKind,
+  HeartRateSample,
   NutritionRecord,
+  WalkRecord,
   WeightRecord,
 } from '../contract';
 
@@ -25,6 +27,8 @@ export interface FakeHealthState {
   days: DailyTotals[];
   sessions: ExerciseSession[];
   weights: HealthWeight[];
+  /** Heart-rate samples (P15), answered for any time span that holds them. */
+  heartRate: HeartRateSample[];
   /**
    * The phone's clock, when the test gives one: like the native plugin, a write dated after it is
    * refused with `invalidInput`, and one such record fails the whole call. Null: no check.
@@ -46,6 +50,8 @@ export interface FakeHealthPlugin extends HealthConnectPlugin {
   readonly nutrition: Map<string, NutritionRecord>;
   /** Weight records written by Platewise, by client id. */
   readonly weightRecords: Map<string, WeightRecord>;
+  /** Walks written by Platewise (P15), by client id. */
+  readonly walks: Map<string, WalkRecord>;
   /** Changes what the fake answers from now on. */
   set(changes: Partial<FakeHealthState>): void;
   /** The next call of `method` rejects with `code` (once). */
@@ -53,8 +59,8 @@ export interface FakeHealthPlugin extends HealthConnectPlugin {
 }
 
 const EVERYTHING: HealthGrants = {
-  read: ['steps', 'activeCalories', 'totalCalories', 'distance', 'exercise', 'weight'],
-  write: ['nutrition', 'weight'],
+  read: ['steps', 'activeCalories', 'totalCalories', 'distance', 'exercise', 'weight', 'heartRate'],
+  write: ['nutrition', 'weight', 'walk'],
 };
 
 /** The totals' value kinds and the permission each needs. */
@@ -64,6 +70,8 @@ const TOTAL_KINDS: ReadonlyArray<[keyof DailyTotals, HealthReadKind]> = [
   ['totalKcal', 'totalCalories'],
   ['distanceM', 'distance'],
 ];
+
+const DAY_MS = 86_400_000;
 
 function rejection(code: HealthErrorCode): Error {
   return Object.assign(new Error(`Health Connect stand-in: ${code}`), { code });
@@ -78,6 +86,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
     days: [],
     sessions: [],
     weights: [],
+    heartRate: [],
     now: null,
     ...initial,
   };
@@ -85,6 +94,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
   const failures = new Map<keyof HealthConnectPlugin, HealthErrorCode>();
   const nutrition = new Map<string, NutritionRecord>();
   const weightRecords = new Map<string, WeightRecord>();
+  const walks = new Map<string, WalkRecord>();
 
   /** Records the call and throws a failure set for it. */
   function enter(method: keyof HealthConnectPlugin, arg?: unknown): void {
@@ -106,6 +116,7 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
     callsOf: (method) => calls.filter((call) => call.method === method).map((call) => call.arg),
     nutrition,
     weightRecords,
+    walks,
     set(changes) {
       Object.assign(state, changes);
     },
@@ -183,6 +194,29 @@ export function fakeHealthPlugin(initial: Partial<FakeHealthState> = {}): FakeHe
       enter('deleteWeight', o);
       if (!canWrite('weight')) throw rejection('permissionDenied');
       for (const id of o.clientIds) weightRecords.delete(id);
+    },
+    async writeWalk(o) {
+      enter('writeWalk', o);
+      if (!canWrite('walk')) throw rejection('permissionDenied');
+      // Like the native plugin: not in the future, and at most 24 h long.
+      if (inFuture(o.end) || Date.parse(o.end) - Date.parse(o.start) > DAY_MS) {
+        throw rejection('invalidInput');
+      }
+      walks.set(o.clientId, o);
+    },
+    async readHeartRate(o) {
+      enter('readHeartRate', o);
+      // Like the native plugin: no samples without the permission, and no window over 24 h.
+      if (!canRead('heartRate')) return { samples: [] };
+      if (Date.parse(o.end) - Date.parse(o.start) > DAY_MS) throw rejection('invalidInput');
+      const from = Date.parse(o.start);
+      const to = Date.parse(o.end);
+      return {
+        samples: state.heartRate.filter((sample) => {
+          const at = Date.parse(sample.t);
+          return at >= from && at <= to;
+        }),
+      };
     },
   };
 }

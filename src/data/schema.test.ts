@@ -15,6 +15,7 @@ import {
 import {
   ADDED_TABLES,
   DB_NAME,
+  KEPT_ADDED_TABLES,
   TABLES,
   TABLE_NAMES,
   UPGRADES,
@@ -74,6 +75,7 @@ describe('schema version 1', () => {
       quarantine: { key: 'seq', autoIncrement: true, indexes: ['at', 'table'] },
       meta: { key: 'key', autoIncrement: false, indexes: [] },
       activity: { key: 'day', autoIncrement: false, indexes: [] },
+      walks: { key: 'id', autoIncrement: false, indexes: ['startedAt'] },
     });
     const dayIndex = db.backendDB().transaction('entries').objectStore('entries');
     expect(dayIndex.index('[dayKey+loggedAt]').keyPath).toEqual(['dayKey', 'loggedAt']);
@@ -90,10 +92,9 @@ describe('schema version 1', () => {
 });
 
 describe('schema version 2 (P11-03)', () => {
-  it('is the current version and adds the activity table, keyed by day', () => {
-    expect(schemaVersion()).toBe(2);
-    expect(UPGRADES).toEqual([{ version: 2, stores: { activity: 'day' } }]);
-    expect(ADDED_TABLES).toEqual({ activity: 'day' });
+  it('adds the activity table, keyed by day', () => {
+    expect(UPGRADES[0]).toEqual({ version: 2, stores: { activity: 'day' } });
+    expect(ADDED_TABLES.activity).toBe('day');
   });
 
   it('moves a version 1 database with rows in every table to version 2, every row kept and the activity table empty', async () => {
@@ -104,12 +105,68 @@ describe('schema version 2 (P11-03)', () => {
     const seeded = await keysByTable(before);
     before.close();
 
-    const after = connect(factory, UPGRADES);
+    const after = connect(factory, UPGRADES.slice(0, 1));
     await after.open();
     expect(after.verno).toBe(2);
     const kept = await keysByTable(after);
     after.close();
     expect(kept).toEqual({ ...seeded, activity: [] });
+  });
+});
+
+describe('schema version 3 (P15-02)', () => {
+  it('is the current version and adds the walks table, keyed by id with an index on the start', () => {
+    expect(schemaVersion()).toBe(3);
+    expect(UPGRADES).toEqual([
+      { version: 2, stores: { activity: 'day' } },
+      { version: 3, stores: { walks: 'id, startedAt' } },
+    ]);
+    expect(ADDED_TABLES).toEqual({ activity: 'day', walks: 'id, startedAt' });
+  });
+
+  it('carries the walks in backups and leaves the activity copy out', () => {
+    expect(KEPT_ADDED_TABLES).toEqual(['walks']);
+  });
+
+  it('moves a version 2 database with rows in every table to version 3, every row kept and the walks table empty', async () => {
+    const factory = new IDBFactory();
+    const before = connect(factory, UPGRADES.slice(0, 1));
+    await before.open();
+    await seedEveryTable(before);
+    await before.activity.put({
+      day: '2026-10-26',
+      steps: 8000,
+      activeKcal: 300,
+      totalKcal: 2400,
+      distanceM: 6000,
+      sessions: [],
+      syncedAt: 0,
+    });
+    const seeded = await keysByTable(before);
+    before.close();
+
+    const after = connect(factory, UPGRADES);
+    await after.open();
+    expect(after.verno).toBe(3);
+    const kept = await keysByTable(after);
+    after.close();
+    expect(kept).toEqual({ ...seeded, walks: [] });
+  });
+
+  it('moves a version 1 database straight to version 3', async () => {
+    const factory = new IDBFactory();
+    const before = connect(factory, []);
+    await before.open();
+    await seedEveryTable(before);
+    const seeded = await keysByTable(before);
+    before.close();
+
+    const after = connect(factory, UPGRADES);
+    await after.open();
+    expect(after.verno).toBe(3);
+    const kept = await keysByTable(after);
+    after.close();
+    expect(kept).toEqual({ ...seeded, activity: [], walks: [] });
   });
 });
 

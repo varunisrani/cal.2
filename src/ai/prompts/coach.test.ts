@@ -288,3 +288,39 @@ describe('coachSystemPrompt: reminders (P13, D-16.93)', () => {
     }
   });
 });
+
+describe('coachSystemPrompt: walks (P15, D-16.96)', () => {
+  it('says what walk_log gives and what the walk score means', () => {
+    const text = coachSystemPrompt({ context: CONTEXT, walks: true });
+    expect(text).toContain('Walks recorded in Platewise:');
+    expect(text).toContain('walk_log gives each walk');
+    expect(text).toContain('The walk score, 0 to 100, says how effective a walk was');
+    expect(text).toContain('the share of brisk minutes counts most');
+    expect(text).toContain('toward the 150 minutes a week');
+    expect(text).toContain("already includes the active calories of today's walks");
+    expect(text.indexOf('Walks recorded in Platewise:')).toBeLessThan(
+      text.indexOf('Shaping answers:'),
+    );
+  });
+
+  it('names exactly the tools offered with it', () => {
+    for (const activity of [false, true]) {
+      const text = coachSystemPrompt({ context: CONTEXT, walks: true, activity, reminders: true });
+      const named = new Set(text.match(/\b[a-z]+(?:_[a-z0-9]+)+\b/g));
+      expect([...named].sort()).toEqual(
+        coachTools(activity, true, true)
+          .map((tool) => tool.name)
+          .sort(),
+      );
+    }
+  });
+
+  it('adds none of it where the app records no walks', () => {
+    for (const text of [
+      coachSystemPrompt({ context: CONTEXT }),
+      coachSystemPrompt({ context: CONTEXT, walks: false }),
+    ]) {
+      expect(text).not.toMatch(/walk_log|walk score|brisk/);
+    }
+  });
+});

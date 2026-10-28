@@ -6,6 +6,7 @@ import {
   parseHash,
   routeHash,
   tabRoute,
+  WALK_ROUTE,
   type Route,
   type Router,
 } from './router';
@@ -33,6 +34,7 @@ describe('parseHash', () => {
     ['#/settings/', tabRoute('settings')],
     ['#/settings/tab-bar', tabRoute('settings', 'tab-bar')],
     ['#/onboarding', ONBOARDING_ROUTE],
+    ['#/walk', WALK_ROUTE],
     ['', HOME_ROUTE],
     ['#', HOME_ROUTE],
     ['#/', HOME_ROUTE],
@@ -57,12 +59,13 @@ describe('parseHash', () => {
     '#/settings/units%20x',
     '#/settings/-units',
     '#/onboarding/step',
+    '#/walk/1',
   ])('names no route for %j', (hash) => {
     expect(parseHash(hash)).toBeNull();
   });
 
   it('writes every route back to the hash it was read from', () => {
-    for (const hash of ['#/home', '#/coach', '#/settings/units/weight', '#/onboarding']) {
+    for (const hash of ['#/home', '#/coach', '#/settings/units/weight', '#/onboarding', '#/walk']) {
       const route = parseHash(hash);
       expect(route && routeHash(route)).toBe(hash);
     }
@@ -363,5 +366,42 @@ describe('createRouter', () => {
     stop();
     host.back();
     expect(routeHash(router.current().route)).toBe('#/coach');
+  });
+});
+
+describe('the walk route (P15-03)', () => {
+  it('is pushed over the screen it was opened from, and Back goes there', () => {
+    const { host, router, at } = setup('#/home');
+    router.navigate(WALK_ROUTE);
+    expect(at()).toBe('#/walk');
+    expect(host.entries()).toEqual({ hashes: ['#/home', '#/walk'], index: 1 });
+    host.back();
+    expect(at()).toBe('#/home');
+  });
+
+  it('steps back to Home when the walk screen goes Home, adding no entry', () => {
+    const { host, router, at } = setup('#/home');
+    router.openSheet('nutrients');
+    router.navigate(WALK_ROUTE);
+    expect(host.entries().hashes).toEqual(['#/home', '#/walk']);
+    router.navigate(HOME_ROUTE);
+    expect(at()).toBe('#/home');
+    expect(host.entries()).toEqual({ hashes: ['#/home', '#/walk'], index: 0 });
+  });
+
+  it('takes its own place when the app opened on it, and ignores tab taps there', () => {
+    const { host, router, at } = setup('#/walk');
+    router.selectTab('progress');
+    expect(at()).toBe('#/walk');
+    router.navigate(HOME_ROUTE);
+    expect(at()).toBe('#/home');
+    expect(host.entries()).toEqual({ hashes: ['#/home'], index: 0 });
+  });
+
+  it('keeps one entry when opened twice', () => {
+    const { host, router } = setup('#/home');
+    router.navigate(WALK_ROUTE);
+    router.navigate(WALK_ROUTE);
+    expect(host.entries().hashes).toEqual(['#/home', '#/walk']);
   });
 });

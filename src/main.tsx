@@ -6,7 +6,7 @@ import { browserFetch } from './ai/transport';
 import { App } from './app/App';
 import { appState } from './app/appState';
 import type { ShellPorts } from './app/ports';
-import { HOME_ROUTE, createRouter, windowHost } from './app/router';
+import { HOME_ROUTE, WALK_ROUTE, createRouter, windowHost } from './app/router';
 import { installOffer } from './app/installOffer';
 import { appUpdates, registerServiceWorker } from './app/swRegistration';
 import { APP_VERSION } from './config/build';
@@ -80,6 +80,7 @@ import { createShellPorts, openErrorPorts, openingPorts } from './services/shell
 import { createStorageNudge } from './services/storageNudge';
 import { createTrackingSettingsService } from './services/trackingSettings';
 import { createTransferService } from './services/transfer/transfer';
+import { loadWalks } from './services/walks/load';
 import { createWaterService } from './services/water';
 import { createYourDataService, reloadOnWelcome } from './services/yourData';
 
@@ -248,6 +249,19 @@ async function start(): Promise<void> {
     return undefined;
   });
 
+  // P15: walks in the Android app only; the web build fetches none of their code.
+  const walks = await loadWalks({
+    db,
+    profileRepo,
+    settingsRepo,
+    clock: systemClock,
+    visibility: documentVisibility,
+    healthPlugin: health?.plugin,
+  }).catch((error: unknown) => {
+    console.error('Platewise: walks could not be set up', error);
+    return undefined;
+  });
+
   // P13: the reminders the person writes; Settings and the Coach's reminder cards share it.
   const customReminders = createCustomRemindersService({ settingsRepo, clock: systemClock });
 
@@ -379,6 +393,8 @@ async function start(): Promise<void> {
         waterRepo: createWaterRepo(db),
         // P13: the Coach reads Health Connect's activity copy in the Android app (D-16.94).
         activityRepo: health?.activityRepo,
+        // P15: the Coach reads the recorded walks where the app records them.
+        walkRepo: walks?.walkRepo,
         clock: systemClock,
       },
       aiAccess: createAiAccess({ settingsRepo, secretsRepo }),
@@ -416,6 +432,7 @@ async function start(): Promise<void> {
     // The "some saved data could not be read" notice's Dismiss (K9).
     damagedData: createDamagedDataService({ clearFlag: () => clearUnreadableFlag(db) }),
     health: health?.service,
+    walks: walks?.service,
     clock: systemClock,
   };
   const data: DataSources = {
@@ -430,6 +447,8 @@ async function start(): Promise<void> {
     coachRepo,
     // Only the Android app has the activity copy.
     activityRepo: health?.activityRepo,
+    // Only the Android app records walks.
+    walkRepo: walks?.walkRepo,
     unreadableFlag: () => hasUnreadableData(db),
     clock: systemClock,
   };
@@ -437,6 +456,10 @@ async function start(): Promise<void> {
   reminders.start();
   health?.service.start();
   autoBackup?.start();
+  // P15: a walk in progress, or one stopped from its notification, opens the Walk screen.
+  void walks?.service.open().then((found) => {
+    if (found !== 'none') router.navigate(WALK_ROUTE);
+  });
   // D-16.46: an analysis that finished before a reload opens its review again.
   analysis.restore().catch((error: unknown) => {
     console.error('Platewise: the stored analysis could not be read', error);

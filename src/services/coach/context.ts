@@ -8,11 +8,13 @@
 // workouts (type, time and length, never their titles), and whether "Count active calories" adds
 // today's active calories to the energy target, as Home does (D-16.94, D-16.89); what is left is
 // then worked out from that target. Without Health Connect nothing about activity or workouts
-// appears. Energy figures are kcal; a kJ reader's block adds the rule for answering in kJ.
+// appears, except where the app records walks (D-16.96): then today's walks are listed and, while
+// "Count active calories" is on, their active calories go on the target, as Home does. Energy
+// figures are kcal; a kJ reader's block adds the rule for answering in kJ.
 
 import type { ActivityRow } from '../../data/schema';
 import { ageOn } from '../../domain/dates/age';
-import { daysBetween, type DayKey } from '../../domain/dates/dayKey';
+import { dayKeyOf, daysBetween, type DayKey } from '../../domain/dates/dayKey';
 import { weekStart } from '../../domain/dates/week';
 import {
   DISAGREE_KG_PER_WEEK,
@@ -51,7 +53,13 @@ import {
   paragraphs,
   type DisplayUnits,
 } from '../../ai/prompts/shared';
-import { snapshotDay, type CoachActivity, type CoachSnapshot, type CoachWater } from './snapshot';
+import {
+  snapshotDay,
+  type CoachActivity,
+  type CoachSnapshot,
+  type CoachWalks,
+  type CoachWater,
+} from './snapshot';
 import type { NutritionToolName } from './toolSchemas';
 
 const WEEKDAYS = [
@@ -290,6 +298,26 @@ function todaySoFar(
   );
 }
 
+/**
+ * Whole kcal of today's recorded walks the energy target gains without Health Connect (Home's
+ * `walkBurn`, D-16.96), or null: Health Connect is connected (its burn counts instead), the app
+ * records no walks, the switch is off, the goal is not above 0, or today's walks add nothing.
+ */
+export function countedWalkKcal(
+  goalKcal: number,
+  activity: CoachActivity | null,
+  walks: CoachWalks | null,
+  today: DayKey,
+): number | null {
+  if (activity !== null || walks === null || !walks.countActive || !(goalKcal > 0)) return null;
+  let burned = 0;
+  for (const walk of walks.items) {
+    if (dayKeyOf(walk.startedAt) === today) burned += Math.max(0, walk.activeKcal);
+  }
+  const whole = Math.round(burned);
+  return whole > 0 ? whole : null;
+}
+
 /** "1800 kcal goal + 420 kcal active = 2220 kcal", or the goal alone, and why. */
 function countingLine(activity: CoachActivity, goalKcal: number, counted: number | null): string {
   const goal = `${num(Math.round(goalKcal), 0)} kcal goal`;
@@ -376,6 +404,40 @@ function activitySection(
   );
 }
 
+/** Today's recorded walks and what they add to the target, without Health Connect (D-16.96). */
+function walksSection(
+  walks: CoachWalks,
+  today: DayKey,
+  goalKcal: number,
+  counted: number | null,
+): string {
+  const todays = walks.items
+    .filter((walk) => dayKeyOf(walk.startedAt) === today)
+    .sort((a, b) => a.startedAt - b.startedAt)
+    .map((walk) => {
+      const parts = [`${Math.round(walk.activeSeconds / 60)} min`];
+      if (walk.distanceM !== null) parts.push(`${oneDecimal(walk.distanceM / METRES_PER_KM)} km`);
+      parts.push(`${Math.round(walk.activeKcal)} kcal active`);
+      if (walk.score !== null) parts.push(`walk score ${Math.round(walk.score)}`);
+      return `Walk at ${clockText(walk.startedAt)}: ${parts.join(', ')}`;
+    });
+  const goal = `${num(Math.round(goalKcal), 0)} kcal goal`;
+  let counting: string;
+  if (!walks.countActive) {
+    counting = `${COUNT_SWITCH} is off, so today's energy target is the ${goal}; walks are not added to it`;
+  } else if (counted === null) {
+    counting = `${COUNT_SWITCH} is on, but no walk adds active calories yet, so today's energy target is the ${goal}`;
+  } else {
+    counting =
+      `${COUNT_SWITCH} is on, so today's energy target is the ${goal} + ${counted} kcal from ` +
+      `today's walks = ${num(Math.round(goalKcal) + counted, 0)} kcal`;
+  }
+  return lines(
+    'Walks today, recorded in Platewise (Health Connect is not connected):',
+    bullets([...(todays.length > 0 ? todays : ['No walk recorded yet today']), counting]),
+  );
+}
+
 /** The kJ rule for people who read energy in kilojoules; nothing for kcal readers. */
 function kilojouleRule(snapshot: CoachSnapshot): string | undefined {
   const base = kilojouleLine(snapshot.units.energy);
@@ -393,7 +455,10 @@ export function coachContext(snapshot: CoachSnapshot): string {
   const targets = effectiveTargets(profile.saved, formulaPlan(profile, today));
   const { activity } = snapshot;
   const day = activity?.days.find((row) => row.day === today) ?? null;
-  const counted = countedActiveKcal(targets.kcal, activity, day);
+  const { walks } = snapshot;
+  const counted =
+    countedActiveKcal(targets.kcal, activity, day) ??
+    countedWalkKcal(targets.kcal, activity, walks, today);
   const todayTargets = counted === null ? targets : { ...targets, kcal: targets.kcal + counted };
   return paragraphs(
     todaySection(today, snapshot.timeZone, snapshot.now),
@@ -404,5 +469,6 @@ export function coachContext(snapshot: CoachSnapshot): string {
     dataSection(snapshot),
     todaySoFar(snapshot, today, todayTargets, counted),
     activity !== null && activitySection(snapshot, activity, day, targets.kcal, counted),
+    activity === null && walks !== null && walksSection(walks, today, targets.kcal, counted),
   );
 }

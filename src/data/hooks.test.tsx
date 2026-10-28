@@ -8,7 +8,7 @@ import { effectiveTargets } from '../domain/goals/targets';
 import type { WaterLog } from '../domain/model';
 import { fixedClock, type Clock } from '../lib/clock';
 import { countRuns, openTestDb } from '../test/db';
-import { FACTORY_NOW, makeCoachMessage, makeEntry, makeProfile } from '../test/factories';
+import { FACTORY_NOW, makeCoachMessage, makeEntry, makeProfile, makeWalk } from '../test/factories';
 import { DataProvider, type DataSources } from './DataProvider';
 import { createBus } from './bus';
 import { hasUnreadableData, settleQuarantine } from './guard';
@@ -27,6 +27,8 @@ import {
   useSettings,
   useTargets,
   useUnreadableFlag,
+  useWalkList,
+  useWalks,
   useWeighIns,
   type LiveState,
   type TargetsRead,
@@ -39,6 +41,7 @@ import { createHealthRepo } from './repos/healthRepo';
 import { createProfileRepo } from './repos/profileRepo';
 import { createSavedMealsRepo } from './repos/savedMealsRepo';
 import { createSettingsRepo } from './repos/settingsRepo';
+import { createWalkRepo } from './repos/walkRepo';
 import { createWaterRepo } from './repos/waterRepo';
 import { createWeightRepo } from './repos/weightRepo';
 import { PROFILE_KEY } from './schema';
@@ -332,6 +335,40 @@ describe('useActivity (P11-03)', () => {
     const { sources } = await setUp();
     const view = track(sources, () => useActivity(DAY, DAY), null);
     expect(view.renders[0]).toEqual({ status: 'ready', value: [] });
+  });
+});
+
+describe('useWalks and useWalkList (P15-02)', () => {
+  it("renders the day's walks and every walk, and follows a stored walk", async () => {
+    const { db, sources } = await setUp();
+    const walkRepo = createWalkRepo(db);
+    const older = makeWalk({ startedAt: FACTORY_NOW - 3 * DAY_MS });
+    await walkRepo.put(older);
+    const day = track({ ...sources, walkRepo }, () => useWalks(DAY, DAY), null);
+    const all = track({ ...sources, walkRepo }, () => useWalkList(), null);
+    await day.until(ready());
+    await all.until(ready(longer(0)));
+    expect(day.value()).toEqual([]);
+    expect(all.value()).toEqual([older]);
+
+    const today = makeWalk();
+    await act(() => walkRepo.put(today));
+    await day.until(ready(longer(0)));
+    await all.until(ready(longer(1)));
+    expect(day.value()).toEqual([today]);
+    expect(all.value()).toEqual([today, older]);
+  });
+
+  it('is empty at once where nothing records walks (the web)', async () => {
+    const { sources } = await setUp();
+    expect(track(sources, () => useWalks(DAY, DAY), null).renders[0]).toEqual({
+      status: 'ready',
+      value: [],
+    });
+    expect(track(sources, () => useWalkList(), null).renders[0]).toEqual({
+      status: 'ready',
+      value: [],
+    });
   });
 });
 

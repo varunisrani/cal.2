@@ -6,6 +6,7 @@ import {
   makeFast,
   makePhoto,
   makeProfile,
+  makeWalk,
   makeWater,
 } from '../test/factories';
 import {
@@ -19,6 +20,7 @@ import {
   decodePhoto,
   decodeProfile,
   decodeSavedMeal,
+  decodeWalk,
   decodeWater,
   decodeWeighIn,
   isBlobLike,
@@ -283,5 +285,54 @@ describe('coach and photo codecs', () => {
     expect(isBlobLike({ size: 1, type: '', arrayBuffer: () => undefined })).toBe(true);
     expect(isBlobLike({ size: 1, type: '' })).toBe(false);
     expect(isBlobLike(null)).toBe(false);
+  });
+});
+
+describe('decodeWalk (P15-02)', () => {
+  it('reads a stored walk as it was written, unknown fields left behind', () => {
+    const walk = makeWalk({
+      heartRate: { avgBpm: 118, maxBpm: 141, maxHr: 186, zoneSeconds: [60, 900, 600, 30, 0] },
+    });
+    expect(decodeWalk({ ...walk, extra: 'x' })).toEqual(walk);
+  });
+
+  it('cannot read a walk without its id, start and end in order, or its active time', () => {
+    const walk = makeWalk();
+    expect(decodeWalk({ ...walk, id: '' })).toBeNull();
+    expect(decodeWalk({ ...walk, startedAt: 'today' })).toBeNull();
+    expect(decodeWalk({ ...walk, endedAt: walk.startedAt - 1 })).toBeNull();
+    expect(decodeWalk({ ...walk, activeSeconds: -5 })).toBeNull();
+    expect(decodeWalk(null)).toBeNull();
+  });
+
+  it('reads damaged figures leniently: unknown, default or left out', () => {
+    const read = decodeWalk({
+      ...makeWalk(),
+      distanceM: 'far',
+      steps: -1,
+      speedFrom: 'teleport',
+      speedKmh: 5,
+      score: 140,
+      parts: { duration: 'x', brisk: 12 },
+      splits: { metres: [1, 'a'], steps: [3, 4] },
+      route: 42,
+      heartRate: { avgBpm: 120, maxBpm: 150, maxHr: 180, zoneSeconds: [1, 2] },
+      writtenToHealth: 'yes',
+      met: 0,
+    });
+    expect(read).toMatchObject({
+      distanceM: null,
+      steps: null,
+      speedFrom: 'none',
+      speedKmh: null,
+      score: null,
+      parts: { brisk: 12, duration: 0, intensity: null, pace: null },
+      splits: { metres: null, steps: [3, 4] },
+      route: '',
+      heartRate: null,
+      writtenToHealth: false,
+      met: 3,
+      briskKnown: true,
+    });
   });
 });

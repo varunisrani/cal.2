@@ -1,7 +1,9 @@
-import { render, screen, within } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import type { ActivityDay, ActivitySession } from '../../data/hooks';
 import { health } from '../../i18n/en/health';
+import { walk as walkWords } from '../../i18n/en/walk';
+import { makeWalk } from '../../test/factories';
 import { ActivityCard, workoutName } from './ActivityCard';
 import { distanceUnitOf } from './distance';
 
@@ -165,5 +167,74 @@ describe('workoutName', () => {
     expect(workoutName(session({ type: 'swimming_pool' }))).toBe(words.type.swimming);
     expect(workoutName(session({ type: 'weightlifting' }))).toBe(words.type.strength);
     expect(workoutName(session({ type: 'fencing' }))).toBe(words.type.other);
+  });
+});
+
+describe('ActivityCard: walks (P15-03)', () => {
+  const walkAt = Date.parse('2026-10-26T08:05:00-04:00');
+
+  it('lists the day’s walks without Health Connect and has the Walk button, in miles for feet', () => {
+    const onWalk = vi.fn();
+    render(
+      <ActivityCard
+        day={null}
+        energyUnit="kJ"
+        lengthUnit="ftIn"
+        healthConnected={false}
+        walks={[makeWalk({ startedAt: walkAt, distanceM: 2_600, activeKcal: 90 })]}
+        onWalk={onWalk}
+      />,
+    );
+    expect(within(card()).queryByText(words.empty)).toBeNull();
+    expect(
+      within(card()).getByRole('list', { name: walkWords.walk.home.heading }),
+    ).toHaveTextContent('8:05 AM: 30m, 1.6 mi, 377 kJ active');
+    fireEvent.click(within(card()).getByRole('button', { name: walkWords.walk.home.start }));
+    expect(onWalk).toHaveBeenCalledTimes(1);
+  });
+
+  it('says there are no walks without Health Connect, and adds no line with it', () => {
+    const { unmount } = render(
+      <ActivityCard
+        day={null}
+        energyUnit="kcal"
+        lengthUnit="cm"
+        healthConnected={false}
+        walks={[]}
+      />,
+    );
+    expect(within(card()).getByText(walkWords.walk.home.none)).toBeVisible();
+    expect(screen.queryByRole('button')).toBeNull();
+    unmount();
+
+    render(
+      <ActivityCard
+        day={day()}
+        energyUnit="kcal"
+        lengthUnit="cm"
+        walks={[]}
+        walking
+        onWalk={vi.fn()}
+      />,
+    );
+    expect(within(card()).queryByText(walkWords.walk.home.none)).toBeNull();
+    expect(within(card()).getByRole('button', { name: walkWords.walk.home.back })).toBeVisible();
+  });
+
+  it('leaves out the distance of a walk without a route', () => {
+    render(
+      <ActivityCard
+        day={null}
+        energyUnit="kcal"
+        lengthUnit="cm"
+        healthConnected={false}
+        walks={[
+          makeWalk({ startedAt: walkAt, distanceM: null, activeKcal: 61, activeSeconds: 1_260 }),
+        ]}
+      />,
+    );
+    expect(
+      within(card()).getByRole('list', { name: walkWords.walk.home.heading }),
+    ).toHaveTextContent('8:05 AM: 21m, 61 kcal active');
   });
 });

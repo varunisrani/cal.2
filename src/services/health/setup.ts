@@ -45,5 +45,5 @@ export function setUpHealth(
     visibility,
     watch: storedHealthWatch({ diaryRepo, weightRepo, clock, live }),
   });
-  return { service, activityRepo: healthRepo };
+  return { service, activityRepo: healthRepo, plugin };
 }

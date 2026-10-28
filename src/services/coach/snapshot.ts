@@ -2,8 +2,9 @@
 // when the person presses Send; the context block and every tool call of that turn then read only
 // this object, so a meal logged while the reply is pending shows up on the next question, and the
 // tools never disagree with the counts the context gave. In the Android app, while Health Connect
-// is connected, it also copies the activity days and the "Count active calories" switch (D-16.94).
-// Weights in the Coach are kg whatever was chosen before (D-16.91).
+// is connected, it also copies the activity days and the "Count active calories" switch (D-16.94),
+// and where the app records walks, every recorded walk (P15, D-16.96). Weights in the Coach are kg
+// whatever was chosen before (D-16.91).
 
 import { dayKeyOf, type DayKey } from '../../domain/dates/dayKey';
 import type {
@@ -23,8 +24,10 @@ import type { HealthRepo } from '../../data/repos/healthRepo';
 import type { ProfileRepo } from '../../data/repos/profileRepo';
 import type { SettingsRepo } from '../../data/repos/settingsRepo';
 import type { WaterRepo } from '../../data/repos/waterRepo';
+import type { WalkRepo } from '../../data/repos/walkRepo';
 import type { WeightRepo } from '../../data/repos/weightRepo';
 import type { ActivityRow } from '../../data/schema';
+import type { Walk } from '../../domain/walks/model';
 import type { Clock } from '../../lib/clock';
 
 /** Water as the settings and the log stand at send time. */
@@ -37,6 +40,14 @@ export interface CoachWater {
   readonly unit: WaterDisplayUnit;
   /** Water logs; only those on today's day key count. */
   readonly logs: readonly WaterLog[];
+}
+
+/** The recorded walks and the counting switch, as they stand at send time (P15, D-16.96). */
+export interface CoachWalks {
+  /** "Count active calories" is on: without Health Connect it counts the day's walks. */
+  readonly countActive: boolean;
+  /** Every recorded walk, newest first. */
+  readonly items: readonly Walk[];
 }
 
 /** Health Connect's activity copy and the counting switch, as they stand at send time. */
@@ -66,6 +77,8 @@ export interface CoachSnapshot {
   readonly water: CoachWater;
   /** Null on the web, and in the Android app while Health Connect is not connected. */
   readonly activity: CoachActivity | null;
+  /** The recorded walks (P15); null where the app records none (the web). */
+  readonly walks: CoachWalks | null;
 }
 
 /** The local day the snapshot was taken on. */
@@ -84,6 +97,8 @@ export interface SnapshotSources {
   readonly waterRepo: Pick<WaterRepo, 'byDay'>;
   /** Health Connect's activity copy: only the Android app has one. */
   readonly activityRepo?: Pick<HealthRepo, 'between'>;
+  /** The recorded walks (P15): only the Android app has them. */
+  readonly walkRepo?: Pick<WalkRepo, 'list'>;
   readonly clock: Clock;
 }
 
@@ -110,10 +125,24 @@ async function activityOf(sources: SnapshotSources): Promise<CoachActivity | nul
   }
 }
 
+/** Every recorded walk and the switch, or null without the walks (the web) or when unreadable. */
+async function walksOf(sources: SnapshotSources): Promise<CoachWalks | null> {
+  if (sources.walkRepo === undefined) return null;
+  try {
+    const [items, countActive] = await Promise.all([
+      sources.walkRepo.list(),
+      sources.settingsRepo.get('health.countActiveCalories'),
+    ]);
+    return { countActive, items };
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Copies the data one turn reads out of the stores, as they are now: every entry, weigh-in,
- * body-fat reading and tracked fast, today's water logs, the unit and water settings, and the
- * activity days when Health Connect is connected. Null when no readable profile is stored (the
+ * body-fat reading and tracked fast, today's water logs, the unit and water settings, the
+ * activity days when Health Connect is connected, and the recorded walks where there are any. Null when no readable profile is stored (the
  * context cannot be built without one).
  */
 export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnapshot | null> {
@@ -121,13 +150,14 @@ export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnaps
   const now = sources.clock.now();
   const profile = await sources.profileRepo.get();
   if (profile.kind !== 'ok') return null;
-  const [entries, weighIns, bodyFat, fasts, logs, activity] = await Promise.all([
+  const [entries, weighIns, bodyFat, fasts, logs, activity, walks] = await Promise.all([
     sources.diaryRepo.between(FIRST_DAY, LAST_DAY),
     sources.weightRepo.history(),
     sources.bodyFatRepo.history(),
     sources.fastRepo.list(),
     sources.waterRepo.byDay(dayKeyOf(now)),
     activityOf(sources),
+    walksOf(sources),
   ]);
   const [energy, height, on, goalMl, unit] = await Promise.all([
     settingsRepo.get('units.energy'),
@@ -147,5 +177,6 @@ export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnaps
     fasts,
     water: { on, goalMl, unit, logs },
     activity,
+    walks,
   };
 }

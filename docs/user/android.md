@@ -66,9 +66,11 @@ What each kind is for:
   following your height unit (centimetres or feet and inches).
 - **Workouts:** the day's workouts on Home, with their length and, when known, their calories.
 - **Weight:** weigh-ins from other apps and scales, added to your weight history.
+- **Heart rate:** read only for the time of a walk you record, for its heart-rate zones (see
+  [Walks](#walks)).
 
-Two more kinds, **Meals sent** and **Weigh-ins sent**, are write access. Platewise asks for them
-only when you turn on sending (below).
+Three more kinds, **Meals sent**, **Weigh-ins sent** and **Walks sent**, are write access.
+Platewise asks for them only when you turn on sending (below).
 
 ### The three switches
 
@@ -77,7 +79,7 @@ The **Options** card holds three switches:
 - **Count active calories** (on): adds the day's active calories to that day's calorie target on
   Home.
 - **Import weigh-ins** (on): adds weigh-ins from Health Connect to your weight history.
-- **Send meals and weigh-ins** (off): writes what you log in Platewise to Health Connect.
+- **Send meals, weigh-ins and walks** (off): writes what you log in Platewise to Health Connect.
 
 ### Sync
 
@@ -101,16 +103,17 @@ calories Health Connect has for that day. A line under the gauge shows the sum, 
 
 Turn the switch off to track against the goal alone.
 
-### Send meals and weigh-ins
+### Send meals, weigh-ins and walks
 
-Turning on **Send meals and weigh-ins** asks Health Connect for write access. If you allow
+Turning on **Send meals, weigh-ins and walks** asks Health Connect for write access. If you allow
 nothing, the switch stays off.
 
 Once it is on:
 
 - Each meal you log goes to Health Connect as a nutrition record: its name, calories, protein,
   carbs and fat, and the meal (breakfast, lunch, dinner or snack). Each weigh-in you enter in
-  Platewise goes as a weight record.
+  Platewise goes as a weight record. Each walk you save goes as a walking workout with its
+  distance and active calories (and its steps, when Health Connect allows them).
 - When you turn it on, the meals and weigh-ins of the last 30 days are sent.
 - Edits and deletes follow: editing a meal replaces its record in Health Connect, and deleting it
   removes the record. This works for the last 30 days; after that, Platewise stops tracking what
@@ -133,6 +136,70 @@ These are two different things:
   already read, and offers **Grant access**. Records Platewise wrote stay in Health Connect until
   you delete them there.
 
+## Walks
+
+Platewise can record a walk as you go: open **+ › Walk**, or press **Walk** on Home's activity
+card. The Walk screen shows the time, distance, pace, steps, cadence and active calories while you
+walk, and a line of your route.
+
+### Before your first walk
+
+Platewise explains, then Android asks, for:
+
+- **Location:** for distance, pace and the route line. Without it there is no distance or route;
+  time, steps and calories still count. Platewise uses your location only while a walk is being
+  recorded, never in the background otherwise.
+- **Physical activity:** for steps and cadence. Without it there are no steps, and brisk minutes
+  come from your speed.
+- **Notifications:** for the "Walk in progress" notification.
+
+### While you walk
+
+The walk keeps recording with the screen off and with Platewise in the background. The "Walk in
+progress" notification shows the time and distance or steps, with **Pause**, **Resume** and
+**Stop**. Paused time and the distance across a pause are not counted. If Android closes
+Platewise, the walk carries on, and opening Platewise again brings you back to it; a walk you stop
+from the notification opens its summary the next time you open Platewise.
+
+### How effective was your walk
+
+When you stop, Platewise shows a summary: the figures, the route, and a **walk score** out of 100
+made of four parts, each shown with what it means:
+
+- **Brisk minutes** (the largest part): minutes at 100 steps a minute or more, a common sign of
+  moderate effort; without steps, minutes at 4.8 km/h (3 mph) or faster.
+- **Duration:** progress toward 30 minutes.
+- **Intensity:** how hard the walk was, from your speed, in METs (from the 2024 Adult Compendium
+  of Physical Activities' walking codes).
+- **Pace:** your pace against your usual walks.
+
+A part that could not be measured (for example steps, without the physical activity permission)
+is left out and the others count for more. The summary also shows:
+
+- **This week:** your moderate minutes against the 150 a week the WHO recommends for adults. It
+  adds your brisk minutes from recorded walks and walking workouts other apps put in Health
+  Connect (not counted twice when they overlap a walk you recorded).
+- **Heart-rate zones**, when Health Connect has heart rate from a watch or band for the walk:
+  time in each zone, by percent of 220 minus your age.
+- **Compared with your walks:** pace, distance and score against your earlier walks.
+
+Calories are worked out from your weight, the walk's METs and its time: the active part (above
+what you would burn at rest) is the number shown and counted.
+
+Press **Save** to keep the walk, or **Discard** to remove it. Saved walks are in **Progress ›
+Walks**, each opening its summary, and the Coach can read them.
+
+### Walks and your calorie target
+
+Burn is never counted twice:
+
+- **With Health Connect connected**, the day's burn comes from Health Connect's active calories
+  alone. Turn on **Send meals, weigh-ins and walks** so the walks you save are written there and
+  counted; with it off, a walk counts only if another app on the phone recorded it too.
+- **Without Health Connect**, the active calories of the day's saved walks are added to that day's
+  target when **Count active calories** is on (Settings › Health Connect shows the switch even
+  before you connect).
+
 ## Privacy
 
 - What Platewise reads from Health Connect stays on the phone, in Platewise's own storage.
@@ -149,15 +216,20 @@ These are two different things:
 - Platewise's backup files leave out the daily activity read from Health Connect, because Health
   Connect keeps it; after a restore, connect again and it is read back. Imported weigh-ins are in
   your weight history, so backups keep them. The connection itself is not in a backup.
+- Walks, routes included, stay on the phone and are in your backups. The Coach gets each walk's
+  date, time, minutes, distance, steps, brisk minutes, score and active calories when it looks
+  them up, never the route.
+- Google Drive copies (Settings › Your data › Google Drive) are your backups, uploaded to your own
+  Drive; Platewise can see only the files it made there (see [Backup and restore](backup.md)).
 - Health Connect's permission screen links to a short note from Platewise about what it reads
   and writes.
 
 ## Limits
 
-- Reminders cannot be turned on in the Android app. Its built-in browser view has no
-  notifications, so Settings › Tracking & reminders and the onboarding step say reminders are not
-  available in the Android app yet, and the onboarding step offers no Turn on reminders button.
+- Reminders in the Android app are Android notifications and come with the app closed; Android
+  may deliver them a few minutes late to save battery.
 - Platewise has not yet been run on a real phone in this project. The app is built and its code is
   tested on a computer, against a stand-in for Health Connect; the first tests on a device are the
   owner's. Expect rough edges until then.
 - Health data is read for the last 30 days only, and only while the app is open.
+- The route is a line on a plain background: there is no map underneath yet.

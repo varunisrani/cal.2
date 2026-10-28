@@ -4,6 +4,7 @@
 // only the Android app asks for.
 
 import type { HealthRepo } from '../../data/repos/healthRepo';
+import type { HealthConnectPlugin } from './contract';
 import { isHealthAvailable } from './platform';
 import type { HealthBase } from './setup';
 import type { HealthService } from './service';
@@ -14,6 +15,8 @@ export type { HealthBase } from './setup';
 export interface HealthParts {
   readonly service: HealthService;
   readonly activityRepo: Pick<HealthRepo, 'between'>;
+  /** The plugin itself, for the walks' write and heart-rate read (P15, D-16.96). */
+  readonly plugin: HealthConnectPlugin;
 }
 
 /** Fetches the module that builds the parts; tests pass their own to see whether it was fetched. */

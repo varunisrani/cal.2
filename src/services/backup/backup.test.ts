@@ -76,6 +76,9 @@ describe('makeBackup', () => {
       appVersion: '0.1.0',
     });
     expect(Object.keys(frame.tables).sort()).toEqual([...BACKUP_TABLES].sort());
+    // The walks travel (P15-02); Health Connect's activity copy stays on the phone.
+    expect(frame.tables.walks!.map((row) => (row as { id: string }).id)).toEqual(['walk-1']);
+    expect(frame.tables.activity).toBeUndefined();
     expect(frame.tables.entries!.map((row) => (row as { id: string }).id).sort()).toEqual([
       'entry-lunch',
       'entry-yoghurt',

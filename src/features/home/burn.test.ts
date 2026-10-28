@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ActivityDay } from '../../data/hooks';
-import { countedBurn, withBurn } from './burn';
+import { burnSource, countedBurn, walkBurn, withBurn } from './burn';
 
 function day(activeKcal: number | null): ActivityDay {
   return {
@@ -24,6 +24,30 @@ describe('countedBurn', () => {
     expect(countedBurn(2_000, day(0.4))).toBeNull();
     expect(countedBurn(2_000, null)).toBeNull();
     expect(countedBurn(0, day(300))).toBeNull();
+  });
+});
+
+describe('walkBurn (P15-03)', () => {
+  it("adds the active calories of the day's recorded walks, rounded to whole kcal", () => {
+    expect(walkBurn(2_000, [{ activeKcal: 90.4 }, { activeKcal: 60.3 }])).toBe(151);
+  });
+
+  it('adds nothing without walks, for 0 or less, or without a goal', () => {
+    expect(walkBurn(2_000, [])).toBeNull();
+    expect(walkBurn(2_000, [{ activeKcal: 0.2 }])).toBeNull();
+    expect(walkBurn(0, [{ activeKcal: 120 }])).toBeNull();
+  });
+});
+
+describe('burnSource (D-16.96)', () => {
+  it("counts Health Connect's day whenever it is connected, never the walks on top", () => {
+    expect(burnSource(true, true)).toBe('health');
+    expect(burnSource(true, false)).toBe('health');
+  });
+
+  it('counts the recorded walks without Health Connect, and nothing on the web', () => {
+    expect(burnSource(false, true)).toBe('walks');
+    expect(burnSource(false, false)).toBe('none');
   });
 });
 

@@ -2,8 +2,8 @@ import type { MessageTree } from '../catalogue';
 
 /**
  * Words of the add menu (src/features/log/AddMenu.tsx): the default groups' names, the label a
- * group with a blank name shows, one label per logging method, and the water and fasting rows
- * under the food. The "+" button's own name is Home's (`home.add.label`).
+ * group with a blank name shows, one label per logging method, and the water, fasting and walk
+ * rows under the food. The "+" button's own name is Home's (`home.add.label`).
  */
 export const menu = {
   menu: {
@@ -33,6 +33,9 @@ export const menu = {
       cancelFast: 'Cancel fast',
       gone: 'That fast had already ended, so nothing changed.',
       failed: "The fast couldn't be changed. Please try again.",
+      // P15: the walk recorder, in the Android app only.
+      walk: 'Walk',
+      backToWalk: 'Back to your walk',
     },
   },
 } as const satisfies MessageTree;

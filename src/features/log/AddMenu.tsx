@@ -68,6 +68,10 @@ export interface AddMenuTrackers {
   readonly onCustomWater: () => void;
   /** Start fast: the menu has closed; the host shows the start sheet. */
   readonly onStartFast: () => void;
+  /** Opens the walk recorder (P15-03); without it there is no Walk row (the web). */
+  readonly onWalk?: () => void;
+  /** A walk is under way: the row goes back to it. */
+  readonly walking?: boolean;
 }
 
 export interface AddMenuProps {
@@ -98,7 +102,8 @@ export interface AddMenuProps {
  * Water (while water is tracked) opens the water page inside the menu; Start fast (fasting
  * tracked, none running) hands over to the start sheet; Fasting (a fast running) is a page with
  * End fast and Cancel fast, which act at once. While a fast runs the food is left off entirely
- * (the store refuses food then anyway, R05.1). With nothing to offer there is no button.
+ * (the store refuses food then anyway, R05.1). In the Android app a Walk row opens the walk
+ * recorder (P15-03). With nothing to offer there is no button.
  */
 export function AddMenu({
   label,
@@ -229,6 +234,16 @@ export function AddMenu({
       label: t('menu.tracker.startFast'),
       icon: <Icon name="hourglass" size={20} />,
       onSelect: onStartFast,
+    });
+  }
+
+  if (trackers?.onWalk) {
+    tracked.push({
+      kind: 'action',
+      id: 'walk',
+      label: t(trackers.walking ? 'menu.tracker.backToWalk' : 'menu.tracker.walk'),
+      icon: <Icon name="walk" size={20} />,
+      onSelect: trackers.onWalk,
     });
   }
 

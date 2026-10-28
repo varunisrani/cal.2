@@ -5,6 +5,26 @@ What changed in each release of Platewise, newest first. Version numbers follow
 
 ## Unreleased (1.3.0)
 
+### Walks in the Android app
+
+- **Record a walk** from + › Walk or Home's activity card: time, distance, pace, steps, cadence
+  and active calories as you go, and a line of your route. It keeps recording with the screen off
+  and in the background, with a "Walk in progress" notification (Pause, Resume, Stop); if Android
+  closes Platewise the walk carries on, and opening the app brings you back to it. Platewise
+  explains the location and physical-activity permissions before Android asks; a walk works
+  without either.
+- **How effective was your walk:** a walk score out of 100 from brisk minutes (100 steps a minute
+  or more, or 4.8 km/h without steps), duration toward 30 minutes, intensity (METs from your speed,
+  2024 Adult Compendium) and pace against your usual walks, each part explained; your week's
+  moderate minutes against the WHO's 150; heart-rate zones when Health Connect has heart rate for
+  the walk; and how it compares with your earlier walks.
+- Saved walks are in Progress › Walks and in your backups, and the Coach can look them up. With
+  Health Connect connected and sending on, a walk is written to Health Connect as a walking
+  workout and the day's burn stays Health Connect's; without Health Connect, the walk's active
+  calories count in "goal + burned". Burn is never counted twice.
+- Health Connect: Platewise can now also read heart rate (for walks) and write walks; the sending
+  switch is now **Send meals, weigh-ins and walks**.
+
 ### Google Drive backup in the Android app
 
 - Connect your Google Drive in Settings › Your data › Google Drive, through Google's own sign-in

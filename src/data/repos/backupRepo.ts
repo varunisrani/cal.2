@@ -17,18 +17,23 @@ import {
   decodePhoto,
   decodeProfile,
   decodeSavedMeal,
+  decodeWalk,
   decodeWater,
   decodeWeighIn,
   type Codec,
 } from '../codecs';
 import { GUARD_TABLES, WriteBlockedError, decodeRows, keepAside } from '../guard';
-import { PROFILE_KEY, type PlatewiseDb, type TableName } from '../schema';
+import { PROFILE_KEY, type PlatewiseDb, type TableName, type KEPT_ADDED_TABLES } from '../schema';
 import { isSettingKey, readSetting } from '../settingsSchema';
 import { decodeDraftRow } from './draftsRepo';
 import { RESTORING_FLAG } from './photoRepo';
 
-/** Tables a backup may carry: every table but the keys, the rows kept aside and device state. */
-export type BackupTable = Exclude<TableName, 'secrets' | 'quarantine' | 'meta'>;
+/**
+ * Tables a backup may carry: every table of version 1 but the keys, the rows kept aside and device
+ * state, and the added tables of the person's own records (the walks, P15-02).
+ */
+export type BackupTable =
+  Exclude<TableName, 'secrets' | 'quarantine' | 'meta'> | (typeof KEPT_ADDED_TABLES)[number];
 
 /** Rows by table. */
 export type TableRows = Partial<Record<BackupTable, readonly object[]>>;
@@ -66,6 +71,7 @@ export const BACKUP_CODECS: Readonly<Record<BackupTable, Codec<unknown>>> = {
   coachMessages: decodeCoachMessage,
   settings: decodeSettingRow,
   drafts: decodeDraftRow,
+  walks: decodeWalk,
 };
 
 export interface RestorePlan {

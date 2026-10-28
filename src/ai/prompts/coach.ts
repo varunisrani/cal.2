@@ -8,7 +8,8 @@
  * are named (R04.20), and `activity_log` when the turn offers it: in the Android app while Health
  * Connect is connected, when the rules for its figures come too (D-16.94); and `propose_reminder`
  * when the turn can take reminder proposals, with the rules that it only proposes, that nothing is
- * set until the person taps Add, and that a missing time or day is asked for (D-16.93). The names
+ * set until the person taps Add, and that a missing time or day is asked for (D-16.93); and
+ * `walk_log` where the app records walks, with a line on what the walk score means (D-16.96). The names
  * are written out here because the AI layer does not import the Coach service, and a test keeps
  * them equal to the tool schemas.
  */
@@ -30,6 +31,11 @@ export interface CoachPromptInput {
    * proposing one are added. Off by default.
    */
   readonly reminders?: boolean;
+  /**
+   * `walk_log` is offered (the app records walks): what the walk score and brisk minutes mean is
+   * added. Off by default.
+   */
+  readonly walks?: boolean;
 }
 
 const ROLE = lines(
@@ -86,6 +92,21 @@ const ACTIVITY = lines(
   ]),
 );
 
+const WALKS = lines(
+  'Walks recorded in Platewise:',
+  bullets([
+    'They can record walks in the app. walk_log gives each walk: minutes, km, steps, brisk ' +
+      'minutes, the walk score and active calories.',
+    'The walk score, 0 to 100, says how effective a walk was: the share of brisk minutes counts ' +
+      'most, then the length toward 30 minutes, then the effort from the speed, then the speed ' +
+      'against their own usual walks. A part that could not be measured is left out.',
+    'Brisk minutes count as moderate activity toward the 150 minutes a week that health ' +
+      'guidelines suggest. Use them, not the score, when they ask how active their week was.',
+    "When the facts above say a target already includes the active calories of today's walks, " +
+      'never add them a second time.',
+  ]),
+);
+
 const REMINDERS = lines(
   'Reminders:',
   bullets([
@@ -118,6 +139,7 @@ export function coachSystemPrompt(input: CoachPromptInput): string {
     lines('What you know about them, as of this message:', input.context),
     TOOLS,
     input.activity === true && ACTIVITY,
+    input.walks === true && WALKS,
     input.reminders === true && REMINDERS,
     SHAPES,
   );

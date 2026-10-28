@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultProfile, profileWith } from '../../domain/goals/__fixtures__/profiles';
-import { countedBurn } from '../../features/home/burn';
-import { makeBodyFat, makeProfile, makeWater } from '../../test/factories';
+import { countedBurn, walkBurn } from '../../features/home/burn';
+import { makeBodyFat, makeProfile, makeWalk, makeWater } from '../../test/factories';
 import {
   FIXTURE_FOOD_NAMES,
   SNAPSHOT_TODAY,
@@ -15,7 +15,7 @@ import {
   weighInOn,
   workoutOn,
 } from './__fixtures__/snapshot';
-import { coachContext, countedActiveKcal } from './context';
+import { coachContext, countedActiveKcal, countedWalkKcal } from './context';
 import type { CoachSnapshot } from './snapshot';
 
 /** Words that would point the model at workouts, which v1 does not have. */
@@ -398,6 +398,55 @@ describe('coachContext: Health Connect activity (D-16.94)', () => {
         expect(countedActiveKcal(goal, { ...on, countActive: false }, day)).toBeNull();
         expect(countedActiveKcal(goal, null, day)).toBeNull();
       }
+    }
+  });
+});
+
+describe('coachContext: recorded walks without Health Connect (D-16.96)', () => {
+  const todaysWalk = makeWalk({ startedAt: at(SNAPSHOT_TODAY, '08:05'), activeKcal: 90 });
+  const yesterdays = makeWalk({ startedAt: at('2026-10-25', '08:00'), activeKcal: 300 });
+  const walks = (countActive = true) => ({ countActive, items: [todaysWalk, yesterdays] });
+
+  it("lists today's walks and counts their active calories in the target, as Home does", () => {
+    const text = withActivity(null, { walks: walks() });
+    expect(text).toContain(
+      [
+        'Walks today, recorded in Platewise (Health Connect is not connected):',
+        '- Walk at 08:05: 30 min, 2.6 km, 90 kcal active, walk score 81',
+        '- "Count active calories" is on, so today\'s energy target is the 2452 kcal goal + 90 kcal from today\'s walks = 2542 kcal',
+      ].join('\n'),
+    );
+    expect(text).toContain(
+      "- Left of today's targets, active calories counted in: 1392 kcal, protein",
+    );
+    expect(text).not.toContain('300 kcal');
+  });
+
+  it('keeps the goal while counting is off, and says when no walk is recorded today', () => {
+    const off = withActivity(null, { walks: walks(false) });
+    expect(off).toContain(
+      '- "Count active calories" is off, so today\'s energy target is the 2452 kcal goal; walks are not added to it',
+    );
+    expect(off).toContain('- Left of the daily targets: 1302 kcal,');
+    const none = withActivity(null, { walks: { countActive: true, items: [yesterdays] } });
+    expect(none).toContain('- No walk recorded yet today');
+    expect(none).toContain('- Left of the daily targets: 1302 kcal,');
+  });
+
+  it("counts Health Connect's burn alone while it is connected", () => {
+    const text = withActivity(connectedActivity([activeToday()]), { walks: walks() });
+    expect(text).toContain('2452 kcal goal + 420 kcal active = 2872 kcal');
+    expect(text).not.toContain('Walks today');
+  });
+
+  it("counts today's walks the way Home does (P15-03)", () => {
+    for (const goal of [0, 1800]) {
+      expect(countedWalkKcal(goal, null, walks(), SNAPSHOT_TODAY)).toBe(
+        walkBurn(goal, [todaysWalk]),
+      );
+      expect(countedWalkKcal(goal, null, walks(false), SNAPSHOT_TODAY)).toBeNull();
+      expect(countedWalkKcal(goal, connectedActivity([]), walks(), SNAPSHOT_TODAY)).toBeNull();
+      expect(countedWalkKcal(goal, null, null, SNAPSHOT_TODAY)).toBeNull();
     }
   });
 });

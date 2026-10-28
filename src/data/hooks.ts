@@ -22,6 +22,7 @@ import type {
   WaterLog,
   WeighIn,
 } from '../domain/model';
+import type { Walk } from '../domain/walks/model';
 import { appBus } from './bus';
 import { useDataSources } from './DataProvider';
 import type { LiveState } from './live';
@@ -130,6 +131,29 @@ export function useActivity(firstKey: DayKey, lastKey: DayKey): LiveState<Activi
     [activityRepo, firstKey, lastKey],
   );
   return activityRepo ? read : NO_ACTIVITY;
+}
+
+const NO_WALKS: Walk[] = [];
+const NO_WALK_LIST: LiveState<Walk[]> = { status: 'ready', value: NO_WALKS };
+
+/**
+ * The walks recorded on the local days `firstKey`…`lastKey`, oldest first (P15-02). Always empty
+ * where nothing records walks (the web).
+ */
+export function useWalks(firstKey: DayKey, lastKey: DayKey): LiveState<Walk[]> {
+  const { walkRepo } = useDataSources();
+  const read = useLive(
+    () => (walkRepo ? walkRepo.between(firstKey, lastKey) : NO_WALKS),
+    [walkRepo, firstKey, lastKey],
+  );
+  return walkRepo ? read : NO_WALK_LIST;
+}
+
+/** Every recorded walk, newest first (P15-02); always empty where nothing records walks. */
+export function useWalkList(): LiveState<Walk[]> {
+  const { walkRepo } = useDataSources();
+  const read = useLive(() => (walkRepo ? walkRepo.list() : NO_WALKS), [walkRepo]);
+  return walkRepo ? read : NO_WALK_LIST;
 }
 
 /** The saved meals in the person's order. */

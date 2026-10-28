@@ -39,6 +39,8 @@ import {
   type WeighIn,
 } from '../domain/model';
 import { WEEKDAYS, isTimeOfDay, isWeekday } from '../domain/reminders/custom';
+import { UNMEASURED_WALK_MET } from '../domain/walks/mets';
+import type { SpeedSource, Walk, WalkHeartRate, WalkScoreParts } from '../domain/walks/model';
 import type { PhotoRow } from './schema';
 
 /** Reads a raw stored value into a record, or returns null when it is unreadable. */
@@ -467,4 +469,84 @@ export const decodePhoto: Codec<PhotoRow> = (raw) => {
   };
   put(photo, 'thumb', isBlobLike(fields.thumb) ? fields.thumb : undefined);
   return photo;
+};
+
+// ---- Walks --------------------------------------------------------------------------------------
+
+const SPEED_SOURCES: readonly SpeedSource[] = ['route', 'steps', 'none'];
+
+/** A number of 0 or more, else null. */
+function amountOrNull(value: unknown): number | null {
+  return amount(value) ?? null;
+}
+
+/** A list of numbers of 0 or more, else null (one bad item makes the list unreadable). */
+function amounts(value: unknown): number[] | null {
+  if (!Array.isArray(value)) return null;
+  const read = value.map(amount);
+  return read.every((item) => item !== undefined) ? (read as number[]) : null;
+}
+
+function decodeScoreParts(raw: unknown): WalkScoreParts {
+  const fields = fieldsOf(raw);
+  return {
+    brisk: amountOrNull(fields?.brisk),
+    duration: amount(fields?.duration) ?? 0,
+    intensity: amountOrNull(fields?.intensity),
+    pace: amountOrNull(fields?.pace),
+  };
+}
+
+function decodeHeartRate(raw: unknown): WalkHeartRate | null {
+  const fields = fieldsOf(raw);
+  const avgBpm = positive(fields?.avgBpm);
+  const maxBpm = positive(fields?.maxBpm);
+  const maxHr = positive(fields?.maxHr);
+  const zoneSeconds = amounts(fields?.zoneSeconds);
+  if (avgBpm === undefined || maxBpm === undefined || maxHr === undefined) return null;
+  if (zoneSeconds === null || zoneSeconds.length !== 5) return null;
+  return { avgBpm, maxBpm, maxHr, zoneSeconds };
+}
+
+/**
+ * A recorded walk (P15-02). Unreadable only without its id, its start and end (the end not before
+ * the start) or its active time; every figure after them reads leniently.
+ */
+export const decodeWalk: Codec<Walk> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const startedAt = finite(fields?.startedAt);
+  const endedAt = finite(fields?.endedAt);
+  const activeSeconds = amount(fields?.activeSeconds);
+  if (!fields || !rowId || startedAt === undefined || endedAt === undefined) return null;
+  if (endedAt < startedAt || activeSeconds === undefined) return null;
+  const distanceM = amountOrNull(fields.distanceM);
+  const steps = amountOrNull(fields.steps);
+  const speedFrom = SPEED_SOURCES.find((source) => source === fields.speedFrom) ?? 'none';
+  const score = amount(fields.score);
+  const splits = fieldsOf(fields.splits);
+  return {
+    id: rowId,
+    startedAt,
+    endedAt,
+    activeSeconds,
+    distanceM,
+    steps,
+    speedFrom,
+    speedKmh: speedFrom === 'none' ? null : (positive(fields.speedKmh) ?? null),
+    cadence: amountOrNull(fields.cadence),
+    briskMinutes: amount(fields.briskMinutes) ?? 0,
+    briskKnown: flag(fields.briskKnown, steps !== null || distanceM !== null),
+    met: positive(fields.met) ?? UNMEASURED_WALK_MET,
+    weightKg: amount(fields.weightKg) ?? 0,
+    kcal: amount(fields.kcal) ?? 0,
+    activeKcal: amount(fields.activeKcal) ?? 0,
+    score: score !== undefined && score <= 100 ? score : null,
+    parts: decodeScoreParts(fields.parts),
+    paceRatio: positive(fields.paceRatio) ?? null,
+    splits: { metres: amounts(splits?.metres), steps: amounts(splits?.steps) },
+    route: text(fields.route) ?? '',
+    heartRate: decodeHeartRate(fields.heartRate),
+    writtenToHealth: flag(fields.writtenToHealth, false),
+  };
 };

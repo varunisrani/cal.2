@@ -49,6 +49,9 @@ const ActivityHistoryCard = onDemand(() =>
   import('./ActivityHistoryCard').then((module) => module.ActivityHistoryCard),
 );
 
+// Progress › Walks (P15-03) exists only where the app records walks; fetched when first drawn.
+const WalksCard = onDemand(() => import('../walk/WalksCard').then((module) => module.WalksCard));
+
 const NO_WEIGH_INS: readonly WeighIn[] = [];
 const NO_BODY_FAT: readonly BodyFatReading[] = [];
 const NO_HISTORY: readonly HistoryReading[] = [];
@@ -89,7 +92,8 @@ function CountToday({ on, view, today, onChange }: CountTodayProps) {
 /**
  * The Progress tab: the recap, the range and its periods, the metric switch with the chosen
  * metric's card and history, the Count today switch and the nutrition cards, then, on the
- * Android app with Health Connect connected, the activity card (P11-04). Nothing with a
+ * Android app with Health Connect connected, the activity card (P11-04), and where the app records
+ * walks, the Walks card with the week's moderate minutes and every walk (P15-03). Nothing with a
  * number is drawn until the settings, the profile and every weigh-in and body-fat reading are
  * read. The range opens on 1W at every visit and is never stored; Count today is stored.
  */
@@ -196,6 +200,11 @@ export function ProgressPage() {
         {services.health && settings.value['health.connected'] ? (
           <Suspense fallback={null}>
             <ActivityHistoryCard today={today} />
+          </Suspense>
+        ) : null}
+        {services.walks ? (
+          <Suspense fallback={null}>
+            <WalksCard today={today} />
           </Suspense>
         ) : null}
         <LogWeightSheet

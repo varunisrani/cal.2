@@ -64,6 +64,8 @@ export function HealthPage() {
 }
 
 function HealthSettings({ health }: { readonly health: HealthService }) {
+  // P15-03: where the app records walks, counting also covers them while not connected.
+  const recordsWalks = useServices().walks !== undefined;
   const status = useSyncExternalStore(health.subscribe, health.getSnapshot);
   const settings = useSettings(SETTINGS);
   const toast = useToast();
@@ -198,7 +200,7 @@ function HealthSettings({ health }: { readonly health: HealthService }) {
         </Card>
       ) : null}
 
-      {connected ? (
+      {connected || recordsWalks ? (
         <Card
           heading={t('health.options.heading')}
           className={styles.listCard}
@@ -208,21 +210,25 @@ function HealthSettings({ health }: { readonly health: HealthService }) {
             {toggle(
               'health.countActiveCalories',
               'health.options.count',
-              'health.options.countHint',
+              connected ? 'health.options.countHint' : 'health.options.countWalksHint',
               'health.countActive',
             )}
-            {toggle(
-              'health.importWeights',
-              'health.options.importWeights',
-              'health.options.importWeightsHint',
-              'health.importWeights',
-            )}
-            {toggle(
-              'health.writeBack',
-              'health.options.writeBack',
-              'health.options.writeBackHint',
-              'health.writeBack',
-            )}
+            {connected ? (
+              <>
+                {toggle(
+                  'health.importWeights',
+                  'health.options.importWeights',
+                  'health.options.importWeightsHint',
+                  'health.importWeights',
+                )}
+                {toggle(
+                  'health.writeBack',
+                  'health.options.writeBack',
+                  'health.options.writeBackHint',
+                  'health.writeBack',
+                )}
+              </>
+            ) : null}
           </ul>
         </Card>
       ) : null}

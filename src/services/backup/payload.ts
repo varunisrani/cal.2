@@ -16,7 +16,7 @@
 import { barcodeKey } from '../../data/barcodeKey';
 import { isBlobLike } from '../../data/codecs';
 import { BACKUP_CODECS, type BackupTable } from '../../data/repos/backupRepo';
-import { PROFILE_KEY, TABLE_NAMES } from '../../data/schema';
+import { KEPT_ADDED_TABLES, PROFILE_KEY, TABLE_NAMES, type TableName } from '../../data/schema';
 import { isSettingKey, readSetting } from '../../data/settingsSchema';
 import type { CoachMessage, DiaryEntry } from '../../domain/model';
 import { isLocalSetting, isLocalTable } from './hash';
@@ -26,10 +26,15 @@ export const BACKUP_FORMAT = 'platewise-backup';
 /** The newest document version this build writes and reads. */
 export const BACKUP_VERSION = 1;
 
-/** The tables a backup carries, in schema order: every table but the device-local ones. */
-export const BACKUP_TABLES: readonly BackupTable[] = TABLE_NAMES.filter(
-  (name): name is BackupTable => !isLocalTable(name),
-);
+/**
+ * The tables a backup carries, in schema order: every table of version 1 but the device-local
+ * ones, then the added tables of the person's own records (the walks, P15-02). An older build
+ * reading a newer file skips a list it does not know.
+ */
+export const BACKUP_TABLES: readonly BackupTable[] = [
+  ...TABLE_NAMES.filter((name): name is Extract<BackupTable, TableName> => !isLocalTable(name)),
+  ...KEPT_ADDED_TABLES,
+];
 
 /** The table whose rows describe photo files instead of holding them. */
 export const PHOTO_TABLE = 'photos' satisfies BackupTable;

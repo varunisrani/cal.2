@@ -429,3 +429,33 @@ describe('AddMenu: water and fasting (P07-08)', () => {
     expect(toast()).toBe(tracker.failed);
   });
 });
+
+describe('AddMenu: the walk recorder (P15-03)', () => {
+  it('offers Walk last under the trackers in the Android app, and Back to your walk while one runs', () => {
+    const onWalk = vi.fn();
+    mount(DEFAULT_MENU_LAYOUT, { trackers: trackersWith({ fastingOn: true, onWalk }) });
+    open();
+    expect(rowNames()).toEqual([
+      words.group.snapScan,
+      words.group.describe,
+      words.group.reuse,
+      tracker.startFast,
+      tracker.walk,
+    ]);
+    expect(row(tracker.walk)).toHaveAttribute('data-ui', 'home.add.walk');
+    fireEvent.click(row(tracker.walk));
+    expect(onWalk).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+    cleanup();
+
+    mount(DEFAULT_MENU_LAYOUT, { trackers: trackersWith({ onWalk, walking: true }) });
+    open();
+    expect(rowNames()).toContain(tracker.backToWalk);
+  });
+
+  it('has no Walk row without the walk recorder, as on the web', () => {
+    mount(DEFAULT_MENU_LAYOUT, { trackers: trackersWith() });
+    open();
+    expect(rowNames()).not.toContain(tracker.walk);
+  });
+});

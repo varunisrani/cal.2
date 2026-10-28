@@ -110,6 +110,7 @@ export function makeSnapshot(changes: Partial<CoachSnapshot> = {}): CoachSnapsho
     fasts: [],
     water: { on: true, goalMl: 2000, unit: 'ml', logs: [] },
     activity: null,
+    walks: null,
     ...changes,
   };
 }

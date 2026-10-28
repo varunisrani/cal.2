@@ -12,7 +12,7 @@ import {
 } from '../../ai/testing/wire';
 import { addDays } from '../../domain/dates/dayKey';
 import type { CoachMessage } from '../../domain/model';
-import { makeCoachMessage } from '../../test/factories';
+import { makeCoachMessage, makeWalk } from '../../test/factories';
 import { advanceAsync, useFakeTime } from '../../test/time';
 import {
   SNAPSHOT_TODAY,
@@ -624,5 +624,34 @@ describe('runTurn: reminders the Coach proposes (P13, D-16.93)', () => {
     expect(await ask(fake)).toEqual(answered('I cannot set reminders here.'));
     const [stray] = toolResults(fake.requests[1]);
     expect(String(stray?.result.error)).toContain('is not available here');
+  });
+});
+
+describe('runTurn: recorded walks (D-16.96)', () => {
+  it('offers walk_log with what the walk score means only when the snapshot holds walks', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      { json: openAiToolCalls([{ id: 'w1', name: 'walk_log', args: {} }]) },
+      { json: openAiAnswer('You walked 30 minutes this morning.') },
+      { json: openAiAnswer('Noted.') },
+    );
+
+    await ask(fake, {
+      snapshot: makeSnapshot({ walks: { countActive: true, items: [makeWalk({ id: 'walk-a' })] } }),
+    });
+    await ask(fake);
+
+    const [android, , web] = fake.requests.map((request) => ({
+      tools: (bodyOf(request).tools as { function: { name: string } }[]).map(
+        (tool) => tool.function.name,
+      ),
+      system: String(messagesOf(request)[0]?.content),
+    }));
+    expect(android?.tools).toEqual([...NUTRITION_TOOL_NAMES, 'walk_log']);
+    expect(android?.system).toContain('Walks recorded in Platewise:');
+    const answer = messagesOf(fake.requests[1]).find((message) => message.role === 'tool');
+    expect(JSON.parse(String(answer?.content))).toMatchObject({ count: 1 });
+    expect(web?.tools).toEqual([...NUTRITION_TOOL_NAMES]);
+    expect(web?.system).not.toMatch(/walk_log|walk score/);
   });
 });

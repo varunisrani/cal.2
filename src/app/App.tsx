@@ -1,4 +1,4 @@
-import { Suspense, useSyncExternalStore } from 'react';
+import { Suspense, useLayoutEffect, useSyncExternalStore } from 'react';
 import { GoalReachedDialog } from '../features/goals/GoalReachedDialog';
 import { OnboardingRoute } from '../features/onboarding/OnboardingRoute';
 import { StorageNudge } from '../features/settings/data/StorageNudge';
@@ -15,7 +15,7 @@ import { InstallPrompt } from './InstallPrompt';
 import { onDemand } from './onDemand';
 import { ReminderBanners } from './ReminderBanners';
 import { ShellPortsContext, type ShellPorts } from './ports';
-import type { Router } from './router';
+import { HOME_ROUTE, type Router } from './router';
 import { Screen } from './Screen';
 import styles from './shell.module.css';
 import { TabBar } from './TabBar';
@@ -23,7 +23,7 @@ import { ThemeProvider } from './ThemeProvider';
 import { TodayProvider } from './TodayProvider';
 import { UpdateBanner } from './UpdateBanner';
 import { useKeyboardOpen } from './useKeyboardOpen';
-import { RouterProvider, useRoute } from './useRoute';
+import { RouterProvider, useRoute, useRouter } from './useRoute';
 import { useTuneUp } from './useTuneUp';
 
 export interface AppProps {
@@ -61,6 +61,20 @@ function AnalysisLayers({ analysis }: { readonly analysis: AnalysisService }) {
   );
 }
 
+// The walk recorder (P15): only the Android app has it; fetched the first time it opens.
+const WalkScreen = onDemand(() =>
+  import('../features/walk/WalkScreen').then((module) => module.WalkScreen),
+);
+
+/** `#/walk` where nothing records walks (the web): Home instead, and nothing is fetched. */
+function NoWalks() {
+  const router = useRouter();
+  useLayoutEffect(() => {
+    router.navigate(HOME_ROUTE, { replace: true });
+  }, [router]);
+  return null;
+}
+
 /** The weekly tune-up's triggers (P05-09): the tab frame shows only once onboarding is done. */
 function TuneUp({ runner }: { readonly runner: TuneUpRunner }) {
   useTuneUp({ runner, ready: true });
@@ -71,7 +85,8 @@ function TuneUp({ runner }: { readonly runner: TuneUpRunner }) {
  * The screen for the route: the onboarding wizard alone, or a tab screen over the tab bar with
  * the goal-reached dialog, which every weigh-in path raises (R01.11), the weekly tune-up, and the
  * one food-analysis overlay, whichever tab started it. While the on-screen keyboard is open the
- * frame says so (`data-keyboard="open"`), and the tab bar steps aside (P14).
+ * frame says so (`data-keyboard="open"`), and the tab bar steps aside (P14). The walk recorder
+ * (`#/walk`, P15) takes the screen's place without a tab bar, in the Android app only.
  */
 function Shell() {
   const route = useRoute();
@@ -89,7 +104,17 @@ function Shell() {
         <InstallPrompt />
         {/* Reminders shown in the app rather than by the browser (P09-09). */}
         <ReminderBanners />
-        <Screen route={route} />
+        {route.kind === 'walk' ? (
+          services?.walks ? (
+            <Suspense fallback={null}>
+              <WalkScreen />
+            </Suspense>
+          ) : (
+            <NoWalks />
+          )
+        ) : (
+          <Screen route={route} />
+        )}
         {/* Keep your diary safe, or time for a backup, under Home's diary (P09-15). */}
         <StorageNudge />
       </main>

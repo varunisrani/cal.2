@@ -41,10 +41,12 @@ export const health = {
         distance: 'Distance',
         exercise: 'Workouts',
         weight: 'Weight',
+        heartRate: 'Heart rate',
       },
       write: {
         nutrition: 'Meals sent',
         weight: 'Weigh-ins sent',
+        walk: 'Walks sent',
       },
     },
     options: {
@@ -52,9 +54,12 @@ export const health = {
       count: 'Count active calories',
       countHint:
         "Adds the day's active calories to your calorie target on Home. Your goal stays as it is.",
+      // P15: before Health Connect is connected, the switch counts the walks recorded here.
+      countWalksHint:
+        "Adds the active calories of the day's recorded walks to your calorie target on Home. Your goal stays as it is.",
       importWeights: 'Import weigh-ins',
       importWeightsHint: 'Adds weigh-ins from other apps to your weight history.',
-      writeBack: 'Send meals and weigh-ins',
+      writeBack: 'Send meals, weigh-ins and walks',
       writeBackHint: 'Writes what you log in Platewise to Health Connect.',
       writeRefused: 'No write access was given, so nothing is sent.',
       saveFailed: "That change wasn't saved. Please try again.",

@@ -30,6 +30,7 @@ import {
   makeProduct,
   makeProfile,
   makeSavedMeal,
+  makeWalk,
   makeWater,
   makeWeighIn,
 } from '../../../test/factories';
@@ -83,6 +84,17 @@ export async function seedStore(db: PlatewiseDb): Promise<Seeded> {
   await db.bodyFat.put(makeBodyFat({ id: 'bodyfat-1' }));
   await db.water.bulkPut([makeWater({ id: 'water-1' }), makeWater({ id: 'water-2', ml: 500 })]);
   await db.fasts.put(makeFast({ id: 'fast-1' }));
+  // A recorded walk travels in backups (P15-02); Health Connect's activity copy never does.
+  await db.walks.put(makeWalk({ id: 'walk-1', startedAt: FACTORY_NOW - 2 * DAY }));
+  await db.activity.put({
+    day: '2026-10-26',
+    steps: 9_000,
+    activeKcal: 320,
+    totalKcal: 2_350,
+    distanceM: 6_800,
+    sessions: [],
+    syncedAt: FACTORY_NOW,
+  });
 
   const coach = createCoachRepo(db, { clock, newId: withIdSequence('message') });
   await coach.append({

@@ -1,0 +1,464 @@
+/*
+ * The walk recorder (P15-03): the Walk screen (start, the explanation of the permissions, the walk
+ * in progress), the summary, the route line, the week ring and Progress's Walks card. Every value
+ * comes from tokens.css (the orange accent on the route, the ring and the score); logical
+ * properties throughout. The screen has no tab bar, so it keeps only the safe area at its foot.
+ */
+
+.page {
+  display: grid;
+  gap: var(--space-4);
+  padding-block-end: calc(var(--space-6) + var(--safe-bottom));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+}
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.lead {
+  margin: 0;
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.busy {
+  margin: 0;
+  padding-block: var(--space-8);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.idleIcon {
+  display: grid;
+  place-items: center;
+  justify-self: center;
+  inline-size: 4.5rem;
+  block-size: 4.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+/* ---- Permissions ------------------------------------------------------------------------------ */
+
+.reasons {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.reasons li {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.reasonName {
+  font-weight: var(--weight-semibold);
+}
+
+.reasonWhy {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* ---- The walk in progress --------------------------------------------------------------------- */
+
+.live {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.clockBlock {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+}
+
+.clockLabel {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+}
+
+.live[data-state='paused'] .clockLabel {
+  color: var(--accent);
+}
+
+.clock {
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.liveFigures,
+.figures {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.figure {
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+}
+
+.figureName {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.figureValue {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: var(--type-title);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Route ------------------------------------------------------------------------------------ */
+
+.routeCard {
+  padding: var(--space-2);
+}
+
+.route {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  border-radius: var(--radius-control);
+  background: var(--well);
+}
+
+.routePath {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.routeStart {
+  fill: var(--card);
+  stroke: var(--text);
+  stroke-width: 3;
+}
+
+.routeEnd {
+  fill: var(--text);
+  stroke: var(--card);
+  stroke-width: 2;
+}
+
+.routeHere {
+  fill: var(--accent);
+  stroke: var(--card);
+  stroke-width: 3;
+}
+
+.routeEmpty {
+  margin: 0;
+  padding: var(--space-6) var(--space-3);
+  border-radius: var(--radius-control);
+  background: var(--well);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  text-align: center;
+}
+
+/* ---- Summary ---------------------------------------------------------------------------------- */
+
+.summary {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.when {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+}
+
+.scoreBlock {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+  padding-block: var(--space-3);
+  text-align: center;
+}
+
+.scoreValue {
+  color: var(--accent);
+  font-size: var(--type-display);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreCaption {
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+}
+
+.scoreCaption span {
+  color: var(--text-muted);
+  font-weight: var(--weight-regular);
+}
+
+.section {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.sectionHeading {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-snug);
+}
+
+.parts {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.part {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+}
+
+.partName {
+  font-weight: var(--weight-semibold);
+}
+
+.partPoints {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The share of the part earned (or the time in a zone), on a quiet track the width of the row. */
+.track {
+  grid-column: 1 / -1;
+  display: block;
+  block-size: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--well);
+}
+
+.bar {
+  display: block;
+  block-size: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.partWhy {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.weekRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ring {
+  position: relative;
+  display: grid;
+  place-items: center;
+  inline-size: 7.5rem;
+  block-size: 7.5rem;
+}
+
+.ringArt {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.ringTrack {
+  fill: none;
+  stroke: var(--well);
+}
+
+.ringFill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+
+.ringText {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+
+.ringValue {
+  font-size: var(--type-figure);
+  font-weight: var(--weight-bold);
+  line-height: var(--leading-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+.ringGoal {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+}
+
+.zones {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.zone {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-1) var(--space-2);
+  font-size: var(--type-caption);
+}
+
+.zoneTime {
+  font-variant-numeric: tabular-nums;
+}
+
+.compare {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--type-body);
+  font-variant-numeric: tabular-nums;
+}
+
+.compare th,
+.compare td {
+  padding-block: var(--space-2);
+  border-block-end: 1px solid var(--line);
+  text-align: end;
+}
+
+.compare th[scope='row'],
+.compare thead th {
+  color: var(--text-muted);
+  font-weight: var(--weight-medium);
+}
+
+.compare th[scope='row'] {
+  text-align: start;
+}
+
+/* ---- Progress › Walks ------------------------------------------------------------------------- */
+
+.walksCard {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.walkList {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.walkRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  inline-size: 100%;
+  min-block-size: 3rem;
+  padding-block: var(--space-2);
+  border: 0;
+  border-block-end: 1px solid var(--line);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.walkRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.walkDay {
+  font-weight: var(--weight-semibold);
+}
+
+.walkFigures {
+  grid-column: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+.walkScore {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  color: var(--accent);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.walkRow svg {
+  grid-column: 3;
+  grid-row: 1 / span 2;
+  color: var(--text-muted);
+}

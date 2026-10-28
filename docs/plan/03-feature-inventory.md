@@ -259,15 +259,16 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | M15 | Workout illustrations of our own | P3 | M D | 07 §3.1a |
 | M16 | Cloud backup (Google Drive) and the welcome-back cloud restore | P1 on Android (P15, D-16.97) | M D | 06 §3.17; 01 §3.5 |
 | M17 | Passphrase lock for API keys | P3 (N-6) | M D | 03 Q7; 06 Q4 |
+| M18 | Walk recorder and walk score: a live walk (route, steps, pace), its score and the week's moderate minutes | P1 on Android (P15, D-16.96) | M | ours (the reference logs a walk by hand, N-1) |
 
 ## Counting it up
 
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 136 |
+| Tier P1 | 137 |
 | Tier P2 | 8 |
 | Tier P3 | 22 |
-| All tiers | 184 |
+| All tiers | 185 |
 
-Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11 and M16 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.
+Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16 and M18 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

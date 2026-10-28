@@ -1,10 +1,14 @@
 // The Health Connect plugin's contract (P11, D-16.89): the TypeScript side of the native plugin
 // the Android app registers as `HealthConnect`. Both slices code to it; the types below are the
-// phase file's, word for word, and the lists and helpers after them are ours.
+// phase file's, word for word, and the lists and helpers after them are ours. P15 (D-16.96) adds
+// the `heartRate` read kind, the `walk` write kind, `writeWalk` and `readHeartRate`, as its phase
+// file has them.
 
 export type HealthReadKind =
-  'steps' | 'activeCalories' | 'totalCalories' | 'distance' | 'exercise' | 'weight';
-export type HealthWriteKind = 'nutrition' | 'weight';
+  'steps' | 'activeCalories' | 'totalCalories' | 'distance' | 'exercise' | 'weight' | 'heartRate';
+// P15: 'walk' is needed by writeWalk (exercise, distance, active calories; steps are asked with it
+// and optional).
+export type HealthWriteKind = 'nutrition' | 'weight' | 'walk';
 export interface HealthConnectPlugin {
   availability(): Promise<{
     status: 'available' | 'notInstalled' | 'updateRequired' | 'notSupported';
@@ -56,6 +60,20 @@ export interface HealthConnectPlugin {
   deleteNutrition(o: { clientIds: string[] }): Promise<void>;
   writeWeight(o: { clientId: string; time: string; kg: number }): Promise<void>;
   deleteWeight(o: { clientIds: string[] }): Promise<void>;
+  // P15: a finished walk as an exercise session of type walking, with its distance, active
+  // calories and (when given) steps, under client ids made from `clientId`.
+  writeWalk(o: {
+    clientId: string;
+    start: string;
+    end: string;
+    distanceM: number;
+    activeKcal: number;
+    steps: number | null;
+  }): Promise<void>;
+  readHeartRate(o: {
+    start: string;
+    end: string;
+  }): Promise<{ samples: { t: string; bpm: number }[] }>;
 }
 
 // ---- Shapes named for the service ----------------------------------------------------------------
@@ -79,6 +97,10 @@ export type NutritionRecord = Parameters<
   HealthConnectPlugin['writeNutrition']
 >[0]['records'][number];
 export type WeightRecord = Parameters<HealthConnectPlugin['writeWeight']>[0];
+export type WalkRecord = Parameters<HealthConnectPlugin['writeWalk']>[0];
+export type HeartRateSample = Awaited<
+  ReturnType<HealthConnectPlugin['readHeartRate']>
+>['samples'][number];
 
 /** Every kind Platewise reads, in the order the Settings page lists them. */
 export const HEALTH_READ_KINDS: readonly HealthReadKind[] = [
@@ -88,10 +110,12 @@ export const HEALTH_READ_KINDS: readonly HealthReadKind[] = [
   'distance',
   'exercise',
   'weight',
+  // P15: for the heart-rate zones of a recorded walk.
+  'heartRate',
 ];
 
 /** Every kind Platewise may write (only while write-back is on). */
-export const HEALTH_WRITE_KINDS: readonly HealthWriteKind[] = ['nutrition', 'weight'];
+export const HEALTH_WRITE_KINDS: readonly HealthWriteKind[] = ['nutrition', 'weight', 'walk'];
 
 /** The codes a plugin call rejects with. */
 export const HEALTH_ERROR_CODES = [

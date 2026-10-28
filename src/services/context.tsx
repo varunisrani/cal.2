@@ -34,6 +34,7 @@ import type { ReprocessService } from './reprocess';
 import type { StorageNudge } from './storageNudge';
 import type { TrackingSettingsService } from './trackingSettings';
 import type { TransferService } from './transfer/transfer';
+import type { WalkService } from './walks/service';
 import type { WaterService } from './water';
 import type { YourDataService } from './yourData';
 
@@ -125,6 +126,11 @@ export interface Services {
    * show no health features, as on the web.
    */
   readonly health?: HealthService;
+  /**
+   * The walk recorder (P15, D-16.96): only the Android app has one. Without it Home, the + menu
+   * and Progress show no walk features, and `#/walk` goes Home, as on the web.
+   */
+  readonly walks?: WalkService;
   /** Where "now" comes from for the actions screens start. */
   readonly clock: Clock;
 }
