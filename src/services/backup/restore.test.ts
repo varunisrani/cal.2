@@ -3,12 +3,14 @@
 // thumbnails can be compared byte for byte.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBackupRepo } from '../../data/repos/backupRepo';
+import { createCoachRepo } from '../../data/repos/coachRepo';
 import { createFastRepo } from '../../data/repos/fastRepo';
 import { createPhotoRepo, RESTORING_FLAG } from '../../data/repos/photoRepo';
 import { createSettingsRepo } from '../../data/repos/settingsRepo';
 import type { PlatewiseDb } from '../../data/schema';
 import type { StorageEstimateResult } from '../../data/storage';
 import { eraseEverything } from '../../data/wipe';
+import { FIRST_CHAT_ID } from '../../domain/coach/chats';
 import { bytesOf, storableBlob } from '../../test/blobs';
 import { openTestDb } from '../../test/db';
 import { FACTORY_NOW, makeEntry, makeFast, makePhoto, makeWalk } from '../../test/factories';
@@ -149,6 +151,7 @@ describe('inspectBackup and applyBackup', () => {
       'bodyFat',
       'water',
       'walks',
+      'coachChats',
     ]) {
       expect(after[table], table).toEqual(before[table]);
     }
@@ -186,6 +189,71 @@ describe('inspectBackup and applyBackup', () => {
 
     expect(result.ok).toBe(true);
     expect(await target.db.walks.count()).toBe(0);
+  });
+
+  it('restores a file made by 1.3, its messages without chats, into one chat (P16-02)', async () => {
+    const source = await seededBackup();
+    // What 1.3 wrote: no chats list, no chat on a message; the hash over those lists.
+    const older = await rewrite(source.file, (doc) => {
+      delete doc.payload.tables.coachChats;
+      doc.payload.tables.coachMessages = doc.payload.tables.coachMessages!.map((row) => {
+        const { chatId: _chatId, ...message } = row as Record<string, unknown>;
+        return message;
+      });
+    });
+    const target = await otherStore();
+    await createCoachRepo(target.db).append(
+      { chatId: 'chat-here', role: 'user', text: 'Replaced by the restore', at: FACTORY_NOW },
+      { start: true },
+    );
+
+    const result = await applyBackup(await checked(older), applyDeps(target.db));
+
+    expect(result.ok).toBe(true);
+    const coach = createCoachRepo(target.db);
+    expect(await coach.chats()).toEqual([
+      {
+        id: FIRST_CHAT_ID,
+        title: 'Was this lunch balanced?',
+        titleByPerson: false,
+        createdAt: FACTORY_NOW,
+        updatedAt: FACTORY_NOW,
+      },
+    ]);
+    expect((await coach.list(FIRST_CHAT_ID)).map((message) => message.text)).toEqual([
+      'Was this lunch balanced?',
+      'Mostly: add some greens.',
+    ]);
+    expect(await target.db.coachMessages.count()).toBe(2);
+  });
+
+  it('gives a chat to messages whose chat the file does not list, rather than refusing it (P16-02)', async () => {
+    const source = await seededBackup();
+    const unlisted = await rewrite(source.file, (doc) => {
+      doc.payload.tables.coachChats = [];
+    });
+    const target = await otherStore();
+
+    const result = await applyBackup(await checked(unlisted), applyDeps(target.db));
+
+    expect(result.ok).toBe(true);
+    expect(await createCoachRepo(target.db).chats()).toEqual([
+      expect.objectContaining({ id: 'chat-lunch', title: 'Was this lunch balanced?' }),
+    ]);
+  });
+
+  it('refuses a file whose chat cannot be read, changing nothing (P16-02)', async () => {
+    const source = await seededBackup();
+    const damaged = await rewrite(source.file, (doc) => {
+      doc.payload.tables.coachChats = [{ id: 'chat-lunch', title: 'No times' }];
+    });
+    const target = await otherStore();
+
+    expect(await inspectBackup(damaged, { storage: storageWith(PLENTY) })).toEqual({
+      ok: false,
+      error: 'damaged',
+    });
+    expect(await storedTables(target.db)).toEqual(target.before);
   });
 
   it('shows what the file holds before anything changes (R06.8, ACC-K4-1)', async () => {

@@ -11,6 +11,7 @@
 import { systemClock, type Clock } from '../../lib/clock';
 import {
   decodeBodyFat,
+  decodeCoachChat,
   decodeCoachMessage,
   decodeEntry,
   decodeFast,
@@ -30,7 +31,8 @@ import { RESTORING_FLAG } from './photoRepo';
 
 /**
  * Tables a backup may carry: every table of version 1 but the keys, the rows kept aside and device
- * state, and the added tables of the person's own records (the walks, P15-02).
+ * state, and the added tables of the person's own records (the walks, P15-02; the Coach's chats,
+ * P16-02).
  */
 export type BackupTable =
   Exclude<TableName, 'secrets' | 'quarantine' | 'meta'> | (typeof KEPT_ADDED_TABLES)[number];
@@ -72,6 +74,7 @@ export const BACKUP_CODECS: Readonly<Record<BackupTable, Codec<unknown>>> = {
   settings: decodeSettingRow,
   drafts: decodeDraftRow,
   walks: decodeWalk,
+  coachChats: decodeCoachChat,
 };
 
 export interface RestorePlan {

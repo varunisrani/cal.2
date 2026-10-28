@@ -10,7 +10,13 @@ import { CUSTOM_REMINDER_LIMIT, WEEKDAYS } from '../../domain/reminders/custom';
 import { withIdSequence } from '../../lib/ids';
 import { makeProfile } from '../../test/factories';
 import { createFakeCodec, type FakeCodec } from '../../test/fakeImageCodec';
-import { SNAPSHOT_TODAY, activityOn, entryOn, fixtureDiary } from './__fixtures__/snapshot';
+import {
+  SNAPSHOT_NOW,
+  SNAPSHOT_TODAY,
+  activityOn,
+  entryOn,
+  fixtureDiary,
+} from './__fixtures__/snapshot';
 import { closeAll, openCoachStores, type CoachStores } from './__fixtures__/stores';
 import type { StoredAiAccess } from '../aiAccess';
 import { createCustomRemindersService } from '../reminders/customReminders';
@@ -21,6 +27,9 @@ const ANTHROPIC = 'https://api.anthropic.com/v1/messages';
 const MISTRAL_KEY = 'mi-session-key-6610';
 const ANTHROPIC_KEY = 'an-session-key-2294';
 const PHOTO_ONLY = 'Look at the attached photo, please.';
+
+/** The chat most tests ask in. */
+const CHAT = 'chat-1';
 
 const SETTINGS: AiSettings = {
   ...DEFAULT_AI_SETTINGS,
@@ -59,6 +68,52 @@ function heldFetch(inner: typeof fetch) {
   return { fetch: held, reached, release: () => open() };
 }
 
+/** The words of the question a request asks: its last message's text. */
+function askedIn(init: RequestInit | undefined): string {
+  const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Json) : {};
+  const last = (body.messages as Json[] | undefined)?.at(-1)?.content;
+  return typeof last === 'string' ? last : '';
+}
+
+/**
+ * A fetch that keeps each request waiting until its question is released (or it is aborted),
+ * then hands it to the fake: a test decides which of several chats' requests gets through first,
+ * and so which scripted answer it takes.
+ */
+function gatedFetch(inner: typeof fetch) {
+  const doors = new Map<
+    string,
+    { arrive: () => void; open: () => void; reached: Promise<void>; gate: Promise<void> }
+  >();
+  const door = (question: string) => {
+    let found = doors.get(question);
+    if (found === undefined) {
+      let arrive = (): void => undefined;
+      let open = (): void => undefined;
+      const reached = new Promise<void>((resolve) => (arrive = resolve));
+      const gate = new Promise<void>((resolve) => (open = resolve));
+      found = { arrive: () => arrive(), open: () => open(), reached, gate };
+      doors.set(question, found);
+    }
+    return found;
+  };
+  const gated: typeof fetch = async (input, init) => {
+    const held = door(askedIn(init));
+    held.arrive();
+    await new Promise<void>((resolve) => {
+      void held.gate.then(resolve);
+      if (init?.signal?.aborted) resolve();
+      init?.signal?.addEventListener('abort', () => resolve(), { once: true });
+    });
+    return inner(input, init);
+  };
+  return {
+    fetch: gated,
+    reached: (question: string) => door(question).reached,
+    release: (question: string) => door(question).open(),
+  };
+}
+
 /** Every photo decodes for the model as 4 000 × 3 000; records what it is drawn at. */
 function modelBackend() {
   const drawn: { width: number; height: number; quality: number }[] = [];
@@ -84,6 +139,7 @@ interface Harness {
   readonly codec: FakeCodec;
   readonly drawn: { width: number; height: number; quality: number }[];
   readonly hold?: ReturnType<typeof heldFetch>;
+  readonly gate?: ReturnType<typeof gatedFetch>;
   /** The activity copy, when `activityCopy` asked for one. */
   readonly activityRepo?: ReturnType<typeof createHealthRepo>;
   /** How often subscribers heard a change. */
@@ -97,6 +153,8 @@ interface SetUpOptions {
   readonly settings?: AiSettings;
   /** Hold every request until released. */
   readonly hold?: boolean;
+  /** Hold each request until its question is released. */
+  readonly gate?: boolean;
   /** Store the profile (true by default). */
   readonly profile?: boolean;
   /** Give the session an activity copy, as the Android app does (none by default: the web). */
@@ -112,6 +170,7 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
   await stores.diaryRepo.addMany(fixtureDiary());
   const fake = fakeFetch();
   const hold = options.hold ? heldFetch(fake.fetch) : undefined;
+  const gate = options.gate ? gatedFetch(fake.fetch) : undefined;
   const codec = createFakeCodec();
   const { backend, drawn } = modelBackend();
   const access: StoredAiAccess = {
@@ -126,7 +185,7 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
     coachRepo: stores.coachRepo,
     data: activityRepo === undefined ? stores.sources : { ...stores.sources, activityRepo },
     aiAccess: () => Promise.resolve(access),
-    fetch: hold?.fetch ?? fake.fetch,
+    fetch: hold?.fetch ?? gate?.fetch ?? fake.fetch,
     photoOnlyText: () => PHOTO_ONLY,
     codec: codec.codec,
     imageBackend: backend,
@@ -139,17 +198,18 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
           }),
         }
       : {}),
+    newId: withIdSequence('chat'),
   });
   let changes = 0;
   session.subscribe(() => {
     changes += 1;
   });
-  return { stores, session, fake, codec, drawn, hold, activityRepo, changes: () => changes };
+  return { stores, session, fake, codec, drawn, hold, gate, activityRepo, changes: () => changes };
 }
 
-/** The stored conversation as side, words and failure mark. */
-async function chat(stores: CoachStores) {
-  return (await stores.coachRepo.list()).map((message) => ({
+/** A chat's stored messages (the main test chat's by default) as side, words and failure mark. */
+async function chat(stores: CoachStores, chatId = CHAT) {
+  return (await stores.coachRepo.list(chatId)).map((message) => ({
     role: message.role,
     text: message.text,
     ...(message.state ? { state: message.state } : {}),
@@ -161,12 +221,12 @@ describe('createCoachSession: send (04 §3.6)', () => {
     const h = await setUp();
     h.fake.on(MISTRAL, { json: openAiAnswer('  About 1 650 kcal so far today.  ') });
 
-    const turn = h.session.send('  How am I doing today?  ');
-    expect(h.session.getState()).toEqual({ pending: true });
+    const turn = h.session.send(CHAT, '  How am I doing today?  ');
+    expect(h.session.getState()).toEqual({ waiting: [CHAT] });
     expect(h.changes()).toBe(1);
 
     expect(await turn).toBe('answered');
-    expect(h.session.getState()).toEqual({ pending: false });
+    expect(h.session.getState()).toEqual({ waiting: [] });
     expect(h.changes()).toBe(2);
     expect(await chat(h.stores)).toEqual([
       { role: 'user', text: 'How am I doing today?' },
@@ -179,8 +239,8 @@ describe('createCoachSession: send (04 §3.6)', () => {
     const h = await setUp();
     h.fake.on(MISTRAL, { json: openAiAnswer('About 1 650 kcal so far today.') });
 
-    const first = h.session.send('How am I doing today?');
-    const second = h.session.send('How am I doing today?');
+    const first = h.session.send(CHAT, 'How am I doing today?');
+    const second = h.session.send(CHAT, 'How am I doing today?');
 
     expect(await second).toBe('ignored');
     expect(await first).toBe('answered');
@@ -191,7 +251,7 @@ describe('createCoachSession: send (04 §3.6)', () => {
   it('ignores blank text without a photo, never turning pending', async () => {
     const h = await setUp();
 
-    expect(await h.session.send(' \n ')).toBe('ignored');
+    expect(await h.session.send(CHAT, ' \n ')).toBe('ignored');
     expect(h.changes()).toBe(0);
     expect(await chat(h.stores)).toEqual([]);
   });
@@ -201,9 +261,9 @@ describe('createCoachSession: send (04 §3.6)', () => {
     h.fake.on(MISTRAL, { json: openAiAnswer('A tuna salad, roughly 450 kcal.') });
     const photo = await h.codec.photo(4000, 3000);
 
-    expect(await h.session.send('   ', photo)).toBe('answered');
+    expect(await h.session.send(CHAT, '   ', photo)).toBe('answered');
 
-    const [question] = await h.stores.coachRepo.list();
+    const [question] = await h.stores.coachRepo.list(CHAT);
     expect(question).toMatchObject({ role: 'user', text: PHOTO_ONLY });
     expect(await h.codec.sizeOf(question?.thumb as Blob)).toEqual({ width: 700, height: 525 });
     expect(h.codec.encodes).toEqual([{ width: 700, height: 525, maxEdge: 700, quality: 0.68 }]);
@@ -221,12 +281,12 @@ describe('createCoachSession: send (04 §3.6)', () => {
   it('stores and sends nothing for a photo the browser cannot read', async () => {
     const h = await setUp();
 
-    expect(await h.session.send('What is this?', await h.codec.undecodable())).toBe(
+    expect(await h.session.send(CHAT, 'What is this?', await h.codec.undecodable())).toBe(
       'photoUnreadable',
     );
     expect(await chat(h.stores)).toEqual([]);
     expect(h.fake.requests).toHaveLength(0);
-    expect(h.session.getState()).toEqual({ pending: false });
+    expect(h.session.getState()).toEqual({ waiting: [] });
   });
 
   it('runs the tools on the data as it stood at Send, not on what is logged meanwhile (R04.22)', async () => {
@@ -241,7 +301,7 @@ describe('createCoachSession: send (04 §3.6)', () => {
       { json: openAiAnswer('Just a matcha oat latte.') },
     );
 
-    const turn = h.session.send('What did I eat yesterday?');
+    const turn = h.session.send(CHAT, 'What did I eat yesterday?');
     await h.hold?.reached;
     await h.stores.diaryRepo.add(entryOn('2026-10-25', '21:30', { name: 'Midnight noodles' }));
     h.hold?.release();
@@ -261,7 +321,7 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
       json: openAiError(`Bad key ${MISTRAL_KEY}; also tried ${ANTHROPIC_KEY}`),
     });
 
-    expect(await h.session.send('How am I doing today?')).toBe('failed');
+    expect(await h.session.send(CHAT, 'How am I doing today?')).toBe('failed');
     expect(await chat(h.stores)).toEqual([
       {
         role: 'user',
@@ -269,7 +329,7 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
         state: { status: 'failed', kind: 'keyRejected', details: 'Bad key •••; also tried •••' },
       },
     ]);
-    expect(h.session.getState()).toEqual({ pending: false });
+    expect(h.session.getState()).toEqual({ waiting: [] });
   });
 
   it('stores the standby’s failure when both providers fail', async () => {
@@ -283,8 +343,8 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
       .on(MISTRAL, { status: 401, json: openAiError('Unauthorized') })
       .on(ANTHROPIC, { status: 404, json: anthropicError('not_found_error', 'No such model') });
 
-    expect(await h.session.send('How am I doing today?')).toBe('failed');
-    const [question] = await h.stores.coachRepo.list();
+    expect(await h.session.send(CHAT, 'How am I doing today?')).toBe('failed');
+    const [question] = await h.stores.coachRepo.list(CHAT);
     expect(question?.state).toEqual({ status: 'failed', kind: 'model', details: 'No such model' });
   });
 
@@ -295,11 +355,11 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
       { status: 500, json: openAiError('Internal error') },
       { json: openAiAnswer('About 1 650 kcal so far today.') },
     );
-    expect(await h.session.send('How am I doing today?')).toBe('failed');
-    const [failed] = await h.stores.coachRepo.list();
+    expect(await h.session.send(CHAT, 'How am I doing today?')).toBe('failed');
+    const [failed] = await h.stores.coachRepo.list(CHAT);
 
-    const retry = h.session.retry(failed?.id ?? '');
-    expect(h.session.getState()).toEqual({ pending: true });
+    const retry = h.session.retry(CHAT, failed?.id ?? '');
+    expect(h.session.getState()).toEqual({ waiting: [CHAT] });
     expect(await retry).toBe('answered');
 
     expect(await chat(h.stores)).toEqual([
@@ -315,10 +375,10 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
     const h = await setUp();
     const busy = { status: 500, json: openAiError('Internal error') };
     h.fake.on(MISTRAL, busy, busy);
-    await h.session.send('How am I doing today?');
-    const [failed] = await h.stores.coachRepo.list();
+    await h.session.send(CHAT, 'How am I doing today?');
+    const [failed] = await h.stores.coachRepo.list(CHAT);
 
-    expect(await h.session.retry(failed?.id ?? '')).toBe('failed');
+    expect(await h.session.retry(CHAT, failed?.id ?? '')).toBe('failed');
     expect(await chat(h.stores)).toEqual([
       {
         role: 'user',
@@ -335,10 +395,10 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
       { status: 500, json: openAiError('Internal error') },
       { json: openAiAnswer('A tuna salad.') },
     );
-    await h.session.send('What is this?', await h.codec.photo(4000, 3000));
-    const [failed] = await h.stores.coachRepo.list();
+    await h.session.send(CHAT, 'What is this?', await h.codec.photo(4000, 3000));
+    const [failed] = await h.stores.coachRepo.list(CHAT);
 
-    expect(await h.session.retry(failed?.id ?? '')).toBe('answered');
+    expect(await h.session.retry(CHAT, failed?.id ?? '')).toBe('answered');
     expect(questionOf(h.fake.requests[1])).toEqual([
       { type: 'image_url', image_url: { url: 'data:image/jpeg;base64,/9j/4AE=' } },
       { type: 'text', text: 'What is this?' },
@@ -348,18 +408,18 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
   it('ignores a retry of an answered question or an unknown id', async () => {
     const h = await setUp();
     h.fake.on(MISTRAL, { json: openAiAnswer('About 1 650 kcal so far today.') });
-    await h.session.send('How am I doing today?');
-    const [answered] = await h.stores.coachRepo.list();
+    await h.session.send(CHAT, 'How am I doing today?');
+    const [answered] = await h.stores.coachRepo.list(CHAT);
 
-    expect(await h.session.retry(answered?.id ?? '')).toBe('ignored');
-    expect(await h.session.retry('message-404')).toBe('ignored');
+    expect(await h.session.retry(CHAT, answered?.id ?? '')).toBe('ignored');
+    expect(await h.session.retry(CHAT, 'message-404')).toBe('ignored');
     expect(h.fake.requests).toHaveLength(1);
   });
 
   it('marks the question generic when no profile can be read, sending nothing', async () => {
     const h = await setUp({ profile: false });
 
-    expect(await h.session.send('How am I doing today?')).toBe('failed');
+    expect(await h.session.send(CHAT, 'How am I doing today?')).toBe('failed');
     expect(await chat(h.stores)).toEqual([
       { role: 'user', text: 'How am I doing today?', state: { status: 'failed', kind: 'generic' } },
     ]);
@@ -367,80 +427,241 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
   });
 });
 
+// Reset is Delete chat since P16-02 (D-16.99): the same question, for the open chat; the titles
+// below keep the words the acceptance map and the trap ledger cite.
 describe('createCoachSession: Reset (R04.6, D-16.34)', () => {
   it('aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)', async () => {
     const h = await setUp({ hold: true });
     h.fake.on(MISTRAL, { json: openAiAnswer('A late answer.') });
 
-    const turn = h.session.send('How am I doing today?');
+    const turn = h.session.send(CHAT, 'How am I doing today?');
     await h.hold?.reached;
-    const resetting = h.session.reset();
-    expect(h.session.getState()).toEqual({ pending: false });
-    await resetting;
+    const deleting = h.session.deleteChat(CHAT);
+    expect(h.session.getState()).toEqual({ waiting: [] });
+    await deleting;
 
     expect(await turn).toBe('dropped');
     expect(h.fake.requests[0]?.signal?.aborted).toBe(true);
     h.hold?.release();
     expect(await chat(h.stores)).toEqual([]);
-    expect(await h.stores.coachRepo.generation()).toBe(1);
+    expect(await h.stores.coachRepo.chats()).toEqual([]);
   });
 
   it('drops a reply that comes back after a Reset in another tab', async () => {
     const h = await setUp({ hold: true });
     h.fake.on(MISTRAL, { json: openAiAnswer('A late answer.') });
 
-    const turn = h.session.send('How am I doing today?');
+    const turn = h.session.send(CHAT, 'How am I doing today?');
     await h.hold?.reached;
-    await h.stores.coachRepo.reset();
+    // Another tab deletes the chat: this session never hears of it.
+    await h.stores.coachRepo.remove(CHAT);
     h.hold?.release();
 
     expect(await turn).toBe('dropped');
     expect(h.fake.requests).toHaveLength(1);
     expect(await chat(h.stores)).toEqual([]);
+    expect(await h.stores.coachRepo.chats()).toEqual([]);
   });
 
-  it('lets a question sent right after a Reset land in the new conversation', async () => {
+  it('lets a question sent in a new chat right after a Delete land there', async () => {
     const h = await setUp({ hold: true });
     h.fake.on(MISTRAL, { json: openAiAnswer('Fresh start: 1 650 kcal so far.') });
 
-    const old = h.session.send('How am I doing today?');
+    const old = h.session.send(CHAT, 'How am I doing today?');
     await h.hold?.reached;
-    const resetting = h.session.reset();
-    const fresh = h.session.send('And now?');
+    const deleting = h.session.deleteChat(CHAT);
+    const fresh = h.session.send('chat-new', 'And now?');
     h.hold?.release();
-    await resetting;
+    await deleting;
 
     expect(await old).toBe('dropped');
     expect(await fresh).toBe('answered');
-    expect(await chat(h.stores)).toEqual([
+    expect(await chat(h.stores)).toEqual([]);
+    expect(await chat(h.stores, 'chat-new')).toEqual([
       { role: 'user', text: 'And now?' },
       { role: 'assistant', text: 'Fresh start: 1 650 kcal so far.' },
     ]);
   });
 
-  it('stores nothing when Reset comes while the photo is being prepared', async () => {
+  it('stores nothing when Delete comes while the photo is being prepared', async () => {
     const h = await setUp();
     const decoding = h.codec.hold();
 
-    const turn = h.session.send('What is this?', await h.codec.photo(4000, 3000));
+    const turn = h.session.send(CHAT, 'What is this?', await h.codec.photo(4000, 3000));
     await decoding.reached;
-    await h.session.reset();
+    await h.session.deleteChat(CHAT);
     decoding.release();
 
     expect(await turn).toBe('dropped');
     expect(await chat(h.stores)).toEqual([]);
+    expect(await h.stores.coachRepo.chats()).toEqual([]);
     expect(h.fake.requests).toHaveLength(0);
   });
 
-  it('clears the conversation when nothing is pending', async () => {
+  it('deletes the chat when nothing is pending', async () => {
     const h = await setUp();
     h.fake.on(MISTRAL, { json: openAiAnswer('About 1 650 kcal so far today.') });
-    await h.session.send('How am I doing today?');
+    await h.session.send(CHAT, 'How am I doing today?');
 
-    await h.session.reset();
+    await h.session.deleteChat(CHAT);
 
     expect(await chat(h.stores)).toEqual([]);
-    expect(h.session.getState()).toEqual({ pending: false });
+    expect(await h.stores.coachRepo.chats()).toEqual([]);
+    expect(h.session.getState()).toEqual({ waiting: [] });
+  });
+});
+
+describe('createCoachSession: several chats (P16-02, D-16.99)', () => {
+  const A = 'chat-a';
+  const B = 'chat-b';
+
+  /** The words of every message a request sent, the system text left out. */
+  function wordsSent(request: RecordedRequest | undefined): string {
+    return JSON.stringify(messagesOf(request).filter((message) => message.role !== 'system'));
+  }
+
+  /** The request that asked `question`. */
+  function requestFor(h: Harness, question: string): RecordedRequest | undefined {
+    return h.fake.requests.find((request) => questionOf(request) === question);
+  }
+
+  it('answers two chats at once, each reply in its own chat, each request with its own chat only', async () => {
+    const h = await setUp({ gate: true });
+    await h.stores.coachRepo.append(
+      { chatId: A, role: 'user', text: 'Earlier in A', at: SNAPSHOT_NOW - 60_000 },
+      { start: true },
+    );
+    await h.stores.coachRepo.append({
+      chatId: A,
+      role: 'assistant',
+      text: 'An earlier answer in A.',
+      at: SNAPSHOT_NOW - 50_000,
+    });
+    h.fake.on(
+      MISTRAL,
+      { json: openAiAnswer('The answer for B.') },
+      { json: openAiAnswer('The answer for A.') },
+    );
+
+    const inA = h.session.send(A, 'Question in A');
+    const inB = h.session.send(B, 'Question in B');
+    expect(h.session.getState()).toEqual({ waiting: [A, B] });
+    await h.gate?.reached('Question in A');
+    await h.gate?.reached('Question in B');
+
+    // B's request goes through first and takes the first answer.
+    h.gate?.release('Question in B');
+    expect(await inB).toBe('answered');
+    expect(h.session.getState()).toEqual({ waiting: [A] });
+    h.gate?.release('Question in A');
+    expect(await inA).toBe('answered');
+    expect(h.session.getState()).toEqual({ waiting: [] });
+
+    expect(await chat(h.stores, B)).toEqual([
+      { role: 'user', text: 'Question in B' },
+      { role: 'assistant', text: 'The answer for B.' },
+    ]);
+    expect(await chat(h.stores, A)).toEqual([
+      { role: 'user', text: 'Earlier in A' },
+      { role: 'assistant', text: 'An earlier answer in A.' },
+      { role: 'user', text: 'Question in A' },
+      { role: 'assistant', text: 'The answer for A.' },
+    ]);
+    expect(wordsSent(requestFor(h, 'Question in B'))).not.toContain('Earlier in A');
+    expect(wordsSent(requestFor(h, 'Question in A'))).toContain('Earlier in A');
+    expect(wordsSent(requestFor(h, 'Question in A'))).not.toContain('Question in B');
+    // The same facts and tools for both chats.
+    expect(messagesOf(requestFor(h, 'Question in A'))[0]).toEqual(
+      messagesOf(requestFor(h, 'Question in B'))[0],
+    );
+    expect((requestFor(h, 'Question in A')?.body as Json).tools).toEqual(
+      (requestFor(h, 'Question in B')?.body as Json).tools,
+    );
+  });
+
+  it('keeps a reply running while a new chat is started and asked, and lands it in its own chat', async () => {
+    const h = await setUp({ gate: true });
+    h.fake.on(
+      MISTRAL,
+      { json: openAiAnswer('Straight away in the new chat.') },
+      { json: openAiAnswer('Late, but in A.') },
+    );
+
+    const inA = h.session.send(A, 'A slow question');
+    await h.gate?.reached('A slow question');
+    // The person opens a new chat meanwhile: A's Send waits, the new chat's does not.
+    const fresh = h.session.newChatId();
+    expect(fresh).not.toBe(A);
+    expect(await h.session.send(A, 'Again in A')).toBe('ignored');
+    const inFresh = h.session.send(fresh, 'A quick question');
+    expect(h.session.getState()).toEqual({ waiting: [A, fresh] });
+    h.gate?.release('A quick question');
+    expect(await inFresh).toBe('answered');
+
+    h.gate?.release('A slow question');
+    expect(await inA).toBe('answered');
+    expect(await chat(h.stores, A)).toEqual([
+      { role: 'user', text: 'A slow question' },
+      { role: 'assistant', text: 'Late, but in A.' },
+    ]);
+    expect(await chat(h.stores, fresh)).toEqual([
+      { role: 'user', text: 'A quick question' },
+      { role: 'assistant', text: 'Straight away in the new chat.' },
+    ]);
+  });
+
+  it('deletes one chat while two wait: its request is aborted and its reply never lands; the other goes on', async () => {
+    const h = await setUp({ gate: true });
+    h.fake.on(MISTRAL, { json: openAiAnswer('The answer for B.') });
+
+    const inA = h.session.send(A, 'Question in A');
+    const inB = h.session.send(B, 'Question in B');
+    await h.gate?.reached('Question in A');
+    await h.gate?.reached('Question in B');
+
+    await h.session.deleteChat(A);
+    expect(h.session.getState()).toEqual({ waiting: [B] });
+    expect(await inA).toBe('dropped');
+    expect(requestFor(h, 'Question in A')?.signal?.aborted).toBe(true);
+    h.gate?.release('Question in B');
+    expect(await inB).toBe('answered');
+
+    expect(await chat(h.stores, A)).toEqual([]);
+    expect((await h.stores.coachRepo.chats()).map((each) => each.id)).toEqual([B]);
+    expect(h.fake.takeUnscripted()).toEqual([]);
+  });
+
+  it('asks a failed question again only in its own chat', async () => {
+    const h = await setUp();
+    h.fake.on(
+      MISTRAL,
+      { status: 500, json: openAiError('Internal error') },
+      { json: openAiAnswer('Now it works.') },
+    );
+    expect(await h.session.send(A, 'Question in A')).toBe('failed');
+    const [failed] = await h.stores.coachRepo.list(A);
+
+    expect(await h.session.retry(B, failed?.id ?? '')).toBe('ignored');
+    expect(await h.session.retry(A, failed?.id ?? '')).toBe('answered');
+    expect(await chat(h.stores, A)).toEqual([
+      { role: 'user', text: 'Question in A' },
+      { role: 'assistant', text: 'Now it works.' },
+    ]);
+    expect(await h.stores.coachRepo.list(B)).toEqual([]);
+  });
+
+  it('renames a chat through the store, and gives a new id for each new chat', async () => {
+    const h = await setUp();
+    h.fake.on(MISTRAL, { json: openAiAnswer('An answer.') });
+    await h.session.send(A, 'What did I eat yesterday?');
+
+    expect(await h.session.renameChat(A, 'Yesterday')).toMatchObject({
+      id: A,
+      title: 'Yesterday',
+      titleByPerson: true,
+    });
+    expect(await h.session.renameChat('chat-gone', 'Nothing')).toBeNull();
+    expect([h.session.newChatId(), h.session.newChatId()]).toEqual(['chat-1', 'chat-2']);
   });
 });
 
@@ -461,7 +682,7 @@ describe('createCoachSession: Health Connect activity (D-16.94)', () => {
       { json: openAiAnswer('5120 steps and 240 active kcal so far today.') },
     );
 
-    expect(await h.session.send('How active am I today?')).toBe('answered');
+    expect(await h.session.send(CHAT, 'How active am I today?')).toBe('answered');
 
     const [first, second] = h.fake.requests;
     const tools = ((first?.body as Json).tools as { function: { name: string } }[]).map(
@@ -482,7 +703,7 @@ describe('createCoachSession: Health Connect activity (D-16.94)', () => {
       await h.activityRepo?.putDays([TODAY]);
       h.fake.on(MISTRAL, { json: openAiAnswer('About 1 650 kcal so far today.') });
 
-      expect(await h.session.send('How am I doing today?')).toBe('answered');
+      expect(await h.session.send(CHAT, 'How am I doing today?')).toBe('answered');
 
       const body = h.fake.requests[0]?.body as Json;
       const tools = (body.tools as { function: { name: string } }[]).map(
@@ -509,14 +730,14 @@ describe('createCoachSession: reminders the Coach proposes (P13, D-16.93)', () =
       },
       { json: openAiAnswer('I have proposed it. Tap Add to set it.') },
     );
-    expect(await h.session.send('Remind me, please.')).toBe('answered');
-    const reply = (await h.stores.coachRepo.list()).at(-1);
+    expect(await h.session.send(CHAT, 'Remind me, please.')).toBe('answered');
+    const reply = (await h.stores.coachRepo.list(CHAT)).at(-1);
     expect(reply?.role).toBe('assistant');
     return reply!.id;
   }
 
   async function cards(h: Harness) {
-    return (await h.stores.coachRepo.list()).at(-1)?.reminders;
+    return (await h.stores.coachRepo.list(CHAT)).at(-1)?.reminders;
   }
 
   const stored = (h: Harness) => h.stores.settingsRepo.get('remind.custom');
@@ -633,7 +854,7 @@ describe('createCoachSession: reminders the Coach proposes (P13, D-16.93)', () =
       { json: openAiAnswer('I cannot set reminders here.') },
     );
 
-    expect(await h.session.send('Remind me to drink water at 10.')).toBe('answered');
+    expect(await h.session.send(CHAT, 'Remind me to drink water at 10.')).toBe('answered');
 
     const tools = (
       (h.fake.requests[0]?.body as Json).tools as { function: { name: string } }[]

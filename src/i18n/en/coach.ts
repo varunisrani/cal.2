@@ -6,7 +6,7 @@ import type { MessageTree } from '../catalogue';
  * reply (P08-13); `photoOnly` is the question a photo sent without words carries (P08-09); the
  * page, its empty state, the waiting dots and the error banner (P08-10) and the composer (P08-11)
  * have the rest. P13 adds "Jump to latest" over the conversation and the card under a reply that
- * proposes a reminder (D-16.93).
+ * proposes a reminder (D-16.93); P16 several chats: New chat, Chats, Rename, Delete chat (D-16.99).
  */
 export const coach = {
   coach: {
@@ -62,14 +62,26 @@ export const coach = {
     },
     page: {
       conversation: 'Conversation',
-      reset: 'Clear chat',
-      resetFailed: "The chat couldn't be cleared. Try again.",
+      newChat: 'New chat',
+      chats: 'Chats',
+      deleteChat: 'Delete chat',
+      deleteFailed: "The chat couldn't be deleted. Try again.",
       unreadable: "This conversation couldn't be read.",
       confirm: {
-        title: 'Clear this chat?',
+        title: 'Delete this chat?',
         message: 'This deletes every message and photo in the chat for good.',
-        clear: 'Clear',
       },
+    },
+    chats: {
+      untitled: 'Earlier chat',
+      empty: 'No chats yet.',
+      waiting: 'Replying…',
+      yesterday: 'Yesterday',
+      rename: 'Rename {title}',
+      delete: 'Delete {title}',
+      renameTitle: 'Rename chat',
+      name: 'Name',
+      renameFailed: "The chat couldn't be renamed.",
     },
     empty: {
       title: 'Ask about your log',

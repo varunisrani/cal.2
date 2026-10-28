@@ -541,7 +541,8 @@
       "symbol": "createCoachSession",
       "tests": [
         "src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)",
-        "e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)"
+        "e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)",
+        "src/services/coach/session.test.ts > createCoachSession: several chats (P16-02, D-16.99) > deletes one chat while two wait: its request is aborted and its reply never lands; the other goes on"
       ]
     },
     {

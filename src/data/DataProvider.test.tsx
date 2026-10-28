@@ -16,7 +16,7 @@ const sources: DataSources = {
   weightRepo: { between: none },
   bodyFatRepo: { between: none },
   savedMealsRepo: { list: none },
-  coachRepo: { list: none },
+  coachRepo: { list: none, chats: none, summaries: none },
   unreadableFlag: () => Promise.resolve(false),
   clock: fixedClock(FACTORY_NOW, 'America/New_York'),
 };

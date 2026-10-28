@@ -14,6 +14,18 @@ What changed in each release of Platewise, newest first. Version numbers follow
   pillars.
 - Coach: it now knows today's sugar and your Sugar limit, and how many of today's foods had a sugar figure.
 
+### Coach chats
+
+- **New chat** at the top of the Coach starts an empty chat with the suggested questions for your goal; it is kept once
+  you send its first question. The Coach tab opens the chat you used last.
+- **Chats** lists every chat, most recently used first, with its name, when you last used it, the start of its last
+  message and "Replying…" while an answer is on its way. Tap to open; **Rename** and **Delete** (asks first) on each.
+- A reply keeps going when you open another chat or start a new one, and lands in the chat you asked in; several chats
+  can wait at once. Each chat sends only its own messages; what the Coach knows about you is the same in every chat.
+- **Delete chat** replaces Clear chat at the top. Each chat keeps its newest 200 messages.
+- Your conversation so far becomes your first chat. Chats are in your backups; a 1.3 backup restores as one chat, and
+  1.3 restores a 1.4 backup with every message in one conversation. Erase everything deletes all chats.
+
 ## 1.3.0 (2026-10-28)
 
 Platewise 1.3 records your walks and tells you how effective they were, and copies your backups to

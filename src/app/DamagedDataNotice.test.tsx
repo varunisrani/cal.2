@@ -62,7 +62,7 @@ function sourcesOver(flag: CountedQuery<[], boolean>): DataSources {
     weightRepo: { between: unused },
     bodyFatRepo: { between: unused },
     savedMealsRepo: { list: unused },
-    coachRepo: { list: unused },
+    coachRepo: { list: unused, chats: unused, summaries: unused },
     unreadableFlag: flag.query,
     clock,
   };

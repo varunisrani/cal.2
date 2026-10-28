@@ -81,21 +81,21 @@ describe('Coach Details: no key in any output (P10-09, D-16.31, R03.18)', () => 
       const logged = recordConsole();
       const { stores, session, fake } = await setUp(settings);
 
-      expect(await session.send('What did I eat yesterday?')).toBe('failed');
+      expect(await session.send('chat-1', 'What did I eat yesterday?')).toBe('failed');
       expect(fake.requests.map((request) => request.url)).toEqual(called);
       // Each request carries its own provider's key, and no other key at all.
       expect(fake.requests.map((request) => plantedIn(describeValue(request)))).toEqual(
         called.map((url) => [url === MISTRAL ? 'mistral' : 'anthropic']),
       );
 
-      const [question] = await stores.coachRepo.list();
+      const [question] = await stores.coachRepo.list('chat-1');
       const mark = question?.state;
       if (mark?.status !== 'failed') throw new Error('the question is not marked failed');
       expect(mark.kind).toBe('keyRejected');
       // The provider's words are kept for Details, the keys in them are not.
       expect(mark.details).toContain('Key refused.');
       expect(mark.details).toContain('•••');
-      expect(plantedIn(describeValue(await stores.coachRepo.list()))).toEqual([]);
+      expect(plantedIn(describeValue(await stores.coachRepo.list('chat-1')))).toEqual([]);
 
       render(
         <ErrorBanner kind={mark.kind} details={mark.details} pending={false} onRetry={() => {}} />,

@@ -181,15 +181,16 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | I2 | Composer: growing text field, one photo per message, Enter sends on desktop | P1 | M D | 04 §3.2 |
 | I3 | Goal-aware prompt chips; a chip sends with the attached photo (D-16.33) | P1 | M D | 04 §3.3; 16 D-16.33 |
 | I4 | Replies rendered as simple Markdown with safe links; copy button | P1 | M D | 04 §3.4 |
-| I5 | Reset with confirmation; a reply arriving after Reset is dropped (D-16.34) | P1 | M D | 04 §3.5, R04.6; 16 D-16.34 |
+| I5 | Delete chat (was Reset) with confirmation; a reply arriving after its chat was deleted is dropped (D-16.34, D-16.99) | P1 | M D | 04 §3.5, R04.6; 16 D-16.34 |
 | I6 | Fresh context each turn: profile, formulas, forecast, data counts, today's intake, calories left and water (D-16.27); replies in the language you write (D-16.28) | P1 | M D | 04 §3.8; 16 D-16.27, D-16.28 |
 | I7 | Six read-only nutrition tools; an unlogged day is never a fast or zero | P1 | M D | 04 §3.9, R04.16 |
 | I8 | Tool loop of up to six rounds on all three formats, with the answer cap and cut-off detection | P1 | M D | 04 §3.11, R04.15, R04.19 |
 | I9 | Tool results capped at 60 000 characters on every provider, keeping the newest rows (D-16.32) | P1 | M D | 04 §3.10; 16 D-16.32 |
-| I10 | Conversation kept locally: newest 200 messages, small thumbnails, included in backups (D-16.29) | P1 | M D | 04 §3.7; 16 D-16.29 |
+| I10 | Conversations kept locally: newest 200 messages per chat, small thumbnails, included in backups (D-16.29, D-16.99) | P1 | M D | 04 §3.7; 16 D-16.29 |
 | I11 | Friendly errors with Details and Retry on the failed turn (D-16.31) | P1 | M D | 04 §3.6; 16 D-16.31 |
 | I12 | The standby provider re-runs the whole turn when the primary fails | P1 | M D | 04 §3.12, R04.1 |
 | I13 | Streaming replies | P3 (D-16.47) | — | 04 Q6 |
+| I14 | Several Coach chats: New chat and chat history | P1 (P16, D-16.99) | M D | 16 D-16.99 |
 
 ## J. Settings and configuration
 
@@ -267,9 +268,9 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 138 |
+| Tier P1 | 139 |
 | Tier P2 | 8 |
 | Tier P3 | 22 |
-| All tiers | 186 |
+| All tiers | 187 |
 
 Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16 and M18 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

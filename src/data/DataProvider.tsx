@@ -27,7 +27,7 @@ export interface DataSources {
   readonly weightRepo: Pick<WeightRepo, 'between'>;
   readonly bodyFatRepo: Pick<BodyFatRepo, 'between'>;
   readonly savedMealsRepo: Pick<SavedMealsRepo, 'list'>;
-  readonly coachRepo: Pick<CoachRepo, 'list'>;
+  readonly coachRepo: Pick<CoachRepo, 'list' | 'chats' | 'summaries'>;
   /** Health Connect's activity copy (P11-03): only the Android app has one. */
   readonly activityRepo?: Pick<HealthRepo, 'between'>;
   /** The recorded walks (P15-02): only the Android app records them. */

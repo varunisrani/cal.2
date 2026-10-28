@@ -19,7 +19,31 @@ with a photo always goes to the main provider.
 - Replies can hold headings, lists, bold text and links; links open in a new tab. The copy button
   copies a reply.
 
-While a reply is on its way, Send and the suggested questions wait for it.
+While a reply is on its way, Send and the suggested questions of that chat wait for it.
+
+## Chats
+
+You can keep several conversations with the Coach, each on its own subject. The name of the open
+chat shows under the Coach heading.
+
+- **New chat** (the **+** at the top) opens an empty chat with the suggested questions for your
+  goal. It is kept once you send its first question, so an unused new chat never piles up.
+- **Chats** (the list button at the top) shows every chat, the most recently used first: its name,
+  when you last used it and the start of its last message. Tap a chat to open it. The open chat is
+  marked.
+- A chat is named after the start of its first question (up to 60 characters). **Rename** (the
+  pencil next to a chat in Chats) gives it your own name, which then stays, whatever you ask in it
+  later.
+- **Delete** (the bin next to a chat in Chats) deletes that chat after asking first.
+- The Coach tab opens on the chat you used most recently.
+
+**A reply keeps going when you switch.** If you open another chat or start a new one while the
+Coach is answering, the reply still arrives, in the chat you asked in. Chats shows "Replying…" on a
+chat whose reply is on its way, and you can ask in another chat meanwhile; several chats can wait
+for replies at the same time.
+
+Each chat sends only its own messages to your AI provider. What the Coach knows about you (below)
+is the same in every chat.
 
 ## What the Coach sees
 
@@ -39,6 +63,8 @@ snapshot, so food you log while a reply is on its way shows up on your next ques
   and whether a fast is running;
 - today so far: what you have eaten, what is left of your targets, and water against its goal if
   you track water;
+- today's sugar against your Sugar limit, and how many of today's foods had a sugar figure (a food
+  without one is never counted as 0 g);
 - your notes for the AI, if you wrote any (Settings › AI providers).
 
 **When it needs more**, the Coach asks Platewise for it. Platewise looks it up on your device and
@@ -58,8 +84,9 @@ newest are kept. A question can take up to six requests to your provider while t
 things up. A question that needs more stops with a message; ask something narrower, such as a
 shorter time span.
 
-**From the chat itself**, the words of up to 19 earlier messages go with each question, so the
-Coach can follow the conversation. Photos from earlier messages are not sent again.
+**From the chat itself**, the words of up to 19 earlier messages of the same chat go with each
+question, so the Coach can follow the conversation. Photos from earlier messages are not sent
+again, and nothing from your other chats is sent.
 
 ## What the Coach does not see or do
 
@@ -86,14 +113,21 @@ starts the question afresh.
 
 ## Your chat history
 
-- The chat keeps the newest 200 messages. Older ones are removed as new ones arrive.
+- Each chat keeps its newest 200 messages. Older ones are removed as new ones arrive. There is no
+  limit on the number of chats.
 - Photos you attached are kept as small copies in the chat.
-- The chat is part of your backups. It is not part of a diary export.
-- **Clear chat** (the bin at the top) deletes every message and photo in the chat for good. A reply
-  that arrives after you cleared the chat is dropped.
+- Your chats are part of your backups, with their names. They are not part of a diary export. A
+  backup made with Platewise 1.3 or earlier restores as one chat; Platewise 1.3 restores a newer
+  backup with all its messages in one conversation.
+- Your conversation from before chats came (Platewise 1.3 and earlier) is your first chat, named
+  after its first question, or "Earlier chat".
+- **Delete chat** (the bin at the top) deletes the open chat, every message and photo in it, for
+  good, after asking first, and opens a new chat. A reply that arrives after you deleted its chat
+  is dropped.
+- Settings › Your data › Erase everything deletes all your chats with everything else.
 
-You can hide the Coach tab in Settings › App settings, under More, in Tab bar. Your chat stays
-until you clear it.
+You can hide the Coach tab in Settings › App settings, under More, in Tab bar. Your chats stay
+until you delete them.
 
 The Coach's answers are estimates from your own log, not medical advice. For a health condition,
 medication or a very low calorie target, ask a doctor or dietitian.

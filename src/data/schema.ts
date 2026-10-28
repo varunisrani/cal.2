@@ -8,6 +8,7 @@ import type { Dexie, EntityTable, Table, Transaction } from 'dexie';
 import type { DayKey } from '../domain/dates/dayKey';
 import type {
   BodyFatReading,
+  CoachChat,
   CoachMessage,
   DiaryEntry,
   Fast,
@@ -17,6 +18,8 @@ import type {
   WeighIn,
 } from '../domain/model';
 import type { Walk } from '../domain/walks/model';
+import { FIRST_CHAT_ID } from '../domain/coach/chats';
+import { chatForRows } from './coachRows';
 
 export const DB_NAME = 'platewise';
 
@@ -52,12 +55,20 @@ export const ADDED_TABLES = {
   activity: 'day',
   /** Version 3 (P15-02): the walks recorded in the Android app, by start. */
   walks: 'id, startedAt',
+  /** Version 4 (P16-02): the Coach's chats, by their newest message's time. */
+  coachChats: 'id, updatedAt',
 } as const;
 
 export type AddedTableName = keyof typeof ADDED_TABLES;
 
 /** Added tables that hold the person's own records: backups carry them like version 1's. */
-export const KEPT_ADDED_TABLES = ['walks'] as const satisfies readonly AddedTableName[];
+export const KEPT_ADDED_TABLES = [
+  'walks',
+  'coachChats',
+] as const satisfies readonly AddedTableName[];
+
+/** Version 4 (P16-02): every Coach message carries its chat's id, indexed. */
+export const COACH_MESSAGES_V4 = 'id, at, chatId';
 
 /** Every table the current schema holds. */
 export type StoreName = TableName | AddedTableName;
@@ -158,6 +169,7 @@ export type PlatewiseDb = Dexie & {
   meta: Table<KeyValueRow, string>;
   activity: Table<ActivityRow, string>;
   walks: Table<WalkRow, string>;
+  coachChats: Table<CoachChat, string>;
 };
 
 // ---- Upgrades -------------------------------------------------------------------------------
@@ -174,12 +186,35 @@ export interface UpgradeStep {
   readonly migrate?: (tx: Transaction) => Promise<void> | void;
 }
 
+/**
+ * Version 4's move (P16-02): the stored conversation becomes the first chat, titled from its
+ * first question, and every message (an unreadable one too, so none is left without a chat)
+ * carries that chat's id. Nothing stored: no chat.
+ */
+async function moveIntoFirstChat(tx: Transaction): Promise<void> {
+  const messages = tx.table('coachMessages');
+  const rows: unknown[] = await messages.toArray();
+  if (rows.length === 0) return;
+  await tx.table('coachChats').add(chatForRows(FIRST_CHAT_ID, rows));
+  await messages.toCollection().modify((row: unknown) => {
+    if (typeof row === 'object' && row !== null) {
+      (row as { chatId?: string }).chatId = FIRST_CHAT_ID;
+    }
+  });
+}
+
 /** The upgrade steps in version order: 2, 3, … */
 export const UPGRADES: readonly UpgradeStep[] = [
   // P11-03: the Health Connect activity copy. A new, empty table: nothing to move.
   { version: 2, stores: { activity: ADDED_TABLES.activity } },
   // P15-02: the recorded walks. A new, empty table: nothing to move.
   { version: 3, stores: { walks: ADDED_TABLES.walks } },
+  // P16-02: several Coach chats. The one conversation so far becomes the first chat.
+  {
+    version: 4,
+    stores: { coachChats: ADDED_TABLES.coachChats, coachMessages: COACH_MESSAGES_V4 },
+    migrate: moveIntoFirstChat,
+  },
 ];
 
 /** The schema version the given steps lead to (1 with no steps). */

@@ -97,13 +97,22 @@ export async function seedStore(db: PlatewiseDb): Promise<Seeded> {
   });
 
   const coach = createCoachRepo(db, { clock, newId: withIdSequence('message') });
+  await coach.append(
+    {
+      chatId: 'chat-lunch',
+      role: 'user',
+      text: 'Was this lunch balanced?',
+      at: FACTORY_NOW,
+      thumb: await storableBlob(400, 33),
+    },
+    { start: true },
+  );
   await coach.append({
-    role: 'user',
-    text: 'Was this lunch balanced?',
+    chatId: 'chat-lunch',
+    role: 'assistant',
+    text: 'Mostly: add some greens.',
     at: FACTORY_NOW,
-    thumb: await storableBlob(400, 33),
   });
-  await coach.append({ role: 'assistant', text: 'Mostly: add some greens.', at: FACTORY_NOW });
 
   const settings = createSettingsRepo(db, { locale: 'en-US', clock });
   await settings.set('display.accent', 'ember');

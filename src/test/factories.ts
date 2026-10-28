@@ -8,6 +8,7 @@ import { dayKeyOf } from '../domain/dates/dayKey';
 import type {
   AnalysisDraft,
   BodyFatReading,
+  CoachChat,
   CoachMessage,
   DiaryEntry,
   Fast,
@@ -169,12 +170,28 @@ export function makeFast(overrides: Partial<Fast> = {}): Fast {
   };
 }
 
+/** The chat `makeCoachMessage` puts a message in unless told otherwise (P16-02). */
+export const FACTORY_CHAT_ID = 'chat-1';
+
 export function makeCoachMessage(overrides: Partial<CoachMessage> = {}): CoachMessage {
   return {
     id: nextId('message'),
+    chatId: FACTORY_CHAT_ID,
     role: 'user',
     text: 'How much protein did I eat this week?',
     at: FACTORY_NOW,
+    ...overrides,
+  };
+}
+
+/** A Coach chat as stored (P16-02), last used at `FACTORY_NOW`. */
+export function makeCoachChat(overrides: Partial<CoachChat> = {}): CoachChat {
+  return {
+    id: FACTORY_CHAT_ID,
+    title: 'How much protein did I eat this week?',
+    titleByPerson: false,
+    createdAt: FACTORY_NOW,
+    updatedAt: FACTORY_NOW,
     ...overrides,
   };
 }

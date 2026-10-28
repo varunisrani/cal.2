@@ -56,7 +56,7 @@ const data: DataSources = {
   weightRepo: { between: pending },
   bodyFatRepo: { between: pending },
   savedMealsRepo: { list: pending },
-  coachRepo: { list: pending },
+  coachRepo: { list: pending, chats: pending, summaries: pending },
   unreadableFlag: pending,
   clock: services.clock,
   bus,

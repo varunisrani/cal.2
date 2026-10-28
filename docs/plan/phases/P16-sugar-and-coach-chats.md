@@ -1,6 +1,6 @@
 # P16 · Sugar on Home, and several Coach chats
 
-**Weeks:** 0.5 · **Tracks:** Home (sugar line, the Coach's facts); Coach (chats: data, service, screens) · **Depends on:** P00–P15 · **Status:** 📋 planned (2026-10-28, at the owner's request) · **Ships as:** 1.4.0
+**Weeks:** 0.5 · **Tracks:** Home (sugar line, the Coach's facts); Coach (chats: data, service, screens) · **Depends on:** P00–P15 · **Status:** ✅ done: P16-01..03 landed (2026-10-28, at the owner's request) · **Ships as:** 1.4.0
 
 ## Goal
 

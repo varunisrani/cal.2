@@ -35,6 +35,7 @@ import {
   readFrame,
   readPhotoListing,
   shapeRow,
+  withChats,
   type DocumentFrame,
 } from './payload';
 import { ZipError } from './zip';
@@ -121,15 +122,19 @@ function keyField(table: BackupTable): string {
   return schemas[table].split(',')[0]!.trim();
 }
 
-/** The rows of every table but `photos`, shaped; null when any row is bad or a key repeats. */
+/**
+ * The rows of every table but `photos`, shaped, every Coach message in a chat; null when any row
+ * is bad or a key repeats.
+ */
 function shapedTables(frame: DocumentFrame): Partial<Record<BackupTable, object[]>> | null {
+  const lists = withChats(frame.tables);
   const tables: Partial<Record<BackupTable, object[]>> = {};
   for (const table of BACKUP_TABLES) {
     if (table === PHOTO_TABLE) continue;
     const field = keyField(table);
     const keys = new Set<unknown>();
     const rows: object[] = [];
-    for (const raw of frame.tables[table] ?? []) {
+    for (const raw of lists[table] ?? []) {
       const shaped = shapeRow(table, raw);
       if (shaped.kind === 'bad') return null;
       if (shaped.kind === 'skip') continue;

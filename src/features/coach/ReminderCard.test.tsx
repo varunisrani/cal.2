@@ -52,7 +52,10 @@ afterEach(async () => {
   await closeHarnesses();
 });
 
-const IDLE = { pending: false } as const;
+const IDLE = { waiting: [] } as const;
+
+/** The one chat the conversation is in. */
+const CHAT = 'chat-reminders';
 
 interface Open {
   readonly cards: CoachReminderCard[];
@@ -70,8 +73,12 @@ async function openChat({ cards, permission = 'granted', master = true }: Open) 
   const h = await openTracking({ permission, hash: '#/coach' });
   const { settingsRepo, coachRepo } = h.repos;
   await settingsRepo.set('remind.master', master);
-  await coachRepo.append({ role: 'user', text: 'Remind me, please.', at: FACTORY_NOW });
+  await coachRepo.append(
+    { chatId: CHAT, role: 'user', text: 'Remind me, please.', at: FACTORY_NOW },
+    { start: true },
+  );
   const reply = await coachRepo.append({
+    chatId: CHAT,
     role: 'assistant',
     text: 'I have proposed it: tap Add to set it.',
     at: FACTORY_NOW + 1,
@@ -85,9 +92,11 @@ async function openChat({ cards, permission = 'granted', master = true }: Open) 
     return {
       getState: () => IDLE,
       subscribe: () => () => undefined,
+      newChatId: () => 'chat-new',
       send: vi.fn(async () => 'answered' as const),
       retry: vi.fn(async () => 'answered' as const),
-      reset: vi.fn(async () => undefined),
+      deleteChat: vi.fn(async () => undefined),
+      renameChat: vi.fn(async () => null),
       addReminder: (id, index, on) => reminderCards.add(id, index, on),
       dismissReminder: (id, index) => reminderCards.dismiss(id, index),
     };
@@ -116,7 +125,7 @@ async function openChat({ cards, permission = 'granted', master = true }: Open) 
     reload,
     user: userEvent.setup(),
     stored: () => settingsRepo.get('remind.custom'),
-    storedCards: async () => (await coachRepo.list()).at(-1)?.reminders,
+    storedCards: async () => (await coachRepo.list(CHAT)).at(-1)?.reminders,
   };
 }
 

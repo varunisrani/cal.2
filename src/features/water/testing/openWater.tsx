@@ -73,12 +73,16 @@ function nextTask(): Promise<void> {
 /**
  * Waits until `check()` passes, one task at a time. Unlike `until`, every round ends its act, so
  * a plain state update made after a write (a toast, a sheet closing itself) is drawn before the
- * next check instead of waiting for the act that holds it.
+ * next check instead of waiting for the act that holds it. The limit is a time, not a count of
+ * rounds: a backup hashes with WebCrypto, which answers on a thread of its own, and a loaded
+ * machine runs any number of rounds before it does.
  */
 export async function settle(check: () => boolean): Promise<void> {
-  for (let round = 0; round < 500; round++) {
-    if (check()) return;
+  const deadline = performance.now() + 5_000;
+  while (!check()) {
+    if (performance.now() > deadline) {
+      throw new Error('settle: the page never reached the expected state');
+    }
     await nextTask();
   }
-  throw new Error('settle: the page never reached the expected state');
 }

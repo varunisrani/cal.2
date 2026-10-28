@@ -1,35 +1,53 @@
-// The Coach conversation, one record per message (D-16.29, R04.8): the text, its time, an optional
-// small thumbnail of an attached photo, on a question whose turn failed, the failure for Retry
-// (D-16.31), and on a reply the reminders it proposed with what became of them (P13). Storage is bounded: each append stores its message and, in the same transaction,
-// deletes the oldest readable messages beyond the newest 200, thumbnails with them.
+// The Coach's chats and their messages (D-16.29, R04.8, P16-02, D-16.99). A chat is one record
+// (its title, whether the person named it, when it started and when its newest message came); a
+// message is one record carrying its chat's id: the text, its time, an optional small thumbnail of
+// an attached photo, on a question whose turn failed the failure for Retry (D-16.31), and on a
+// reply the reminders it proposed with what became of them (P13). A chat is stored together with
+// its first message, titled from it, so a chat nobody wrote in never becomes a record. Storage is
+// bounded per chat: each append stores its message and, in the same transaction, deletes that
+// chat's oldest readable messages beyond its newest 200, thumbnails with them.
 //
 // Writes from this tab run one after another through a queue, in call order, so a reply, a retry
-// mark and a Reset never interleave. Messages are listed oldest first by time; messages with the
-// same time keep the order they were appended in, through a sequence number stored on the row
-// (`seq`, not part of the message). Reset deletes every message and moves the conversation
-// generation in `meta` on, so a reply that was still running when the person reset can be told
-// apart and dropped (R04.6, D-16.34).
+// mark, a rename and a delete never interleave. A chat's messages are listed oldest first by time;
+// messages with the same time keep the order they were appended in, through a sequence number
+// stored on the row (`seq`, not part of the message). Deleting a chat deletes its messages with
+// it; a reply that was still running for it finds no chat and is not stored (R04.6, D-16.34): only
+// an append that starts a chat may store one.
 //
-// A message that cannot be read (an unknown role, no time) is dropped from the list and kept aside
-// by the guard. Appends, the cap and `patch` never overwrite or delete it; Reset keeps its raw value
-// in quarantine before it deletes it (R04.7).
+// A record that cannot be read (a message with an unknown role or no chat, a chat with no time) is
+// dropped from the lists and kept aside by the guard. Appends, the cap and `patch` never overwrite
+// or delete an unreadable message; deleting a chat keeps their raw values in quarantine first
+// (R04.7). A chat record that cannot be read is made again from its messages on the next write.
 
 import { Dexie, type PromiseExtended } from 'dexie';
-import type { CoachMessage, CoachMessageState, CoachReminderCard } from '../../domain/model';
+import { chatTitle, typedTitle } from '../../domain/coach/chats';
+import type {
+  CoachChat,
+  CoachMessage,
+  CoachMessageState,
+  CoachReminderCard,
+  CoachRole,
+} from '../../domain/model';
 import { systemClock, type Clock } from '../../lib/clock';
 import { newId as randomId, type IdSource } from '../../lib/ids';
-import { decodeCoachMessage, type Codec } from '../codecs';
+import { decodeCoachChat, decodeCoachMessage } from '../codecs';
+import { byConversationOrder, chatForRows, chatIdOf, seqOf } from '../coachRows';
 import { GUARD_TABLES, decodeRows, keepAside, readOne, removeRows, writeOne } from '../guard';
 import type { PlatewiseDb } from '../schema';
 
-/** How many messages the conversation keeps (D-16.29). */
+/** How many messages each chat keeps (D-16.29, per chat since P16-02). */
 export const COACH_MESSAGE_LIMIT = 200;
 
-/** The `meta` key of the conversation generation. */
-export const GENERATION_KEY = 'coachGeneration';
-
-/** A message to append; the repository gives it its id. */
+/** A message to append, its chat named in it; the repository gives it its id. */
 export type NewCoachMessage = Omit<CoachMessage, 'id'>;
+
+export interface AppendOptions {
+  /**
+   * The message may start its chat: when the chat is not stored it is, titled from this message's
+   * words. Without it, a message for a chat that is not stored (deleted meanwhile) is dropped.
+   */
+  readonly start?: boolean;
+}
 
 export interface CoachMessageChanges {
   text?: string;
@@ -39,22 +57,37 @@ export interface CoachMessageChanges {
   reminders?: readonly CoachReminderCard[];
 }
 
+/** A chat as the Chats list shows it. */
+export interface CoachChatSummary {
+  readonly chat: CoachChat;
+  /** Its newest readable message, whose it is and the words; null when none can be read. */
+  readonly last: { readonly role: CoachRole; readonly text: string } | null;
+}
+
 export interface CoachRepo {
-  /** Stores a message after every earlier write of this tab; returns it with its new id. */
-  append(message: NewCoachMessage): Promise<CoachMessage>;
+  /** The readable chats, newest activity first. */
+  chats(): PromiseExtended<CoachChat[]>;
+  /** The readable chats, newest activity first, each with its newest message. */
+  summaries(): PromiseExtended<CoachChatSummary[]>;
+  /** The readable messages of one chat, oldest first (none for a chat that is not stored). */
+  list(chatId: string): PromiseExtended<CoachMessage[]>;
+  /** One readable message, from any chat; null when it is missing or unreadable. */
+  get(id: string): Promise<CoachMessage | null>;
   /**
-   * The same, only while the conversation is still at `generation`; after a Reset nothing is
-   * stored and the promise resolves to null.
+   * Stores a message in its chat after every earlier write of this tab and returns it with its new
+   * id; null when its chat is not stored and the message may not start it.
    */
-  append(message: NewCoachMessage, generation: number): Promise<CoachMessage | null>;
-  /** The readable messages, oldest first. */
-  list(): PromiseExtended<CoachMessage[]>;
+  append(message: NewCoachMessage, options: { readonly start: true }): Promise<CoachMessage>;
+  append(message: NewCoachMessage, options?: AppendOptions): Promise<CoachMessage | null>;
   /** Changes a stored message; null when it is missing or unreadable (then nothing changes). */
   patch(id: string, changes: CoachMessageChanges): Promise<CoachMessage | null>;
-  /** Deletes every message and moves the generation on; returns the new generation. */
-  reset(): Promise<number>;
-  /** The current conversation generation: 0 until the first Reset. */
-  generation(): Promise<number>;
+  /**
+   * Gives a chat the person's own title (on one line, at most 60 characters), never replaced by
+   * an automatic one; null when the chat is not stored. Rejects with a TypeError for no words.
+   */
+  rename(chatId: string, title: string): Promise<CoachChat | null>;
+  /** Deletes a chat and every message in it; true when there was a chat. */
+  remove(chatId: string): Promise<boolean>;
 }
 
 export interface CoachRepoOptions {
@@ -67,45 +100,21 @@ export interface CoachRepoOptions {
 /** A message as stored: `seq` orders messages that share a time. */
 type MessageRow = CoachMessage & { seq: number };
 
-const MESSAGE_TABLES = ['coachMessages', ...GUARD_TABLES] as const;
-
-/** The generation row of `meta`: a whole number of at least 0. */
-const decodeGeneration: Codec<number> = (raw) => {
-  const value = (raw as { value?: unknown } | null)?.value;
-  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null;
-};
-
-/** A raw row's field, when the row is an object. */
-function fieldOf(raw: unknown, key: string): unknown {
-  return typeof raw === 'object' && raw !== null
-    ? (raw as Record<string, unknown>)[key]
-    : undefined;
-}
-
-function numberOr(value: unknown, fallback: number): number {
-  return typeof value === 'number' && Number.isFinite(value) ? value : fallback;
-}
-
-/** The append sequence of a raw row; 0 for rows stored without one (a restore, say). */
-function seqOf(raw: unknown): number {
-  return numberOr(fieldOf(raw, 'seq'), 0);
-}
-
-/** Conversation order of raw rows: time, then append sequence, then id. */
-function byConversationOrder(a: unknown, b: unknown): number {
-  const aId = String(fieldOf(a, 'id'));
-  const bId = String(fieldOf(b, 'id'));
-  return (
-    numberOr(fieldOf(a, 'at'), 0) - numberOr(fieldOf(b, 'at'), 0) ||
-    seqOf(a) - seqOf(b) ||
-    (aId < bId ? -1 : aId > bId ? 1 : 0)
-  );
-}
+const CHAT_TABLES = ['coachMessages', 'coachChats', ...GUARD_TABLES] as const;
 
 /** The message without its stored sequence number. */
 function asMessage(row: MessageRow): CoachMessage {
   const { seq: _seq, ...message } = row;
   return message;
+}
+
+/** Newest activity first; then the newer start; then by id, so the order never wavers. */
+function byNewestActivity(a: CoachChat, b: CoachChat): number {
+  return (
+    b.updatedAt - a.updatedAt ||
+    b.createdAt - a.createdAt ||
+    (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+  );
 }
 
 export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {}): CoachRepo {
@@ -124,9 +133,14 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
     return run;
   }
 
-  /** One read-write transaction over the messages and the guard's tables (`meta` among them). */
+  /** One read-write transaction over the chats, the messages and the guard's tables. */
   function change<T>(work: () => Promise<T>): Promise<T> {
-    return db.transaction('rw', [...MESSAGE_TABLES], work);
+    return db.transaction('rw', [...CHAT_TABLES], work);
+  }
+
+  /** The raw message rows of one chat, in no order. */
+  function rowsOf(chatId: string): PromiseExtended<unknown[]> {
+    return db.coachMessages.where('chatId').equals(chatId).toArray();
   }
 
   /** Readable messages of raw rows, oldest first; unreadable ones are kept aside. */
@@ -140,9 +154,9 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
     ).items;
   }
 
-  async function currentGeneration(): Promise<number> {
-    const stored = await readOne(db, 'meta', GENERATION_KEY, decodeGeneration, clock);
-    return stored.kind === 'ok' ? stored.value : 0;
+  /** Readable chats of raw rows, newest activity first; unreadable ones are kept aside. */
+  function decodedChats(rows: unknown[]): CoachChat[] {
+    return decodeRows(db, 'coachChats', rows, decodeCoachChat, clock).items.sort(byNewestActivity);
   }
 
   /** The row to store; throws a TypeError for a message the codec cannot read back. */
@@ -156,20 +170,40 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
     return { ...clean, seq };
   }
 
-  function append(message: NewCoachMessage): Promise<CoachMessage>;
-  function append(message: NewCoachMessage, generation: number): Promise<CoachMessage | null>;
+  function append(
+    message: NewCoachMessage,
+    options: { readonly start: true },
+  ): Promise<CoachMessage>;
+  function append(message: NewCoachMessage, options?: AppendOptions): Promise<CoachMessage | null>;
   async function append(
     message: NewCoachMessage,
-    generation?: number,
+    options: AppendOptions = {},
   ): Promise<CoachMessage | null> {
     const checked = toRow({ ...message, id: newId() }, 0);
+    const { chatId } = checked;
     return queued(() =>
       change(async () => {
-        if (generation !== undefined && (await currentGeneration()) !== generation) return null;
-        const rows: unknown[] = await db.coachMessages.toArray();
+        const stored = await readOne(db, 'coachChats', chatId, decodeCoachChat, clock);
+        if (stored.kind === 'missing' && !options.start) return null;
+        const rows: unknown[] = await rowsOf(chatId);
         const seq = rows.reduce((highest: number, raw) => Math.max(highest, seqOf(raw)), 0) + 1;
         const row: MessageRow = { ...checked, seq };
+        const chat: CoachChat =
+          stored.kind === 'ok'
+            ? stored.value
+            : stored.kind === 'corrupt'
+              ? // Made again from its messages; the guard keeps the unreadable record aside.
+                chatForRows(chatId, [...rows, row])
+              : {
+                  id: chatId,
+                  title: chatTitle(row.text),
+                  titleByPerson: false,
+                  createdAt: row.at,
+                  updatedAt: row.at,
+                };
         await writeOne(db, 'coachMessages', row, decodeCoachMessage, clock);
+        const updatedAt = Math.max(chat.updatedAt, row.at);
+        await writeOne(db, 'coachChats', { ...chat, updatedAt }, decodeCoachChat, clock);
         const messages = decoded([...rows, row]);
         const overflow = messages.length - COACH_MESSAGE_LIMIT;
         if (overflow > 0) {
@@ -182,9 +216,31 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
   }
 
   return {
-    append,
+    chats: () => db.coachChats.toArray().then((rows: unknown[]) => decodedChats(rows)),
 
-    list: () => db.coachMessages.toArray().then((rows: unknown[]) => decoded(rows)),
+    summaries: () =>
+      db.coachChats.toArray().then((chatRows: unknown[]) =>
+        db.coachMessages.toArray().then((messageRows: unknown[]) => {
+          const newestFirst = messageRows.sort(byConversationOrder).reverse();
+          return decodedChats(chatRows).map((chat): CoachChatSummary => {
+            for (const raw of newestFirst) {
+              if (chatIdOf(raw) !== chat.id) continue;
+              const message = decodeCoachMessage(raw);
+              if (message) return { chat, last: { role: message.role, text: message.text } };
+            }
+            return { chat, last: null };
+          });
+        }),
+      ),
+
+    list: (chatId) => rowsOf(chatId).then((rows) => decoded(rows)),
+
+    get: async (id) => {
+      const stored = await readOne(db, 'coachMessages', id, decodeCoachMessage, clock);
+      return stored.kind === 'ok' ? stored.value : null;
+    },
+
+    append,
 
     patch: (id, changes) =>
       queued(() =>
@@ -207,18 +263,32 @@ export function createCoachRepo(db: PlatewiseDb, options: CoachRepoOptions = {})
         }),
       ),
 
-    reset: () =>
+    async rename(chatId, title) {
+      const words = typedTitle(title);
+      if (words === '') throw new TypeError('A chat title needs words');
+      return queued(() =>
+        change(async () => {
+          const stored = await readOne(db, 'coachChats', chatId, decodeCoachChat, clock);
+          if (stored.kind === 'missing') return null;
+          const chat =
+            stored.kind === 'ok' ? stored.value : chatForRows(chatId, await rowsOf(chatId));
+          const renamed: CoachChat = { ...chat, title: words, titleByPerson: true };
+          await writeOne(db, 'coachChats', renamed, decodeCoachChat, clock);
+          return renamed;
+        }),
+      );
+    },
+
+    remove: (chatId) =>
       queued(() =>
         change(async () => {
-          const next = (await currentGeneration()) + 1;
-          const keys = await db.coachMessages.toCollection().primaryKeys();
+          const existed = (await db.coachChats.get(chatId)) !== undefined;
+          const keys = await db.coachMessages.where('chatId').equals(chatId).primaryKeys();
           // Unreadable messages are kept aside by the guard before they go.
-          await removeRows(db, 'coachMessages', keys, decodeCoachMessage, clock);
-          await writeOne(db, 'meta', { key: GENERATION_KEY, value: next }, decodeGeneration, clock);
-          return next;
+          await removeRows(db, 'coachMessages', keys.map(String), decodeCoachMessage, clock);
+          await removeRows(db, 'coachChats', [chatId], decodeCoachChat, clock);
+          return existed;
         }),
       ),
-
-    generation: currentGeneration,
   };
 }

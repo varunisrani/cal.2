@@ -12,7 +12,7 @@ import type { CustomReminderProblem } from '../../domain/reminders/custom';
 import type { CustomRemindersService } from '../reminders/customReminders';
 
 /**
- * Why a card's reminder was not added: the service's reason, the card gone (the chat was cleared,
+ * Why a card's reminder was not added: the service's reason, the card gone (its chat was deleted,
  * or it was dismissed), or no reminders service to add it with.
  */
 export type ReminderCardProblem = CustomReminderProblem | 'gone' | 'unavailable';
@@ -29,7 +29,7 @@ export interface ReminderCards {
 }
 
 export interface ReminderCardsDeps {
-  readonly coachRepo: Pick<CoachRepo, 'list' | 'patch'>;
+  readonly coachRepo: Pick<CoachRepo, 'get' | 'patch'>;
   readonly reminders?: Pick<CustomRemindersService, 'addCustomReminder'>;
 }
 
@@ -51,8 +51,7 @@ export function createReminderCards({ coachRepo, reminders }: ReminderCardsDeps)
   }
 
   async function find(messageId: string, index: number): Promise<FoundCard | null> {
-    const message = (await coachRepo.list()).find((each) => each.id === messageId);
-    const cards = message?.reminders;
+    const cards = (await coachRepo.get(messageId))?.reminders;
     const card = cards?.[index];
     return cards && card ? { cards, card } : null;
   }

@@ -3,10 +3,11 @@
  * on its defaults (the goal is "maintain") with the AI as the Custom provider at the fake's
  * loopback address (`plan-ok`), and opens the Coach tab. Then it talks to the fake: a question it
  * answers after a `food_log` call on the person's own diary, a card and a chip (the chip with a
- * photo), a turn that fails and is retried, a slow reply cut off by Clear chat, enough short
- * exchanges to pass the 200-message cap, and (P13) a reminder the fake proposes, added from its
- * card and found in Settings › Tracking & reminders. As in the logging spec, every request off
- * loopback is aborted and fails the test.
+ * photo), a turn that fails and is retried, a slow reply cut off by Delete chat, enough short
+ * exchanges to pass the 200-message cap, (P13) a reminder the fake proposes, added from its card
+ * and found in Settings › Tracking & reminders, and (P16) several chats: New chat, Chats, a reply
+ * that lands in its own chat while another is open, Rename and Delete. As in the logging spec,
+ * every request off loopback is aborted and fails the test.
  */
 import { AxeBuilder } from '@axe-core/playwright';
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
@@ -26,6 +27,7 @@ import {
   recordHooks,
   recordTexts,
   routeFoodDatabases,
+  textReply,
   textScript,
   textsSeen,
   toolResultsSent,
@@ -153,7 +155,7 @@ async function onboard(page: Page): Promise<void> {
   });
 }
 
-/** The Coach tab from the tab bar: an empty chat with four cards, Clear chat off. */
+/** The Coach tab from the tab bar: an empty new chat with four cards, Delete chat off. */
 async function openEmptyCoach(page: Page): Promise<void> {
   await ui(page, 'shell.tabbar.coach').click();
   await expect(page).toHaveURL(/#\/coach$/);
@@ -161,6 +163,7 @@ async function openEmptyCoach(page: Page): Promise<void> {
   await expect(empty).toBeVisible();
   await expect(empty.getByRole('heading', { name: words('coach.empty.title') })).toBeVisible();
   await expect(ui(empty, 'coach.cards').getByRole('button')).toHaveText([...CHIPS]);
+  await expect(ui(page, 'coach.chatTitle')).toHaveText(words('coach.page.newChat'));
   await expect(ui(page, 'coach.reset')).toBeDisabled();
 }
 
@@ -204,15 +207,15 @@ async function coachRequests(): Promise<RecordedRequest[]> {
 }
 
 /**
- * The conversation and the composer in both themes: no serious or critical axe finding (the
- * rules and impacts of the a11y spec).
+ * The conversation and the composer (or what `scope` names, such as the Chats list) in both
+ * themes: no serious or critical axe finding (the rules and impacts of the a11y spec).
  */
-async function expectAxeClean(page: Page): Promise<void> {
+async function expectAxeClean(page: Page, scope = '[data-ui="screen.coach"]'): Promise<void> {
   for (const theme of ['dark', 'light'] as const) {
     await page.emulateMedia({ colorScheme: theme });
     await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
     const results = await new AxeBuilder({ page })
-      .include('[data-ui="screen.coach"]')
+      .include(scope)
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'])
       .analyze();
     const blocking = results.violations
@@ -464,7 +467,8 @@ test.describe('coach chat (Demo 5)', () => {
     await openEmptyCoach(page);
     await fakeAi.useScript('coach-slow');
     const typing = ui(page, 'coach.typing');
-    const reset = page.getByRole('button', { name: words('coach.page.reset') });
+    // Delete chat (P16) took Clear chat's place, its hooks and its question.
+    const reset = page.getByRole('button', { name: words('coach.page.deleteChat') });
     const dialog = page.getByRole('alertdialog', { name: words('coach.page.confirm.title') });
 
     await test.step('the question → the fake holds its answer; the dots show, the chips wait', async () => {
@@ -476,7 +480,7 @@ test.describe('coach chat (Demo 5)', () => {
       await expect(ui(page, 'coach.attach')).toBeDisabled();
     });
 
-    await test.step('Clear chat → Cancel keeps everything as it was', async () => {
+    await test.step('Delete chat → Cancel keeps everything as it was', async () => {
       await expect(reset).toHaveAttribute('data-ui', 'coach.reset');
       await reset.click();
       await expect(dialog).toHaveAttribute('data-ui', 'coach.resetDialog');
@@ -486,13 +490,14 @@ test.describe('coach chat (Demo 5)', () => {
       await expect(typing).toBeVisible();
     });
 
-    await test.step('Clear chat → Clear: the chat is empty at once and the request is dropped', async () => {
+    await test.step('Delete chat → Delete: a new, empty chat at once and the request is dropped', async () => {
       await reset.click();
       const clear = ui(dialog, 'coach.resetDialog.confirm');
-      await expect(clear).toHaveText(words('coach.page.confirm.clear'));
+      await expect(clear).toHaveText(words('common.delete'));
       await clear.click();
       await expect(dialog).toBeHidden();
       await expect(ui(page, 'coach.empty')).toBeVisible();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(words('coach.page.newChat'));
       await expect(ui(page, 'coach.message')).toHaveCount(0);
       await expect(typing).toHaveCount(0);
       await expect(reset).toBeDisabled();
@@ -571,6 +576,123 @@ test.describe('coach chat (Demo 5)', () => {
       await expect(shown).toHaveCount(200);
       await expectMessage(shown.first(), ['user', question(2)]);
       await expectMessage(shown.last(), ['assistant', answer(exchanges)]);
+    });
+  });
+});
+
+test.describe('several chats (P16, D-16.99)', () => {
+  test('starts a chat, then a new one while the first reply runs, switches back through Chats, renames and deletes', async ({
+    page,
+  }) => {
+    const first = 'How is my protein this week?';
+    const second = 'Which dinner fits my day?';
+    const firstAnswer = 'About 92 g a day this week: close to your goal.';
+    const secondAnswer = 'A lentil soup with bread fits what is left of today.';
+    const renamed = 'Dinner plans';
+    const chats = ui(page, 'coach.chats');
+    const row = (title: string) =>
+      ui(chats, 'coach.chats.item').filter({
+        has: page.locator('[data-ui="coach.chats.item.title"]', { hasText: title }),
+      });
+    await onboard(page);
+    await openEmptyCoach(page);
+    // The first chat's answer takes three seconds; the second chat's comes at once.
+    await fakeAi.useReplies({
+      replies: [{ ...textReply(firstAnswer), delayMs: 3_000 }, textReply(secondAnswer)],
+    });
+
+    await test.step('a question starts the first chat; its reply is on its way', async () => {
+      await ask(page, first);
+      await expectChat(page, [['user', first]]);
+      await expect(ui(page, 'coach.typing')).toBeVisible();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(first);
+    });
+
+    await test.step('New chat: an empty chat with the cards, and Send works there meanwhile', async () => {
+      const newChat = page.getByRole('button', { name: words('coach.page.newChat') });
+      await expect(newChat).toHaveAttribute('data-ui', 'coach.chats.new');
+      await newChat.click();
+      await expect(ui(page, 'coach.empty')).toBeVisible();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(words('coach.page.newChat'));
+      await expect(ui(page, 'coach.typing')).toHaveCount(0);
+      await expect(newChat).toBeDisabled();
+      await ask(page, second);
+      await expectChat(page, [
+        ['user', second],
+        ['assistant', secondAnswer],
+      ]);
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(second);
+    });
+
+    await test.step('Chats: both chats; back to the first, whose reply landed there', async () => {
+      await page.getByRole('button', { name: words('coach.page.chats') }).click();
+      await expect(chats).toBeVisible();
+      await expect(ui(chats, 'coach.chats.item')).toHaveCount(2);
+      await expect(row(second)).toHaveAttribute('data-current', 'true');
+      await expect(ui(row(second), 'coach.chats.item.last')).toHaveText(secondAnswer);
+      await expectAxeClean(page, '[data-ui="coach.chats"]');
+      await ui(row(first), 'coach.chats.item.open').click();
+      await expect(chats).toBeHidden();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(first);
+      await expectChat(page, [
+        ['user', first],
+        ['assistant', firstAnswer],
+      ]);
+    });
+
+    await test.step('each chat sent only its own messages', async () => {
+      const asked = await coachRequests();
+      expect(asked).toHaveLength(2);
+      const sentFor = (question: string) =>
+        JSON.stringify(
+          messagesSent(asked.find((request) => questionsSent(request).at(-1) === question)!),
+        );
+      expect(sentFor(second)).not.toContain(first);
+      expect(sentFor(first)).not.toContain(second);
+    });
+
+    await test.step('Rename the second chat from Chats', async () => {
+      await page.getByRole('button', { name: words('coach.page.chats') }).click();
+      await row(second)
+        .getByRole('button', { name: words('coach.chats.rename', { title: second }) })
+        .click();
+      const sheet = page.getByRole('dialog', { name: words('coach.chats.renameTitle') });
+      await expect(sheet).toHaveAttribute('data-ui', 'coach.chats.renameSheet');
+      const name = sheet.getByRole('textbox', { name: words('coach.chats.name') });
+      await expect(name).toHaveValue(second);
+      await name.fill(renamed);
+      await ui(sheet, 'coach.chats.renameSheet.save').click();
+      await expect(sheet).toBeHidden();
+      await expect(row(renamed)).toHaveCount(1);
+      await expect(row(second)).toHaveCount(0);
+    });
+
+    await test.step('Delete the first chat from Chats, after the question', async () => {
+      await row(first)
+        .getByRole('button', { name: words('coach.chats.delete', { title: first }) })
+        .click();
+      const dialog = page.getByRole('alertdialog', { name: words('coach.page.confirm.title') });
+      await ui(dialog, 'coach.resetDialog.confirm').click();
+      await expect(dialog).toBeHidden();
+      await expect(ui(chats, 'coach.chats.item')).toHaveCount(1);
+      await ui(row(renamed), 'coach.chats.item.open').click();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(renamed);
+      await expectChat(page, [
+        ['user', second],
+        ['assistant', secondAnswer],
+      ]);
+    });
+
+    await test.step('after a reload: the renamed chat opens, the only one left', async () => {
+      await page.reload();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(renamed);
+      await expectChat(page, [
+        ['user', second],
+        ['assistant', secondAnswer],
+      ]);
+      await page.getByRole('button', { name: words('coach.page.chats') }).click();
+      await expect(ui(chats, 'coach.chats.item')).toHaveCount(1);
+      expect(await coachRequests()).toHaveLength(2);
     });
   });
 });

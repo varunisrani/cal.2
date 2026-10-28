@@ -346,8 +346,25 @@ export interface CoachReminderCard {
   reminderId?: string;
 }
 
+/**
+ * One Coach chat (P16-02, D-16.99). It is stored with its first question; its messages carry its
+ * id. Instants are epoch ms.
+ */
+export interface CoachChat {
+  id: string;
+  /** The start of the first message, or the person's own. */
+  title: string;
+  /** A renamed title is never replaced. */
+  titleByPerson: boolean;
+  createdAt: number;
+  /** The newest message's time; the list's order. */
+  updatedAt: number;
+}
+
 export interface CoachMessage {
   id: string;
+  /** The chat it belongs to (P16-02). */
+  chatId: string;
   role: CoachRole;
   text: string;
   at: number;

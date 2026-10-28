@@ -888,11 +888,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-I4-3** Copy works without the Clipboard API and says Copied
   - Test: src/features/coach/CopyButton.test.tsx > CopyButton > copies with the copy command and says Copied when there is no Clipboard API (P13)
 
-### I5 · Reset with confirmation (P1)
+### I5 · Delete chat (was Reset) with confirmation (P1)
 
-- **ACC-I5-1** Reset during a pending reply leaves the chat empty
+- **ACC-I5-1** Delete chat (was Reset) during a pending reply removes the chat, the reply never lands, and a new chat opens
   - Test: src/services/coach/session.test.ts > createCoachSession: Reset (R04.6, D-16.34) > aborts the running request, ends pending at once and leaves the chat empty (ACC-I5-1)
   - Test: e2e/coach.spec.ts > coach chat (Demo 5) > clears the chat while a slow reply is pending, and that reply never arrives (ACC-I5-1, R04.6, D-16.34)
+  - Test: src/services/coach/session.test.ts > createCoachSession: several chats (P16-02, D-16.99) > deletes one chat while two wait: its request is aborted and its reply never lands; the other goes on
 
 ### I6 · Fresh context each turn (P1)
 
@@ -918,11 +919,12 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-I9-1** A year of entries is trimmed to fit and the newest rows are kept
   - Test: src/services/coach/limiter.test.ts > limitToolResult: cutting a long list (R04.9, D-16.32) > trims a year of food_log output and keeps the newest days (ACC-I9-1)
 
-### I10 · Conversation kept locally (P1)
+### I10 · Conversations kept locally (P1)
 
 - **ACC-I10-1** After 205 messages the oldest 5 are gone
   - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > keeps the newest 200 of 205 messages, removing the oldest with their thumbnails (ACC-I10-1, R04.8, D-16.29)
   - Test: e2e/coach.spec.ts > coach chat (Demo 5) > keeps the newest 200 messages after 101 exchanges, also after a reload (D-16.29, R04.8)
+  - Test: src/data/repos/coachRepo.test.ts > append and the 200-message cap > caps each chat on its own: a full chat drops its own oldest, another chat keeps all of its (P16-02)
 - **ACC-I10-2** The chat survives a reload
   - Test: e2e/coach.spec.ts > coach chat (Demo 5) > answers "What did I eat yesterday?" from a food_log call, copies the reply and keeps the chat over a reload (ACC-I7-1, ACC-I10-2)
 
@@ -938,6 +940,34 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 
 - **ACC-I12-1** With the primary failing, the standby answers and nothing from the failed attempt remains
   - Test: src/services/coach/engine.test.ts > runTurn: the standby (R04.1, D-16.22) > re-runs the whole turn on the standby after the primary fails, with nothing from the first attempt (ACC-I12-1)
+
+### I14 · Several Coach chats: New chat and chat history (P1, P16)
+
+- **ACC-I14-1** New chat opens an empty chat with the goal's prompts; it is stored with its first question; the Coach tab opens the most recent chat
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > New chat opens an empty chat with the goal’s questions; its first send goes to it
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > opens the most recent chat, with its name under the heading
+  - Test: src/data/repos/coachRepo.test.ts > chats (P16-02, D-16.99) > stores a chat with its first message, titled from it, and nothing for a chat that was never started
+- **ACC-I14-2** Chats lists every chat newest first with its name, last use, last message and a waiting mark; a tap opens it
+  - Test: src/features/coach/ChatsSheet.test.tsx > ChatsSheet (P16-03, D-16.99) > lists every chat newest first: its name, when it was last used and its last message
+  - Test: src/features/coach/ChatsSheet.test.tsx > ChatsSheet (P16-03, D-16.99) > marks the open chat and the chats waiting for a reply
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > lists every chat in Chats, newest first, and a tap opens one
+- **ACC-I14-3** A reply keeps going when the person switches chats and lands in its own chat; several chats wait at once; each chat sends only its own messages
+  - Test: src/services/coach/session.test.ts > createCoachSession: several chats (P16-02, D-16.99) > answers two chats at once, each reply in its own chat, each request with its own chat only
+  - Test: src/services/coach/session.test.ts > createCoachSession: several chats (P16-02, D-16.99) > keeps a reply running while a new chat is started and asked, and lands it in its own chat
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > leaves Send free in this chat while another chat waits for its reply
+  - Test: e2e/coach.spec.ts > several chats (P16, D-16.99) > starts a chat, then a new one while the first reply runs, switches back through Chats, renames and deletes
+- **ACC-I14-4** Rename keeps the person's title over the automatic one
+  - Test: src/data/repos/coachRepo.test.ts > chats (P16-02, D-16.99) > renames a chat for good: later messages never bring the automatic title back
+  - Test: src/features/coach/RenameChatSheet.test.tsx > RenameChatSheet (P16-03) > stores the words on one line and closes
+- **ACC-I14-5** Delete asks first; a reply for a deleted chat is dropped
+  - Test: src/services/coach/session.test.ts > createCoachSession: several chats (P16-02, D-16.99) > deletes one chat while two wait: its request is aborted and its reply never lands; the other goes on
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > deletes a chat from the list after asking; the open chat stays
+- **ACC-I14-6** The 1.3 conversation becomes one chat; chats travel in backups at document version 1; a 1.3 backup restores into one chat
+  - Test: src/data/schema.test.ts > schema version 4 (P16-02) > moves the conversation into one chat titled from its first question, with its times, every row kept
+  - Test: src/services/backup/backup.test.ts > makeBackup > carries the Coach’s chats as one more list, the document still at version 1 (P16-02)
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > restores a file made by 1.3, its messages without chats, into one chat (P16-02)
+- **ACC-I14-7** Erase everything removes all chats
+  - Test: src/services/yourData.test.ts > createYourDataService: Erase everything > deletes everything, the nudge’s key too, and another open tab starts again on Welcome (ACC-K6-1)
 
 ## J · Settings and configuration
 
@@ -1356,7 +1386,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > shows the heart-rate zones only when Health Connect had heart rate for the walk
   - Test: src/features/walk/WalkSummary.test.tsx > WalkSummary (P15-03) > has no zones without heart rate
 - **ACC-M18-6** Walks are stored in a walks table (schema version 3) and travel in backups; a backup made before walks restores with none
-  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > is the current version and adds the walks table, keyed by id with an index on the start
+  - Test: src/data/schema.test.ts > schema version 3 (P15-02) > adds the walks table, keyed by id with an index on the start
   - Test: src/data/schema.test.ts > schema version 3 (P15-02) > carries the walks in backups and leaves the activity copy out
   - Test: src/data/schema.test.ts > schema version 3 (P15-02) > moves a version 2 database with rows in every table to version 3, every row kept and the walks table empty
   - Test: src/data/schema.test.ts > schema version 3 (P15-02) > moves a version 1 database straight to version 3

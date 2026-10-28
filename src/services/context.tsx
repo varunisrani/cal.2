@@ -95,7 +95,7 @@ export interface Services {
   readonly trackingSettings?: TrackingSettingsService;
   /** The reminders the person writes (P13, D-16.93): Settings, and the Coach's Add. */
   readonly customReminders?: CustomRemindersService;
-  /** The Coach's one session: send, retry, reset and pending (P08-09); optional likewise. */
+  /** The Coach's one session, a turn per chat (P08-09, P16-02); optional likewise. */
   readonly coachSession?: CoachSession;
   /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */
   readonly combine?: CombineService;

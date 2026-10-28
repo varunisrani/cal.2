@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   FACTORY_NOW,
+  makeCoachChat,
   makeCoachMessage,
   makeEntry,
   makeFast,
@@ -13,6 +14,7 @@ import {
   DEFAULT_FAST_GOAL_MIN,
   decodeAnalysisDraft,
   decodeBodyFat,
+  decodeCoachChat,
   decodeCoachMessage,
   decodeEntry,
   decodeFast,
@@ -234,6 +236,29 @@ describe('coach and photo codecs', () => {
     expect(
       decodeCoachMessage({ ...message, state: { status: 'failed', kind: 'quota', extra: 1 } }),
     ).toEqual({ ...message, state: { status: 'failed', kind: 'quota' } });
+  });
+
+  it('cannot read a message without its chat (P16-02)', () => {
+    const message = makeCoachMessage();
+    expect(decodeCoachMessage(message)).toEqual(message);
+    const { chatId: _chatId, ...withoutChat } = message;
+    expect(decodeCoachMessage(withoutChat)).toBeNull();
+    expect(decodeCoachMessage({ ...message, chatId: '' })).toBeNull();
+    expect(decodeCoachMessage({ ...message, chatId: 7 })).toBeNull();
+  });
+
+  it('reads a chat, needing its id and both times; a bad title reads as empty (P16-02)', () => {
+    const chat = makeCoachChat({ titleByPerson: true });
+    expect(decodeCoachChat({ ...chat, extra: 'left behind' })).toEqual(chat);
+    expect(decodeCoachChat({ ...chat, title: 12, titleByPerson: 'yes' })).toEqual({
+      ...chat,
+      title: '',
+      titleByPerson: false,
+    });
+    expect(decodeCoachChat({ ...chat, id: '' })).toBeNull();
+    expect(decodeCoachChat({ ...chat, createdAt: undefined })).toBeNull();
+    expect(decodeCoachChat({ ...chat, updatedAt: 'today' })).toBeNull();
+    expect(decodeCoachChat('chat')).toBeNull();
   });
 
   it('reads the reminder cards of a reply and leaves out a card it cannot read in full (P13)', () => {

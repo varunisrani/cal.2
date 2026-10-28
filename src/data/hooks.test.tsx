@@ -16,6 +16,8 @@ import {
   useActiveFast,
   useActivity,
   useBodyFat,
+  useCoachChatSummaries,
+  useCoachChats,
   useCoachMessages,
   useDayEntries,
   useDayWater,
@@ -279,16 +281,49 @@ describe('each hook renders loading, then the stored data, and follows a write a
     expect(view.value()).toEqual([toggled.meal]);
   });
 
-  it('useCoachMessages', async () => {
+  it('useCoachMessages: one chat’s messages, none before it is stored (P16-02)', async () => {
     const { repos, sources } = await setUp();
-    const view = track(sources, () => useCoachMessages(), null);
+    const view = track(sources, () => useCoachMessages('chat-a'), null);
     await view.until(ready());
     expect(view.value()).toEqual([]);
 
-    const { id: _unused, ...question } = makeCoachMessage();
-    const stored = await act(() => repos.coachRepo.append(question));
+    const { id: _unused, ...question } = makeCoachMessage({ chatId: 'chat-a' });
+    const { id: _other, ...elsewhere } = makeCoachMessage({ chatId: 'chat-b' });
+    await act(() => repos.coachRepo.append(elsewhere, { start: true }));
+    const stored = await act(() => repos.coachRepo.append(question, { start: true }));
     await view.until(ready(longer(0)));
     expect(view.value()).toEqual([stored]);
+  });
+
+  it('useCoachChats and useCoachChatSummaries: newest activity first, with the last message', async () => {
+    const { repos, sources } = await setUp();
+    const chats = track(sources, () => useCoachChats(), null);
+    const summaries = track(sources, () => useCoachChatSummaries(), null);
+    await chats.until(ready());
+    await summaries.until(ready());
+    expect(chats.value()).toEqual([]);
+    expect(summaries.value()).toEqual([]);
+
+    const ask = (chatId: string, text: string, at: number) =>
+      act(() => repos.coachRepo.append({ chatId, role: 'user', text, at }, { start: true }));
+    await ask('chat-a', 'First question', FACTORY_NOW);
+    await ask('chat-b', 'Second question', FACTORY_NOW + 60_000);
+    await chats.until(ready(longer(1)));
+    expect(chats.value().map((chat) => chat.id)).toEqual(['chat-b', 'chat-a']);
+
+    await ask('chat-a', 'A follow-up', FACTORY_NOW + 120_000);
+    await summaries.until(ready((value) => value[0]?.chat.id === 'chat-a'));
+    expect(summaries.value()).toEqual([
+      {
+        chat: expect.objectContaining({ id: 'chat-a', title: 'First question' }),
+        last: { role: 'user', text: 'A follow-up' },
+      },
+      {
+        chat: expect.objectContaining({ id: 'chat-b', title: 'Second question' }),
+        last: { role: 'user', text: 'Second question' },
+      },
+    ]);
+    await chats.until(ready((value) => value[0]?.id === 'chat-a'));
   });
 
   it('useUnreadableFlag', async () => {

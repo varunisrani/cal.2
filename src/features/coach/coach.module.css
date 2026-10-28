@@ -1,7 +1,7 @@
 /*
  * The Coach tab (P08-10, P08-11, P13): the page column, the conversation and its bubbles, Jump to
- * latest, the reminder cards, the typing dots, the error banner, the empty chat and the composer.
- * Every value comes from tokens.css.
+ * latest, the reminder cards, the typing dots, the error banner, the empty chat and the composer;
+ * the Chats list and Rename (P16-03). Every value comes from tokens.css.
  */
 
 /* ---- Page ---------------------------------------------------------------------------------- */
@@ -46,6 +46,30 @@
   font-size: var(--type-heading);
   font-weight: var(--weight-bold);
   line-height: var(--leading-tight);
+}
+
+/* The heading and, under it, the open chat's name on one line. */
+.heading {
+  display: grid;
+  min-inline-size: 0;
+}
+
+.openChatName {
+  margin: 0;
+  overflow: hidden;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* New chat, Chats and Delete chat. */
+.actions {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .body {
@@ -592,4 +616,123 @@
 
 .send {
   flex: none;
+}
+
+/* ---- Chats list and Rename (P16-03) -------------------------------------------------------- */
+
+.chatsEmpty {
+  margin: 0;
+  padding-block: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  text-align: center;
+}
+
+.chatList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A chat: the part that opens it, then Rename and Delete. */
+.chatItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding-inline-end: var(--space-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--card);
+}
+
+/* The open chat: an accent edge, the words keep their own colours. */
+.chatItem[data-current] {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+[dir='rtl'] .chatItem[data-current] {
+  box-shadow: inset -3px 0 0 var(--accent);
+}
+
+.chatOpen {
+  flex: 1;
+  display: grid;
+  gap: var(--space-1);
+  min-inline-size: 0;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chatOpen:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.chatTop,
+.chatLine {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  min-inline-size: 0;
+}
+
+.chatTitle,
+.chatLast {
+  flex: 1;
+  min-inline-size: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chatTitle {
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.chatWhen,
+.chatLast {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.chatWhen {
+  flex: none;
+}
+
+/* "Replying…" with the accent dot, ahead of the last message. */
+.chatWaiting {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--accent);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.chatDot {
+  inline-size: var(--space-2);
+  block-size: var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.renameForm {
+  display: grid;
+  padding-block-end: var(--space-2);
 }

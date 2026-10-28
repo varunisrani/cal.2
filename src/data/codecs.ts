@@ -19,6 +19,7 @@ import {
   isSex,
   type AnalysisDraft,
   type BodyFatReading,
+  type CoachChat,
   type CoachMessage,
   type CoachMessageState,
   type CoachReminderCard,
@@ -442,17 +443,46 @@ function decodeReminderCards(raw: unknown): CoachReminderCard[] | undefined {
   return cards.length > 0 ? cards : undefined;
 }
 
-/** A message with an unknown role is unreadable: there is no safe side to show it on. */
+/**
+ * A message with an unknown role is unreadable: there is no safe side to show it on; one without
+ * its chat (P16-02) likewise: there is no chat to show it in.
+ */
 export const decodeCoachMessage: Codec<CoachMessage> = (raw) => {
   const fields = fieldsOf(raw);
   const rowId = id(fields?.id);
+  const chatId = id(fields?.chatId);
   const at = finite(fields?.at);
-  if (!fields || !rowId || at === undefined || !isCoachRole(fields.role)) return null;
-  const message: CoachMessage = { id: rowId, role: fields.role, text: text(fields.text) ?? '', at };
+  if (!fields || !rowId || !chatId || at === undefined || !isCoachRole(fields.role)) return null;
+  const message: CoachMessage = {
+    id: rowId,
+    chatId,
+    role: fields.role,
+    text: text(fields.text) ?? '',
+    at,
+  };
   put(message, 'thumb', isBlobLike(fields.thumb) ? fields.thumb : undefined);
   put(message, 'state', decodeMessageState(fields.state));
   put(message, 'reminders', decodeReminderCards(fields.reminders));
   return message;
+};
+
+/**
+ * A Coach chat (P16-02): unreadable only without its id or either time. A title that cannot be
+ * read is empty (the screens' "Earlier chat"); it counts as the person's only when marked so.
+ */
+export const decodeCoachChat: Codec<CoachChat> = (raw) => {
+  const fields = fieldsOf(raw);
+  const rowId = id(fields?.id);
+  const createdAt = finite(fields?.createdAt);
+  const updatedAt = finite(fields?.updatedAt);
+  if (!fields || !rowId || createdAt === undefined || updatedAt === undefined) return null;
+  return {
+    id: rowId,
+    title: text(fields.title) ?? '',
+    titleByPerson: fields.titleByPerson === true,
+    createdAt,
+    updatedAt,
+  };
 };
 
 export const decodePhoto: Codec<PhotoRow> = (raw) => {

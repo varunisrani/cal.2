@@ -13,6 +13,7 @@ import { formulaPlan } from '../domain/goals/formulas';
 import { effectiveTargets } from '../domain/goals/targets';
 import type {
   BodyFatReading,
+  CoachChat,
   CoachMessage,
   DiaryEntry,
   Fast,
@@ -26,6 +27,7 @@ import type { Walk } from '../domain/walks/model';
 import { appBus } from './bus';
 import { useDataSources } from './DataProvider';
 import type { LiveState } from './live';
+import type { CoachChatSummary } from './repos/coachRepo';
 import type { ProfileRead } from './repos/profileRepo';
 import type { ActivityRow } from './schema';
 import type { SettingKey, Settings } from './settingsSchema';
@@ -33,6 +35,7 @@ import { useLive } from './useLive';
 
 // Screens may not import from src/data/repos, so the types they need come from here.
 export type { LiveState } from './live';
+export type { CoachChatSummary } from './repos/coachRepo';
 export type { ProfileRead } from './repos/profileRepo';
 export type { ActivityRow as ActivityDay, ActivitySession } from './schema';
 
@@ -162,10 +165,22 @@ export function useSavedMeals(): LiveState<SavedMeal[]> {
   return useLive(() => savedMealsRepo.list(), [savedMealsRepo]);
 }
 
-/** The Coach conversation, oldest first. */
-export function useCoachMessages(): LiveState<CoachMessage[]> {
+/** The Coach's chats, newest activity first (P16-02). */
+export function useCoachChats(): LiveState<CoachChat[]> {
   const { coachRepo } = useDataSources();
-  return useLive(() => coachRepo.list(), [coachRepo]);
+  return useLive(() => coachRepo.chats(), [coachRepo]);
+}
+
+/** The Coach's chats, newest activity first, each with its newest message (the Chats list). */
+export function useCoachChatSummaries(): LiveState<CoachChatSummary[]> {
+  const { coachRepo } = useDataSources();
+  return useLive(() => coachRepo.summaries(), [coachRepo]);
+}
+
+/** One Coach chat's messages, oldest first; none for a chat not stored yet. */
+export function useCoachMessages(chatId: string): LiveState<CoachMessage[]> {
+  const { coachRepo } = useDataSources();
+  return useLive(() => coachRepo.list(chatId), [coachRepo, chatId]);
 }
 
 function targetsOf(read: ProfileRead, today: DayKey): TargetsRead {

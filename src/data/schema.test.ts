@@ -1,6 +1,7 @@
 import { Dexie } from 'dexie';
 import { IDBFactory, IDBKeyRange } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
+import { FIRST_CHAT_ID } from '../domain/coach/chats';
 import { openTestDb } from '../test/db';
 import {
   makeBodyFat,
@@ -68,7 +69,7 @@ describe('schema version 1', () => {
       bodyFat: { key: 'id', autoIncrement: false, indexes: ['at'] },
       water: { key: 'id', autoIncrement: false, indexes: ['at', 'dayKey'] },
       fasts: { key: 'id', autoIncrement: false, indexes: ['end', 'start'] },
-      coachMessages: { key: 'id', autoIncrement: false, indexes: ['at'] },
+      coachMessages: { key: 'id', autoIncrement: false, indexes: ['at', 'chatId'] },
       settings: { key: 'key', autoIncrement: false, indexes: [] },
       secrets: { key: 'id', autoIncrement: false, indexes: [] },
       drafts: { key: 'id', autoIncrement: false, indexes: [] },
@@ -76,6 +77,7 @@ describe('schema version 1', () => {
       meta: { key: 'key', autoIncrement: false, indexes: [] },
       activity: { key: 'day', autoIncrement: false, indexes: [] },
       walks: { key: 'id', autoIncrement: false, indexes: ['startedAt'] },
+      coachChats: { key: 'id', autoIncrement: false, indexes: ['updatedAt'] },
     });
     const dayIndex = db.backendDB().transaction('entries').objectStore('entries');
     expect(dayIndex.index('[dayKey+loggedAt]').keyPath).toEqual(['dayKey', 'loggedAt']);
@@ -115,17 +117,15 @@ describe('schema version 2 (P11-03)', () => {
 });
 
 describe('schema version 3 (P15-02)', () => {
-  it('is the current version and adds the walks table, keyed by id with an index on the start', () => {
-    expect(schemaVersion()).toBe(3);
-    expect(UPGRADES).toEqual([
-      { version: 2, stores: { activity: 'day' } },
-      { version: 3, stores: { walks: 'id, startedAt' } },
-    ]);
-    expect(ADDED_TABLES).toEqual({ activity: 'day', walks: 'id, startedAt' });
+  it('adds the walks table, keyed by id with an index on the start', () => {
+    expect(schemaVersion(UPGRADES.slice(0, 2))).toBe(3);
+    expect(UPGRADES[1]).toEqual({ version: 3, stores: { walks: 'id, startedAt' } });
+    expect(ADDED_TABLES.walks).toBe('id, startedAt');
   });
 
   it('carries the walks in backups and leaves the activity copy out', () => {
-    expect(KEPT_ADDED_TABLES).toEqual(['walks']);
+    expect(KEPT_ADDED_TABLES).toContain('walks');
+    expect(KEPT_ADDED_TABLES).not.toContain('activity');
   });
 
   it('moves a version 2 database with rows in every table to version 3, every row kept and the walks table empty', async () => {
@@ -145,7 +145,7 @@ describe('schema version 3 (P15-02)', () => {
     const seeded = await keysByTable(before);
     before.close();
 
-    const after = connect(factory, UPGRADES);
+    const after = connect(factory, UPGRADES.slice(0, 2));
     await after.open();
     expect(after.verno).toBe(3);
     const kept = await keysByTable(after);
@@ -161,12 +161,108 @@ describe('schema version 3 (P15-02)', () => {
     const seeded = await keysByTable(before);
     before.close();
 
-    const after = connect(factory, UPGRADES);
+    const after = connect(factory, UPGRADES.slice(0, 2));
     await after.open();
     expect(after.verno).toBe(3);
     const kept = await keysByTable(after);
     after.close();
     expect(kept).toEqual({ ...seeded, activity: [], walks: [] });
+  });
+});
+
+describe('schema version 4 (P16-02)', () => {
+  it('is the current version: it adds the chats table and the chat index on messages', () => {
+    expect(schemaVersion()).toBe(4);
+    expect(UPGRADES[2]).toMatchObject({
+      version: 4,
+      stores: { coachChats: 'id, updatedAt', coachMessages: 'id, at, chatId' },
+    });
+    expect(ADDED_TABLES.coachChats).toBe('id, updatedAt');
+    expect(KEPT_ADDED_TABLES).toEqual(['walks', 'coachChats']);
+  });
+
+  /** A version 3 database with the given Coach messages (and one row in every other table). */
+  async function version3With(messages: readonly object[]) {
+    const factory = new IDBFactory();
+    const before = connect(factory, UPGRADES.slice(0, 2));
+    await before.open();
+    await seedEveryTable(before);
+    await before.coachMessages.clear();
+    await before.coachMessages.bulkPut(messages as never[]);
+    const seeded = await keysByTable(before);
+    before.close();
+    const after = connect(factory, UPGRADES);
+    await after.open();
+    return { after, seeded };
+  }
+
+  it('moves the conversation into one chat titled from its first question, with its times, every row kept', async () => {
+    const { after, seeded } = await version3With([
+      // A reply left at the start by the cap, then the person's first question (and an
+      // unreadable row, which must get the chat too).
+      { id: 'm1', role: 'assistant', text: 'Earlier reply.', at: 1_000, seq: 1 },
+      { id: 'm2', role: 'user', text: '  How was\nmy week?  ', at: 2_000, seq: 2 },
+      { id: 'm3', role: 'assistant', text: 'Steady.', at: 3_000, seq: 3 },
+      { id: 'm4', role: 'system', text: 'from an older version', at: 4_000 },
+    ]);
+
+    expect(after.verno).toBe(4);
+    const kept = await keysByTable(after);
+    expect(kept).toEqual({ ...seeded, coachChats: [FIRST_CHAT_ID] });
+    expect(await after.coachChats.toArray()).toEqual([
+      {
+        id: FIRST_CHAT_ID,
+        title: 'How was my week?',
+        titleByPerson: false,
+        createdAt: 1_000,
+        updatedAt: 4_000,
+      },
+    ]);
+    const messages: unknown[] = await after.coachMessages.toArray();
+    expect(messages.map((row) => (row as { chatId?: string }).chatId)).toEqual(
+      Array(4).fill(FIRST_CHAT_ID),
+    );
+    expect(messages[1]).toEqual({
+      id: 'm2',
+      chatId: FIRST_CHAT_ID,
+      role: 'user',
+      text: '  How was\nmy week?  ',
+      at: 2_000,
+      seq: 2,
+    });
+    expect(await after.coachMessages.where('chatId').equals(FIRST_CHAT_ID).count()).toBe(4);
+    after.close();
+  });
+
+  it('leaves the title empty when no question has words, and adds no chat without messages', async () => {
+    const withoutWords = await version3With([
+      { id: 'm1', role: 'assistant', text: 'A reply alone.', at: 5_000 },
+      { id: 'm2', role: 'user', text: ' ', at: 6_000 },
+    ]);
+    expect(await withoutWords.after.coachChats.toArray()).toEqual([
+      { id: FIRST_CHAT_ID, title: '', titleByPerson: false, createdAt: 5_000, updatedAt: 6_000 },
+    ]);
+    withoutWords.after.close();
+
+    const empty = await version3With([]);
+    expect(await empty.after.coachChats.count()).toBe(0);
+    empty.after.close();
+  });
+
+  it('moves a version 1 database straight to version 4', async () => {
+    const factory = new IDBFactory();
+    const before = connect(factory, []);
+    await before.open();
+    await seedEveryTable(before);
+    const seeded = await keysByTable(before);
+    before.close();
+
+    const after = connect(factory, UPGRADES);
+    await after.open();
+    expect(after.verno).toBe(4);
+    const kept = await keysByTable(after);
+    after.close();
+    expect(kept).toEqual({ ...seeded, activity: [], walks: [], coachChats: [FIRST_CHAT_ID] });
   });
 });
 

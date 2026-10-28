@@ -207,6 +207,8 @@ describe('createYourDataService: Erase everything', () => {
     const mine = await openTestDb({ bus: here });
     const other = await openTestDb({ indexedDB: mine.factory, name: mine.name, bus: there });
     await seedStore(mine.db);
+    // The seeded Coach chat, among everything else (P16-02).
+    expect(await mine.db.coachChats.count()).toBe(1);
     const otherRestarted = signal();
     closeOnErase(other.db, otherRestarted.fire, there);
     const keys = new Map([
@@ -240,6 +242,9 @@ describe('createYourDataService: Erase everything', () => {
     expect([...keys.keys()]).toEqual(['not-ours']);
     const reopened = await openTestDb({ indexedDB: mine.factory, name: mine.name });
     for (const table of TABLE_NAMES) expect(await reopened.db.table(table).count(), table).toBe(0);
+    // Every Coach chat goes too, and the walks.
+    expect(await reopened.db.coachChats.count()).toBe(0);
+    expect(await reopened.db.walks.count()).toBe(0);
     reopened.db.close();
   });
 

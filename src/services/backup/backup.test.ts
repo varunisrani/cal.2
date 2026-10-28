@@ -3,6 +3,7 @@
 // read back exactly.
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createBackupRepo, type BackupRepo } from '../../data/repos/backupRepo';
+import { createCoachRepo } from '../../data/repos/coachRepo';
 import { createSettingsRepo } from '../../data/repos/settingsRepo';
 import type { PlatewiseDb } from '../../data/schema';
 import { bytesOf, storableBlob } from '../../test/blobs';
@@ -19,7 +20,7 @@ import {
   type ShareEnv,
 } from './backup';
 import { contentHash } from './hash';
-import { BACKUP_TABLES, readFrame } from './payload';
+import { BACKUP_TABLES, BACKUP_VERSION, readFrame } from './payload';
 import { KNOWN_KEY, SEED_CLOCK, seedStore } from './testing/seed';
 
 const opened: PlatewiseDb[] = [];
@@ -126,6 +127,51 @@ describe('makeBackup', () => {
     expect(framed.frame.contentHash).toBe(
       await contentHash({ tables: framed.frame.tables, photos }),
     );
+  });
+
+  it('carries the Coach’s chats as one more list, the document still at version 1 (P16-02)', async () => {
+    const db = await freshDb();
+    await seedStore(db);
+    // A second chat, renamed: the person's title travels as it is.
+    const coach = createCoachRepo(db, { clock: SEED_CLOCK });
+    await coach.append(
+      { chatId: 'chat-dinner', role: 'user', text: 'Dinner ideas?', at: FACTORY_NOW + 60_000 },
+      { start: true },
+    );
+    await coach.rename('chat-dinner', 'Dinners');
+
+    const opened = await unpackBackup((await made(db)).file);
+    const framed = readFrame(opened.document);
+    if (!framed.ok) throw new Error(framed.problem);
+    const { tables, contentHash: hash } = framed.frame;
+
+    expect(BACKUP_VERSION).toBe(1);
+    expect(opened.document).toMatchObject({ version: 1 });
+    expect(tables.coachChats).toEqual([
+      {
+        id: 'chat-dinner',
+        title: 'Dinners',
+        titleByPerson: true,
+        createdAt: FACTORY_NOW + 60_000,
+        updatedAt: FACTORY_NOW + 60_000,
+      },
+      {
+        id: 'chat-lunch',
+        title: 'Was this lunch balanced?',
+        titleByPerson: false,
+        createdAt: FACTORY_NOW,
+        updatedAt: FACTORY_NOW,
+      },
+    ]);
+    const messages = tables.coachMessages as { chatId: string; text: string }[];
+    expect(messages.map(({ chatId, text }) => `${chatId}: ${text}`).sort()).toEqual([
+      'chat-dinner: Dinner ideas?',
+      'chat-lunch: Mostly: add some greens.',
+      'chat-lunch: Was this lunch balanced?',
+    ]);
+    // An older build hashes every list the file holds, the ones it does not know too: it matches.
+    const photos = opened.photos.map(({ name, size }) => ({ name, size }));
+    expect(hash).toBe(await contentHash({ tables, photos }));
   });
 
   it('never holds a key, the rows kept aside or this device’s state (ACC-E14-2, R06.7)', async () => {

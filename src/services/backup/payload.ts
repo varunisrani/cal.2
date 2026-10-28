@@ -4,7 +4,9 @@
 // is read through its table's codec (unknown fields left behind), and the few fields a repository
 // keeps beside the record are put back (the profile's key, an entry's barcode key, a Coach
 // message's append sequence). A row the codec cannot read makes a file damaged; a setting this
-// build does not know, or one that belongs to this device, is skipped.
+// build does not know, or one that belongs to this device, is skipped. The Coach's chats (P16-02)
+// are an added list like the walks, so the document version stays 1: a file from 1.3 or earlier
+// has messages without a chat, and they are put in one (`withChats`).
 //
 // The document: `{format, version, exportedAt, appVersion, contentHash, payload: {tables}}`, with
 // `tables` holding one list of rows per table the backup carries. Blobs inside rows (a Coach
@@ -15,9 +17,11 @@
 
 import { barcodeKey } from '../../data/barcodeKey';
 import { isBlobLike } from '../../data/codecs';
+import { chatForRows, chatIdOf, fieldOf } from '../../data/coachRows';
 import { BACKUP_CODECS, type BackupTable } from '../../data/repos/backupRepo';
 import { KEPT_ADDED_TABLES, PROFILE_KEY, TABLE_NAMES, type TableName } from '../../data/schema';
 import { isSettingKey, readSetting } from '../../data/settingsSchema';
+import { FIRST_CHAT_ID } from '../../domain/coach/chats';
 import type { CoachMessage, DiaryEntry } from '../../domain/model';
 import { isLocalSetting, isLocalTable } from './hash';
 
@@ -153,6 +157,32 @@ export function shapeRow(table: Exclude<BackupTable, 'photos'>, raw: unknown): S
     default:
       return rowOf(BACKUP_CODECS[table](raw) as object | null);
   }
+}
+
+/**
+ * A file's lists with every Coach message in a chat the file lists (P16-02). A message without a
+ * chat (a file made by 1.3 or earlier) goes to the chat the conversation of those versions
+ * becomes; a message whose chat the file does not list (that chat's record could not be read when
+ * the backup was made) gets a chat made from its messages, so the file still restores. A row that
+ * is not an object is left as it is, for its codec to refuse. The other lists stay as they are.
+ */
+export function withChats(
+  tables: Readonly<Record<string, readonly unknown[]>>,
+): Readonly<Record<string, readonly unknown[]>> {
+  const messages = tables.coachMessages ?? [];
+  const chats = tables.coachChats ?? [];
+  const listed = new Set(chats.map((raw) => fieldOf(raw, 'id')));
+  const unlisted = new Map<string, unknown[]>();
+  const placed = messages.map((raw) => {
+    const named = chatIdOf(raw);
+    const chatId = named ?? FIRST_CHAT_ID;
+    if (!listed.has(chatId)) unlisted.set(chatId, [...(unlisted.get(chatId) ?? []), raw]);
+    const object = fieldsOf(raw);
+    return named === null && object ? { ...object, chatId } : raw;
+  });
+  if (unlisted.size === 0) return tables;
+  const made = [...unlisted].map(([chatId, rows]) => chatForRows(chatId, rows));
+  return { ...tables, coachMessages: placed, coachChats: [...chats, ...made] };
 }
 
 /** A photo listing of a document, or null when it cannot be used. */

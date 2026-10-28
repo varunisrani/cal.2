@@ -19,7 +19,7 @@ function storedReply(cards: CoachReminderCard[]) {
     reminders: cards,
   });
   const coachRepo = {
-    list: vi.fn(() => Promise.resolve([message])),
+    get: vi.fn((id: string) => Promise.resolve(id === message.id ? message : null)),
     patch: vi.fn(async (_id: string, changes: { reminders?: readonly CoachReminderCard[] }) => {
       message = { ...message, reminders: [...(changes.reminders ?? [])] };
       return message;

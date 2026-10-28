@@ -71,7 +71,7 @@ afterEach(() => {
 let nextId = 0;
 function message(changes: Partial<CoachMessage> & Pick<CoachMessage, 'role' | 'text'>) {
   nextId += 1;
-  return { id: `m${nextId}`, at: AT + nextId, ...changes } satisfies CoachMessage;
+  return { id: `m${nextId}`, chatId: 'chat-1', at: AT + nextId, ...changes } satisfies CoachMessage;
 }
 
 const photo = new Blob([new Uint8Array(32)], { type: 'image/jpeg' });
