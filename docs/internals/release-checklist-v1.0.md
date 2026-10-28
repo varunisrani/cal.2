@@ -113,6 +113,19 @@ owner's.
 | E4 | Nudges and notices | Home's card asks for notifications; skip lunch past the usual time (meal check); pass the sugar limit (notice); the bell and the panel; quiet hours | **Open: the owner's phone** | — |
 | E5 | The Coach's notifications | Ask the Coach for a reminder (Reminder set, Undo); ask for a check-in tomorrow (notification opens the chat); leave the app while the Coach replies (The Coach replied) | **Open: the owner's phone** | — |
 
+## 1.6.0 (2026-10-29): nutrient sources, live Coach replies, food prices and spending
+
+P18 (`docs/plan/phases/P18-sources-streaming-spending.md`, P18-00, D-16.105–D-16.108). `CHANGELOG.md` describes 1.6.0.
+Results of the release loop and the APK are in the rows below; device checks are the owner's.
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| F1 | Release loop | `scripts/ci-local.sh` on the 1.6.0 stack | see the 1.6.0 release commit's message | 2026-10-29, lead's loop |
+| F2 | 1.6.0 APK | `PLATEWISE_BUILD_NUMBER=7 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-29, lead |
+| F3 | Sources on a device | Tap the Sugar line, a pillar and a row of All nutrients; open a food from the list | **Open: the owner's phone** | — |
+| F4 | Streaming on a device | Ask the Coach with Claude, GPT and Gemini; the reply grows as it comes; switch chats while it streams | **Open: the owner's phone** | — |
+| F5 | Prices on a device | Describe "paneer roll, ₹120"; the review shows ₹120; Home's spend line; Progress › Spending; add a price to an older food in its editor | **Open: the owner's phone** | — |
+
 ## Release files
 
 | File | State |
