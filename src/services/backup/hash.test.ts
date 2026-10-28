@@ -140,6 +140,20 @@ describe('contentHash', () => {
     expect(LOCAL_SETTINGS).toContain('backup.drive');
   });
 
+  it('keeps this device’s notification inbox and bookkeeping out of the hash (P17)', async () => {
+    const before = await contentHash(content());
+    const inbox = content({
+      settings: [
+        { key: 'display.accent', value: 'basil' },
+        { key: 'notify.inbox', value: { items: [], plan: [], seenAt: 1 } },
+        { key: 'notify.device', value: { sent: { 'sugarOver:2026-10-28': 1 } } },
+      ],
+    });
+    expect(await contentHash(inbox)).toBe(before);
+    expect(LOCAL_SETTINGS).toEqual(expect.arrayContaining(['notify.inbox', 'notify.device']));
+    expect(LOCAL_SETTINGS).not.toContain('notify.off');
+  });
+
   it('changes when an entry, a setting or a photo changes', async () => {
     const before = await contentHash(content());
     const changed = [

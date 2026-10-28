@@ -1,10 +1,11 @@
 // A stand-in for `@capacitor/local-notifications` as the Android shell has it, kept in memory:
 // `schedule` replaces a notification by id and keeps those with a schedule (one shown at once is
 // not kept, as on Android), `cancel` takes them back, `getPending` lists what waits, the
-// permission is a field, and a tap made before any listener waits for one.
+// permission is a field, and a tap made before any listener waits for one. P17: `shown` reports a
+// notification Android showed while the app runs.
 
 import type { NativeRequest } from '../nativePlan';
-import type { NotificationsPlugin, PluginAction } from '../nativeSync';
+import type { NotificationsPlugin, PluginAction, PluginEvent } from '../nativeSync';
 
 /** The plugin as the Android shell has it, kept in memory. */
 export class FakeNotificationsPlugin implements NotificationsPlugin {
@@ -18,6 +19,7 @@ export class FakeNotificationsPlugin implements NotificationsPlugin {
   answer = 'granted';
   failSchedule: Error | null = null;
   private listener: ((action: PluginAction) => void) | null = null;
+  private shownListener: ((action: PluginAction) => void) | null = null;
   /** A tap from before any listener: the plugin keeps it until one comes. */
   private kept: PluginAction | null = null;
 
@@ -56,7 +58,15 @@ export class FakeNotificationsPlugin implements NotificationsPlugin {
     this.channels.push(channel);
   }
 
-  async addListener(_event: string, listener: (action: PluginAction) => void) {
+  async addListener(event: PluginEvent, listener: (action: PluginAction) => void) {
+    if (event === 'localNotificationReceived') {
+      this.shownListener = listener;
+      return {
+        remove: async () => {
+          if (this.shownListener === listener) this.shownListener = null;
+        },
+      };
+    }
     this.listener = listener;
     if (this.kept) listener(this.kept);
     this.kept = null;
@@ -67,10 +77,18 @@ export class FakeNotificationsPlugin implements NotificationsPlugin {
     };
   }
 
-  tap(extra: unknown): void {
-    const action = { actionId: 'tap', notification: { extra } };
+  tap(extra: unknown, id?: number): void {
+    const action = {
+      actionId: 'tap',
+      notification: { extra, ...(id === undefined ? {} : { id }) },
+    };
     if (this.listener) this.listener(action);
     else this.kept = action;
+  }
+
+  /** Android showed a notification while the app runs. */
+  shown(id: number): void {
+    this.shownListener?.({ notification: { id } });
   }
 
   ids(): number[] {

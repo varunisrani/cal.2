@@ -54,6 +54,11 @@ describe('SETTING_SPECS', () => {
         'log.gramsFirst',
         'meals.times',
         'menu.layout',
+        'notify.device',
+        'notify.inbox',
+        'notify.off',
+        'notify.onlyIfNotLogged',
+        'notify.quiet',
         'onboarding.done',
         'onboarding.termsAccepted',
         'product.hiddenFields',
@@ -469,5 +474,22 @@ describe('readSetting', () => {
       readonly kind: 'offline' | 'signIn' | 'quota' | 'failed';
       readonly at: number;
     } | null>();
+  });
+
+  it('has every notice kind on, quiet hours on and meal reminders only for unlogged meals (P17)', () => {
+    const settings = defaultSettings(metric);
+    expect(settings['notify.off']).toEqual([]);
+    expect(settings['notify.quiet']).toBe(true);
+    expect(settings['notify.onlyIfNotLogged']).toBe(true);
+    expect(settings['notify.inbox']).toBeNull();
+    expect(settings['notify.device']).toBeNull();
+    expect(readSetting('notify.off', ['weighIn', 'mealCheck', 'weighIn'])).toEqual([
+      'weighIn',
+      'mealCheck',
+    ]);
+    expect(readSetting('notify.off', 'all')).toBeUndefined();
+    expect(readSetting('notify.off', ['weighIn', 3])).toBeUndefined();
+    expect(readSetting('notify.inbox', { items: [] })).toEqual({ items: [] });
+    expect(readSetting('notify.device', [])).toBeUndefined();
   });
 });

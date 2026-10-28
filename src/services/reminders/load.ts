@@ -4,15 +4,14 @@
 // web keeps the reminder engine and the browser's notifications.
 
 import { isHealthAvailable } from '../health/platform';
-import type { NativeRemindersBase } from './native';
-import type { NativeReminders } from './nativeSync';
+import type { NativeParts, NativeRemindersBase } from './native';
 
-export type { NativeRemindersBase } from './native';
+export type { NativeParts, NativeRemindersBase } from './native';
 export type { NativeReminders } from './nativeSync';
 
 /** Fetches the module that builds the parts; tests pass their own to see whether it was fetched. */
 export type NativeRemindersModule = () => Promise<{
-  setUpNativeReminders(base: NativeRemindersBase): NativeReminders;
+  setUpNativeReminders(base: NativeRemindersBase): NativeParts | Promise<NativeParts>;
 }>;
 
 const APP_SETUP: NativeRemindersModule = () => import('./native');
@@ -26,10 +25,10 @@ export async function loadNativeReminders(
   setup: NativeRemindersModule = APP_SETUP,
   // The Android shell is where Health Connect is: the same probe tells the app it runs there.
   inAndroidApp: () => boolean = isHealthAvailable,
-): Promise<NativeReminders | undefined> {
+): Promise<NativeParts | undefined> {
   if (!inAndroidApp()) return undefined;
   const { setUpNativeReminders } = await setup();
-  const parts = setUpNativeReminders(base);
+  const parts = await setUpNativeReminders(base);
   await parts.access.refresh();
   return parts;
 }

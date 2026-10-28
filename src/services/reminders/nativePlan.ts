@@ -13,10 +13,15 @@
 // Each notification carries, in `extra`, where a tap opens the app and a key of everything it
 // says and when, so a later hand-over leaves an unchanged one alone (the system would otherwise
 // take it out of the notification shade while re-scheduling it).
+//
+// P17 (D-16.100) adds the nudges Platewise plans by itself (`nudgePlan.ts`), under their own
+// switches rather than the reminders' one, and, while Only if I haven't logged it is on, plans the
+// meal reminders day by day so a logged meal takes that day's back.
 
 import { addDays, dayKeyOf, dayNumberOf, type DayKey } from '../../domain/dates/dayKey';
 import type { Fast } from '../../domain/model';
 import { WEEKDAYS, type CustomReminder, type Weekday } from '../../domain/reminders/custom';
+import { afterQuiet } from '../../domain/reminders/notices';
 import { goalAt, isActive } from '../../domain/trackers/fasting';
 import {
   customRemindersOn,
@@ -24,6 +29,8 @@ import {
   fastGoalWanted,
   type ReminderSettings,
 } from './engine';
+import { mealReminderDays, nudgeRequests, type NudgeFacts, type WriteMessage } from './nudgePlan';
+import { daily, once, request, weekly, type NativeRequest } from './requests';
 import {
   clockOn,
   customMessage,
@@ -33,17 +40,18 @@ import {
   nextOccurrence,
   summaryMessage,
   type DayTotals,
-  type ReminderMessage,
 } from './schedule';
 
-/** Where a tap on a notification opens the app: Home on today, or the running fast there. */
-export type OpenTarget = 'home' | 'fast';
-
-/** The status-bar icon drawn by scripts/android/icons.py. */
-export const SMALL_ICON = 'ic_stat_platewise';
-
-/** Our notification channel, as Android's settings list it. */
-export const CHANNEL_ID = 'platewise-reminders';
+export {
+  CHANNEL_ID,
+  SMALL_ICON,
+  channelOf,
+  type NativeExtra,
+  type NativeRequest,
+  type NativeSchedule,
+  type OpenTarget,
+} from './requests';
+export type { NudgeFacts, WriteMessage } from './nudgePlan';
 
 /** How many summaries are handed over ahead. */
 export const SUMMARY_DAYS = 7;
@@ -52,7 +60,8 @@ export const SUMMARY_DAYS = 7;
  * The notification ids. Daily ones have their own; the summary takes one of 8 by the day, so
  * the next 7 never reuse the id of today's (which may still be in the shade); a written reminder
  * takes a block of 8 (its daily or once notification, then one per weekday) at a slot worked out
- * from its id, so deleting one leaves the others' ids alone.
+ * from its id, so deleting one leaves the others' ids alone. P17's nudges take 100–207
+ * (`NUDGE_IDS`), its event notices 300–403.
  */
 export const NATIVE_IDS = {
   breakfast: 11,
@@ -70,34 +79,6 @@ const CUSTOM_BLOCK = 8;
 /** Slots for written reminders: far more than the 20 kept, so a slot is seldom taken. */
 export const CUSTOM_SLOTS = 1_000;
 
-/** When the system brings one: a clock time every day (or every week on a weekday), or once. */
-export type NativeSchedule =
-  | {
-      readonly on: { readonly hour: number; readonly minute: number; readonly weekday?: number };
-      readonly allowWhileIdle: true;
-    }
-  | { readonly at: Date; readonly allowWhileIdle: true };
-
-export interface NativeExtra {
-  readonly open: OpenTarget;
-  /** Everything the notification says and when, as one string. */
-  readonly key: string;
-}
-
-/** One notification for the system; without `schedule` it shows at once. */
-export interface NativeRequest {
-  readonly id: number;
-  readonly title: string;
-  readonly body: string;
-  readonly schedule?: NativeSchedule;
-  readonly smallIcon: string;
-  readonly channelId: string;
-  readonly extra: NativeExtra;
-}
-
-/** Writes a notice's words (the catalogue keys with `t()`). */
-export type WriteMessage = (message: ReminderMessage) => { title: string; body: string };
-
 export interface NativePlanInput {
   readonly settings: ReminderSettings;
   /** Android lets the app notify. */
@@ -107,15 +88,16 @@ export interface NativePlanInput {
   /** The totals of the days `summaryDays` named; a day missing or null reads as unread. */
   readonly totals: ReadonlyMap<DayKey, DayTotals | null>;
   readonly now: number;
+  /**
+   * What the nudges are planned from (P17); without it none are, and the meal reminders repeat
+   * daily whatever Only if I haven't logged it says (nothing tells whether a meal is logged).
+   */
+  readonly nudges?: NudgeFacts;
 }
 
 /** Capacitor's weekday numbers: Sunday 1 … Saturday 7. */
 export function systemWeekday(day: Weekday): number {
   return ((WEEKDAYS.indexOf(day) + 1) % 7) + 1;
-}
-
-function clockParts(at: string): { hour: number; minute: number } {
-  return { hour: Number(at.slice(0, 2)), minute: Number(at.slice(3, 5)) };
 }
 
 /** The days of the summary's next 7 occurrences: from the day of the next one on. */
@@ -155,33 +137,6 @@ export function customBaseIds(list: readonly CustomReminder[]): Map<string, numb
   return bases;
 }
 
-function request(
-  id: number,
-  words: { title: string; body: string },
-  schedule: NativeSchedule | undefined,
-  open: OpenTarget,
-): NativeRequest {
-  const when =
-    schedule === undefined ? null : 'at' in schedule ? schedule.at.getTime() : schedule.on;
-  const key = JSON.stringify([words.title, words.body, when, open]);
-  return {
-    id,
-    title: words.title,
-    body: words.body,
-    ...(schedule ? { schedule } : {}),
-    smallIcon: SMALL_ICON,
-    channelId: CHANNEL_ID,
-    extra: { open, key },
-  };
-}
-
-const daily = (at: string): NativeSchedule => ({ on: clockParts(at), allowWhileIdle: true });
-const weekly = (at: string, day: Weekday): NativeSchedule => ({
-  on: { ...clockParts(at), weekday: systemWeekday(day) },
-  allowWhileIdle: true,
-});
-const once = (at: number): NativeSchedule => ({ at: new Date(at), allowWhileIdle: true });
-
 function customRequests(
   reminder: CustomReminder,
   base: number,
@@ -197,42 +152,53 @@ function customRequests(
     return [request(base, words, daily(reminder.time), 'home')];
   }
   return reminder.days.map((day) =>
-    request(base + systemWeekday(day), words, weekly(reminder.time, day), 'home'),
+    request(base + systemWeekday(day), words, weekly(reminder.time, systemWeekday(day)), 'home'),
   );
 }
 
 /**
- * Every notification the system should hold now: none unless the notifications switch is on and
- * Android allows them; then each reminder that is on, by the rules above.
+ * Every notification the system should hold now: none unless Android allows them; the reminders
+ * that are on while the notifications switch is on, by the rules above; and the nudges (P17) that
+ * are on. The fasting goal is the person's own alert but follows P17's rules too: its own channel,
+ * and in quiet hours it waits until 07:00.
  */
 export function nativePlan(input: NativePlanInput, write: WriteMessage): NativeRequest[] {
-  const { settings, fast, now } = input;
-  if (!input.permitted || !settings['remind.master']) return [];
+  const { settings, fast, now, nudges } = input;
+  if (!input.permitted) return [];
   const list: NativeRequest[] = [];
+  const nudgeInput = nudges && { settings, facts: nudges, fast, now };
+  const mealsByDay = nudgeInput !== undefined && settings['notify.onlyIfNotLogged'];
 
-  for (const { id, at } of dailyRemindersOn(settings)) {
-    if (id === 'summary') {
-      for (const day of summaryDays(at, now)) {
-        const message = summaryMessage(input.totals.get(day) ?? null, settings['units.energy']);
-        list.push(request(summaryId(day), write(message), once(clockOn(day, at)), 'home'));
+  if (settings['remind.master']) {
+    for (const { id, at } of dailyRemindersOn(settings)) {
+      if (id === 'summary') {
+        for (const day of summaryDays(at, now)) {
+          const message = summaryMessage(input.totals.get(day) ?? null, settings['units.energy']);
+          list.push(request(summaryId(day), write(message), once(clockOn(day, at)), 'home'));
+        }
+        continue;
       }
-      continue;
+      if (mealsByDay && id !== 'water') continue;
+      list.push(request(NATIVE_IDS[id], write(fixedMessage(id)), daily(at), 'home'));
     }
-    list.push(request(NATIVE_IDS[id], write(fixedMessage(id)), daily(at), 'home'));
+    if (mealsByDay) list.push(...mealReminderDays(nudgeInput, write));
+
+    if (fastGoalWanted(settings) && fast !== null && isActive(fast)) {
+      const at = goalAt(fast);
+      if (at > now) {
+        const when = settings['notify.quiet'] ? afterQuiet(at) : at;
+        const words = write(fastGoalMessage(fast.goalMin));
+        list.push(request(NATIVE_IDS.fastGoal, words, once(when), 'fast', 'fastGoal'));
+      }
+    }
+
+    const bases = customBaseIds(settings['remind.custom']);
+    for (const reminder of customRemindersOn(settings)) {
+      list.push(...customRequests(reminder, bases.get(reminder.id)!, write, now));
+    }
   }
 
-  if (fastGoalWanted(settings) && fast !== null && isActive(fast)) {
-    const at = goalAt(fast);
-    if (at > now) {
-      const words = write(fastGoalMessage(fast.goalMin));
-      list.push(request(NATIVE_IDS.fastGoal, words, once(at), 'fast'));
-    }
-  }
-
-  const bases = customBaseIds(settings['remind.custom']);
-  for (const reminder of customRemindersOn(settings)) {
-    list.push(...customRequests(reminder, bases.get(reminder.id)!, write, now));
-  }
+  if (nudgeInput) list.push(...nudgeRequests(nudgeInput, write));
   return list;
 }
 

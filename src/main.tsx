@@ -213,6 +213,16 @@ async function start(): Promise<void> {
       appState.selectDay(null);
       router.navigate(HOME_ROUTE);
     },
+    // P17: the nudges, the notices and their inbox (D-16.100–D-16.103); a tap opens its target.
+    notify: {
+      settingsRepo,
+      diaryRepo,
+      waterRepo: createWaterRepo(db),
+      weightRepo,
+      profileRepo,
+      live,
+      app: { router, appState, analysis },
+    },
   }).catch((error: unknown) => {
     console.error('Platewise: Android notifications could not be set up', error);
     return undefined;
@@ -381,6 +391,8 @@ async function start(): Promise<void> {
     trackingSettings: createTrackingSettingsService({ settingsRepo, notifications, reminders }),
     // P13: the reminders the person writes; also the Coach's way to add one (D-16.93).
     customReminders,
+    // P17: the Android app's notifications: Smart notifications, Home's card, bell and panel.
+    notify: native?.notify?.service,
     coachSession: createCoachSession({
       coachRepo,
       data: {
@@ -454,6 +466,8 @@ async function start(): Promise<void> {
   };
   render(createShellPorts({ profileRepo, settingsRepo }), services, data);
   reminders.start();
+  // P17: the events behind the notices (D-16.101), once what they read exists.
+  native?.notify?.watchEvents({ activityRepo: health?.activityRepo, walkRepo: walks?.walkRepo });
   health?.service.start();
   autoBackup?.start();
   // P15: a walk in progress, or one stopped from its notification, opens the Walk screen.

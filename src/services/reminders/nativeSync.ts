@@ -15,10 +15,15 @@
 //
 // The plugin is the only way to the system, so tests pass a stand-in; `native.ts` passes the real
 // one, inside the Android app only.
+//
+// P17: with `nudgeFacts` the plan also holds the nudges Platewise works out (D-16.100), each kind in
+// its own channel (`channels`); every plan handed over is reported (`onHandedOver`) and so is every
+// notification Android shows while the app runs (`onShown`), for the inbox (D-16.103).
 
 import type { DayKey } from '../../domain/dates/dayKey';
 import type { Fast } from '../../domain/model';
 import type { Clock } from '../../lib/clock';
+import { targetOf } from '../notifications/open';
 import type { PageVisibility, ReminderEngine, ReminderSettings } from './engine';
 import { fastGoalWanted } from './engine';
 import {
@@ -28,6 +33,7 @@ import {
   nativePlan,
   summaryDays,
   type NativeRequest,
+  type NudgeFacts,
   type OpenTarget,
   type WriteMessage,
 } from './nativePlan';
@@ -50,8 +56,11 @@ export interface PendingNotification {
 /** What a tap on a notification reports. */
 export interface PluginAction {
   readonly actionId?: string;
-  readonly notification?: { readonly extra?: unknown } | null;
+  readonly notification?: { readonly id?: unknown; readonly extra?: unknown } | null;
 }
+
+/** The plugin's events used here: a tap, and a notification shown while the app runs (P17). */
+export type PluginEvent = 'localNotificationActionPerformed' | 'localNotificationReceived';
 
 export interface PluginChannel {
   readonly id: string;
@@ -70,7 +79,7 @@ export interface NotificationsPlugin {
   requestPermissions(): Promise<PluginPermission>;
   createChannel(channel: PluginChannel): Promise<void>;
   addListener(
-    eventName: 'localNotificationActionPerformed',
+    eventName: PluginEvent,
     listener: (action: PluginAction) => void,
   ): Promise<{ remove(): Promise<void> }>;
 }
@@ -110,8 +119,16 @@ export interface NativeReminderDeps {
   readonly write: WriteMessage;
   /** The channel's name and description in Android's settings. */
   readonly channel: { readonly name: string; readonly description: string };
-  /** A notification was tapped: show what it is about. */
-  onOpen(target: OpenTarget): void;
+  /** A notification was tapped: show what it is about (`id` is the notification's, when known). */
+  onOpen(target: OpenTarget, id?: number): void;
+  /** P17: what the nudges are planned from; without it none are planned. */
+  nudgeFacts?(settings: ReminderSettings, now: number): Promise<NudgeFacts>;
+  /** P17: the other channels to make (one per kind Platewise sends by itself). */
+  readonly channels?: readonly PluginChannel[];
+  /** P17: called with every plan handed over in full, and the time it was handed over. */
+  onHandedOver?(plan: readonly NativeRequest[], now: number): void | Promise<void>;
+  /** P17: Android showed a notification while the app runs. */
+  onShown?(): void;
   /** A check or a plugin call that failed; defaults to the console. */
   onError?(error: unknown): void;
 }
@@ -131,11 +148,12 @@ function keyOf(extra: unknown): string | null {
   return typeof key === 'string' ? key : null;
 }
 
-function targetOf(action: PluginAction): OpenTarget {
+function tapped(action: PluginAction): { open: OpenTarget; id: number | undefined } {
   const extra = action.notification?.extra;
   const open =
     typeof extra === 'object' && extra !== null ? (extra as { open?: unknown }).open : undefined;
-  return open === 'fast' ? 'fast' : 'home';
+  const id = action.notification?.id;
+  return { open: targetOf(open), id: typeof id === 'number' ? id : undefined };
 }
 
 export function createNativeReminders(deps: NativeReminderDeps): NativeReminders {
@@ -192,11 +210,13 @@ export function createNativeReminders(deps: NativeReminderDeps): NativeReminders
   let held = new Set<number>();
   let channelReady: Promise<void> | null = null;
 
-  /** Our channel, made once (Android keeps it; making it again only renames it). */
+  /** Our channels, made once (Android keeps them; making one again only renames it). */
   function ensureChannel(): Promise<void> {
-    channelReady ??= plugin
-      .createChannel({ id: CHANNEL_ID, importance: 3, ...deps.channel })
-      .catch((error: unknown) => onError(error));
+    channelReady ??= Promise.all(
+      [{ id: CHANNEL_ID, importance: 3 as const, ...deps.channel }, ...(deps.channels ?? [])].map(
+        (channel) => plugin.createChannel(channel).catch((error: unknown) => onError(error)),
+      ),
+    ).then(() => undefined);
     return channelReady;
   }
 
@@ -222,10 +242,15 @@ export function createNativeReminders(deps: NativeReminderDeps): NativeReminders
     const permitted = (await access.refresh()) === 'granted';
     const settings = await deps.settings();
     const wanted = permitted && settings['remind.master'];
-    const fast = wanted && fastGoalWanted(settings) ? await deps.activeFast() : null;
+    const nudging = permitted && deps.nudgeFacts !== undefined;
+    const fast = (wanted && fastGoalWanted(settings)) || nudging ? await deps.activeFast() : null;
     const now = clock.now();
     const totals = wanted ? await totalsFor(settings, now) : new Map<DayKey, null>();
-    const plan = nativePlan({ settings, permitted, fast, totals, now }, deps.write);
+    const nudges = nudging ? await deps.nudgeFacts!(settings, now) : undefined;
+    const plan = nativePlan(
+      { settings, permitted, fast, totals, now, ...(nudges ? { nudges } : {}) },
+      deps.write,
+    );
     const pending = (await plugin.getPending()).notifications;
     if (run !== generation) return;
 
@@ -237,6 +262,7 @@ export function createNativeReminders(deps: NativeReminderDeps): NativeReminders
     if (stale.length > 0) await plugin.cancel({ notifications: stale });
     if (fresh.length > 0) await plugin.schedule({ notifications: fresh });
     fullOwed = false;
+    await deps.onHandedOver?.(plan, now);
   }
 
   function request(all: boolean): Promise<void> {
@@ -259,10 +285,10 @@ export function createNativeReminders(deps: NativeReminderDeps): NativeReminders
     return tail;
   }
 
-  function listenForTaps(run: number): void {
+  function listen(run: number, event: PluginEvent, onEvent: (action: PluginAction) => void) {
     plugin
-      .addListener('localNotificationActionPerformed', (action) => {
-        if (run === generation) deps.onOpen(targetOf(action));
+      .addListener(event, (action) => {
+        if (run === generation) onEvent(action);
       })
       .then(
         (handle) => {
@@ -272,6 +298,16 @@ export function createNativeReminders(deps: NativeReminderDeps): NativeReminders
         },
         (error: unknown) => onError(error),
       );
+  }
+
+  function listenForTaps(run: number): void {
+    listen(run, 'localNotificationActionPerformed', (action) => {
+      const { open, id } = tapped(action);
+      if (id === undefined) deps.onOpen(open);
+      else deps.onOpen(open, id);
+    });
+    const { onShown } = deps;
+    if (onShown) listen(run, 'localNotificationReceived', () => onShown());
   }
 
   const engine: ReminderEngine = {

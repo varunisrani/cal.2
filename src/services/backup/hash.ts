@@ -32,6 +32,9 @@ export const LOCAL_SETTINGS = [
   'backup.autoState',
   // This device's Google Drive connection (P15-04).
   'backup.drive',
+  // This device's notification inbox and bookkeeping (P17).
+  'notify.inbox',
+  'notify.device',
 ] as const satisfies readonly SettingKey[];
 
 /** The table whose rows are counted as photo files instead. */

@@ -33,6 +33,7 @@ import { ManualSheet } from '../log/ManualSheet';
 import { ReuseSheet } from '../log/reuse/ReuseSheet';
 import { LookupOverlay } from '../log/scan/LookupOverlay';
 import { ScanSheet } from '../log/scan/ScanSheet';
+import { NotifyHeader } from '../notifications/NotifyHeader';
 import { DayNutrientsSheet } from './DayNutrientsSheet';
 import type { WaterDay } from './dayNutrients';
 import { DaySummary } from './DaySummary';
@@ -505,7 +506,9 @@ export function HomePage() {
       }
       data-ui="screen.home"
     >
-      <h1 className={styles.title}>{tx('common.tabs.home')}</h1>
+      <NotifyHeader>
+        <h1 className={styles.title}>{tx('common.tabs.home')}</h1>
+      </NotifyHeader>
       {body}
       <ManualSheet open={manual.open} onClose={manual.close} dayKey={dayKey} />
       <CaptureSheet

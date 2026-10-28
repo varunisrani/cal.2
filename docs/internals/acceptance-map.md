@@ -1077,6 +1077,71 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/reminders/notifier.test.ts > createNotifier: reminders > shows a reminder the person wrote with its own words, and as its own banner (P13)
   - Test: e2e/reminders.spec.ts > reminders of your own (P13) > adds a reminder of your own, shows it at its time while open, edits and deletes it (D-16.93)
 
+### J14 · Smart notifications: planned nudges and event notices (P1 on Android, P17)
+
+- **ACC-J14-1** A meal check comes about an hour after the person's usual time for that meal; today's is taken back once the meal is logged
+  - Test: src/services/reminders/nudgePlan.test.ts > the meal check (P17-01, D-16.100) > comes an hour after the reminder time without history, each day of the next 7, in its channel
+  - Test: src/services/reminders/nudgePlan.test.ts > the meal check (P17-01, D-16.100) > goes for a meal once it is logged that day, and history decides the time
+  - Test: src/domain/reminders/usualTimes.test.ts > usualMealTime (P17-01, D-16.100) > is the median of the days that have the meal, from 5 of them
+  - Test: src/services/notifications/setup.test.ts > the Android app’s notifications together (P17) > takes today's check back once lunch is logged, so it never reaches the inbox
+- **ACC-J14-2** Water pace, empty-day and weigh-in nudges come only while still true
+  - Test: src/services/reminders/nudgePlan.test.ts > the water pace (P17-01) > comes at 13:00, 16:00 and 19:00 while behind, opening the water, only while water is tracked
+  - Test: src/services/reminders/nudgePlan.test.ts > the empty day (P17-01) > comes at 20:30 on a day with nothing logged, food or water
+  - Test: src/services/reminders/nudgePlan.test.ts > the weigh-in (P17-01) > comes at 08:30 seven days after the newest weigh-in, then every 7 days
+- **ACC-J14-3** Meal reminders take back a day once that meal is logged (Only if I haven't logged it, on)
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan with the nudges (P17-01, D-16.100) > plans meal reminders day by day while Only if I haven’t logged it is on, taking back a logged day
+  - Test: src/features/settings/tracking/SmartNotifications.test.tsx > Only if I haven't logged it (P17-01) > shows after the meal reminders in the Android app while one is on, and stores the switch
+- **ACC-J14-4** Quiet hours (22:00–07:00) hold back what Platewise sends by itself, never the person's reminders
+  - Test: src/services/reminders/nudgePlan.test.ts > the meal check (P17-01, D-16.100) > drops a check that falls in quiet hours, unless they are off
+  - Test: src/services/notifications/notices.test.ts > Notices.post (P17-02, D-16.101) > drops a notice in quiet hours, and posts it after them when it is still true
+  - Test: src/services/reminders/nativePlan.test.ts > nativePlan with the nudges (P17-01, D-16.100) > holds the fasting goal until 07:00 when it would come in quiet hours
+- **ACC-J14-5** Each notice is posted once, only while its kind is on and Android allows notifications
+  - Test: src/services/notifications/notices.test.ts > Notices.post (P17-02, D-16.101) > posts a onceKey once, even when asked twice at the same moment
+  - Test: src/services/notifications/notices.test.ts > Notices.post (P17-02, D-16.101) > posts nothing, and records nothing, while its kind is off or Android does not allow it
+- **ACC-J14-6** Event notices: sugar limit passed, calories over by 10 %, protein goal reached, 150 active minutes a week, a meal ready to review, backups failing
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: the day (P17-02) > posts "sugar limit passed" once the day’s known sugar passes the limit, once a day
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: the day (P17-02) > posts "over your calorie target" past 110 % of the goal plus the day’s walks
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: the day (P17-02) > posts "protein goal reached" when the day reaches its protein target
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: the day (P17-02) > posts "150 active minutes" once a week, from the person’s week start
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: a meal ready to review (P17-02) > posts when an analysis finishes while the app is in the background, opening the review
+  - Test: src/services/notifications/hooks.test.ts > watchEvents: backups failing (P17-02) > posts on the second automatic backup in a row that failed, opening Your data
+- **ACC-J14-7** Settings › Smart notifications: a switch per kind (on), Quiet hours (on), asking Android when needed
+  - Test: src/features/settings/tracking/SmartNotifications.test.tsx > Smart notifications (P17-02, D-16.100/101) > shows a switch per kind, all on, each with a line on what it does, and Quiet hours on
+  - Test: src/features/settings/tracking/SmartNotifications.test.tsx > Smart notifications (P17-02, D-16.100/101) > asks Android when a switch goes on while notifications are not allowed, and points to Android's settings after a no
+- **ACC-J14-8** Home's one-time card asks for notifications while Android has not allowed them
+  - Test: src/features/notifications/HomeNotifyParts.test.tsx > Home in the Android app: Let Platewise nudge you (P17-02) > shows while Android has not allowed notifications, and Not now hides it for good
+  - Test: src/features/notifications/HomeNotifyParts.test.tsx > Home in the Android app: Let Platewise nudge you (P17-02) > asks Android on Turn on, and goes once it allows
+- **ACC-J14-9** A channel per kind, ids that never collide, and tap targets
+  - Test: src/services/reminders/nativeSync.test.ts > createNativeReminders: the nudges and the inbox hooks (P17) > makes a channel per kind besides the reminders’ and hands the nudges over without the reminders’ switch
+  - Test: src/services/reminders/nudgePlan.test.ts > the nudges together (P17-01) > never gives two notifications one id, nor one of the ids of P13
+  - Test: src/services/notifications/open.test.ts > where a notification opens the app (P17, D-16.101) > reads a stored target, anything unknown as Home
+- **ACC-J14-10** The web app shows nothing new
+  - Test: src/features/notifications/HomeNotifyParts.test.tsx > Home in the Android app: the bell (P17-04, D-16.103) > shows nothing new on the web: the title alone
+  - Test: src/features/settings/tracking/SmartNotifications.test.tsx > Smart notifications (P17-02, D-16.100/101) > is not on the Tracking page on the web
+
+### J15 · Notification panel (P1 on Android, P17)
+
+- **ACC-J15-1** The inbox keeps the newest 100 items or 30 days, out of backups
+  - Test: src/services/notifications/inbox.test.ts > the inbox: keeping notices (P17-04, D-16.103) > keeps the newest first, at most 100 and 30 days
+  - Test: src/services/backup/hash.test.ts > contentHash > keeps this device’s notification inbox and bookkeeping out of the hash (P17)
+- **ACC-J15-2** Planned notifications that came while the app was closed are added once
+  - Test: src/services/notifications/inbox.test.ts > the inbox: what came from the plan while the app was closed (P17-04) > adds a planned notification whose time has passed, once
+  - Test: src/services/notifications/inbox.test.ts > the inbox: what came from the plan while the app was closed (P17-04) > adds every day of a repeating reminder that came, from when it was planned, at most 30 days
+  - Test: src/services/notifications/inbox.test.ts > the inbox: what came from the plan while the app was closed (P17-04) > never brings back an item that was deleted
+- **ACC-J15-3** Home's bell shows the unread count and opens the panel
+  - Test: src/features/notifications/HomeNotifyParts.test.tsx > Home in the Android app: the bell (P17-04, D-16.103) > shows the bell beside the title, named with the unread count
+  - Test: src/features/notifications/HomeNotifyParts.test.tsx > Home in the Android app: the bell (P17-04, D-16.103) > opens the panel, which marks nothing read by itself
+- **ACC-J15-4** The panel: Today / Yesterday / Earlier, open and mark read, Mark all as read, delete one, Clear all after asking, the settings link
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > lists the items by Today, Yesterday and Earlier, each with its icon, words, time and unread mark
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > opens what an item is about and marks it read
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > marks all as read
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > deletes one item with its own button
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > asks before clearing all, then shows that nothing is here
+  - Test: src/features/notifications/NotificationPanel.test.tsx > the notification panel (P17-04, D-16.103) > links to the Smart notifications settings
+- **ACC-J15-5** A tap on the system notification opens its target and marks its item read
+  - Test: src/services/notifications/setup.test.ts > the Android app’s notifications together (P17) > adds what came while the app was away when it comes back, and a tap opens it and marks it read
+  - Test: src/services/notifications/inbox.test.ts > the inbox: keeping notices (P17-04, D-16.103) > marks the newest item of a tapped notification read
+
 ## K · Data management, backup and privacy
 
 ### K1 · Export the diary as JSON, Markdown or CSV for today, this week (by … (P1)

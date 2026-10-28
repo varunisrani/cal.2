@@ -3,6 +3,21 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.5.0)
+
+### Smart notifications in the Android app
+
+- Platewise now nudges you when it helps. A meal check comes about an hour after your usual meal time if nothing is
+  logged. A water-pace nudge comes at 13:00, 16:00 and 19:00 while you are behind, an empty-day nudge at 20:30, and a
+  weigh-in nudge a week after your last one. Each is taken back once it no longer applies.
+- Notices when the day passes your sugar limit or your calorie target by 10 %, or reaches its protein goal; when the
+  week reaches 150 active minutes; when a photo analysis finishes while you are in another app; and when backups fail
+  twice in a row.
+- Settings › Tracking & reminders › Smart notifications has a switch per kind and Quiet hours (22:00–07:00). Meal
+  reminders gain "Only if I haven't logged it". Each kind has its own Android notification channel.
+- A bell on Home opens a notification panel with what Platewise sent in the last 30 days (mark read, delete, Clear
+  all). A one-time card asks for notification permission.
+
 ## 1.4.0 (2026-10-28)
 
 Platewise 1.4 shows your sugar on Home and gives the Coach several chats with a history.

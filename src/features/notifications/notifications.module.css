@@ -1,0 +1,233 @@
+/*
+ * The Android app's notification parts on Home (P17): the title row with the bell and its unread
+ * count, the one-time permission card, and the notification panel. Every value comes from
+ * tokens.css; logical properties throughout.
+ */
+
+/* ---- The title row and the bell ---------------------------------------------------------- */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.bellSlot {
+  position: relative;
+  flex: none;
+}
+
+.badge {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  min-inline-size: 1.25rem;
+  padding-inline: var(--space-1);
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--type-micro);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25rem;
+  text-align: center;
+  pointer-events: none;
+}
+
+/* ---- The permission card ------------------------------------------------------------------- */
+
+.card {
+  display: grid;
+  gap: var(--space-3);
+  border-inline-start: 3px solid var(--accent);
+}
+
+.cardText {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: var(--type-lead);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.cardBody {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  line-height: var(--leading-body);
+}
+
+.cardActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+/* ---- The panel ----------------------------------------------------------------------------- */
+
+/* Tall even when it holds little, so it reads as a page of its own. */
+.panel {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
+  min-block-size: 60dvh;
+}
+
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.empty {
+  margin: 0;
+  padding-block: var(--space-8);
+  color: var(--text-muted);
+  font-size: var(--type-body);
+  text-align: center;
+}
+
+.group {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.groupHeading {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  font-weight: var(--weight-medium);
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  list-style: none;
+}
+
+.list > li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.itemIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  inline-size: 2.25rem;
+  block-size: 2.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--well);
+  color: var(--text-muted);
+}
+
+.item[data-unread] .itemIcon {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.itemText {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 2px;
+  min-inline-size: 0;
+}
+
+.itemTitle {
+  font-size: var(--type-body);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+}
+
+.item[data-unread] .itemTitle {
+  font-weight: var(--weight-semibold);
+}
+
+.itemBody {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+.itemEnd {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: var(--space-2);
+}
+
+.itemTime {
+  color: var(--text-muted);
+  font-size: var(--type-micro);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dot {
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+.hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  padding-inline: var(--space-4);
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--card);
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: start;
+  cursor: pointer;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}

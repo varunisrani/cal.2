@@ -7,6 +7,7 @@ import { REMINDER_SETTING_KEYS, type ReminderSettings } from './engine';
 import {
   CHANNEL_ID,
   NATIVE_IDS,
+  channelOf,
   SMALL_ICON,
   SUMMARY_DAYS,
   customBaseIds,
@@ -17,6 +18,7 @@ import {
   systemWeekday,
   type NativePlanInput,
   type NativeRequest,
+  type NudgeFacts,
 } from './nativePlan';
 import { writeMessage } from './notifier';
 import type { DayTotals } from './schedule';
@@ -140,7 +142,7 @@ describe('nativePlan (D-16.92)', () => {
     expect(summaryId('2026-10-26')).toBe(NATIVE_IDS.summary + (dayNumberOf('2026-10-26') % 8));
   });
 
-  it('hands over the fasting goal once at start + goal, opening the fast', () => {
+  it('hands over the fasting goal once at start + goal, opening the fast, in its own channel (P17)', () => {
     const fast = makeFast({ start: NOW - 10 * 60 * MINUTE, goalMin: 16 * 60, end: null });
     const settings = stored({ 'fasting.on': true, 'remind.fastGoal': true });
 
@@ -150,7 +152,8 @@ describe('nativePlan (D-16.92)', () => {
         title: 'Fasting goal met',
         body: '16h done. Your fast keeps running until you end it.',
         schedule: { at: new Date(NOW + 6 * 60 * MINUTE), allowWhileIdle: true },
-        extra: { open: 'fast', key: expect.any(String) },
+        channelId: channelOf('fastGoal'),
+        extra: { open: 'fast', key: expect.any(String), kind: 'fastGoal' },
       }),
     ]);
   });
@@ -258,6 +261,72 @@ describe('nativePlan (D-16.92)', () => {
       smallIcon: SMALL_ICON,
       channelId: CHANNEL_ID,
       extra: { open: 'home', key: expect.any(String) },
+    });
+  });
+});
+
+describe('nativePlan with the nudges (P17-01, D-16.100)', () => {
+  const facts = (lunchToday = false): NudgeFacts => ({
+    days: new Map([
+      ['2026-10-26', { meals: lunchToday ? ['lunch'] : [], waterMl: 0, any: lunchToday }],
+    ]),
+    usual: {},
+    lastWeighIn: null,
+  });
+  const meals = stored({
+    'remind.lunch': { on: true, at: '13:00' },
+    'notify.off': ['mealCheck', 'waterPace', 'emptyDay', 'weighIn'],
+  });
+
+  it('plans meal reminders day by day while Only if I haven’t logged it is on, taking back a logged day', () => {
+    const open = plan(meals, { nudges: facts() });
+    expect(open.map((each) => each.id)).not.toContain(NATIVE_IDS.lunch);
+    expect(open).toHaveLength(7);
+    expect(open[0]).toMatchObject({
+      title: 'Lunch',
+      schedule: { at: new Date(local('2026-10-26T13:00:00')), allowWhileIdle: true },
+    });
+
+    const logged = plan(meals, { nudges: facts(true) });
+    expect(logged).toHaveLength(6);
+    expect(logged[0]!.schedule).toEqual({
+      at: new Date(local('2026-10-27T13:00:00')),
+      allowWhileIdle: true,
+    });
+  });
+
+  it('keeps the daily repeating meal reminder while it is off, or without the facts', () => {
+    const daily = {
+      id: NATIVE_IDS.lunch,
+      schedule: { on: { hour: 13, minute: 0 }, allowWhileIdle: true },
+    };
+    expect(plan({ ...meals, 'notify.onlyIfNotLogged': false }, { nudges: facts(true) })).toEqual([
+      expect.objectContaining(daily),
+    ]);
+    expect(plan(meals)).toEqual([expect.objectContaining(daily)]);
+  });
+
+  it('plans nudges without the reminders’ switch, but never without Android’s permission', () => {
+    const nudgesOnly = stored({
+      'remind.master': false,
+      'notify.off': ['waterPace', 'emptyDay', 'weighIn'],
+    });
+    const list = plan(nudgesOnly, { nudges: facts() });
+    expect(list.length).toBeGreaterThan(0);
+    expect(list.every((each) => each.extra.kind === 'mealCheck')).toBe(true);
+    expect(plan(nudgesOnly, { nudges: facts(), permitted: false })).toEqual([]);
+  });
+
+  it('holds the fasting goal until 07:00 when it would come in quiet hours', () => {
+    const fast = makeFast({ start: local('2026-10-26T08:00:00'), goalMin: 16 * 60, end: null });
+    const settings = stored({ 'fasting.on': true, 'remind.fastGoal': true });
+    expect(plan(settings, { fast })[0]!.schedule).toEqual({
+      at: new Date(local('2026-10-27T07:00:00')),
+      allowWhileIdle: true,
+    });
+    expect(plan({ ...settings, 'notify.quiet': false }, { fast })[0]!.schedule).toEqual({
+      at: new Date(local('2026-10-27T00:00:00')),
+      allowWhileIdle: true,
     });
   });
 });

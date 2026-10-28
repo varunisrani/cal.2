@@ -23,13 +23,17 @@ const SETTINGS = [
   'alerts.goalReached',
   'water.on',
   'fasting.on',
+  'notify.onlyIfNotLogged',
 ] as const;
 
 /** The reminders with a time, in the card's order; water joins them while water is tracked. */
 const TIMED: readonly DailyReminder[] = ['breakfast', 'lunch', 'dinner', 'summary'];
 
+/** The meal reminders, which Only if I haven't logged it follows (P17). */
+const MEALS: readonly DailyReminder[] = ['breakfast', 'lunch', 'dinner'];
+
 /** The switches that are written on their own, so each can wait for its write. */
-type SwitchId = 'master' | DailyReminder | 'fastGoal' | 'goalReached';
+type SwitchId = 'master' | DailyReminder | 'fastGoal' | 'goalReached' | 'onlyIfNotLogged';
 
 /**
  * The Notifications card of Settings › Tracking & reminders (06 §3.9–3.10, R06.13, D-16.5). The
@@ -39,9 +43,10 @@ type SwitchId = 'master' | DailyReminder | 'fastGoal' | 'goalReached';
  * While on: breakfast, lunch, dinner and the daily summary, each a switch with its time; water
  * (switch and time) only while water is tracked; the fasting goal only while fasting is tracked;
  * the goal-weight alert. A last line says when reminders can show. Inside the Android app (P13,
- * D-16.92) the permission is Android's: the hint, the pointer and the last line say so. Nothing is
- * drawn until the settings are read (R06.22), nor without the service (screens tested without
- * one).
+ * D-16.92) the permission is Android's: the hint, the pointer and the last line say so; there,
+ * with P17's notifications, the meal reminders gain Only if I haven't logged it while one is on.
+ * Nothing is drawn until the settings are read (R06.22), nor without the service (screens tested
+ * without one).
  */
 export function RemindersSection() {
   const service = useOptionalServices()?.trackingSettings;
@@ -49,6 +54,7 @@ export function RemindersSection() {
 }
 
 function RemindersCard({ service }: { readonly service: TrackingSettingsService }) {
+  const notify = useOptionalServices()?.notify;
   const settings = useSettings(SETTINGS);
   const toast = useToast();
   const permission = usePermission(service);
@@ -94,6 +100,17 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
   };
 
   const timed = stored['water.on'] ? [...TIMED, 'water' as const] : TIMED;
+  const mealOn = MEALS.some((id) => stored[`remind.${id}`].on);
+  const timedRow = (id: DailyReminder) => (
+    <TimedReminderRow
+      key={id}
+      id={id}
+      value={stored[`remind.${id}`]}
+      busy={writing.has(id)}
+      onSwitch={(next) => void run(id, () => service.setReminder(id, { on: next }))}
+      onTime={(at) => service.setReminder(id, { at })}
+    />
+  );
   const anyOn =
     timed.some((id) => stored[`remind.${id}`].on) ||
     (stored['fasting.on'] && stored['remind.fastGoal']) ||
@@ -120,16 +137,22 @@ function RemindersCard({ service }: { readonly service: TrackingSettingsService 
         </li>
         {on ? (
           <>
-            {timed.map((id) => (
-              <TimedReminderRow
-                key={id}
-                id={id}
-                value={stored[`remind.${id}`]}
-                busy={writing.has(id)}
-                onSwitch={(next) => void run(id, () => service.setReminder(id, { on: next }))}
-                onTime={(at) => service.setReminder(id, { at })}
-              />
-            ))}
+            {timed.filter((id) => MEALS.includes(id)).map(timedRow)}
+            {notify && mealOn ? (
+              <li className={`${styles.rowItem} ${styles.switchItem}`}>
+                <Switch
+                  label={t('reminders.smart.onlyIfNotLogged')}
+                  description={t('reminders.smart.onlyIfNotLoggedHint')}
+                  checked={stored['notify.onlyIfNotLogged']}
+                  disabled={writing.has('onlyIfNotLogged')}
+                  onChange={(next) =>
+                    void run('onlyIfNotLogged', () => notify.setOnlyIfNotLogged(next))
+                  }
+                  data-ui="reminders.onlyIfNotLogged"
+                />
+              </li>
+            ) : null}
+            {timed.filter((id) => !MEALS.includes(id)).map(timedRow)}
             {stored['fasting.on'] ? (
               <li className={`${styles.rowItem} ${styles.switchItem}`}>
                 <Switch

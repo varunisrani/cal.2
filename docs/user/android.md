@@ -200,6 +200,76 @@ Burn is never counted twice:
   target when **Count active calories** is on (Settings › Health Connect shows the switch even
   before you connect).
 
+## Notifications
+
+In the Android app, the reminders you turn on (Settings › Tracking & reminders › Notifications)
+are Android notifications that come with Platewise closed. Platewise can also send a few of its
+own: **nudges** it plans ahead, and **notices** about something that just happened. They all need
+Android's permission to show notifications. Until you give it, Home shows a card, **Let Platewise
+nudge you**: **Turn on** asks Android, **Not now** hides the card for good (you can still allow
+notifications later, from any switch below or in Android's settings).
+
+### Nudges
+
+Platewise plans these for the next 7 days and plans them again after every change you make, so a
+nudge that is no longer true is taken back before it comes:
+
+- **Meal check**: about an hour after your usual breakfast, lunch or dinner time, if that meal is
+  not logged yet ("Nothing logged for lunch yet"). Your usual time is the middle one of your last
+  14 days' logs of that meal, once there are at least 5 days of them; until then, it is the time
+  of that meal's reminder. Logging the meal takes that day's nudge back.
+- **Water pace**: at 13:00, 16:00 and 19:00 while water tracking is on, when the day's water is
+  behind an even pace toward your goal from 08:00 to 21:00.
+- **Empty day**: at 20:30 when nothing at all (food or water) is logged for the day. A day you
+  are fasting through is left alone.
+- **Weigh-in**: at 08:30 a week after your newest weigh-in, then every 7 days until you weigh in.
+
+Your own meal reminders gain **Only if I haven't logged it** (on): a reminder for a meal you have
+already logged that day does not come.
+
+### Notices
+
+These come at once, at most once a day each (the week's once a week):
+
+- **Sugar limit passed**: the day's sugar passed the limit in Nutrient goals (only foods with a
+  sugar figure count).
+- **Over your calorie target**: the day passed its calorie target (your goal plus the calories
+  burned, as Home shows it) by more than 10 %.
+- **Protein goal reached** for the day.
+- **150 active minutes** this week (your walks, and other apps' walks from Health Connect).
+- **Meal ready to review**: a photo you sent for analysis is done while Platewise is in the
+  background. A tap opens its review.
+- **Backups are failing**: two automatic or Google Drive backups in a row failed. A tap opens
+  Settings › Your data.
+- The fasting goal alert you turn on among the reminders works as before.
+
+A tap on any notification opens what it is about: Home on today, your water, Progress for a
+weigh-in, the review, or Your data.
+
+### Settings
+
+Settings › Tracking & reminders › **Smart notifications** has a switch for each nudge and notice
+(all on to start with), each with a line on what it does, and **Quiet hours** (on): from 22:00 to
+07:00 Platewise sends none of its own; a nudge or notice that would come then is skipped, and the
+fasting goal waits until 07:00. Reminders you set always come at their time.
+
+Each kind also has its own channel in Android's settings (Apps › Platewise › Notifications), so
+you can silence one there, or change its sound, without touching the others.
+
+### The notification panel
+
+The bell on Home's header opens the **notification panel**. It keeps what Platewise sent you,
+reminders included, for 30 days (up to 100), newest first, under Today, Yesterday and Earlier. A
+dot marks the ones you have not opened, and the bell shows how many there are. A tap opens what it
+is about and marks it read (so does a tap on the Android notification). **Mark all as read**,
+delete one with its button or by swiping it aside, or **Clear all** (Platewise asks first). The
+link at the bottom opens Smart notifications. The panel is kept on the phone only: it is not in
+your backups. Reminders that came while Platewise was closed are added when you open it again.
+
+Platewise has no server: everything above is worked out on the phone. If you do not open the app
+for more than a week, the planned nudges (and meal reminders with Only if I haven't logged it on)
+stop until you open it again.
+
 ## Privacy
 
 - What Platewise reads from Health Connect stays on the phone, in Platewise's own storage.
@@ -226,8 +296,9 @@ Burn is never counted twice:
 
 ## Limits
 
-- Reminders in the Android app are Android notifications and come with the app closed; Android
-  may deliver them a few minutes late to save battery.
+- Reminders and nudges in the Android app are Android notifications and come with the app closed;
+  Android may deliver them a few minutes late to save battery. Notices about what just happened
+  come only while Platewise is open or was just left.
 - Platewise has not yet been run on a real phone in this project. The app is built and its code is
   tested on a computer, against a stand-in for Health Connect; the first tests on a device are the
   owner's. Expect rough edges until then.

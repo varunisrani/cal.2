@@ -29,6 +29,7 @@ import type { SavedMealsService } from './savedMeals';
 import type { ProgressService } from './progress';
 import type { CustomRemindersService } from './reminders/customReminders';
 import type { ReminderEngine } from './reminders/engine';
+import type { NotifyService } from './notifications/contract';
 import type { Notifier } from './reminders/notifier';
 import type { ReprocessService } from './reprocess';
 import type { StorageNudge } from './storageNudge';
@@ -95,6 +96,11 @@ export interface Services {
   readonly trackingSettings?: TrackingSettingsService;
   /** The reminders the person writes (P13, D-16.93): Settings, and the Coach's Add. */
   readonly customReminders?: CustomRemindersService;
+  /**
+   * The Android app's nudges, notices and inbox (P17): only the Android app has it. Without it
+   * Settings shows no Smart notifications and Home no card, bell or panel, as on the web.
+   */
+  readonly notify?: NotifyService;
   /** The Coach's one session, a turn per chat (P08-09, P16-02); optional likewise. */
   readonly coachSession?: CoachSession;
   /** Combines Home's picked rows into one entry (P06-19); optional for the same reason. */

@@ -9,9 +9,10 @@ import type { CustomReminder } from '../../domain/reminders/custom';
 import type { Clock } from '../../lib/clock';
 import { makeFast } from '../../test/factories';
 import { REMINDER_SETTING_KEYS, type PageVisibility, type ReminderSettings } from './engine';
-import { CHANNEL_ID, NATIVE_IDS, summaryId } from './nativePlan';
+import { CHANNEL_ID, NATIVE_IDS, channelOf, summaryId, type NudgeFacts } from './nativePlan';
 import { createNativeReminders, permissionOf, type NativeReminderDeps } from './nativeSync';
 import { writeMessage } from './notifier';
+import { DAY_SLOTS, NUDGE_IDS, daySlot } from './nudgePlan';
 import type { DayTotals } from './schedule';
 import { FakeNotificationsPlugin } from './testing/fakeNotificationsPlugin';
 
@@ -184,7 +185,15 @@ describe('createNativeReminders: the schedule (D-16.92)', () => {
   });
 
   it('moves the fasting goal with the fast, and takes it back when the fast ends', async () => {
-    const r = rig(storedDefaults({ ...MEALS, 'fasting.on': true, 'remind.fastGoal': true }));
+    // Quiet hours off: the goals below fall at night (P17 moves those to 07:00, tested apart).
+    const r = rig(
+      storedDefaults({
+        ...MEALS,
+        'fasting.on': true,
+        'remind.fastGoal': true,
+        'notify.quiet': false,
+      }),
+    );
     const fast = makeFast({ start: NOW - 60 * MINUTE, goalMin: 16 * 60, end: null });
     r.state.fast = fast;
     await r.start();
@@ -379,5 +388,122 @@ describe('createNativeReminders: taps, errors and stop', () => {
     await r.start();
     expect(r.plugin.ids()).toEqual([NATIVE_IDS.breakfast, NATIVE_IDS.lunch]);
     expect(r.plugin.channels).toHaveLength(1);
+  });
+});
+
+describe('createNativeReminders: the nudges and the inbox hooks (P17)', () => {
+  function nudgeRig() {
+    const plugin = new FakeNotificationsPlugin();
+    const visibility = new FakeVisibility();
+    let changed: (() => void) | null = null;
+    const clock: Clock = { now: () => NOW, timeZone: () => 'America/New_York' };
+    const state = {
+      settings: storedDefaults({
+        'notify.off': ['waterPace', 'emptyDay', 'weighIn'],
+      }),
+      lunchLogged: false,
+    };
+    const facts = vi.fn(async (): Promise<NudgeFacts> => ({
+      days: new Map([
+        [
+          '2026-10-26',
+          {
+            meals: state.lunchLogged ? (['lunch'] as const) : [],
+            waterMl: 0,
+            any: state.lunchLogged,
+          },
+        ],
+      ]),
+      usual: {},
+      lastWeighIn: null,
+    }));
+    const handedOver = vi.fn<NonNullable<NativeReminderDeps['onHandedOver']>>();
+    const shown = vi.fn();
+    const onOpen = vi.fn<NativeReminderDeps['onOpen']>();
+    const channels = [{ id: channelOf('mealCheck'), name: 'Meal check', importance: 3 as const }];
+    const { engine } = createNativeReminders({
+      plugin,
+      clock,
+      visibility,
+      settings: async () => state.settings,
+      activeFast: async () => null,
+      todayTotals: async () => ({ eatenKcal: 0, goalKcal: 2_000 }),
+      watch(onChange) {
+        changed = onChange;
+        return () => {
+          changed = null;
+        };
+      },
+      write: writeMessage,
+      channel: { name: 'Reminders', description: 'All of them.' },
+      onOpen,
+      nudgeFacts: facts,
+      channels,
+      onHandedOver: handedOver,
+      onShown: shown,
+    });
+    return {
+      plugin,
+      state,
+      engine,
+      facts,
+      handedOver,
+      shown,
+      onOpen,
+      async start() {
+        engine.start();
+        await engine.settled();
+      },
+      async change() {
+        changed?.();
+        await engine.settled();
+      },
+    };
+  }
+
+  const lunchCheckToday = NUDGE_IDS.mealCheck + DAY_SLOTS + daySlot('2026-10-26');
+
+  it('makes a channel per kind besides the reminders’ and hands the nudges over without the reminders’ switch', async () => {
+    const r = nudgeRig();
+    await r.start();
+
+    expect(r.plugin.channels).toEqual([
+      { id: CHANNEL_ID, importance: 3, name: 'Reminders', description: 'All of them.' },
+      { id: channelOf('mealCheck'), name: 'Meal check', importance: 3 },
+    ]);
+    expect(r.facts).toHaveBeenCalledWith(r.state.settings, NOW);
+    expect(r.plugin.held.get(lunchCheckToday)).toMatchObject({
+      title: 'Lunch',
+      body: 'Nothing logged for lunch yet.',
+      channelId: channelOf('mealCheck'),
+    });
+  });
+
+  it("takes today's meal check back once the meal is logged, and reports each plan handed over", async () => {
+    const r = nudgeRig();
+    await r.start();
+    expect(r.handedOver).toHaveBeenCalledTimes(1);
+    expect(r.handedOver.mock.calls[0]![1]).toBe(NOW);
+
+    r.state.lunchLogged = true;
+    await r.change();
+
+    expect(r.plugin.held.has(lunchCheckToday)).toBe(false);
+    expect(r.plugin.cancelled.at(-1)).toContain(lunchCheckToday);
+    expect(r.handedOver).toHaveBeenCalledTimes(2);
+    expect(r.handedOver.mock.calls[1]![0].map((each) => each.id)).not.toContain(lunchCheckToday);
+  });
+
+  it('hears a notification Android shows while the app runs, and passes a tap’s id on', async () => {
+    const r = nudgeRig();
+    await r.start();
+
+    r.plugin.shown(lunchCheckToday);
+    r.plugin.tap({ open: 'water', key: 'k' }, 161);
+    r.plugin.tap({ open: { coachChat: 'chat-1' } });
+    r.plugin.tap({ open: 'gremlins' });
+
+    expect(r.shown).toHaveBeenCalledTimes(1);
+    expect(r.onOpen.mock.calls).toEqual([['water', 161], [{ coachChat: 'chat-1' }], ['home']]);
   });
 });

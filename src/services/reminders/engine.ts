@@ -54,6 +54,11 @@ export const REMINDER_SETTING_KEYS = [
   'water.on',
   'fasting.on',
   'units.energy',
+  // The Android app's nudges (P17): their switches, quiet hours, and the water goal they pace.
+  'notify.off',
+  'notify.quiet',
+  'notify.onlyIfNotLogged',
+  'water.goalMl',
 ] as const satisfies readonly (keyof Settings)[];
 
 export type ReminderSettings = Pick<Settings, (typeof REMINDER_SETTING_KEYS)[number]>;

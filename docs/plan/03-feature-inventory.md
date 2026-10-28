@@ -209,6 +209,8 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | J11 | Reminders: the master switch turns on only after permission; breakfast, lunch, dinner, daily summary, water and fasting goal; all off by default; shown while open or on the next open (D-16.5, D-16.41) | P1 | M D | 06 §3.9–3.12; 16 D-16.5, D-16.41 |
 | J12 | Quick-action slot settings | P3 (static manifest shortcuts instead, L8) | — | 06 §3.7 |
 | J13 | What's New dialog | P3 (D-16.43) | — | 06 §3.21 |
+| J14 | Smart notifications: planned nudges and event notices | P1 on Android (P17, D-16.100, D-16.101) | M | 16 D-16.100, D-16.101 |
+| J15 | Notification panel | P1 on Android (P17, D-16.103) | M | 16 D-16.103 |
 
 ## K. Data management, backup and privacy
 
@@ -268,9 +270,9 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 139 |
+| Tier P1 | 141 |
 | Tier P2 | 8 |
 | Tier P3 | 22 |
-| All tiers | 187 |
+| All tiers | 189 |
 
-Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16 and M18 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.
+Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16, M18, J14 and J15 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

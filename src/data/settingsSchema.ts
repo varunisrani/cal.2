@@ -290,6 +290,14 @@ function readDayOrNull(stored: unknown): DayKey | null | undefined {
   return isDayKey(stored) ? stored : undefined;
 }
 
+/** Names: an array of non-empty strings, each kept once. */
+function readNames(stored: unknown): readonly string[] | undefined {
+  if (!Array.isArray(stored) || !stored.every((name) => typeof name === 'string' && name !== '')) {
+    return undefined;
+  }
+  return [...new Set(stored as string[])];
+}
+
 function readTextOrNull(stored: unknown): string | null | undefined {
   return stored === null || typeof stored === 'string' ? stored : undefined;
 }
@@ -422,6 +430,16 @@ export const SETTING_SPECS = {
   /** The reminders the person writes (P13, D-16.93), at most 20; their rules live in the domain. */
   'remind.custom': setting<readonly CustomReminder[]>(() => [], readCustomReminders),
   'alerts.goalReached': setting(off, readFlag),
+
+  // What Platewise sends by itself in the Android app (P17, D-16.100/101): every kind on unless
+  // named here (src/domain/reminders/notices.ts; a name it does not know is ignored), quiet hours
+  // on, meal reminders only for a meal not logged yet. The inbox and the bookkeeping are this
+  // device's own (`LOCAL_SETTINGS`); their fields belong to src/services/notifications.
+  'notify.off': setting<readonly string[]>(() => [], readNames),
+  'notify.quiet': setting(on, readFlag),
+  'notify.onlyIfNotLogged': setting(on, readFlag),
+  'notify.inbox': setting<StoredRecord | null>(none, readRecordOrNull),
+  'notify.device': setting<StoredRecord | null>(none, readRecordOrNull),
 
   // Goals and the weekly tune-up
   'goals.nutrients': setting<Readonly<GoalValues>>(

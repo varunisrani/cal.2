@@ -2,13 +2,18 @@
 // fasting, tracking settings and custom reminders services, the browser's notifications stood in
 // for (src/test/notifications.ts; Android's with `system: 'android'`), and the screen harness's
 // repositories, router, toasts and providers. The clock is the harness's (Monday 26 October 2026,
-// 12:30 in New York) unless given.
+// 12:30 in New York) unless given. With `notify` it has the Android app's notifications (P17) too:
+// the real service over the harness's settings, with the notices stood in for.
 
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
+import { live } from '../../../../data/live';
 import { withIdSequence } from '../../../../lib/ids';
 import { ServicesProvider } from '../../../../services/context';
 import { createFastingService } from '../../../../services/fasting';
+import { createNotifyService } from '../../../../services/notifications/service';
+import { createNotifyStore } from '../../../../services/notifications/store';
+import { FakeNotices } from '../../../../services/notifications/testing/fakeNotices';
 import { createCustomRemindersService } from '../../../../services/reminders/customReminders';
 import type {
   NotificationState,
@@ -32,6 +37,8 @@ export interface TrackingSetup {
   readonly hash?: string;
   /** Wraps the real tracking settings service (a failing or held write). */
   readonly wrap?: (real: TrackingSettingsService) => TrackingSettingsService;
+  /** The Android app's notifications (P17). */
+  readonly notify?: boolean;
 }
 
 export async function openTracking({
@@ -40,6 +47,7 @@ export async function openTracking({
   clock,
   hash = '#/settings/tracking',
   wrap,
+  notify = false,
 }: TrackingSetup = {}) {
   const h = await openHarness({ hash, clock });
   const notifications = fakeNotifications(permission, system);
@@ -51,6 +59,16 @@ export async function openTracking({
     reminders,
   });
   const trackingSettings = wrap ? wrap(real) : real;
+  const notices = new FakeNotices();
+  const notifyService = notify
+    ? createNotifyService({
+        notices,
+        store: createNotifyStore(h.repos.settingsRepo),
+        settingsRepo: h.repos.settingsRepo,
+        open: vi.fn(),
+        live,
+      })
+    : undefined;
   const services = {
     ...h.services,
     trackingSettings,
@@ -61,13 +79,14 @@ export async function openTracking({
       clock: h.clock,
       newId: withIdSequence('reminder'),
     }),
+    ...(notifyService ? { notify: notifyService } : {}),
   };
 
   /** Renders `ui` in the harness's providers with these services. */
   const mount = (ui: ReactNode) =>
     h.mount(<ServicesProvider services={services}>{ui}</ServicesProvider>);
 
-  return { ...h, notifications, reminders, trackingSettings, services, mount };
+  return { ...h, notifications, reminders, trackingSettings, notifyService, services, mount };
 }
 
 export type TrackingHarness = Awaited<ReturnType<typeof openTracking>>;
