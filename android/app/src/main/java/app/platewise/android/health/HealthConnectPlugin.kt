@@ -29,7 +29,8 @@ import org.json.JSONObject
 private const val LOG_TAG = "PlatewiseHealth"
 
 /**
- * The `HealthConnect` plugin of the contract in docs/plan/phases/P11-android-and-health-connect.md.
+ * The `HealthConnect` plugin of the contract in docs/plan/phases/P11-android-and-health-connect.md,
+ * with the additions of docs/plan/phases/P15-walks-and-drive-backup.md (walks, heart rate).
  * This file only moves values between Capacitor and the gateway: arguments become plain maps
  * and lists, results become JSON, and every error becomes one of the contract's codes.
  */
@@ -64,12 +65,13 @@ class HealthConnectPlugin : Plugin() {
             try {
                 gateway.requireAvailable()
                 val wanted = KindSet.fromRequest(argsOf(call))
-                val missing = wanted.permissions - gateway.grantedPermissions()
-                if (missing.isEmpty()) {
+                val granted = gateway.grantedPermissions()
+                // Optional permissions (a walk's steps) do not bring the screen back once refused.
+                if (granted.containsAll(wanted.requiredPermissions)) {
                     call.resolve(toJs(gateway.grants().toWire()))
                     return@launch
                 }
-                val intent = gateway.permissionRequestIntent(missing)
+                val intent = gateway.permissionRequestIntent(wanted.permissions - granted)
                 withContext(Dispatchers.Main) { startActivityForResult(call, intent, "permissionScreenClosed") }
             } catch (error: Throwable) {
                 if (error is CancellationException) throw error
@@ -159,6 +161,21 @@ class HealthConnectPlugin : Plugin() {
         gateway.requireAvailable()
         if (ids.isNotEmpty()) gateway.deleteWeight(ids)
         null
+    }
+
+    @PluginMethod
+    fun writeWalk(call: PluginCall) = answer(call) {
+        val walk = walkWrite(argsOf(call), Instant.now())
+        gateway.requireAvailable()
+        gateway.writeWalk(walk)
+        null
+    }
+
+    @PluginMethod
+    fun readHeartRate(call: PluginCall) = answer(call) {
+        val window = TimeWindow.fromArgs(argsOf(call))
+        gateway.requireAvailable()
+        mapOf("samples" to gateway.heartRate(window).map { it.toWire() })
     }
 
     /** Runs [block] off the main thread and settles the call with its map (null: no value). */

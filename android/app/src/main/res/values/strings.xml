@@ -5,8 +5,23 @@
 
     <!-- The note Health Connect shows when someone asks why Platewise wants access. -->
     <string name="privacy_note_title">Health data in Platewise</string>
-    <string name="privacy_note_reads">Platewise reads your steps, distance, active and total calories burned, workouts and weigh-ins from Health Connect. It shows them beside your food diary and, if you leave the switch on, adds the day\'s active calories to that day\'s calorie target.</string>
-    <string name="privacy_note_writes">Writing is off until you turn it on in Platewise. Then each meal you log goes to Health Connect as a nutrition record (calories, protein, carbs and fat), and each weigh-in as a weight record. Editing or deleting it in Platewise changes or removes the same record.</string>
+    <string name="privacy_note_reads">Platewise reads your steps, distance, active and total calories burned, workouts, heart rate and weigh-ins from Health Connect. It shows them beside your food diary and, if you leave the switch on, adds the day\'s active calories to that day\'s calorie target. Heart rate is read only for the time of a walk you recorded, to show its heart-rate zones.</string>
+    <string name="privacy_note_writes">Writing is off until you turn it on in Platewise. Then each meal you log goes to Health Connect as a nutrition record (calories, protein, carbs and fat), and each weigh-in as a weight record. Editing or deleting it in Platewise changes or removes the same record. Each walk you record goes to Health Connect as a walking session with its distance, active calories and, if you allow it, steps.</string>
     <string name="privacy_note_storage">Platewise has no account and no server of its own, so your health data is never sent to us. It is kept in the app\'s storage on this phone and is never used for advertising.</string>
     <string name="privacy_note_control">You can see, change or remove Platewise\'s access at any time in Health Connect.</string>
+
+    <!-- The walk recorder's notification (P15). -->
+    <string name="walk_channel_name">Walks</string>
+    <string name="walk_channel_description">Shows a walk while Platewise records it.</string>
+    <string name="walk_running_title">Walk in progress</string>
+    <string name="walk_paused_title">Walk paused</string>
+    <string name="walk_ended_title">Walk ended</string>
+    <string name="walk_ended_text">Open Platewise to see and save it.</string>
+    <string name="walk_pause">Pause</string>
+    <string name="walk_resume">Resume</string>
+    <string name="walk_stop">Stop</string>
+    <plurals name="walk_steps">
+        <item quantity="one">%s step</item>
+        <item quantity="other">%s steps</item>
+    </plurals>
 </resources>

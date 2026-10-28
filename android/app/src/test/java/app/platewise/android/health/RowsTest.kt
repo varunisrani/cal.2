@@ -173,4 +173,30 @@ class RowsTest {
             runBlocking { readEveryPage { listOf(1) to "again" } }
         }
     }
+
+    // --- Heart rate ---
+
+    @Test
+    fun heartRateKeepsTheWindowsSamplesInOrder() {
+        val window = TimeWindow.fromArgs(mapOf("start" to "2026-10-27T07:00:00Z", "end" to "2026-10-27T07:30:00Z"))
+        fun at(time: String, bpm: Long) = HeartRateFacts(Instant.parse(time), bpm)
+        val rows = heartRateRows(
+            listOf(
+                at("2026-10-27T07:10:00Z", 121),
+                at("2026-10-27T06:59:59Z", 88), // the record began before the walk
+                at("2026-10-27T07:00:00Z", 96),
+                at("2026-10-27T07:30:00Z", 110),
+                at("2026-10-27T07:30:01Z", 101),
+                at("2026-10-27T07:05:00Z", 0), // not a heart rate
+                at("2026-10-27T07:06:00Z", 301),
+                at("2026-10-27T07:10:00Z", 119), // a second source at the same time
+            ),
+            window,
+        )
+        assertEquals(
+            listOf("2026-10-27T07:00:00Z" to 96L, "2026-10-27T07:10:00Z" to 119L, "2026-10-27T07:10:00Z" to 121L, "2026-10-27T07:30:00Z" to 110L),
+            rows.map { it.time to it.bpm },
+        )
+        assertEquals(mapOf("t" to "2026-10-27T07:00:00Z", "bpm" to 96L), rows.first().toWire())
+    }
 }

@@ -129,4 +129,64 @@ class WritesTest {
         val clock = VersionClock { ticks.removeFirst() }
         assertEquals(listOf(5_000L, 5_001L, 5_002L, 9_000L), List(4) { clock.next() })
     }
+
+    // --- Walks ---
+
+    private fun walk(vararg changes: Pair<String, Any?>): Map<String, Any?> = mapOf<String, Any?>(
+        "clientId" to "walk-7",
+        "start" to "2026-10-27T07:00:00Z",
+        "end" to "2026-10-27T07:42:30Z",
+        "distanceM" to 3_480.6,
+        "activeKcal" to 151,
+        "steps" to 4_620,
+    ) + changes
+
+    @Test
+    fun aWalkIsCheckedAndItsRecordsTakeTheWalkIdWithASuffix() {
+        val write = walkWrite(walk(), now)
+        assertEquals("walk-7", write.clientId)
+        assertEquals(Instant.parse("2026-10-27T07:00:00Z"), write.start)
+        assertEquals(Instant.parse("2026-10-27T07:42:30Z"), write.end)
+        assertEquals(3_480.6, write.distanceM, 0.0)
+        assertEquals(151.0, write.activeKcal, 0.0)
+        assertEquals(4_620L, write.steps)
+        assertEquals(
+            listOf("walk-7:exercise", "walk-7:distance", "walk-7:activeCalories", "walk-7:steps"),
+            WalkPart.entries.map { write.recordId(it) },
+        )
+        assertNull(walkWrite(walk("steps" to null), now).steps)
+    }
+
+    @Test
+    fun badWalksAreInvalidInput() {
+        val bad = listOf(
+            walk("clientId" to ""),
+            walk("clientId" to "w".repeat(MAX_WALK_ID_LENGTH + 1)),
+            walk("start" to "07:00"),
+            walk("end" to "2026-10-27T07:00:00Z"),
+            walk("end" to "2026-10-27T06:59:00Z"),
+            walk("end" to "2026-10-27T12:00:01Z"),
+            walk("start" to "2026-10-26T07:00:00Z", "end" to "2026-10-27T07:00:01Z"),
+            walk("distanceM" to -1),
+            walk("distanceM" to MAX_DISTANCE_M + 1),
+            walk("distanceM" to null),
+            walk("activeKcal" to Double.POSITIVE_INFINITY),
+            walk("activeKcal" to "151"),
+            walk("steps" to 12.5),
+            walk("steps" to -3),
+            walk("steps" to MAX_STEPS + 1),
+        )
+        for (args in bad) invalid { walkWrite(args, now) }
+        assertEquals(MAX_CLIENT_ID_LENGTH, "w".repeat(MAX_WALK_ID_LENGTH).length + ":activeCalories".length)
+    }
+
+    @Test
+    fun aWalkWritesItsSessionAndOnlyRecordsThatHoldSomething() {
+        val full = walkWrite(walk(), now)
+        assertEquals(WalkPart.entries.toList(), walkParts(full, stepsGranted = true))
+        assertEquals(listOf(WalkPart.EXERCISE, WalkPart.DISTANCE, WalkPart.ACTIVE_CALORIES), walkParts(full, stepsGranted = false))
+        val bare = walkWrite(walk("distanceM" to 0, "activeKcal" to 0, "steps" to 0), now)
+        assertEquals(listOf(WalkPart.EXERCISE), walkParts(bare, stepsGranted = true))
+        assertEquals(listOf(WalkPart.EXERCISE, WalkPart.DISTANCE, WalkPart.ACTIVE_CALORIES), walkParts(walkWrite(walk("steps" to null), now), stepsGranted = true))
+    }
 }

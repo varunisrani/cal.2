@@ -70,4 +70,21 @@ class DayKeysTest {
         assertEquals(LocalDate.of(2026, 3, 29), localDayOf(Instant.parse("2026-03-28T23:30:00Z"), null, berlin))
         assertEquals(LocalDate.of(2026, 3, 28), localDayOf(Instant.parse("2026-03-28T22:59:59Z"), null, berlin))
     }
+
+    @Test
+    fun aHeartRateWindowIsTwoInstantsAtMostADayApart() {
+        val window = TimeWindow.fromArgs(mapOf("start" to "2026-10-27T07:00:00Z", "end" to "2026-10-27T07:45:00Z"))
+        assertEquals(Instant.parse("2026-10-27T07:00:00Z"), window.start)
+        assertTrue(Instant.parse("2026-10-27T07:45:00Z") in window)
+        assertFalse(Instant.parse("2026-10-27T07:45:00.001Z") in window)
+        TimeWindow.fromArgs(mapOf("start" to "2026-10-27T07:00:00Z", "end" to "2026-10-28T07:00:00Z"))
+        for (args in listOf(
+            mapOf("start" to "2026-10-27T07:00:00Z", "end" to "2026-10-27T07:00:00Z"),
+            mapOf("start" to "2026-10-27T07:00:00Z", "end" to "2026-10-28T07:00:01Z"),
+            mapOf("start" to "2026-10-27", "end" to "2026-10-28T07:00:00Z"),
+            mapOf("start" to "2026-10-27T07:00:00Z"),
+        )) {
+            invalid { TimeWindow.fromArgs(args) }
+        }
+    }
 }

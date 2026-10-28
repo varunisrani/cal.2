@@ -185,6 +185,28 @@ fun weightRows(weights: List<WeightFacts>, ownPackage: String, range: DayRange, 
         .sortedWith(compareBy<WeightFacts> { it.time }.thenBy { it.id })
         .map { WeightRow(it.id, it.time.toString(), (it.kg * 1000).roundToLong() / 1000.0, it.origin) }
 
+// --- Heart rate -----------------------------------------------------------------------------
+
+/** Health Connect's range for a heart-rate sample, in beats per minute. */
+val HEART_RATE_RANGE: LongRange = 1L..300L
+
+/** One heart-rate sample as Health Connect holds it (any app's). */
+data class HeartRateFacts(val time: Instant, val bpm: Long)
+
+/** A sample of `readHeartRate`, in the contract's shape. */
+data class HeartRateRow(val time: String, val bpm: Long) {
+    fun toWire(): Map<String, Any?> = mapOf("t" to time, "bpm" to bpm)
+}
+
+/**
+ * The samples inside [window], oldest first. Records that only overlap the window bring samples
+ * from outside it, which are left out, as are values Health Connect would not hold.
+ */
+fun heartRateRows(samples: List<HeartRateFacts>, window: TimeWindow): List<HeartRateRow> = samples
+    .filter { it.time in window && it.bpm in HEART_RATE_RANGE }
+    .sortedWith(compareBy<HeartRateFacts> { it.time }.thenBy { it.bpm })
+    .map { HeartRateRow(it.time.toString(), it.bpm) }
+
 // --- Paging ---------------------------------------------------------------------------------
 
 /** Pages one read may follow before the plugin gives up on a token that never ends. */

@@ -12,5 +12,41 @@
     "Unlicense",
     "Python-2.0"
   ],
-  "exceptions": []
+  "exceptions": [
+    {
+      "package": "com.google.android.gms:play-services-auth",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-auth-api-phone",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-auth-base",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-base",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-basement",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-fido",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    },
+    {
+      "package": "com.google.android.gms:play-services-tasks",
+      "license": "LicenseRef-Android-SDK",
+      "reason": "Android APK only (never in the web build): Google's sign-in for Drive backups, which the owner asked for (D-16.97). Google publishes the Play services client libraries only under the Android SDK terms; there is no open-source build of its Authorization API. Listed with those terms in THIRD_PARTY_NOTICES.md."
+    }
+  ]
 }

@@ -18,9 +18,15 @@
     <uses-permission android:name="android.permission.health.READ_DISTANCE" />
     <uses-permission android:name="android.permission.health.READ_EXERCISE" />
     <uses-permission android:name="android.permission.health.READ_WEIGHT" />
-    <!-- Writes, used only after the person turns write-back on: -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <!-- Writes, used only after the person turns write-back on (a walk: exercise, distance and
+         active calories, and steps when that one is allowed too): -->
     <uses-permission android:name="android.permission.health.WRITE_NUTRITION" />
     <uses-permission android:name="android.permission.health.WRITE_WEIGHT" />
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+    <uses-permission android:name="android.permission.health.WRITE_DISTANCE" />
+    <uses-permission android:name="android.permission.health.WRITE_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.WRITE_STEPS" />
 
     <!-- Reminders (P13): Android shows each one at its time, also with the app closed. From
          Android 13 the app asks before it may post notifications; the alarms behind them are set
@@ -31,6 +37,21 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" tools:node="remove" />
+
+    <!-- Walks (P15): the route from the GPS (fine location: approximate location gives no route)
+         and steps from the step counter (the activity permission, Android 10+), both asked when
+         the person starts their first walk and both optional. Recording goes on with the screen
+         off in a foreground service, started while the app is in front, so no background
+         location. Its type is location when the walk records GPS and health when it counts
+         steps; Android 14 asks for the matching permission for each. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_HEALTH" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.stepcounter" android:required="false" />
 
     <!-- Automatic backups (P14) go to Documents/Platewise. Up to Android 10 that folder needs the
          storage permission (asked once, at the first automatic backup), and Android 10 also the
@@ -90,6 +111,17 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+
+        <!-- Records a walk with the screen off (P15). -->
+        <service
+            android:name=".walk.WalkService"
+            android:exported="false"
+            android:foregroundServiceType="location|health" />
+
+        <!-- The walk notification's Pause, Resume and Stop. -->
+        <receiver
+            android:name=".walk.WalkActionReceiver"
+            android:exported="false" />
 
         <!-- Lets the WebView hand the camera app a file to save a new photo into. -->
         <provider

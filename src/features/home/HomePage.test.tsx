@@ -1013,9 +1013,12 @@ function diaryLayout(): string[][] {
  * act would hold back the lazy sheet's first draw (see src/test/lazy.ts).
  */
 async function untilDrawn(selector: string): Promise<void> {
-  await waitFor(() => {
-    if (document.querySelector(selector) === null) throw new Error(`${selector} not drawn yet`);
-  });
+  await waitFor(
+    () => {
+      if (document.querySelector(selector) === null) throw new Error(`${selector} not drawn yet`);
+    },
+    { timeout: 5_000 },
+  );
 }
 
 const addButton = () => screen.getByRole('button', { name: words.add.label });
@@ -1333,10 +1336,9 @@ describe('HomePage: a row opens its editor and keeps a saved copy (P06-19)', () 
     const h = await openWithMorning();
 
     fireEvent.click(rowButton('Edit Eggs'));
-    await waitFor(() =>
-      expect(screen.getByRole('dialog', { name: editorWords.editor.title })).toBeVisible(),
-    );
+    // The editor is fetched on first open, which can take over waitFor's 1 s on a busy machine.
     await untilShown('[data-ui="editor.name"]');
+    expect(screen.getByRole('dialog', { name: editorWords.editor.title })).toBeVisible();
 
     const sheet = within(screen.getByRole('dialog', { name: editorWords.editor.title }));
     expect(sheet.getByDisplayValue('Eggs')).toBeVisible();

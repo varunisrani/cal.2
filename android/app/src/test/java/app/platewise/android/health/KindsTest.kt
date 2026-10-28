@@ -18,19 +18,30 @@ class KindsTest {
             ReadKind.DISTANCE.permission to HealthPermission.getReadPermission(DistanceRecord::class),
             ReadKind.EXERCISE.permission to HealthPermission.getReadPermission(ExerciseSessionRecord::class),
             ReadKind.WEIGHT.permission to HealthPermission.getReadPermission(WeightRecord::class),
-            WriteKind.NUTRITION.permission to HealthPermission.getWritePermission(NutritionRecord::class),
-            WriteKind.WEIGHT.permission to HealthPermission.getWritePermission(WeightRecord::class),
+            ReadKind.HEART_RATE.permission to HealthPermission.getReadPermission(HeartRateRecord::class),
         )
         expected.forEach { (ours, library) -> assertEquals(library, ours) }
+        assertEquals(setOf(HealthPermission.getWritePermission(NutritionRecord::class)), WriteKind.NUTRITION.permissions)
+        assertEquals(setOf(HealthPermission.getWritePermission(WeightRecord::class)), WriteKind.WEIGHT.permissions)
+        assertEquals(
+            setOf(
+                HealthPermission.getWritePermission(ExerciseSessionRecord::class),
+                HealthPermission.getWritePermission(DistanceRecord::class),
+                HealthPermission.getWritePermission(ActiveCaloriesBurnedRecord::class),
+            ),
+            WriteKind.WALK.required,
+        )
+        assertEquals(setOf(HealthPermission.getWritePermission(StepsRecord::class)), WriteKind.WALK.optional)
+        assertEquals(HealthPermission.getWritePermission(StepsRecord::class), WRITE_STEPS_PERMISSION)
     }
 
     @Test
     fun grantsBecomeKindsInContractOrderIgnoringOtherPermissions() {
         val granted = setOf(
-            WriteKind.WEIGHT.permission,
+            WriteKind.WEIGHT.required.single(),
             ReadKind.WEIGHT.permission,
             ReadKind.STEPS.permission,
-            "android.permission.health.READ_HEART_RATE",
+            "android.permission.health.READ_BLOOD_PRESSURE",
             "android.permission.CAMERA",
         )
         val wire = KindSet.fromGranted(granted).toWire()
@@ -48,9 +59,26 @@ class KindsTest {
         val asked = KindSet.fromRequest(mapOf("read" to listOf("distance", "steps", "steps"), "write" to listOf("nutrition")))
         assertEquals(setOf(ReadKind.DISTANCE, ReadKind.STEPS), asked.read)
         assertEquals(
-            setOf(ReadKind.DISTANCE.permission, ReadKind.STEPS.permission, WriteKind.NUTRITION.permission),
+            setOf(ReadKind.DISTANCE.permission, ReadKind.STEPS.permission) + WriteKind.NUTRITION.permissions,
             asked.permissions,
         )
+    }
+
+    @Test
+    fun aWalkIsGrantedWithItsThreeWritesAndStepsAreOptional() {
+        val walk = WriteKind.WALK.required
+        val partly = walk.drop(1).toSet()
+        assertTrue(WriteKind.WALK !in KindSet.fromGranted(partly).write)
+        assertEquals(listOf("walk"), KindSet.fromGranted(walk).toWire()["write"])
+        assertEquals(listOf("walk"), KindSet.fromGranted(walk + WRITE_STEPS_PERMISSION).toWire()["write"])
+    }
+
+    @Test
+    fun aWalkRequestAsksForStepsButOnlyNeedsTheRest() {
+        val asked = KindSet.fromRequest(mapOf("read" to listOf("heartRate"), "write" to listOf("walk")))
+        assertTrue(WRITE_STEPS_PERMISSION in asked.permissions)
+        assertTrue(WRITE_STEPS_PERMISSION !in asked.requiredPermissions)
+        assertEquals(setOf(ReadKind.HEART_RATE.permission) + WriteKind.WALK.required, asked.requiredPermissions)
     }
 
     @Test
@@ -63,7 +91,7 @@ class KindsTest {
     @Test
     fun unknownOrMistypedKindsAreInvalidInput() {
         for (args in listOf(
-            mapOf("read" to listOf("heartRate")),
+            mapOf("read" to listOf("bloodPressure")),
             mapOf("write" to listOf("steps")),
             mapOf("read" to "steps"),
             mapOf("read" to listOf(3)),

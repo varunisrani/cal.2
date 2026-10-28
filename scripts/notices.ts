@@ -50,7 +50,9 @@ export const ANDROID_HEADING = '## Android app';
 /**
  * The standard licence texts the Android list refers to, one `<SPDX id>.txt` each, next to this
  * script: the SPDX License List's plain-text files, release v3.29.0, unchanged
- * (https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/text/<id>.txt).
+ * (https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/text/<id>.txt). The one
+ * `LicenseRef-` file is ours: it names the terms Google publishes its Play services libraries
+ * under and the open-source parts those libraries say they contain.
  */
 export const LICENSE_TEXTS_DIR = join(dirname(fileURLToPath(import.meta.url)), 'licenses');
 
@@ -150,6 +152,16 @@ export interface AndroidLibrary {
 const ANDROIDX = 'https://developer.android.com/jetpack/androidx/releases/';
 const COROUTINES = 'https://github.com/Kotlin/kotlinx.coroutines';
 const GUAVA = 'https://github.com/google/guava';
+const PLAY_SERVICES = 'https://developers.google.com/android/guides/setup';
+
+/** A Google Play services library, published under the Android SDK terms (LicenseRef-Android-SDK). */
+const playServices = (name: string, version: string): AndroidLibrary => ({
+  name,
+  version,
+  license: 'LicenseRef-Android-SDK',
+  homepage: PLAY_SERVICES,
+  copyright: null,
+});
 
 /** An Apache-2.0 library, which asks for no copyright line beside the licence text. */
 const apache = (name: string, version: string, homepage: string): AndroidLibrary => ({
@@ -162,7 +174,8 @@ const apache = (name: string, version: string, homepage: string): AndroidLibrary
 
 /**
  * What the APK carries, read from Gradle's report on 2026-10-27 (Capacitor 7.6.9, Health Connect
- * client 1.1.0, Kotlin 2.2.21): every resolved module but the two BOMs (`kotlin-bom`,
+ * client 1.1.0, Kotlin 2.2.21) and again on 2026-10-28 for Play services auth 22.0.0 (Drive
+ * backups, D-16.97; licence exception in tooling/checks/licenses.allow.json): every resolved module but the two BOMs (`kotlin-bom`,
  * `kotlinx-coroutines-bom`, version constraints with no code) and Capacitor's generated
  * `capacitor-cordova-android-plugins` module (empty: Platewise uses no Cordova plugin). Copyright
  * lines: Capacitor's from @capacitor/android's LICENSE; the protobuf runtime's from the protobuf
@@ -210,13 +223,12 @@ export const ANDROID_LIBRARIES: readonly AndroidLibrary[] = [
   apache('androidx.health.connect:connect-client-proto', '1.1.0', `${ANDROIDX}health-connect`),
   apache('androidx.interpolator:interpolator', '1.0.0', `${ANDROIDX}interpolator`),
   apache('androidx.lifecycle:lifecycle-common', '2.6.2', `${ANDROIDX}lifecycle`),
-  apache('androidx.lifecycle:lifecycle-livedata', '2.6.2', `${ANDROIDX}lifecycle`),
   apache('androidx.lifecycle:lifecycle-livedata-core', '2.6.2', `${ANDROIDX}lifecycle`),
   apache('androidx.lifecycle:lifecycle-process', '2.6.2', `${ANDROIDX}lifecycle`),
   apache('androidx.lifecycle:lifecycle-runtime', '2.6.2', `${ANDROIDX}lifecycle`),
   apache('androidx.lifecycle:lifecycle-viewmodel', '2.6.2', `${ANDROIDX}lifecycle`),
   apache('androidx.lifecycle:lifecycle-viewmodel-savedstate', '2.6.2', `${ANDROIDX}lifecycle`),
-  apache('androidx.loader:loader', '1.0.0', `${ANDROIDX}loader`),
+  apache('androidx.loader:loader', '1.1.0', `${ANDROIDX}loader`),
   apache('androidx.profileinstaller:profileinstaller', '1.3.1', `${ANDROIDX}profileinstaller`),
   apache(
     'androidx.resourceinspection:resourceinspection-annotation',
@@ -235,6 +247,13 @@ export const ANDROID_LIBRARIES: readonly AndroidLibrary[] = [
   ),
   apache('androidx.viewpager:viewpager', '1.0.0', `${ANDROIDX}viewpager`),
   apache('androidx.webkit:webkit', '1.12.1', `${ANDROIDX}webkit`),
+  playServices('com.google.android.gms:play-services-auth', '22.0.0'),
+  playServices('com.google.android.gms:play-services-auth-api-phone', '18.0.2'),
+  playServices('com.google.android.gms:play-services-auth-base', '18.0.10'),
+  playServices('com.google.android.gms:play-services-base', '18.5.0'),
+  playServices('com.google.android.gms:play-services-basement', '18.9.0'),
+  playServices('com.google.android.gms:play-services-fido', '20.0.1'),
+  playServices('com.google.android.gms:play-services-tasks', '18.2.0'),
   {
     name: 'com.google.code.findbugs:jsr305',
     version: '3.0.2',
@@ -260,6 +279,7 @@ export const ANDROID_LIBRARIES: readonly AndroidLibrary[] = [
   apache('org.jetbrains.kotlinx:kotlinx-coroutines-core', '1.10.2', COROUTINES),
   apache('org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm', '1.10.2', COROUTINES),
   apache('org.jetbrains.kotlinx:kotlinx-coroutines-guava', '1.10.2', COROUTINES),
+  apache('org.jetbrains.kotlinx:kotlinx-coroutines-play-services', '1.10.2', COROUTINES),
   apache('org.jetbrains:annotations', '23.0.0', 'https://github.com/JetBrains/java-annotations'),
   apache('org.jspecify:jspecify', '1.0.0', 'https://jspecify.dev/'),
 ];

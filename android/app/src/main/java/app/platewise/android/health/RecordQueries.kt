@@ -3,6 +3,7 @@ package app.platewise.android.health
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.Record
 import androidx.health.connect.client.records.WeightRecord
 import androidx.health.connect.client.records.metadata.DataOrigin
@@ -46,6 +47,16 @@ internal suspend fun HealthConnectClient.weightFacts(range: DayRange): List<Weig
             kg = record.weight.inKilograms,
         )
     }
+
+/** Every heart-rate sample of the records that overlap [window] (HealthRows.kt trims them). */
+internal suspend fun HealthConnectClient.heartRateFacts(window: TimeWindow): List<HeartRateFacts> {
+    val filter = TimeRangeFilter.between(window.start, window.end)
+    val records = readEveryPage { token ->
+        val page = readRecords(ReadRecordsRequest(recordType = HeartRateRecord::class, timeRangeFilter = filter, pageToken = token))
+        page.records to page.pageToken
+    }
+    return records.flatMap { record -> record.samples.map { HeartRateFacts(it.time, it.beatsPerMinute) } }
+}
 
 /**
  * Active calories between [from] and [until], as Health Connect sums them (it shares out records

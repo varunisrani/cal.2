@@ -17,7 +17,9 @@ ext {
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
 
-    // Platewise's own native code (app/src/main/java/app/platewise/android/health).
+    // Platewise's own native code (app/src/main/java/app/platewise/android/...).
     healthConnectClientVersion = '1.1.0'
     kotlinCoroutinesVersion = '1.10.2'
+    // Google's Authorization API for Drive backups (drive/); the latest stable on Google Maven.
+    playServicesAuthVersion = '22.0.0'
 }

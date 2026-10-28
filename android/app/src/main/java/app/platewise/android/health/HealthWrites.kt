@@ -12,6 +12,11 @@ const val MAX_CLIENT_ID_LENGTH = 200
 const val MAX_ENERGY_KCAL = 100_000.0
 const val MAX_MACRO_GRAMS = 100_000.0
 const val MAX_WEIGHT_KG = 1_000.0
+const val MAX_DISTANCE_M = 1_000_000.0
+const val MAX_STEPS = 1_000_000L
+
+/** The longest walk Platewise writes; anything longer is a clock or input error. */
+val MAX_WALK_DURATION: Duration = Duration.ofHours(24)
 
 /** A meal is written as a one-minute interval from its time: Health Connect needs an interval. */
 val MEAL_DURATION: Duration = Duration.ofMinutes(1)
@@ -110,6 +115,65 @@ fun weightWrite(args: Map<String, Any?>, now: Instant): WeightWrite {
         kg = kg,
     )
 }
+
+/** The records one walk becomes; each carries the walk's id with its own suffix. */
+enum class WalkPart(val suffix: String) {
+    EXERCISE("exercise"),
+    DISTANCE("distance"),
+    ACTIVE_CALORIES("activeCalories"),
+    STEPS("steps"),
+}
+
+/** The longest walk id: its records' ids add a suffix and must stay within [MAX_CLIENT_ID_LENGTH]. */
+val MAX_WALK_ID_LENGTH: Int = MAX_CLIENT_ID_LENGTH - 1 - WalkPart.entries.maxOf { it.suffix.length }
+
+/** One finished walk, checked and ready to write. */
+data class WalkWrite(
+    val clientId: String,
+    val start: Instant,
+    val end: Instant,
+    val distanceM: Double,
+    val activeKcal: Double,
+    val steps: Long?,
+) {
+    /** The client record id of one of the walk's records: `<walk id>:<part>`. */
+    fun recordId(part: WalkPart): String = "$clientId:${part.suffix}"
+}
+
+/** The `{ clientId, start, end, distanceM, activeKcal, steps }` of `writeWalk`. */
+fun walkWrite(args: Map<String, Any?>, now: Instant): WalkWrite {
+    val clientId = clientIdOf(args["clientId"], "clientId")
+    if (clientId.length > MAX_WALK_ID_LENGTH) invalidInput("clientId is longer than $MAX_WALK_ID_LENGTH characters")
+    val start = pastInstantOf(args["start"], "start", now)
+    val end = pastInstantOf(args["end"], "end", now)
+    if (!end.isAfter(start)) invalidInput("end must be after start")
+    if (Duration.between(start, end) > MAX_WALK_DURATION) invalidInput("a walk lasts at most ${MAX_WALK_DURATION.toHours()} hours")
+    val steps = args["steps"]?.let { value ->
+        val count = amountOf(value, "steps", MAX_STEPS.toDouble())
+        if (count % 1.0 != 0.0) invalidInput("steps must be a whole number")
+        count.toLong()
+    }
+    return WalkWrite(
+        clientId = clientId,
+        start = start,
+        end = end,
+        distanceM = amountOf(args["distanceM"], "distanceM", MAX_DISTANCE_M),
+        activeKcal = amountOf(args["activeKcal"], "activeKcal", MAX_ENERGY_KCAL),
+        steps = steps,
+    )
+}
+
+/**
+ * The records to write for [walk]: always the exercise session; distance and active calories
+ * when there are some (a record of nothing is noise); steps when there are some and writing
+ * steps is granted (Health Connect takes no 0-step record).
+ */
+fun walkParts(walk: WalkWrite, stepsGranted: Boolean): List<WalkPart> = listOfNotNull(
+    WalkPart.EXERCISE,
+    WalkPart.DISTANCE.takeIf { walk.distanceM > 0.0 },
+    WalkPart.ACTIVE_CALORIES.takeIf { walk.activeKcal > 0.0 },
+    WalkPart.STEPS.takeIf { stepsGranted && (walk.steps ?: 0L) > 0L },
+)
 
 /** The `clientIds` of the delete calls, without repeats. */
 fun clientIdsToDelete(args: Map<String, Any?>): List<String> {

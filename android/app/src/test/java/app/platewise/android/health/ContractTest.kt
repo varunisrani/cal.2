@@ -1,16 +1,23 @@
 package app.platewise.android.health
 
+import app.platewise.android.PhaseContract
 import com.getcapacitor.PluginMethod
 import java.io.File
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * The plugin against the TypeScript contract in the P11 phase file, which the web side codes to
- * as well. Reading the plan itself means a change to the contract fails here until both agree.
+ * The plugin against the TypeScript contract in the P11 phase file and its additions in the P15
+ * one, which the web side codes to as well. Reading the plan itself means a change to the
+ * contract fails here until both agree.
  */
 class ContractTest {
+    /** The P15 block lists the additions as comments: `//   writeWalk(...)`, `kind 'x' in ...`. */
+    private val p15 = PhaseContract("P15-walks-and-drive-backup.md")
+    private val additions: Map<String, String> by lazy { p15.commentedMethods() }
+
     private val phaseFile = File(
         System.getProperty("platewise.repoRoot") ?: "../..",
         "docs/plan/phases/P11-android-and-health-connect.md",
@@ -54,13 +61,41 @@ class ContractTest {
             .map { it.name }
             .toSet()
         assertEquals(11, methodLines.size)
-        assertEquals(methodLines.keys, declared)
+        assertEquals(setOf("writeWalk", "readHeartRate"), additions.keys)
+        assertEquals(methodLines.keys + additions.keys, declared)
     }
 
     @Test
     fun readAndWriteKindsMatchTheContractUnions() {
-        assertEquals(unionOf("HealthReadKind"), ReadKind.entries.map { it.wire }.toSet())
-        assertEquals(unionOf("HealthWriteKind"), WriteKind.entries.map { it.wire }.toSet())
+        assertEquals(setOf("heartRate"), p15.kindsAddedTo("HealthReadKind"))
+        assertEquals(unionOf("HealthReadKind") + p15.kindsAddedTo("HealthReadKind"), ReadKind.entries.map { it.wire }.toSet())
+        assertEquals(unionOf("HealthWriteKind") + p15.kindsAddedTo("HealthWriteKind"), WriteKind.entries.map { it.wire }.toSet())
+    }
+
+    @Test
+    fun writeWalkTakesTheContractFields() {
+        val fields = PhaseContract.objectAfter(additions.getValue("writeWalk"), "")
+        assertEquals(setOf("clientId", "start", "end", "distanceM", "activeKcal", "steps"), fields)
+        val args = mapOf<String, Any?>(
+            "clientId" to "walk-1",
+            "start" to "2026-10-28T07:00:00Z",
+            "end" to "2026-10-28T07:40:00Z",
+            "distanceM" to 3_200,
+            "activeKcal" to 140.5,
+            "steps" to null,
+        )
+        assertEquals(fields, args.keys)
+        walkWrite(args, Instant.parse("2026-10-28T08:00:00Z"))
+        assertTrue(additions.getValue("writeWalk").contains("steps: number | null"))
+    }
+
+    @Test
+    fun readHeartRateTakesAWindowAndAnswersSamples() {
+        val line = additions.getValue("readHeartRate")
+        assertEquals(setOf("start", "end"), PhaseContract.objectAfter(line, ""))
+        TimeWindow.fromArgs(mapOf("start" to "2026-10-28T07:00:00Z", "end" to "2026-10-28T07:40:00Z"))
+        assertEquals(setOf("samples"), PhaseContract.objectAfter(line, "Promise<"))
+        assertEquals(PhaseContract.objectAfter(line, "samples: "), HeartRateRow("2026-10-28T07:00:00Z", 98).toWire().keys)
     }
 
     @Test

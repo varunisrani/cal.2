@@ -1,6 +1,7 @@
 package app.platewise.android.health
 
 import java.time.DateTimeException
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -67,3 +68,31 @@ data class DayRange(val first: LocalDate, val last: LocalDate) {
  */
 fun localDayOf(instant: Instant, recordedOffset: ZoneOffset?, phoneZone: ZoneId): LocalDate =
     instant.atZone(recordedOffset ?: phoneZone).toLocalDate()
+
+/** The longest window one heart-rate read may span. */
+val MAX_WINDOW: Duration = Duration.ofHours(24)
+
+/** A span of time between two instants, as `readHeartRate` takes it (a walk's start and end). */
+data class TimeWindow(val start: Instant, val end: Instant) {
+    operator fun contains(instant: Instant): Boolean = !instant.isBefore(start) && !instant.isAfter(end)
+
+    companion object {
+        private fun instantOf(value: Any?, field: String): Instant {
+            val text = value as? String ?: invalidInput("$field must be an ISO-8601 time")
+            return try {
+                Instant.parse(text)
+            } catch (_: DateTimeException) {
+                invalidInput("$field is not an ISO-8601 time: \"$text\"")
+            }
+        }
+
+        /** The `{ start, end }` argument of `readHeartRate`. */
+        fun fromArgs(args: Map<String, Any?>): TimeWindow {
+            val start = instantOf(args["start"], "start")
+            val end = instantOf(args["end"], "end")
+            if (!end.isAfter(start)) invalidInput("end must be after start")
+            if (Duration.between(start, end) > MAX_WINDOW) invalidInput("a read covers at most ${MAX_WINDOW.toHours()} hours")
+            return TimeWindow(start, end)
+        }
+    }
+}

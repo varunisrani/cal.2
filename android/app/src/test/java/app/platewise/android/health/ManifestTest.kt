@@ -29,7 +29,7 @@ class ManifestTest {
     @Test
     fun declaresExactlyTheHealthPermissionsOfTheKinds() {
         val health = usesPermissions().filter { it.startsWith("android.permission.health.") }.toSet()
-        val expected = ReadKind.entries.map { it.permission }.toSet() + WriteKind.entries.map { it.permission }
+        val expected = ReadKind.entries.map { it.permission }.toSet() + WriteKind.entries.flatMap { it.permissions }
         assertEquals(expected, health)
     }
 

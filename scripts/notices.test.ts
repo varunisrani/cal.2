@@ -313,11 +313,9 @@ describe("the Android app's libraries (P11-05)", () => {
     copyright: null,
   };
   const capacitor = ANDROID_LIBRARIES.find((library) => library.name === '@capacitor/android')!;
-  const allowed = (
-    JSON.parse(readFileSync(join(PRODUCT_ROOT, 'tooling/checks/licenses.allow.json'), 'utf8')) as {
-      allowed: string[];
-    }
-  ).allowed;
+  const { allowed, exceptions } = JSON.parse(
+    readFileSync(join(PRODUCT_ROOT, 'tooling/checks/licenses.allow.json'), 'utf8'),
+  ) as { allowed: string[]; exceptions: { package: string; license: string }[] };
 
   it('keeps one sorted row per library, each with an https page, an allowed licence and its text', () => {
     const names = ANDROID_LIBRARIES.map((library) => library.name);
@@ -325,13 +323,21 @@ describe("the Android app's libraries (P11-05)", () => {
     expect(new Set(names).size).toBe(names.length);
     for (const library of ANDROID_LIBRARIES) {
       expect(library.homepage, library.name).toMatch(/^https:\/\/\S+$/);
-      expect(allowed, library.name).toContain(library.license);
+      if (!library.license.startsWith('LicenseRef-')) {
+        expect(allowed, library.name).toContain(library.license);
+      } else {
+        expect(exceptions, library.name).toContainEqual(
+          expect.objectContaining({ package: library.name, license: library.license }),
+        );
+      }
       expect(existsSync(join(LICENSE_TEXTS_DIR, `${library.license}.txt`)), library.name).toBe(
         true,
       );
-      // MIT and BSD ask for the copyright notice with the text; Apache-2.0 asks for the text only.
-      if (library.license === 'Apache-2.0') expect(library.copyright, library.name).toBeNull();
-      else expect(library.copyright, library.name).toMatch(/^Copyright /);
+      // MIT and BSD ask for the copyright notice with the text; Apache-2.0 and Google's terms ask
+      // for the text only.
+      if (library.license === 'Apache-2.0' || library.license.startsWith('LicenseRef-')) {
+        expect(library.copyright, library.name).toBeNull();
+      } else expect(library.copyright, library.name).toMatch(/^Copyright /);
     }
   });
 
@@ -399,7 +405,12 @@ describe("the Android app's libraries (P11-05)", () => {
     expect(real.android.map((library) => library.name)).toEqual(
       ANDROID_LIBRARIES.map((library) => library.name),
     );
-    expect(Object.keys(real.licenseTexts)).toEqual(['Apache-2.0', 'BSD-3-Clause', 'MIT']);
+    expect(Object.keys(real.licenseTexts)).toEqual([
+      'Apache-2.0',
+      'BSD-3-Clause',
+      'LicenseRef-Android-SDK',
+      'MIT',
+    ]);
     expect(real.licenseTexts['BSD-3-Clause']).toMatch(/^Copyright \(c\) <year> <owner>\./);
     // Fifty-odd Apache-2.0 libraries, one copy of its text.
     const file = formatNotices(real);

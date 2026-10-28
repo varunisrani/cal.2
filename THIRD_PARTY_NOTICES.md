@@ -98,13 +98,12 @@ adds these libraries to its Licences and credits page, each with its licence tex
 - `androidx.health.connect:connect-client-proto` 1.1.0: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/health-connect>
 - `androidx.interpolator:interpolator` 1.0.0: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/interpolator>
 - `androidx.lifecycle:lifecycle-common` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
-- `androidx.lifecycle:lifecycle-livedata` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
 - `androidx.lifecycle:lifecycle-livedata-core` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
 - `androidx.lifecycle:lifecycle-process` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
 - `androidx.lifecycle:lifecycle-runtime` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
 - `androidx.lifecycle:lifecycle-viewmodel` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
 - `androidx.lifecycle:lifecycle-viewmodel-savedstate` 2.6.2: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/lifecycle>
-- `androidx.loader:loader` 1.0.0: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/loader>
+- `androidx.loader:loader` 1.1.0: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/loader>
 - `androidx.profileinstaller:profileinstaller` 1.3.1: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/profileinstaller>
 - `androidx.resourceinspection:resourceinspection-annotation` 1.0.1: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/resourceinspection>
 - `androidx.savedstate:savedstate` 1.2.1: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/savedstate>
@@ -115,6 +114,13 @@ adds these libraries to its Licences and credits page, each with its licence tex
 - `androidx.versionedparcelable:versionedparcelable` 1.1.1: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/versionedparcelable>
 - `androidx.viewpager:viewpager` 1.0.0: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/viewpager>
 - `androidx.webkit:webkit` 1.12.1: Apache-2.0, <https://developer.android.com/jetpack/androidx/releases/webkit>
+- `com.google.android.gms:play-services-auth` 22.0.0: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-auth-api-phone` 18.0.2: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-auth-base` 18.0.10: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-base` 18.5.0: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-basement` 18.9.0: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-fido` 20.0.1: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
+- `com.google.android.gms:play-services-tasks` 18.2.0: LicenseRef-Android-SDK, <https://developers.google.com/android/guides/setup>
 - `com.google.code.findbugs:jsr305` 3.0.2: BSD-3-Clause, <https://findbugs.sourceforge.net/>; Copyright (c) 2007-2009, JSR305 expert group. All rights reserved.
 - `com.google.errorprone:error_prone_annotations` 2.11.0: Apache-2.0, <https://errorprone.info/>
 - `com.google.guava:failureaccess` 1.0.1: Apache-2.0, <https://github.com/google/guava>
@@ -128,5 +134,6 @@ adds these libraries to its Licences and credits page, each with its licence tex
 - `org.jetbrains.kotlinx:kotlinx-coroutines-core` 1.10.2: Apache-2.0, <https://github.com/Kotlin/kotlinx.coroutines>
 - `org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm` 1.10.2: Apache-2.0, <https://github.com/Kotlin/kotlinx.coroutines>
 - `org.jetbrains.kotlinx:kotlinx-coroutines-guava` 1.10.2: Apache-2.0, <https://github.com/Kotlin/kotlinx.coroutines>
+- `org.jetbrains.kotlinx:kotlinx-coroutines-play-services` 1.10.2: Apache-2.0, <https://github.com/Kotlin/kotlinx.coroutines>
 - `org.jetbrains:annotations` 23.0.0: Apache-2.0, <https://github.com/JetBrains/java-annotations>
 - `org.jspecify:jspecify` 1.0.0: Apache-2.0, <https://jspecify.dev/>

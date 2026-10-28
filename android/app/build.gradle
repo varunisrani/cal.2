@@ -105,6 +105,8 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.health.connect:connect-client:$healthConnectClientVersion"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinCoroutinesVersion"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-play-services:$kotlinCoroutinesVersion"
+    implementation "com.google.android.gms:play-services-auth:$playServicesAuthVersion"
     implementation project(':capacitor-android')
     implementation project(':capacitor-cordova-android-plugins')
     testImplementation "junit:junit:$junitVersion"

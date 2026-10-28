@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.records.metadata.Device
 import java.time.ZoneId
 
 /**
@@ -46,10 +47,13 @@ internal class HealthConnectGateway(private val context: Context) {
     fun permissionRequestIntent(permissions: Set<String>): Intent =
         PermissionController.createRequestPermissionResultContract().createIntent(context, permissions)
 
-    private suspend fun requireGranted(kind: WriteKind) {
-        if (kind.permission !in grantedPermissions()) {
+    /** The granted permissions, after checking that they include [kind]. */
+    private suspend fun requireGranted(kind: WriteKind): Set<String> {
+        val granted = grantedPermissions()
+        if (!kind.isGrantedBy(granted)) {
             throw HealthFailure(FailureCode.PERMISSION_DENIED, "Health Connect has not granted writing ${kind.wire}")
         }
+        return granted
     }
 
     suspend fun dailyTotals(range: DayRange): List<DailyRow> {
@@ -98,5 +102,18 @@ internal class HealthConnectGateway(private val context: Context) {
     suspend fun deleteWeight(clientIds: List<String>) {
         requireGranted(WriteKind.WEIGHT)
         client.deleteWeighIns(clientIds)
+    }
+
+    /** A finished walk; its steps only when they are given and writing steps is granted too. */
+    suspend fun writeWalk(walk: WalkWrite) {
+        val granted = requireGranted(WriteKind.WALK)
+        val parts = walkParts(walk, stepsGranted = WRITE_STEPS_PERMISSION in granted)
+        val phone = Device(type = Device.TYPE_PHONE, manufacturer = Build.MANUFACTURER, model = Build.MODEL)
+        client.insertWalk(walk, parts, versions, ZoneId.systemDefault(), phone)
+    }
+
+    suspend fun heartRate(window: TimeWindow): List<HeartRateRow> {
+        if (ReadKind.HEART_RATE !in grants().read) return emptyList()
+        return heartRateRows(client.heartRateFacts(window), window)
     }
 }

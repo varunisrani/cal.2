@@ -5,14 +5,18 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import app.platewise.android.drive.DrivePlugin
 import app.platewise.android.health.HealthConnectPlugin
+import app.platewise.android.walk.WalkTrackerPlugin
 import com.getcapacitor.BridgeActivity
 
-/** The app's one screen: Capacitor's WebView showing the web build, with our native plugin. */
+/** The app's one screen: Capacitor's WebView showing the web build, with our native plugins. */
 class MainActivity : BridgeActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // The bridge starts inside super.onCreate and only knows plugins registered before it.
         registerPlugin(HealthConnectPlugin::class.java)
+        registerPlugin(WalkTrackerPlugin::class.java)
+        registerPlugin(DrivePlugin::class.java)
         super.onCreate(savedInstanceState)
         bridge?.webView?.let(::keepClearOfBarsAndKeyboard)
     }

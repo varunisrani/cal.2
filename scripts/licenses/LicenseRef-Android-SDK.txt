@@ -1,0 +1,21 @@
+Google Play services client libraries
+
+Google publishes these libraries under the Android Software Development Kit License Agreement:
+https://developer.android.com/studio/terms
+
+Each library says it contains open-source code under these licences (from the
+third_party_licenses.txt in each library's package):
+
+Apache-2.0 (text above): Dagger, Error Prone, Google Auto, Guava, HighwayHash, J2ObjC, JSR 250,
+JSR 330, Jakarta Inject, JSpecify, JsInterop Annotations, Kotlin, Kotlin coroutines,
+kotlinx atomicfu, kotlinx serialization, SafeParcelable library, Tink, gsfclient,
+mobiledatadownload, java_annotations, apksig (Copyright (c) 2005-2008, The Android Open Source
+Project).
+
+MIT (text above): Animal Sniffer, Copyright (c) 2008 Kohsuke Kawaguchi and codehaus.org;
+Checker Framework annotations, Copyright 2004-present by the Checker Framework developers.
+
+BSD-3-Clause (text above): Protocol Buffers and Protocol Buffers for Java, Copyright 2008 Google
+Inc. All rights reserved; Protocol Buffers for Go v2, Copyright (c) 2018 The Go Authors. All
+rights reserved; JSR 305, Copyright (c) 2007-2009, JSR305 expert group. All rights reserved;
+Chromium sync, Copyright 2015 The Chromium Authors. All rights reserved.

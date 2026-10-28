@@ -15,18 +15,46 @@ enum class ReadKind(val wire: String, val permission: String) {
     DISTANCE("distance", PERMISSION_PREFIX + "READ_DISTANCE"),
     EXERCISE("exercise", PERMISSION_PREFIX + "READ_EXERCISE"),
     WEIGHT("weight", PERMISSION_PREFIX + "READ_WEIGHT"),
+    HEART_RATE("heartRate", PERMISSION_PREFIX + "READ_HEART_RATE"),
 }
 
-/** What the web app may write (the contract's `HealthWriteKind`). */
-enum class WriteKind(val wire: String, val permission: String) {
-    NUTRITION("nutrition", PERMISSION_PREFIX + "WRITE_NUTRITION"),
-    WEIGHT("weight", PERMISSION_PREFIX + "WRITE_WEIGHT"),
+/** Writing steps, asked for with [WriteKind.WALK] but not needed for it. */
+const val WRITE_STEPS_PERMISSION = PERMISSION_PREFIX + "WRITE_STEPS"
+
+/**
+ * What the web app may write (the contract's `HealthWriteKind`). A kind is granted when all its
+ * [required] permissions are; its [optional] ones are asked for with it, and a write uses them
+ * only when they are granted (a walk's steps).
+ */
+enum class WriteKind(val wire: String, val required: Set<String>, val optional: Set<String> = emptySet()) {
+    NUTRITION("nutrition", setOf(PERMISSION_PREFIX + "WRITE_NUTRITION")),
+    WEIGHT("weight", setOf(PERMISSION_PREFIX + "WRITE_WEIGHT")),
+    WALK(
+        "walk",
+        required = setOf(
+            PERMISSION_PREFIX + "WRITE_EXERCISE",
+            PERMISSION_PREFIX + "WRITE_DISTANCE",
+            PERMISSION_PREFIX + "WRITE_ACTIVE_CALORIES_BURNED",
+        ),
+        optional = setOf(WRITE_STEPS_PERMISSION),
+    ),
+    ;
+
+    /** Every permission a request for this kind asks for. */
+    val permissions: Set<String> get() = required + optional
+
+    fun isGrantedBy(granted: Set<String>): Boolean = granted.containsAll(required)
 }
 
 /** Kinds in both directions: what is granted, or what a request asks for. */
 data class KindSet(val read: Set<ReadKind>, val write: Set<WriteKind>) {
+    /** Every permission these kinds ask for, optional ones included. */
     val permissions: Set<String>
-        get() = read.mapTo(LinkedHashSet()) { it.permission } + write.map { it.permission }
+        get() = read.mapTo(LinkedHashSet()) { it.permission } + write.flatMap { it.permissions }
+
+    /** The permissions without which one of these kinds is not granted. */
+    val requiredPermissions: Set<String>
+        get() = read.mapTo(LinkedHashSet()) { it.permission } + write.flatMap { it.required }
 
     /** `{ read: [...], write: [...] }`, each list in the enums' order. */
     fun toWire(): Map<String, Any?> = mapOf(
@@ -38,7 +66,7 @@ data class KindSet(val read: Set<ReadKind>, val write: Set<WriteKind>) {
         /** The kinds whose permission is among [granted]; other apps' and unknown names are ignored. */
         fun fromGranted(granted: Set<String>): KindSet = KindSet(
             read = ReadKind.entries.filterTo(LinkedHashSet()) { it.permission in granted },
-            write = WriteKind.entries.filterTo(LinkedHashSet()) { it.permission in granted },
+            write = WriteKind.entries.filterTo(LinkedHashSet()) { it.isGrantedBy(granted) },
         )
 
         /** The `{ read, write }` argument of requestPermissions; a missing list asks for nothing. */
