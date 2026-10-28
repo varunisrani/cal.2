@@ -1,7 +1,8 @@
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Dexie } from 'dexie';
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { tabRoute } from '../../app/router';
 import { DataProvider } from '../../data/DataProvider';
 import { createHealthRepo } from '../../data/repos/healthRepo';
 import { health as healthWords } from '../../i18n/en/health';
@@ -10,8 +11,15 @@ import { createHealthService } from '../../services/health/service';
 import { fakeHealthPlugin } from '../../services/health/testing/fakeHealthPlugin';
 import { common } from '../../i18n/en/common';
 import { progress } from '../../i18n/en/progress';
+import { spending } from '../../i18n/en/spending';
 import { FACTORY_NOW, makeProfile } from '../../test/factories';
-import { closeHarnesses, until, untilGone, untilShown } from '../../test/screenHarness';
+import {
+  closeHarnesses,
+  openHarness,
+  until,
+  untilGone,
+  untilShown,
+} from '../../test/screenHarness';
 import { ProgressPage } from './ProgressPage';
 import { openProgress } from './testing/openProgress';
 
@@ -246,5 +254,36 @@ describe('ProgressPage: Health Connect on the Android app (P11-04)', () => {
     h.mount(<ProgressPage />);
     await untilShown('[data-ui="progress.weight"]');
     expect(document.querySelector('[data-ui="progress.activity"]')).toBeNull();
+  });
+});
+
+describe('ProgressPage: Spending (D-16.108)', () => {
+  it('has a row to Spending under the nutrition cards that opens its page', async () => {
+    const h = await openProgress();
+    h.mount(<ProgressPage />);
+    await untilShown('[data-ui="spending.link"]');
+    const link = screen.getByRole('button', { name: spending.spending.title });
+    expect(link).toHaveAccessibleDescription(spending.spending.link);
+
+    await act(async () => {
+      fireEvent.click(link);
+    });
+    expect(h.router.current().route).toEqual(tabRoute('progress', 'spending'));
+    await untilShown('[data-ui="screen.progress.spending"]');
+    expect(document.querySelector('[data-ui="progress.weight"]')).toBeNull();
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: common.common.tabs.progress }));
+    });
+    await untilShown('[data-ui="progress.weight"]');
+    expect(h.router.current().route).toEqual(tabRoute('progress'));
+  });
+
+  it('goes back to Progress from an address naming no page of it, drawing nothing first', async () => {
+    const h = await openHarness({ hash: '#/progress/nowhere' });
+    expect(h.router.current().route).toEqual(tabRoute('progress', 'nowhere'));
+    h.mount(<ProgressPage />);
+    expect(document.querySelector('[data-ui="screen.progress.spending"]')).toBeNull();
+    await waitFor(() => expect(h.router.current().route).toEqual(tabRoute('progress')));
   });
 });

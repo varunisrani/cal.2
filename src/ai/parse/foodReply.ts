@@ -3,14 +3,17 @@
  * The answer must name the food and give kcal, protein, carbs and fat; anything less is an
  * unusable answer, so the client tries the standby instead of showing a meal of zeros (D-16.22,
  * D-16.58). Unit choices and parts come from the same object but are read by `units.ts` and
- * `parts.ts`; this reader leaves them empty.
+ * `parts.ts`; this reader leaves them empty. A price is kept only when the person's own words
+ * stated one (D-16.107): see `statedPrice`.
  */
 import {
   EXTRA_KEYS,
   NUTRIENT_KEYS,
   type NutritionDraft,
+  type Price,
   type ServingBasis,
 } from '../../domain/model';
+import { currencyCodeOf, priceAmountOf } from '../../domain/money/price';
 import { err, ok, type Result } from '../../lib/result';
 import type { SingleFailure } from '../errors';
 import { isRecord, readNumber } from './json';
@@ -32,7 +35,11 @@ export const FOOD_REPLY_KEYS = {
   units: 'units',
   parts: 'parts',
   progressive: 'progressive',
+  price: 'price',
 } as const;
+
+/** The keys of the reply's `price` object (D-16.107). */
+export const PRICE_REPLY_KEYS = { amount: 'amount', currency: 'currency' } as const;
 
 /** The keys of one element of the reply's `units` list. */
 export const UNIT_REPLY_KEYS = { unit: 'unit', count: 'count', gramsEach: 'gramsEach' } as const;
@@ -53,6 +60,13 @@ export interface FoodReplyContext {
   readonly note?: string;
   /** The photos show one plate built up in steps; when left out, the reply's own flag is used. */
   readonly progressive?: boolean;
+  /**
+   * The person's own words the request carried (a description), when they are not the note. A
+   * price is read only from a request whose words (these, else the note) hold a figure.
+   */
+  readonly words?: string;
+  /** The person's currency (`money.currency`): a stated price without a code is in it. */
+  readonly currency?: string;
 }
 
 const K = FOOD_REPLY_KEYS;
@@ -102,7 +116,27 @@ export function readFoodReply(
   if (emoji !== undefined) draft.emoji = emoji;
   const note = textOf(context.note);
   if (note !== undefined) draft.note = note;
+  const price = statedPrice(reply[K.price], context);
+  if (price !== undefined) draft.price = price;
   return ok(draft);
+}
+
+/** A figure in any script's digits. */
+const FIGURE = /\p{Nd}/u;
+
+/**
+ * The reply's price (D-16.107), or undefined. The AI is asked for one only when the person's words
+ * state it, and never to estimate one; this reader holds it to that: the request must have carried
+ * words with a figure in them, the amount must be a number of 0 or more (kept to two decimals),
+ * and a currency the reply does not name as a code is the person's own, or there is no price.
+ */
+function statedPrice(raw: unknown, context: FoodReplyContext): Price | undefined {
+  const words = context.words ?? context.note;
+  if (!isRecord(raw) || words === undefined || !FIGURE.test(words)) return undefined;
+  const amount = priceAmountOf(readNumber(raw[PRICE_REPLY_KEYS.amount]));
+  const currency =
+    currencyCodeOf(raw[PRICE_REPLY_KEYS.currency]) ?? currencyCodeOf(context.currency);
+  return amount === undefined || currency === undefined ? undefined : { amount, currency };
 }
 
 /** A required amount: present, finite and not negative (a negative kcal or macro is no food). */

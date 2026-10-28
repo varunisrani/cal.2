@@ -147,6 +147,40 @@ describe('other food codecs', () => {
     expect(decoded?.draft.product).toMatchObject(product);
   });
 
+  it('keep a price on an entry, a saved meal and a stored draft, and none without one (D-16.107)', () => {
+    const price = { amount: 120, currency: 'INR' };
+    const entry = makeEntry({ price });
+    expect(decodeEntry(entry)?.price).toEqual(price);
+    const { id: _id, loggedAt: _at, dayKey: _day, meal: _meal, ...food } = entry;
+    expect(decodeSavedMeal({ ...food, id: 'saved-1' })?.price).toEqual(price);
+    const draft = { name: 'Paneer roll', kcal: 420, protein: 14, carbs: 50, fat: 18, price };
+    expect(decodeAnalysisDraft({ draft, photoIds: [] })?.draft.price).toEqual(price);
+    expect(decodeEntry(makeEntry())).not.toHaveProperty('price');
+  });
+
+  it('tidy a price to two decimals and an upper-case code, and drop one that is not a price', () => {
+    const read = (price: unknown) => decodeEntry({ ...makeEntry(), price });
+    expect(read({ amount: 4.499, currency: 'usd' })?.price).toEqual({
+      amount: 4.5,
+      currency: 'USD',
+    });
+    expect(read({ amount: 0, currency: 'EUR' })?.price).toEqual({ amount: 0, currency: 'EUR' });
+    for (const price of [
+      { amount: -1, currency: 'INR' },
+      { amount: Number.NaN, currency: 'INR' },
+      { amount: Number.POSITIVE_INFINITY, currency: 'INR' },
+      { amount: '120', currency: 'INR' },
+      { amount: 120, currency: 'Rupees' },
+      { amount: 120 },
+      120,
+      null,
+    ]) {
+      const entry = read(price);
+      expect(entry).not.toBeNull();
+      expect(entry).not.toHaveProperty('price');
+    }
+  });
+
   it('give a bare draft empty collections', () => {
     expect(decodeNutritionDraft({ name: 'Tea', kcal: 2, protein: 0, carbs: 0, fat: 0 })).toEqual({
       name: 'Tea',

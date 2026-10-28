@@ -8,6 +8,7 @@ import { ai as aiWords } from '../../i18n/en/ai';
 import { common } from '../../i18n/en/common';
 import { editor } from '../../i18n/en/editor';
 import { log as logWords } from '../../i18n/en/log';
+import { price as priceWords } from '../../i18n/en/price';
 import { review } from '../../i18n/en/review';
 import { lintCatalogue } from '../../i18n/lint';
 import { ServicesProvider, type Services } from '../../services/context';
@@ -376,6 +377,7 @@ describe('EntryEditor: Reprocess', () => {
       note: 'Homemade, with feta ',
       photoIds: ['photo-1'],
       progressive: false,
+      currency: 'USD',
     };
     expect(reprocess.run).toHaveBeenCalledWith(request, expect.any(AbortSignal));
     expect(h.sheet.getByRole('textbox', { name: reviewWords.name })).toHaveValue(
@@ -457,6 +459,81 @@ describe('EntryEditor: Reprocess', () => {
     expect(hooked('review.kcal')).toHaveTextContent('410');
     expect(primary()).toHaveTextContent(words.reprocess);
     expect(h.onClose).not.toHaveBeenCalled();
+  });
+});
+
+describe('EntryEditor: price (D-16.107)', () => {
+  const PRICE = priceWords.price;
+  const priceField = (sheet: Sheet) => sheet.getByRole('textbox', { name: PRICE.label });
+
+  it("shows the entry's price in its own currency and saves an edit to it", async () => {
+    const h = await openEditor({ entry: soup({ price: { amount: 120, currency: 'INR' } }) });
+    const field = priceField(h.sheet);
+    expect(field).toHaveValue('120');
+    expect(field).toHaveAttribute('data-ui', 'price.editor');
+    expect(field).toHaveAccessibleDescription(`INR ${PRICE.hint}`);
+
+    type(field, '110.5');
+    await saveAndClose(h.onClose);
+    expect((await storedEntry(h))?.price).toEqual({ amount: 110.5, currency: 'INR' });
+  });
+
+  it('takes the price away when the field is emptied', async () => {
+    const h = await openEditor({ entry: soup({ price: { amount: 4.5, currency: 'USD' } }) });
+    expect(priceField(h.sheet)).toHaveValue('4.50');
+    type(priceField(h.sheet), '  ');
+    await saveAndClose(h.onClose);
+    expect(await storedEntry(h)).not.toHaveProperty('price');
+  });
+
+  it("adds a price typed into an entry without one, in the person's currency", async () => {
+    const h = await openEditor();
+    expect(priceField(h.sheet)).toHaveValue('');
+    expect(priceField(h.sheet)).toHaveAccessibleDescription(`USD ${PRICE.hint}`);
+    type(priceField(h.sheet), '0');
+    await saveAndClose(h.onClose);
+    expect((await storedEntry(h))?.price).toEqual({ amount: 0, currency: 'USD' });
+  });
+
+  it('holds Save back while the price is not an amount', async () => {
+    const h = await openEditor();
+    type(priceField(h.sheet), '12 dollars');
+    expect(priceField(h.sheet)).toHaveAccessibleDescription(`USD ${PRICE.invalid}`);
+    expect(primary()).toBeDisabled();
+    type(priceField(h.sheet), '12');
+    expect(primary()).toBeEnabled();
+  });
+
+  it('keeps the price when the amount on the serving card changes', async () => {
+    const h = await openEditor({ entry: soup({ price: { amount: 120, currency: 'INR' } }) });
+    const amount = hooked('review.amount') as HTMLElement;
+    type(amount, '2');
+    fireEvent.keyDown(amount, { key: 'Enter' });
+    await saveAndClose(h.onClose);
+    const stored = await storedEntry(h);
+    expect(stored?.kcal).toBe(820);
+    expect(stored?.price).toEqual({ amount: 120, currency: 'INR' });
+  });
+
+  it('takes a price the reprocessed note states, and keeps the typed one otherwise', async () => {
+    const stated = makeDraft({ name: 'Lentil soup', price: { amount: 90, currency: 'INR' } });
+    const h = await openEditor({
+      entry: soup({ price: { amount: 120, currency: 'INR' } }),
+      reprocess: standInReprocess(stated),
+    });
+    type(h.sheet.getByRole('textbox', { name: words.note.label }), 'canteen, ₹90');
+    await press(primary());
+    await settle(() => (priceField(h.sheet) as HTMLInputElement).value === '90');
+    expect(priceField(h.sheet)).toHaveAccessibleDescription(`INR ${PRICE.hint}`);
+  });
+
+  it('keeps the typed price after a reprocess that states none', async () => {
+    const h = await openEditor({ reprocess: standInReprocess(makeDraft({ kcal: 520 })) });
+    type(priceField(h.sheet), '75');
+    type(h.sheet.getByRole('textbox', { name: words.note.label }), 'bigger bowl');
+    await press(primary());
+    await settle(() => hooked('review.kcal')?.textContent === '520');
+    expect(priceField(h.sheet)).toHaveValue('75');
   });
 });
 

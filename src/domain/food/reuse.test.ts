@@ -168,6 +168,14 @@ describe('reuseDraft', () => {
     expect(draft).not.toHaveProperty('meal');
   });
 
+  it('keeps the price of a saved meal or an entry, and none when it had none (D-16.107)', () => {
+    const meal = makeSavedMeal({ price: { amount: 120, currency: 'INR' } });
+    const draft = reuseDraft(meal);
+    expect(draft.price).toEqual({ amount: 120, currency: 'INR' });
+    expect(draft.price).not.toBe(meal.price);
+    expect(reuseDraft(makeEntry())).not.toHaveProperty('price');
+  });
+
   it('keeps an unknown weight as servings, never inventing grams (R02.1)', () => {
     const meal = makeSavedMeal({ basis: { kind: 'servings', count: 2 }, units: [] });
     expect(reuseDraft(meal).basis).toEqual({ kind: 'servings', count: 2 });

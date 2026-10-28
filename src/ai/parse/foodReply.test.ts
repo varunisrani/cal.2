@@ -4,6 +4,7 @@ import foodOkScript from '../../../e2e/fake-ai/scripts/food-ok.json?raw';
 import {
   FOOD_REPLY_KEYS,
   PART_REPLY_KEYS,
+  PRICE_REPLY_KEYS,
   readFoodReply,
   UNIT_REPLY_KEYS,
   type FoodReplyContext,
@@ -234,7 +235,7 @@ describe('readFoodReply: optional nutrients and extras', () => {
 
 describe('reply contract keys', () => {
   it('spells each key as its own name, for the prompts and the readers to share', () => {
-    for (const keys of [FOOD_REPLY_KEYS, UNIT_REPLY_KEYS, PART_REPLY_KEYS]) {
+    for (const keys of [FOOD_REPLY_KEYS, UNIT_REPLY_KEYS, PART_REPLY_KEYS, PRICE_REPLY_KEYS]) {
       for (const [name, spelled] of Object.entries(keys)) expect(spelled).toBe(name);
     }
     expect(Object.values(FOOD_REPLY_KEYS)).toEqual([
@@ -249,6 +250,69 @@ describe('reply contract keys', () => {
       'units',
       'parts',
       'progressive',
+      'price',
     ]);
+    expect(Object.values(PRICE_REPLY_KEYS)).toEqual(['amount', 'currency']);
+  });
+});
+
+describe('readFoodReply: a price the person stated (D-16.107)', () => {
+  const priced = (price: unknown) => reply({ price });
+
+  it('keeps a stated price from a description, with its currency, kept to two decimals', () => {
+    const words = 'paneer roll, ₹120';
+    expect(draftOf(priced({ amount: 120, currency: 'INR' }), { words }).price).toEqual({
+      amount: 120,
+      currency: 'INR',
+    });
+    expect(
+      draftOf(priced({ amount: 4.499, currency: 'usd' }), { words: 'bagel $4.50' }).price,
+    ).toEqual({ amount: 4.5, currency: 'USD' });
+    expect(draftOf(priced({ amount: '5', currency: 'USD' }), { words: '5 dollars' }).price).toEqual(
+      { amount: 5, currency: 'USD' },
+    );
+  });
+
+  it("keeps a price stated in a photo's note, and a free meal's 0", () => {
+    const draft = draftOf(priced({ amount: 0, currency: 'EUR' }), { note: 'free, 0 euros' });
+    expect(draft.price).toEqual({ amount: 0, currency: 'EUR' });
+  });
+
+  it("puts a price without a code in the person's currency, or drops it without one", () => {
+    const words = 'paid 120 for the thali';
+    for (const currency of [null, undefined, '', 'rupees', 12]) {
+      expect(draftOf(priced({ amount: 120, currency }), { words, currency: 'INR' }).price).toEqual({
+        amount: 120,
+        currency: 'INR',
+      });
+      expect(draftOf(priced({ amount: 120, currency }), { words })).not.toHaveProperty('price');
+    }
+  });
+
+  it('never takes a price from a request without words, or words without a figure', () => {
+    const price = { amount: 120, currency: 'INR' };
+    expect(draftOf(priced(price))).not.toHaveProperty('price');
+    expect(draftOf(priced(price), { note: '   ' })).not.toHaveProperty('price');
+    expect(draftOf(priced(price), { words: 'paneer roll' })).not.toHaveProperty('price');
+    expect(draftOf(priced(price), { note: 'lunch at the canteen' })).not.toHaveProperty('price');
+    expect(draftOf(priced(price), { words: 'paneer roll ₹१२०' }).price).toEqual(price);
+  });
+
+  it('drops a price that is not an amount of 0 or more, and keeps the food', () => {
+    const words = 'roll ₹120';
+    for (const price of [
+      null,
+      120,
+      'INR 120',
+      [],
+      { currency: 'INR' },
+      { amount: -5, currency: 'INR' },
+      { amount: Number.NaN, currency: 'INR' },
+      { amount: 'about 100', currency: 'INR' },
+    ]) {
+      const draft = draftOf(priced(price), { words, currency: 'INR' });
+      expect(draft).not.toHaveProperty('price');
+      expect(draft.name).toBe('Chickpea curry with rice');
+    }
   });
 });

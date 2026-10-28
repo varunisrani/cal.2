@@ -99,6 +99,7 @@ export const home = {
       noFigures: 'No sugar figures',
       added: '{amount} g added',
     },
+    spend: '{amount} spent',
     nutrients: {
       link: 'All nutrients',
       title: 'All nutrients',
@@ -107,6 +108,8 @@ export const home = {
       pillarsRow: 'Choose pillars',
       sugarLine: 'Sugar on Home',
       sugarLineHint: 'Hidden while Sugar is a pillar.',
+      spendLine: 'Spending on Home',
+      spendLineHint: 'On days when a food has a price.',
       waterHeading: 'Water',
       waterNote: 'While water tracking is on, Home shows water after the pillars you choose.',
       macrosHeading: 'Macros',

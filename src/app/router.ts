@@ -39,9 +39,14 @@ export function tabRoute(tab: TabId, ...nested: string[]): TabRoute {
 export const HOME_ROUTE: TabRoute = tabRoute('home');
 export const ONBOARDING_ROUTE: OnboardingRoute = { kind: 'onboarding' };
 export const WALK_ROUTE: WalkRoute = { kind: 'walk' };
+/** Progress › Spending (D-16.108), a page of its own under Progress. */
+export const SPENDING_ROUTE: TabRoute = tabRoute('progress', 'spending');
 
-/** How many segments each tab takes below it: `#/settings/<page>/<sub>`. */
-const NESTING: Readonly<Record<TabId, number>> = { home: 0, progress: 0, coach: 0, settings: 2 };
+/**
+ * How many segments each tab takes below it: `#/settings/<page>/<sub>`, `#/progress/<page>`.
+ * The tab's screen sends an address naming no page of its own back to the tab.
+ */
+const NESTING: Readonly<Record<TabId, number>> = { home: 0, progress: 1, coach: 0, settings: 2 };
 
 /** A page id: lower-case words joined by single hyphens (`tab-bar`, `units`). */
 const SEGMENT = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -426,9 +431,9 @@ export function createRouter(host: HistoryHost): Router {
         switchTab(lastRoute(tab));
         return;
       }
-      // Re-tapping Settings anywhere inside Settings goes back to its hub; any other re-tap
-      // does nothing.
-      if (tab === 'settings' && from.nested.length > 0) navigate(tabRoute('settings'));
+      // Re-tapping Settings or Progress on one of their pages goes back to the tab's first page;
+      // any other re-tap does nothing.
+      if (from.nested.length > 0) navigate(tabRoute(tab));
     },
     openSheet(id) {
       if (id === '') throw new TypeError('openSheet: a sheet needs an id');

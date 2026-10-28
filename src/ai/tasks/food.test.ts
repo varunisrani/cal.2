@@ -402,6 +402,63 @@ describe('analyzeText', () => {
   });
 });
 
+describe('a price the person states (D-16.107)', () => {
+  const ROLL = { ...PIZZA, name: 'Paneer roll', kcal: 420, servingGrams: 220 };
+  const INR_120 = { amount: 120, currency: 'INR' };
+
+  it('fills the price a description states, asking in their currency', async () => {
+    const fake = fakeFetch().on(GEMINI, answer({ ...ROLL, price: INR_120 }));
+    const draft = draftOf(await settle(analyzeText('paneer roll, ₹120', depsFor(fake), 'INR')));
+
+    expect(draft.price).toEqual(INR_120);
+    expect(promptOf(fake.requests[0])).toBe(
+      textMealPrompt({ description: 'paneer roll, ₹120', currency: 'INR' }).prompt,
+    );
+  });
+
+  it("puts a bare amount in the person's currency ('120 rupees' answered without a code)", async () => {
+    const fake = fakeFetch().on(GEMINI, answer({ ...ROLL, price: { amount: 120 } }));
+    const draft = draftOf(await settle(analyzeText('paneer roll 120', depsFor(fake), 'INR')));
+    expect(draft.price).toEqual(INR_120);
+  });
+
+  it('leaves the price empty when the description states none', async () => {
+    const fake = fakeFetch().on(GEMINI, answer({ ...ROLL, price: null }));
+    const draft = draftOf(await settle(analyzeText('paneer roll', depsFor(fake), 'INR')));
+    expect(draft).not.toHaveProperty('price');
+  });
+
+  it('never keeps a price the AI gives for words without a figure, or photos without a note', async () => {
+    const fake = fakeFetch().on(
+      GEMINI,
+      answer({ ...ROLL, price: INR_120 }),
+      answer({ ...ROLL, price: INR_120 }),
+    );
+    const typed = draftOf(await settle(analyzeText('paneer roll', depsFor(fake), 'INR')));
+    const photos = draftOf(
+      await settle(analyzePhotos({ images: [photo(4)], currency: 'INR' }, depsFor(fake))),
+    );
+    expect(typed).not.toHaveProperty('price');
+    expect(photos).not.toHaveProperty('price');
+  });
+
+  it("fills the price a photo's note states", async () => {
+    const fake = fakeFetch().on(
+      GEMINI,
+      answer({ ...ROLL, price: { amount: 8.5, currency: 'USD' } }),
+    );
+    const draft = draftOf(
+      await settle(
+        analyzePhotos({ images: [photo(4)], note: 'paid $8.50', currency: 'INR' }, depsFor(fake)),
+      ),
+    );
+    expect(draft.price).toEqual({ amount: 8.5, currency: 'USD' });
+    expect(promptOf(fake.requests[0])).toBe(
+      photoMealPrompt({ photoCount: 1, note: 'paid $8.50', currency: 'INR' }).prompt,
+    );
+  });
+});
+
 describe('analyzeLabelScan (Proposed D-16.62)', () => {
   it('sends the photos with the label request, through the photo path, progressive off', async () => {
     const bar = { ...PIZZA, name: 'Oat bar', kcal: 190, servingGrams: 45, units: [] };

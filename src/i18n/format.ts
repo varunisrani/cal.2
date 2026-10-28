@@ -148,6 +148,39 @@ export function formatPeriod(
   return format.formatRange(first, last).replace(/\u2009/g, ' ');
 }
 
+const WHOLE_MONEY: Intl.NumberFormatOptions = {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+};
+
+/**
+ * An amount of money in its currency, the locale's way (D-16.107): a whole amount without
+ * decimals, any other with the currency's own: (240, "INR") → "₹240", (4.5, "USD") → "$4.50"
+ * (en-IN). `currency` is an ISO 4217 code.
+ */
+export function formatMoney(
+  amount: number,
+  currency: string,
+  locale: string = currentLocale(),
+): string {
+  const options = { style: 'currency', currency } as const;
+  const whole = Number.isInteger(amount);
+  return numberFormat(locale, whole ? { ...options, ...WHOLE_MONEY } : options).format(
+    withoutNegativeZero(amount, 2),
+  );
+}
+
+const AND_LIST: Intl.ListFormatOptions = { type: 'conjunction', style: 'long' };
+
+/** Amounts in several currencies joined with "and" in the locale: "₹240 and $5" (en). */
+export function formatMoneyList(
+  totals: readonly { readonly amount: number; readonly currency: string }[],
+  locale: string = currentLocale(),
+): string {
+  const amounts = totals.map(({ amount, currency }) => formatMoney(amount, currency, locale));
+  return listFormat(locale, AND_LIST).format(amounts);
+}
+
 const HOURS: Intl.NumberFormatOptions = { style: 'unit', unit: 'hour', unitDisplay: 'narrow' };
 const MINUTES: Intl.NumberFormatOptions = { style: 'unit', unit: 'minute', unitDisplay: 'narrow' };
 const UNIT_LIST: Intl.ListFormatOptions = { type: 'unit', style: 'narrow' };

@@ -74,6 +74,8 @@ export interface FileItem extends FileMacros {
   readonly time: string;
   readonly source: FileSource;
   readonly note?: string;
+  /** What it cost, in its own currency (D-16.107); none when it has no price. */
+  readonly price?: { readonly amount: number; readonly currency: string };
   readonly lines: readonly FileLine[];
 }
 
@@ -234,6 +236,9 @@ function itemOf(entry: DiaryEntry): FileItem {
     time: clockTime(entry.loggedAt),
     source: entry.source === 'manual' ? 'manual' : 'ai',
     ...(note === undefined ? {} : { note }),
+    ...(entry.price === undefined
+      ? {}
+      : { price: { amount: entry.price.amount, currency: entry.price.currency } }),
     lines: entry.lines.map(lineOf),
   };
 }

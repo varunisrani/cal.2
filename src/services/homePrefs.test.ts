@@ -62,3 +62,16 @@ describe('setSugarLine (D-16.98)', () => {
     expect(await h.settingsRepo.get('home.sugarLine')).toBe(true);
   });
 });
+
+describe('setSpendLine (D-16.108)', () => {
+  it('stores whether Home shows the spend line, on until turned off', async () => {
+    const h = await setUp();
+    expect(await h.settingsRepo.get('home.spendLine')).toBe(true);
+
+    await h.service.setSpendLine(false);
+    expect(await h.settingsRepo.get('home.spendLine')).toBe(false);
+
+    await h.service.setSpendLine(true);
+    expect(await h.settingsRepo.get('home.spendLine')).toBe(true);
+  });
+});

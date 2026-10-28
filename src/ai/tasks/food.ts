@@ -5,7 +5,9 @@
  * unit list was missing or mangled may get one more short request for the units alone: only when
  * its weight is known and it has no energy or macros at all (water, black coffee), where a unit
  * such as "1 cup" is what makes the entry usable (R03.17). That request shares the analysis's
- * deadline (D-16.60), and its failures leave the first analysis as it was.
+ * deadline (D-16.60), and its failures leave the first analysis as it was. A request carrying the
+ * person's words (a description, a note) asks for a price they state, in their currency when the
+ * words name none (D-16.107).
  */
 import type { NutritionDraft, ServingBasis, UnitChoice } from '../../domain/model';
 import { isWeightKnown } from '../../domain/servings/units';
@@ -34,11 +36,15 @@ export interface PhotoMealRequest {
   readonly note?: string;
   /** The photos show one plate built up in steps; meaningful with two photos or more. */
   readonly progressive?: boolean;
+  /** The person's currency (`money.currency`), for a price the note states. */
+  readonly currency?: string;
 }
 
 export interface LabelScanRequest {
   readonly images: readonly Blob[];
   readonly note?: string;
+  /** The person's currency, for a price the note states. */
+  readonly currency?: string;
 }
 
 /** A food answer read into a draft, and whether its unit list asked for the repair request. */
@@ -143,29 +149,34 @@ export function analyzePhotos(
     photoCount: images.length,
     progressive: request.progressive,
   });
+  const { note, currency } = request;
   return analyze(
     {
       purpose: 'mealPhotos',
-      prompt: photoMealPrompt({ photoCount: images.length, note: request.note, progressive }),
+      prompt: photoMealPrompt({ photoCount: images.length, note, progressive, currency }),
       images,
-      reply: { note: request.note, progressive },
-      repairNote: request.note,
+      reply: { note, progressive, currency },
+      repairNote: note,
     },
     deps,
   );
 }
 
-/** A meal the person described in words; the description is also the repair's note. */
+/**
+ * A meal the person described in words; the description is also the repair's note, and the words
+ * a stated price is read from (in `currency` when they name none).
+ */
 export function analyzeText(
   text: string,
   deps: AiDeps,
+  currency?: string,
 ): Promise<Result<NutritionDraft, AiFailure>> {
   return analyze(
     {
       purpose: 'mealText',
-      prompt: textMealPrompt({ description: text }),
+      prompt: textMealPrompt({ description: text, currency }),
       images: [],
-      reply: { progressive: false },
+      reply: { progressive: false, words: text, currency },
       repairNote: text,
     },
     deps,
@@ -182,13 +193,14 @@ export function analyzeLabelScan(
 ): Promise<Result<NutritionDraft, AiFailure>> {
   const images = mealPhotos(request.images);
   if (images.length === 0) return noPhoto();
+  const { note, currency } = request;
   return analyze(
     {
       purpose: 'labelScan',
-      prompt: labelScanPrompt({ photoCount: images.length, note: request.note }),
+      prompt: labelScanPrompt({ photoCount: images.length, note, currency }),
       images,
-      reply: { note: request.note, progressive: false },
-      repairNote: request.note,
+      reply: { note, progressive: false, currency },
+      repairNote: note,
     },
     deps,
   );

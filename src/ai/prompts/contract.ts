@@ -9,6 +9,7 @@ import { MAX_UNIT_CHOICES } from '../../domain/servings/units';
 import {
   FOOD_REPLY_KEYS as FOOD,
   PART_REPLY_KEYS as PART,
+  PRICE_REPLY_KEYS as PRICE,
   UNIT_REPLY_KEYS as UNIT,
 } from '../parse/foodReply';
 import { MAX_PARTS } from '../parse/parts';
@@ -71,6 +72,9 @@ export const FOOD_REPLY_CONTRACT = lines(
     `${jsonKey(FOOD.nutrients)}: an object with the optional amounts for the same amount, under the ` +
       'keys below and in their units. Use null for any you cannot judge.',
     `${jsonKey(FOOD.progressive)}: true or false, as this request says.`,
+    `${jsonKey(FOOD.price)}: what the food cost, as {${jsonKey(PRICE.amount)}: a number, ` +
+      `${jsonKey(PRICE.currency)}: a three-letter ISO 4217 code}, only when the person's own ` +
+      'words in this request say what they paid; otherwise null. Never estimate or look up a price.',
   ]),
   `Units inside ${jsonKey(FOOD.nutrients)}:`,
   NUTRIENT_UNIT_LIST,

@@ -53,10 +53,12 @@ describe('SETTING_SPECS', () => {
         'health.writeBack',
         'home.pillars',
         'home.sort',
+        'home.spendLine',
         'home.sugarLine',
         'log.gramsFirst',
         'meals.times',
         'menu.layout',
+        'money.currency',
         'notify.device',
         'notify.inbox',
         'notify.off',
@@ -127,6 +129,29 @@ describe('SETTING_SPECS', () => {
     expect(readSetting('home.sugarLine', undefined)).toBeUndefined();
   });
 
+  it('shows the spend line on Home until the person turns it off (D-16.108)', () => {
+    expect(settingDefault('home.spendLine', metric)).toBe(true);
+    expect(readSetting('home.spendLine', false)).toBe(false);
+    expect(readSetting('home.spendLine', 'on')).toBeUndefined();
+  });
+
+  it("takes the currency from the locale's region and reads only a code (D-16.107)", () => {
+    const currency = (locale: string) => settingDefault('money.currency', { locale });
+    expect(currency('en-IN')).toBe('INR');
+    expect(currency('hi-IN')).toBe('INR');
+    expect(currency('en-US')).toBe('USD');
+    expect(currency('de-DE')).toBe('EUR');
+    expect(currency('fr-BE')).toBe('EUR');
+    expect(currency('en-GB')).toBe('GBP');
+    expect(currency('ja-JP')).toBe('USD');
+    expect(currency('en')).toBe('USD');
+    expect(currency('')).toBe('USD');
+    expect(readSetting('money.currency', 'JPY')).toBe('JPY');
+    expect(readSetting('money.currency', 'jpy')).toBeUndefined();
+    expect(readSetting('money.currency', 'RUPEE')).toBeUndefined();
+    expect(readSetting('money.currency', 5)).toBeUndefined();
+  });
+
   it('reads the tune-up switch as on when nothing is stored', () => {
     expect(settingDefault('tuneUp.on', metric)).toBe(true);
     expect(readSetting('tuneUp.on', undefined)).toBeUndefined();
@@ -154,6 +179,8 @@ describe('SETTING_SPECS', () => {
       'home.sort': 'byMeal',
       'home.pillars': ['protein', 'carbs', 'fat', 'fibre'],
       'home.sugarLine': true,
+      'home.spendLine': true,
+      'money.currency': 'GBP',
       'tabs.hidden': [],
       'menu.layout': null,
       'product.show': true,

@@ -49,6 +49,12 @@ Type what you ate and about how much: "a bowl of porridge with banana and a spoo
 more exact the amounts, the better the numbers. Name brands, cooking fat and sauces where they
 matter.
 
+Add what you paid if you like: "paneer roll, ₹120", "bagel and coffee, $6.50", "thali for 150".
+The review then has the price filled in. An amount without a currency is in your own currency
+(Settings › App settings › Units › Currency). A photo's note works the same way ("paid 5 dollars").
+Platewise only takes a price you wrote: it never guesses one, so without a price in your words the
+field stays empty.
+
 ## Barcode
 
 Point the camera at the barcode, or type the digits printed under it and press **Look up**. If the
@@ -85,6 +91,9 @@ The review opens after every method. What to check:
   unknown, not zero.
 - **Meal, date and time.** Until you pick a meal yourself, it follows the time you pick, using
   your meal times.
+- **Price.** What the food cost, in the currency shown after the field. Type "120" or "4.50", or
+  leave it empty for no price; a food without a price never counts as free. Changing the amount
+  does not change the price.
 - **Ingredients.** Split a meal into parts, or add a missing part (oil, a sauce, a drink) by photo,
   barcode, words, by hand or from your recent, frequent and saved foods. For a dish you cooked, add
   every ingredient, then set **Servings in recipe** so the amount shows one serving.
@@ -97,9 +106,9 @@ Press **Log** when it looks right.
 
 ## After logging
 
-- **Tap** an entry to edit it: every value, the photos, the meal and the time. Write a note such
-  as "large bowl" and press **Reprocess** to ask the AI again; nothing changes until you press
-  Save.
+- **Tap** an entry to edit it: every value, the photos, the meal, the price and the time. Write a
+  note such as "large bowl" and press **Reprocess** to ask the AI again; nothing changes until you
+  press Save. A price shows quietly on the entry's row, next to its time.
 - **Swipe** an entry to the left to delete it. Platewise asks first.
 - **Press and hold** an entry to start picking entries, then tap others and press **Combine** to
   join them into one. Every nutrient both entries have is added up.
@@ -117,7 +126,27 @@ Press **Log** when it looks right.
   originals stay where they were.
 
 Picking a food from Recent, Often eaten or Saved opens the review, so you can change the amount
-before you log it. Copy a day logs the copies at once.
+(and the price) before you log it. A saved meal keeps its price. Copy a day logs the copies at
+once.
+
+## Prices and spending
+
+Give a food a price in the review or the entry editor, or say it when you describe the meal. On a
+day where some food has a price, Home shows what the day cost under the summary: "₹240 spent",
+with "from 4 of 6 foods" when some foods have no price (they are left out, never counted as 0).
+Prices in another currency are added up apart ("₹240 and $5 spent"), never converted. Tap the line
+to open **Progress › Spending**; **Spending on Home** in All nutrients hides it.
+
+Spending (also on the Progress tab, under the nutrition cards) shows:
+
+- the last 7 or 30 days as bars, with their total; a day without any price shows a small circle
+  instead of a bar,
+- this month's total, how many days had a price, and the average over those days,
+- each month, back to the first with a price (up to 12),
+- the spend by meal, and the foods that cost the most.
+
+Everything is in your currency; prices in another one are listed apart. Changing the currency in
+Settings never changes a price you logged.
 
 ## Water and fasting
 

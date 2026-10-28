@@ -83,6 +83,25 @@ describe('EntryRow', () => {
     expect(document.querySelector('[data-ui="entry.row"]')).not.toBeNull();
   });
 
+  it('shows its price quietly before the time, and nothing for an entry without one (D-16.107)', () => {
+    const { rerender } = renderRow({ ...toast(), price: { amount: 120, currency: 'INR' } });
+    const row = screen.getByRole('group', { name: 'Toast 250 kcal' });
+    const price = within(row).getByText('₹120');
+    expect(price).toHaveAttribute('data-ui', 'price.row');
+    expect(price.nextElementSibling).toHaveTextContent('12:30 PM');
+
+    rerender(
+      <EntryRow
+        entry={{ ...toast(), price: { amount: 4.5, currency: 'USD' } }}
+        energyUnit="kcal"
+      />,
+    );
+    expect(within(row).getByText('$4.50')).toBeVisible();
+
+    rerender(<EntryRow entry={toast()} energyUnit="kcal" />);
+    expect(document.querySelector('[data-ui="price.row"]')).toBeNull();
+  });
+
   it('shows the emoji when there is one, else an icon for how the entry was logged', () => {
     const { rerender } = renderRow({ ...toast(), emoji: '🍞' });
     expect(screen.getByText('🍞')).toBeInTheDocument();

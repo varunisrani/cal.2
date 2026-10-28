@@ -10,12 +10,14 @@ import { goals } from './en/goals';
 import { health } from './en/health';
 import { ingredients } from './en/ingredients';
 import { onboarding } from './en/onboarding';
+import { price } from './en/price';
 import { profile } from './en/profile';
 import { progress } from './en/progress';
 import { reminders } from './en/reminders';
 import { review } from './en/review';
 import { settings } from './en/settings';
 import { sources } from './en/sources';
+import { spending } from './en/spending';
 import { transfer } from './en/transfer';
 import { walk } from './en/walk';
 import { startupPartitions } from './startup';
@@ -46,6 +48,8 @@ export const onDemandPartitions = {
   health,
   walk,
   sources,
+  price,
+  spending,
 } as const;
 
 /** The name of a partition fetched on demand. */

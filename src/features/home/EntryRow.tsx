@@ -9,7 +9,7 @@ import {
 } from 'react';
 import type { DiaryEntry } from '../../domain/model';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
-import { formatTime } from '../../i18n/format';
+import { formatMoney, formatTime } from '../../i18n/format';
 import { useServices } from '../../services/context';
 import { IconButton } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
@@ -113,13 +113,14 @@ function useLongPress(onLongPress: () => void) {
 
 /**
  * One food entry in the diary: its emoji (or an icon for how it was logged), name, time, energy
- * in the person's unit and whole grams of protein, carbs and fat. Swiping it toward the leading
- * edge, or its delete button, asks before anything is deleted. On Home a tap also opens the
- * entry's editor, a long-press (or its Select button, shown on keyboard focus) starts picking rows
- * for a combine, and a heart adds a copy to the saved meals or takes it out. While rows are picked
- * a tap picks this one or lets it go, and the row can be neither swiped nor deleted. The tap
- * target is a button holding the name only, so its name ("Edit Toast") holds all the text it
- * shows (WCAG 2.5.3); its hit area and focus ring cover the tile and both lines.
+ * in the person's unit and whole grams of protein, carbs and fat, and quietly its price when it has
+ * one (D-16.107). Swiping it toward the leading edge, or its delete button, asks before anything
+ * is deleted. On Home a tap also opens the entry's editor, a long-press (or its Select button,
+ * shown on keyboard focus) starts picking rows for a combine, and a heart adds a copy to the saved
+ * meals or takes it out. While rows are picked a tap picks this one or lets it go, and the row can
+ * be neither swiped nor deleted. The tap target is a button holding the name only, so its name
+ * ("Edit Toast") holds all the text it shows (WCAG 2.5.3); its hit area and focus ring cover the
+ * tile and both lines.
  */
 export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
   const { diary } = useServices();
@@ -188,6 +189,11 @@ export function EntryRow({ entry, energyUnit, actions }: EntryRowProps) {
       <span className={styles.entryText}>
         <span className={styles.entryLine}>
           {name}
+          {entry.price ? (
+            <span className={styles.entryPrice} data-ui="price.row">
+              {formatMoney(entry.price.amount, entry.price.currency)}
+            </span>
+          ) : null}
           <time className={styles.entryTime} dateTime={new Date(entry.loggedAt).toISOString()}>
             {formatTime(entry.loggedAt)}
           </time>

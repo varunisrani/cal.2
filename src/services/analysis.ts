@@ -297,6 +297,8 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
     // The AI layer is fetched on first use, before the deadline starts (P10-08's budget).
     const { analyzeLabelScan, analyzePhotos, analyzeText } = await import('../ai/tasks/food');
     const { settings, keys } = await aiAccess();
+    // A price the person's words state without a currency is in theirs (D-16.107).
+    const currency = await deps.settingsRepo.get('money.currency');
     const deadline = startDeadline({
       timeoutSeconds: settings.timeoutSec,
       cancel: attempt.controller.signal,
@@ -311,18 +313,18 @@ export function createAnalysisService(deps: AnalysisDeps): AnalysisService {
     try {
       const { request } = attempt;
       if (request.kind === 'text') {
-        const result = await analyzeText(request.inputs.text, ai);
+        const result = await analyzeText(request.inputs.text, ai, currency);
         return result.ok ? ok({ food: result.value, photoIds: [] }) : result;
       }
       const { ids, images } = await photosOf(request.inputs.photoIds);
       const { note } = request.inputs;
       if (request.kind === 'label') {
-        const result = await analyzeLabelScan({ images, note }, ai);
+        const result = await analyzeLabelScan({ images, note, currency }, ai);
         if (!result.ok) return result;
         return ok({ food: withBarcode(result.value, request.inputs.barcode), photoIds: ids });
       }
       const { progressive } = request.inputs;
-      const result = await analyzePhotos({ images, note, progressive }, ai);
+      const result = await analyzePhotos({ images, note, progressive, currency }, ai);
       return result.ok ? ok({ food: result.value, photoIds: ids }) : result;
     } finally {
       deadline.end();

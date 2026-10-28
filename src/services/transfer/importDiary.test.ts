@@ -157,6 +157,25 @@ describe('readDiaryFile', () => {
     { date: MON, meals: [{ meal: 'lunch', items: [item] }], ...extra },
   ];
 
+  it('reads a price, tidied, and none from a file without one (D-16.107)', () => {
+    const price = { amount: 4.5, currency: 'usd' };
+    expect(read(file(day(food({ price })))).foods[0]?.price).toEqual({
+      amount: 4.5,
+      currency: 'USD',
+    });
+    expect(read(file(day(food({ price: null })))).foods[0]).not.toHaveProperty('price');
+    expect(read(file(day(food()))).foods[0]).not.toHaveProperty('price');
+  });
+
+  it('refuses a food whose price is not an amount of 0 or more with a code (D-16.107)', () => {
+    for (const price of [{ amount: -1, currency: 'INR' }, { amount: 5 }, '120', 120]) {
+      expect(problemOf(file(day(food({ price }))))).toEqual({
+        kind: 'food',
+        detail: 'Rice bowl, 2026-10-26',
+      });
+    }
+  });
+
   it.each<[string, string, ImportProblem]>([
     [
       'one negative value',
@@ -501,6 +520,41 @@ describe('importing into the diary (the transfer service)', () => {
       nutrients: { fibre: 8.5, sodium: 820 },
     });
     expect(await photoRepo.get(photo)).not.toBeNull();
+    db.close();
+  });
+
+  it("takes the file's prices back, for a matched entry and a food added as new (D-16.107)", async () => {
+    const { db, diary, service, entries } = await setUp();
+    const stored = makeEntry({
+      id: uuid(1),
+      name: 'Paneer roll',
+      loggedAt: at(MON, '12:30'),
+      price: { amount: 120, currency: 'INR' },
+    });
+    await diary.add(stored);
+    const document = JSON.parse(
+      toJson(
+        buildDocument({
+          range: { start: MON, end: MON },
+          entries: [stored],
+          water: [],
+          targets: TARGETS,
+        }),
+      ),
+    );
+    expect(document.days[0].meals[0].items[0].price).toEqual({ amount: 120, currency: 'INR' });
+    document.days[0].meals[0].items[0].price.amount = 110;
+
+    await service.importDiary(read(JSON.stringify(document)), 'replace');
+    expect((await entries()).map((entry) => entry.price)).toEqual([
+      { amount: 110, currency: 'INR' },
+    ]);
+
+    await service.importDiary(read(JSON.stringify(document)), 'add');
+    expect((await entries()).map((entry) => entry.price)).toEqual([
+      { amount: 110, currency: 'INR' },
+      { amount: 110, currency: 'INR' },
+    ]);
     db.close();
   });
 

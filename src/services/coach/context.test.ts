@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultProfile, profileWith } from '../../domain/goals/__fixtures__/profiles';
 import { countedBurn, walkBurn } from '../../features/home/burn';
 import { makeBodyFat, makeProfile, makeWalk, makeWater } from '../../test/factories';
+import type { Price } from '../../domain/model';
 import {
   FIXTURE_FOOD_NAMES,
   SNAPSHOT_TODAY,
@@ -351,6 +352,50 @@ describe("coachContext: today's sugar against the Sugar limit (D-16.98)", () => 
     expect(coachContext(makeSnapshot({ sugarLimitG: 0 }))).toContain(
       '- Sugar: nothing logged yet (no daily limit set)',
     );
+  });
+});
+
+describe("coachContext: what today's food cost (D-16.108)", () => {
+  /** Today's entries with these prices (none for undefined), and yesterday's ₹900. */
+  function spendDay(prices: readonly (Price | undefined)[]) {
+    return coachContext(
+      makeSnapshot({
+        entries: [
+          entryOn('2026-10-25', '19:00', { price: { amount: 900, currency: 'INR' } }),
+          ...prices.map((price, index) =>
+            entryOn(
+              SNAPSHOT_TODAY,
+              `${String(8 + index).padStart(2, '0')}:00`,
+              price === undefined ? {} : { price },
+            ),
+          ),
+        ],
+      }),
+    );
+  }
+  const inr = (amount: number): Price => ({ amount, currency: 'INR' });
+
+  it("gives today's spend after sugar and before water, yesterday's left out", () => {
+    const text = spendDay([inr(120), inr(80.5)]);
+    expect(text).toMatch(/\n- Sugar: [^\n]+\n- Spent on food: 200.5 INR\n- Water: /);
+    expect(text).not.toContain('900');
+  });
+
+  it('says how many entries had a price when not all did, never counting the rest as 0', () => {
+    expect(spendDay([inr(120), undefined, inr(0)])).toContain(
+      '- Spent on food: 120 INR, from 2 of 3 entries; the rest have no price',
+    );
+  });
+
+  it('gives each currency apart, never converted', () => {
+    expect(spendDay([inr(120), { amount: 4.5, currency: 'USD' }])).toContain(
+      '- Spent on food: 120 INR and 4.5 USD',
+    );
+  });
+
+  it('has no spend line while no entry today has a price', () => {
+    expect(spendDay([undefined, undefined])).not.toContain('Spent on food');
+    expect(coachContext(makeSnapshot())).not.toContain('Spent on food');
   });
 });
 

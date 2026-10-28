@@ -266,15 +266,16 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | M16 | Cloud backup (Google Drive) and the welcome-back cloud restore | P1 on Android (P15, D-16.97) | M D | 06 §3.17; 01 §3.5 |
 | M17 | Passphrase lock for API keys | P3 (N-6) | M D | 03 Q7; 06 Q4 |
 | M18 | Walk recorder and walk score: a live walk (route, steps, pace), its score and the week's moderate minutes | P1 on Android (P15, D-16.96) | M | ours (the reference logs a walk by hand, N-1) |
+| M19 | Food prices and spending | P1 (P18, D-16.107, D-16.108) | M D | 16 D-16.107, D-16.108 |
 
 ## Counting it up
 
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 144 |
+| Tier P1 | 145 |
 | Tier P2 | 8 |
 | Tier P3 | 21 |
-| All tiers | 191 |
+| All tiers | 192 |
 
 Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16, M18, I15, J14 and J15 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

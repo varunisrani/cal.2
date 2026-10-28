@@ -212,6 +212,8 @@ function foodRow(entry: DiaryEntry): Payload {
     const amount = entry.extras[key];
     if (isAmount(amount)) row[`${key}G`] = round(amount, 2);
   }
+  // What it cost, in its own currency (D-16.107); an entry without a price has no key.
+  if (entry.price) row.price = { amount: entry.price.amount, currency: entry.price.currency };
   return row;
 }
 

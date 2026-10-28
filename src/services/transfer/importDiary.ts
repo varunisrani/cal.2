@@ -24,9 +24,11 @@ import {
   type IngredientLine,
   type MealKind,
   type NutrientValues,
+  type Price,
   type ServingBasis,
   type WaterLog,
 } from '../../domain/model';
+import { readPrice } from '../../domain/money/price';
 import type { IdSource } from '../../lib/ids';
 import type { DaysWrite, StoredDays, TransferRepo } from '../../data/repos/transferRepo';
 import type { PhotoRepo } from '../../data/repos/photoRepo';
@@ -84,6 +86,8 @@ export interface ImportFood {
   readonly extras: ExtraValues;
   readonly source: FileSource;
   readonly note?: string;
+  /** What it cost (D-16.107); a file without one, or from before prices, gives none. */
+  readonly price?: Price;
   readonly lines: readonly ImportLine[];
 }
 
@@ -243,6 +247,11 @@ function foodOf(raw: unknown, date: DayKey, meal: MealKind): ImportFood {
   if (note !== undefined && note !== null && typeof note !== 'string') {
     refuse({ kind: 'food', detail: where });
   }
+  // A price is optional, but one that is there must be an amount of 0 or more and a code.
+  const price =
+    fields.price === undefined || fields.price === null
+      ? undefined
+      : (readPrice(fields.price) ?? refuse({ kind: 'food', detail: where }));
   const time = typeof fields.time === 'string' ? fields.time : '';
   if (!CLOCK.test(time)) refuse({ kind: 'time', detail: `${date} ${time}`.trim() });
   const loggedAt =
@@ -263,6 +272,7 @@ function foodOf(raw: unknown, date: DayKey, meal: MealKind): ImportFood {
     extras: amounts(fields.extras, EXTRA_KEYS, EXTRA_FILE_KEYS, where),
     source: fields.source === 'manual' ? 'manual' : 'ai',
     ...(typeof note === 'string' && note.trim() !== '' ? { note } : {}),
+    ...(price === undefined ? {} : { price }),
     lines: listOf(fields.lines).map((line) => lineOf(line, where)),
   };
 }
@@ -408,6 +418,7 @@ function newEntry(food: ImportFood, id: string): DiaryEntry {
     lines: linesOf(food),
     progressive: false,
     ...(food.note === undefined ? {} : { note: food.note }),
+    ...(food.price === undefined ? {} : { price: food.price }),
     loggedAt: food.loggedAt,
     dayKey: food.date,
     meal: food.meal,
@@ -416,9 +427,12 @@ function newEntry(food: ImportFood, id: string): DiaryEntry {
   };
 }
 
-/** A stored entry taking the file's values: id, photos, product and units stay. */
+/**
+ * A stored entry taking the file's values: id, photos, product and units stay. The note and the
+ * price are the file's, as the file is what the person exported and edited.
+ */
 function mergedEntry(food: ImportFood, before: DiaryEntry): DiaryEntry {
-  const { note: _note, chosenUnit, chosenCount, ...kept } = before;
+  const { note: _note, price: _price, chosenUnit, chosenCount, ...kept } = before;
   const basis = basisOf(food, before);
   const sameBasis = basis === before.basis;
   return {
@@ -436,6 +450,7 @@ function mergedEntry(food: ImportFood, before: DiaryEntry): DiaryEntry {
     ...(sameBasis && chosenCount !== undefined ? { chosenCount } : {}),
     lines: linesOf(food, before),
     ...(food.note === undefined ? {} : { note: food.note }),
+    ...(food.price === undefined ? {} : { price: food.price }),
     loggedAt: food.loggedAt,
     dayKey: food.date,
     meal: food.meal,

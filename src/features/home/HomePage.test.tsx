@@ -2,6 +2,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { Dexie } from 'dexie';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { fakeFetch } from '../../ai/testing/fakeFetch';
+import { tabRoute } from '../../app/router';
 import { DataProvider } from '../../data/DataProvider';
 import { createDraftsRepo } from '../../data/repos/draftsRepo';
 import type { HeightDisplayUnit } from '../../domain/units/body';
@@ -749,6 +750,60 @@ describe('HomePage: nutrient sources (D-16.105)', () => {
     await untilGone('[data-ui="sources"]');
     expect(h.router.current().sheets).toEqual(['nutrients']);
     expect(nutrientsSheet()).toBeVisible();
+  });
+});
+
+describe('HomePage: the spend line (D-16.108)', () => {
+  const spendLine = () => document.querySelector<HTMLElement>('[data-ui="spending.home"]');
+  const inr = (amount: number) => ({ amount, currency: 'INR' });
+
+  it("shows the shown day's spend, opens Spending from it, and its switch in All nutrients hides it", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.settingsRepo.set('money.currency', 'INR');
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ price: inr(120), loggedAt: FACTORY_NOW - HOUR }),
+      makeEntry({ price: inr(120), loggedAt: FACTORY_NOW - 2 * HOUR }),
+      // No price: unknown, never 0.
+      makeEntry({ loggedAt: FACTORY_NOW - 3 * HOUR }),
+      makeEntry({ price: inr(60), loggedAt: FACTORY_NOW - 24 * HOUR }),
+    ]);
+    mount();
+    await untilShown('[data-ui="spending.home"]');
+    expect(spendLine()).toHaveAccessibleName('₹240 spent from 2 of 3 foods');
+
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => textOf('spending.home.amount') === '₹60 spent');
+
+    fireEvent.click(screen.getByRole('button', { name: /^₹60 spent/ }));
+    expect(h.router.current().route).toEqual(tabRoute('progress', 'spending'));
+  });
+
+  it('is hidden by its switch beside Sugar on Home, and on a day without prices', async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ price: inr(30), loggedAt: FACTORY_NOW - HOUR }),
+      makeEntry({ loggedAt: FACTORY_NOW - 24 * HOUR }),
+    ]);
+    mount();
+    await untilShown('[data-ui="spending.home"]');
+
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
+    await untilShown('[data-ui="home.nutrients"]');
+    const toggle = within(nutrientsSheet()).getByRole('switch', {
+      name: words.nutrients.spendLine,
+    });
+    fireEvent.click(toggle);
+    await untilGone('[data-ui="spending.home"]');
+    expect(await h.repos.settingsRepo.get('home.spendLine')).toBe(false);
+    fireEvent.click(toggle);
+    await untilShown('[data-ui="spending.home"]');
+    expect(await h.repos.settingsRepo.get('home.spendLine')).toBe(true);
+
+    await act(async () => {
+      h.router.closeSheet();
+    });
+    fireEvent.click(dayTile('2026-10-25'));
+    await untilGone('[data-ui="spending.home"]');
   });
 });
 

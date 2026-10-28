@@ -215,6 +215,22 @@ describe('buildDocument', () => {
     expect(item?.source).toBe('ai');
   });
 
+  it('writes the price of an item in its own currency, and none without one (D-16.107)', () => {
+    const items =
+      buildDocument({
+        range: { start: MON, end: MON },
+        entries: [
+          makeEntry({ loggedAt: at(MON, '12:30'), price: { amount: 120, currency: 'INR' } }),
+          makeEntry({ loggedAt: at(MON, '12:45') }),
+        ],
+        water: [],
+        targets: TARGETS,
+      }).days[0]?.meals[0]?.items ?? [];
+
+    expect(items[0]?.price).toEqual({ amount: 120, currency: 'INR' });
+    expect(items[1]).not.toHaveProperty('price');
+  });
+
   it('adds up the day, compares it with the targets and never leaves less than 0', () => {
     const document = buildDocument({
       range: { start: MON, end: MON },

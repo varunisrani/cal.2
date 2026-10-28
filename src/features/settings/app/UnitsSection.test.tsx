@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Profile } from '../../../domain/model';
 import { appSettings } from '../../../i18n/en/appSettings';
 import { home } from '../../../i18n/en/home';
+import { price as priceWords } from '../../../i18n/en/price';
 import { profile as profileWords } from '../../../i18n/en/profile';
 import { makeEntry, makeProfile } from '../../../test/factories';
 import { closeHarnesses, until, untilShown } from '../../../test/screenHarness';
@@ -144,5 +145,41 @@ describe('UnitsSection', () => {
     expect(logged).toHaveBeenCalledOnce();
     expect(checkedIn(words.units.height)).toEqual([units.cm]);
     expect(await h.repos.settingsRepo.get('units.height')).toBe('cm');
+  });
+});
+
+describe('UnitsSection: the currency (D-16.107)', () => {
+  const PRICE = priceWords.price;
+
+  it('shows the stored currency by code and name, and stores the one picked from the list', async () => {
+    const h = await openAppSettings();
+    await h.repos.settingsRepo.set('money.currency', 'INR');
+    h.mount(<UnitsSection />);
+    await untilShown(CARD);
+
+    const row = screen.getByRole('button', { name: `${PRICE.currency} INR · Indian Rupee` });
+    expect(row).toHaveAttribute('data-ui', 'price.currency');
+    expect(row).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(row);
+    const picker = await screen.findByRole('dialog', { name: PRICE.currency });
+    const options = within(picker).getAllByRole('option');
+    expect(options.map((option) => option.getAttribute('data-ui'))).toContain(
+      'price.currency.picker.EUR',
+    );
+    expect(within(picker).getByRole('option', { selected: true })).toHaveTextContent('INR');
+
+    fireEvent.click(within(picker).getByRole('option', { name: /^EUR/ }));
+    await until(() => textOf('price.currency').includes('EUR · Euro'));
+    expect(await h.repos.settingsRepo.get('money.currency')).toBe('EUR');
+  });
+
+  it('keeps a stored currency the list does not offer among the choices', async () => {
+    const h = await openAppSettings();
+    await h.repos.settingsRepo.set('money.currency', 'ISK');
+    h.mount(<UnitsSection />);
+    await untilShown(CARD);
+    fireEvent.click(screen.getByRole('button', { name: /^Currency ISK/ }));
+    const picker = await screen.findByRole('dialog', { name: PRICE.currency });
+    expect(within(picker).getByRole('option', { selected: true })).toHaveTextContent('ISK');
   });
 });

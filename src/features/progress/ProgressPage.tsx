@@ -1,7 +1,8 @@
-import { Suspense, useMemo, useState } from 'react';
+import { Suspense, useLayoutEffect, useMemo, useState } from 'react';
 import { onDemand } from '../../app/onDemand';
+import { SPENDING_ROUTE, tabRoute } from '../../app/router';
 import { useToday } from '../../app/TodayProvider';
-import { useSheet } from '../../app/useRoute';
+import { useRoute, useRouter, useSheet } from '../../app/useRoute';
 import { useBodyFat, useProfile, useSettings, useWeighIns } from '../../data/hooks';
 import type { DayKey } from '../../domain/dates/dayKey';
 import type { BodyFatReading, WeighIn } from '../../domain/model';
@@ -36,6 +37,7 @@ import { NutritionCards } from './NutritionCards';
 import styles from './progress.module.css';
 import { RangeBar } from './RangeBar';
 import { RecapCard } from './RecapCard';
+import { SpendingLink } from './SpendingLink';
 import { WeightCard } from './WeightCard';
 
 /** The Log weight sheet's place on the sheet stack. */
@@ -58,6 +60,16 @@ const WalksCard = onDemand(() =>
     (module) => module.WalksCard,
   ),
 );
+
+// Progress › Spending (D-16.108), a page of its own; fetched the first time it opens.
+const SpendingPage = onDemand(() =>
+  withPartitions(['charts', 'spending'], import('./spending/SpendingPage')).then(
+    (module) => module.SpendingPage,
+  ),
+);
+
+/** The pages under Progress, by their address segment. */
+const SPENDING_PAGE = SPENDING_ROUTE.nested[0];
 
 const NO_WEIGH_INS: readonly WeighIn[] = [];
 const NO_BODY_FAT: readonly BodyFatReading[] = [];
@@ -97,16 +109,37 @@ function CountToday({ on, view, today, onChange }: CountTodayProps) {
 }
 
 /**
- * The Progress tab: the recap, the range and its periods, the metric switch with the chosen
- * metric's card and history, the Count today switch and the nutrition cards, then, on the
- * Android app with Health Connect connected, the activity card (P11-04), and where the app records
- * walks, the Walks card with the week's moderate minutes and every walk (P15-03). Nothing with a
- * number is drawn until the settings, the profile and every weigh-in and body-fat reading are
- * read. The range opens on 1W at every visit and is never stored; Count today is stored.
+ * What the Progress tab shows for its address: the overview, or Progress › Spending
+ * (`#/progress/spending`, D-16.108). An address naming no page of Progress goes back to the
+ * overview before anything is drawn.
  */
 export function ProgressPage() {
+  const route = useRoute();
+  const router = useRouter();
+  const page = route.kind === 'tab' ? route.nested[0] : undefined;
+  const unknown = page !== undefined && page !== SPENDING_PAGE;
+
+  useLayoutEffect(() => {
+    if (unknown) router.navigate(tabRoute('progress'));
+  }, [router, unknown]);
+
+  if (unknown) return null;
+  return page === SPENDING_PAGE ? <SpendingPage /> : <ProgressOverview />;
+}
+
+/**
+ * The Progress tab: the recap, the range and its periods, the metric switch with the chosen
+ * metric's card and history, the Count today switch and the nutrition cards, the row to Spending
+ * (D-16.108), then, on the Android app with Health Connect connected, the activity card (P11-04),
+ * and where the app records walks, the Walks card with the week's moderate minutes and every walk
+ * (P15-03). Nothing with a number is drawn until the settings, the profile and every weigh-in and
+ * body-fat reading are read. The range opens on 1W at every visit and is never stored; Count
+ * today is stored.
+ */
+function ProgressOverview() {
   const today = useToday();
   const services = useServices();
+  const router = useRouter();
   const toast = useToast();
   const settings = useSettings(SETTINGS);
   const profileRead = useProfile();
@@ -204,6 +237,7 @@ export function ProgressPage() {
         />
         <CountToday on={countToday} view={view} today={today} onChange={setCountToday} />
         <NutritionCards window={nutritionWindow(view, today, countToday)} />
+        <SpendingLink onOpen={() => router.navigate(SPENDING_ROUTE)} />
         {services.health && settings.value['health.connected'] ? (
           <Suspense fallback={null}>
             <ActivityHistoryCard today={today} />

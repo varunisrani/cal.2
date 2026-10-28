@@ -48,6 +48,40 @@
   font-weight: var(--weight-medium);
 }
 
+/* A setting whose choice opens a list (the currency, D-16.107): name, value, chevron. */
+.pickRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  min-block-size: calc(var(--space-8) + var(--space-5));
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.pickRow:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.pickValue {
+  flex: 1 1 auto;
+  min-inline-size: 0;
+  color: var(--text-muted);
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+.pickRow > svg {
+  flex: none;
+  color: var(--text-muted);
+}
+
 .note {
   margin: 0;
   padding-inline: var(--space-1);

@@ -26,6 +26,8 @@ export interface ReprocessRequest {
   readonly photoIds: readonly string[];
   /** The photos show one plate built up in steps. */
   readonly progressive: boolean;
+  /** The person's currency, for a price the note states without one (D-16.107). */
+  readonly currency?: string;
 }
 
 export type ReprocessOutcome =
@@ -97,13 +99,11 @@ export function createReprocessService(deps: ReprocessDeps): ReprocessService {
         const description = reprocessDescription(request);
         const images = await readablePhotos(request.photoIds);
         if (cancel.aborted) return CANCELLED;
+        const { currency, progressive } = request;
         const result =
           images.length > 0
-            ? await analyzePhotos(
-                { images, note: description, progressive: request.progressive },
-                ai,
-              )
-            : await analyzeText(description, ai);
+            ? await analyzePhotos({ images, note: description, progressive, currency }, ai)
+            : await analyzeText(description, ai, currency);
         if (result.ok) return { kind: 'draft', draft: result.value };
         if (result.error.kind === 'cancelled') return CANCELLED;
         return { kind: 'failed', messages: failureMessages(result.error) };

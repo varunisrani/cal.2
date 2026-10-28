@@ -6,18 +6,20 @@ import { t } from '../../../i18n/t';
 import { Card } from '../../../ui/Card';
 import { Segmented, type SegmentedOption } from '../../../ui/Segmented';
 import styles from './appSettings.module.css';
+import { CurrencyRow } from './CurrencyRow';
 import { useAppSettingsService, usePendingWrites, useSaveFailed } from './writes';
 
-const UNITS = ['units.energy', 'units.height'] as const;
+const UNITS = ['units.energy', 'units.height', 'money.currency'] as const;
 
 type UnitKey = (typeof UNITS)[number];
 
 /**
  * The Units card of Settings › App settings (06 §3.3, 01 §3.9): energy (kcal or kJ) and height
  * (cm or ft and in), two settings of their own, each stored the moment it is picked. Weight is kg
- * only, so it has no choice here (D-16.91). A unit changes only how numbers are shown and typed:
- * nothing stored is converted, as the note under the card says. Drawn once the settings are read,
- * so a stored unit never shows its default first (R06.22).
+ * only, so it has no choice here (D-16.91). The currency prices are typed in follows (D-16.107).
+ * A unit changes only how numbers are shown and typed: nothing stored is converted, as the note
+ * under the card says (a logged price keeps its currency). Drawn once the settings are read, so a
+ * stored unit never shows its default first (R06.22).
  */
 export function UnitsSection() {
   const settings = useSettings(UNITS);
@@ -94,6 +96,10 @@ function UnitChoices({ stored }: { readonly stored: Pick<Settings, UnitKey> }) {
             value={pending.shown('units.height')}
             onChange={(value) => choose('units.height', value)}
             data-ui="appSettings.units.height"
+          />
+          <CurrencyRow
+            value={pending.shown('money.currency')}
+            onChange={(value) => choose('money.currency', value)}
           />
         </ul>
       </Card>

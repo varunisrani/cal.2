@@ -3,7 +3,8 @@
 // pressed Send: the local day, time and zone, the profile in the person's own units, how the energy
 // numbers are worked out, the weight forecast (P01-18) or what it still needs, how much data is
 // stored, and today so far (eaten, left of each target, sugar against the Sugar limit with how many
-// entries had a figure, D-16.98, and water). It holds counts and totals only:
+// entries had a figure, D-16.98, what today's food cost when any entry has a price, D-16.108, and
+// water). It holds counts and totals only:
 // no food name, note or ingredient ever enters it. In the Android app, while Health Connect is
 // connected, it ends with today's activity: steps, active and total calories, distance, the
 // workouts (type, time and length, never their titles), and whether "Count active calories" adds
@@ -35,6 +36,7 @@ import {
 } from '../../domain/goals/formulas';
 import { effectiveTargets } from '../../domain/goals/targets';
 import type { DiaryEntry, Profile, Targets } from '../../domain/model';
+import { spendOf } from '../../domain/money/spending';
 import { DEFAULT_GOAL_VALUES } from '../../domain/nutrients/goalDefaults';
 import { sugarOfDay } from '../../domain/nutrients/sugar';
 import {
@@ -266,6 +268,19 @@ function sugarLine(todays: readonly DiaryEntry[], limitG: number): string {
 }
 
 /**
+ * What today's food cost, counted as Home's spend line counts it (D-16.108): each currency apart,
+ * never converted, and an entry without a price is unknown, never 0. No line while no entry today
+ * has a price, so people who never type prices are not asked about them.
+ */
+function spendLine(todays: readonly DiaryEntry[]): string[] {
+  const { foods, priced, totals } = spendOf(todays, '');
+  if (priced === 0) return [];
+  const amounts = totals.map((total) => `${num(total.amount, 2)} ${total.currency}`).join(' and ');
+  const part = priced < foods ? `, from ${priced} of ${foods} entries; the rest have no price` : '';
+  return [`Spent on food: ${amounts}${part}`];
+}
+
+/**
  * Whole kcal of today's active energy the energy target gains, or null when it gains nothing: the
  * switch is off, the goal is not above 0, or today has no active calories above 0. Home's rule
  * (P11-04, `countedBurn`), written again here because that one belongs to the screen.
@@ -315,6 +330,7 @@ function todaySoFar(
         : `Eaten: ${energyAndMacros(eaten)}, from ${plural(count, 'entry', 'entries')}`,
       `Left of ${leftOf}: ${energyAndMacros(left)} (a negative amount is over the target)`,
       sugarLine(todays, snapshot.sugarLimitG ?? DEFAULT_GOAL_VALUES.sugar),
+      ...spendLine(todays),
       waterLine(snapshot.water, today),
     ]),
   );

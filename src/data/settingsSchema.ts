@@ -13,6 +13,7 @@ import type { WeekStart } from '../domain/dates/week';
 import { DEFAULT_DIARY_SORT, isDiarySortMode, type DiarySortMode } from '../domain/meals/diary';
 import { DEFAULT_MEAL_TIMES, isValidMealTimes, readMealTimes } from '../domain/meals/times';
 import type { MealTimes, SavedTargets } from '../domain/model';
+import { currencyForLocale, isCurrencyCode } from '../domain/money/price';
 import { isPillarKey, type PillarKey } from '../domain/nutrients/catalogue';
 import {
   DEFAULT_GOAL_VALUES,
@@ -391,6 +392,12 @@ export const SETTING_SPECS = {
     (env) => defaultUnits(env.locale).weight,
     () => 'kg',
   ),
+  // The currency a price is typed in (D-16.107), first from the locale's region; prices already
+  // logged keep their own.
+  'money.currency': setting<string>(
+    (env) => currencyForLocale(env.locale),
+    (stored) => (isCurrencyCode(stored) ? stored : undefined),
+  ),
 
   // Logging and Home
   'log.gramsFirst': setting(off, readFlag),
@@ -402,6 +409,8 @@ export const SETTING_SPECS = {
   'home.pillars': setting<readonly PillarKey[]>(() => [...DEFAULT_PILLARS], readPillars),
   /** The Sugar line under the pillars (D-16.98); its switch is in Home › All nutrients. */
   'home.sugarLine': setting(on, readFlag),
+  /** The spend line under the summary (D-16.108); its switch is beside Sugar on Home. */
+  'home.spendLine': setting(on, readFlag),
 
   // Tabs, menus and the product block
   'tabs.hidden': setting<readonly HideableTab[]>(() => [], subsetOf(HIDEABLE_TABS)),

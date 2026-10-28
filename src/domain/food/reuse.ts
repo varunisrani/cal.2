@@ -89,8 +89,9 @@ export function oftenEaten(entries: readonly DiaryEntry[], now: number): OftenGr
 /**
  * The food values of an entry or a saved meal, as a draft for the review: its basis (a known
  * weight opens in grams with its units, an unknown one as servings, R02.1), its units and chosen
- * amount, values, lines, note and product details. Its id, time, day, meal, source and photos are
- * left behind; the caller hands the photos and the source over beside the draft.
+ * amount, values, lines, note, product details and price (D-16.107, editable at review). Its id,
+ * time, day, meal, source and photos are left behind; the caller hands the photos and the source
+ * over beside the draft.
  */
 export function reuseDraft(food: NutritionDraft): NutritionDraft {
   const draft: NutritionDraft = {
@@ -111,5 +112,6 @@ export function reuseDraft(food: NutritionDraft): NutritionDraft {
   if (food.emoji !== undefined) draft.emoji = food.emoji;
   if (food.note !== undefined) draft.note = food.note;
   if (food.product !== undefined) draft.product = food.product;
+  if (food.price !== undefined) draft.price = { ...food.price };
   return draft;
 }

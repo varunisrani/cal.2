@@ -5,6 +5,16 @@ What changed in each release of Platewise, newest first. Version numbers follow
 
 ## Unreleased (1.6.0)
 
+### Food prices and spending
+
+- Food prices: a Price field in the review and the entry editor. A price you write when you describe a meal or in a
+  photo's note ("paneer roll, ₹120") is filled in for you, never guessed. Saved meals keep their price. Currency in
+  Settings › App settings › Units, starting from your region.
+- Spending: what the day's food cost under Home's summary ("₹240 spent", "from 4 of 6 foods"), with a Spending on Home
+  switch in All nutrients. Progress › Spending shows the last 7 or 30 days, this month and its average per day with a
+  price, months, meals and the foods that cost most. Other currencies are added up apart, never converted.
+- The Coach sees each food's price and today's spend; backups and the JSON diary file carry prices.
+
 ### Live Coach replies
 
 - The Coach's replies appear as they are written, with three dots under them until they are complete; only the complete

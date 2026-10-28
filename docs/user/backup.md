@@ -32,8 +32,8 @@ Backups need Platewise to be opened over a secure (https) address.
 ### What is in a backup
 
 - your profile, plan, targets and nutrient goals;
-- every diary entry with its photos;
-- saved meals, weigh-ins, body-fat readings, water logs and fasts;
+- every diary entry with its photos and price;
+- saved meals (with their prices), weigh-ins, body-fat readings, water logs and fasts;
 - the Coach chat with its photo copies;
 - your settings, and an analysis still waiting for review.
 
@@ -253,8 +253,9 @@ In Settings › Your data, choose **Export diary**:
   - **CSV** for spreadsheets, one row per food and water log.
 
 Energy is always written in kcal, whatever unit you read in Platewise. An export holds the foods
-and water logs of those days (the Markdown file adds each day's totals). It has no photos, weights,
-fasts, saved meals, Coach chat, settings or keys: it is not a backup.
+and water logs of those days (the Markdown file adds each day's totals); the JSON file also keeps
+each food's price, and an import takes it back. It has no photos, weights, fasts, saved meals,
+Coach chat, settings or keys: it is not a backup.
 
 ### Import
 

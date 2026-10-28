@@ -244,7 +244,7 @@ describe('start: a finished analysis waits for review', () => {
     expect(await storedPhotos(setup.photoRepo, photoIds)).toEqual(photoIds);
     expect(photosOf(setup.fake.requests[0])).toEqual([jpegOf(1_000 % 256), jpegOf(2_000 % 256)]);
     expect(promptOf(setup.fake.requests[0])).toBe(
-      photoMealPrompt({ photoCount: 2, note: NOTE, progressive: true }).prompt,
+      photoMealPrompt({ photoCount: 2, note: NOTE, progressive: true, currency: 'GBP' }).prompt,
     );
   });
 
@@ -267,10 +267,26 @@ describe('start: a finished analysis waits for review', () => {
     await setup.service.start('text', { text: '  two eggs and toast \n' });
 
     expect(promptOf(setup.fake.requests[0])).toBe(
-      textMealPrompt({ description: 'two eggs and toast' }).prompt,
+      textMealPrompt({ description: 'two eggs and toast', currency: 'GBP' }).prompt,
     );
     expect(photosOf(setup.fake.requests[0])).toEqual([]);
     expect(reviewOf(setup.service).draft).toMatchObject({ source: 'text', photoIds: [] });
+  });
+
+  it("asks in the person's currency and keeps a price the words state for the review (D-16.107)", async () => {
+    const setup = await setUp();
+    await setup.settingsRepo.set('money.currency', 'INR');
+    setup.fake.on(GEMINI, answer({ ...BAKE, price: { amount: 120, currency: null } }));
+
+    await setup.service.start('text', { text: 'paneer roll, 120 rupees' });
+
+    expect(promptOf(setup.fake.requests[0])).toBe(
+      textMealPrompt({ description: 'paneer roll, 120 rupees', currency: 'INR' }).prompt,
+    );
+    expect(reviewOf(setup.service).draft.draft.price).toEqual({ amount: 120, currency: 'INR' });
+    expect(await setup.draftsRepo.load()).toMatchObject({
+      draft: { draft: { price: { amount: 120, currency: 'INR' } } },
+    });
   });
 
   it('runs photos taken for an armed label scan as a label, keeping the barcode', async () => {
@@ -286,7 +302,7 @@ describe('start: a finished analysis waits for review', () => {
     });
 
     expect(promptOf(setup.fake.requests[0])).toBe(
-      labelScanPrompt({ photoCount: 1, note: '' }).prompt,
+      labelScanPrompt({ photoCount: 1, note: '', currency: 'GBP' }).prompt,
     );
     const { draft } = reviewOf(setup.service);
     expect(draft).toMatchObject({ source: 'label', photoIds });

@@ -1,8 +1,7 @@
 # P18 · Nutrient sources, live Coach replies, food prices and spending
 
 **Weeks:** 1 · **Tracks:** i18n (catalogue on demand); Home (nutrient sources); Coach (streaming); data, analysis,
-Progress (prices and spending) · **Depends on:** P00–P17 · **Status:** 🔨 in progress: P18-00 landing (2026-10-29, at the owner's request)
-· **Ships as:** 1.6.0
+Progress (prices and spending) · **Depends on:** P00–P17 · **Status:** ✅ done: P18-00..04 landed (2026-10-29, at the owner's request) · **Ships as:** 1.6.0
 
 ## Goal
 

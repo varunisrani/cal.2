@@ -10,6 +10,7 @@ import { mergePartitions } from '../../../i18n/catalogue';
 import { enPartitions } from '../../../i18n/en';
 import { common } from '../../../i18n/en/common';
 import { log as logWords } from '../../../i18n/en/log';
+import { price as priceWords } from '../../../i18n/en/price';
 import { review } from '../../../i18n/en/review';
 import { lintCatalogue } from '../../../i18n/lint';
 import { fixedClock, type Clock } from '../../../lib/clock';
@@ -458,6 +459,57 @@ describe('ReviewSheet', () => {
     expect(screen.queryByText('Saved label notice')).toBeNull();
   });
 
+  it('shows a price the words stated, in its currency, and logs it with the food (D-16.107)', async () => {
+    const diary = recordingDiary();
+    const draft = makeDraft({ price: { amount: 120, currency: 'INR' } });
+    const { sheet } = await openReview({ diary, review: makeAnalysisDraft({ draft }) });
+    const field = sheet.getByRole('textbox', { name: priceWords.price.label });
+    expect(field).toHaveValue('120');
+    expect(field).toHaveAccessibleDescription(`INR ${priceWords.price.hint}`);
+    // A different amount on the serving card leaves the price as it was.
+    fireEvent.change(sheet.getByRole('textbox', { name: words.serving.amount }), {
+      target: { value: '2' },
+    });
+    await pressLog(sheet);
+    expect(logged(diary).draft.price).toEqual({ amount: 120, currency: 'INR' });
+  });
+
+  it("opens with no price in the person's currency, and logs one typed in or none", async () => {
+    const typed = recordingDiary();
+    const first = await openReview({ diary: typed });
+    await first.repos.settingsRepo.set('money.currency', 'INR');
+    const field = () => first.sheet.getByRole('textbox', { name: priceWords.price.label });
+    // The setting is read live: the field follows it while the review has no price of its own.
+    await settle(() => document.getElementById(`${field().id}-unit`)?.textContent === 'INR');
+    expect(field()).toHaveValue('');
+    fireEvent.change(field(), { target: { value: '1,200' } });
+    await pressLog(first.sheet);
+    expect(logged(typed).draft.price).toEqual({ amount: 1200, currency: 'INR' });
+    first.unmount();
+
+    const none = recordingDiary();
+    const second = await openReview({
+      diary: none,
+      review: makeAnalysisDraft({ draft: makeDraft({ price: { amount: 5, currency: 'USD' } }) }),
+    });
+    fireEvent.change(second.sheet.getByRole('textbox', { name: priceWords.price.label }), {
+      target: { value: '' },
+    });
+    await pressLog(second.sheet);
+    expect(logged(none).draft).not.toHaveProperty('price');
+  });
+
+  it('holds Log back while the price is not an amount', async () => {
+    const diary = recordingDiary();
+    const { sheet } = await openReview({ diary });
+    const field = sheet.getByRole('textbox', { name: priceWords.price.label });
+    fireEvent.change(field, { target: { value: 'about 100' } });
+    expect(field).toHaveAccessibleDescription(`USD ${priceWords.price.invalid}`);
+    expect(logButton(sheet)).toBeDisabled();
+    fireEvent.change(field, { target: { value: '100' } });
+    expect(logButton(sheet)).toBeEnabled();
+  });
+
   it('hooks every control for tests', async () => {
     await openReview();
     for (const hook of [
@@ -477,6 +529,7 @@ describe('ReviewSheet', () => {
       'review.fat',
       'review.more',
       'review.meal',
+      'price.review',
       'review.when',
     ]) {
       expect(hooked(hook), hook).not.toBeNull();

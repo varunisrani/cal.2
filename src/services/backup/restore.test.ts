@@ -13,7 +13,14 @@ import { eraseEverything } from '../../data/wipe';
 import { FIRST_CHAT_ID } from '../../domain/coach/chats';
 import { bytesOf, storableBlob } from '../../test/blobs';
 import { openTestDb } from '../../test/db';
-import { FACTORY_NOW, makeEntry, makeFast, makePhoto, makeWalk } from '../../test/factories';
+import {
+  FACTORY_NOW,
+  makeEntry,
+  makeFast,
+  makePhoto,
+  makeSavedMeal,
+  makeWalk,
+} from '../../test/factories';
 import { packBackup, unpackBackup } from './archive';
 import { makeBackup } from './backup';
 import { contentHash } from './hash';
@@ -176,6 +183,30 @@ describe('inspectBackup and applyBackup', () => {
     // The walks came back (P15-02); Health Connect's copy is read again, never restored.
     expect((after.walks as { id: string }[]).map((walk) => walk.id)).toEqual(['walk-1']);
     expect(await target.db.activity.count()).toBe(0);
+  });
+
+  it('carries prices and the currency through a backup and back; older rows stay without (D-16.107)', async () => {
+    const price = { amount: 120, currency: 'INR' };
+    const source = await seededBackup(async (db) => {
+      await db.entries.put(makeEntry({ id: 'priced', name: 'Paneer roll', price }));
+      await db.savedMeals.put(makeSavedMeal({ id: 'saved-priced', price }));
+      const settings = createSettingsRepo(db, { locale: 'en-US' });
+      await settings.set('money.currency', 'INR');
+      await settings.set('home.spendLine', false);
+    });
+    const target = await otherStore();
+
+    const result = await applyBackup(await checked(source.file), applyDeps(target.db));
+
+    expect(result.ok).toBe(true);
+    expect((await target.db.entries.get('priced'))?.price).toEqual(price);
+    expect((await target.db.savedMeals.get('saved-priced'))?.price).toEqual(price);
+    const unpriced = (await target.db.entries.toArray()).filter((row) => row.id !== 'priced');
+    expect(unpriced.length).toBeGreaterThan(0);
+    for (const row of unpriced) expect(row).not.toHaveProperty('price');
+    const settings = createSettingsRepo(target.db, { locale: 'en-US' });
+    expect(await settings.get('money.currency')).toBe('INR');
+    expect(await settings.get('home.spendLine')).toBe(false);
   });
 
   it('restores a file made before walks were recorded, leaving no walks (P15-02)', async () => {

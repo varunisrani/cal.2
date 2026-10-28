@@ -1694,6 +1694,100 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/log/AddMenu.test.tsx > AddMenu: the walk recorder (P15-03) > has no Walk row without the walk recorder, as on the web
   - Test: src/features/settings/health/HealthPage.test.tsx > HealthPage: walks (P15-03) > keeps the options away before connecting where nothing records walks
 
+### M19 · Food prices and spending (P1, P18)
+
+- **ACC-M19-1** A price the person's words state (a described meal, a photo's note) is filled into the review in its currency and logged with the food; the row shows it
+  - Test: e2e/logging.spec.ts > a meal with a price, in India (D-16.107, D-16.108) > describes a meal with its price, logs it, and sees the spend on Home and in Spending
+  - Test: src/ai/tasks/food.test.ts > a price the person states (D-16.107) > fills the price a description states, asking in their currency
+  - Test: src/ai/tasks/food.test.ts > a price the person states (D-16.107) > puts a bare amount in the person's currency ('120 rupees' answered without a code)
+  - Test: src/ai/tasks/food.test.ts > a price the person states (D-16.107) > fills the price a photo's note states
+  - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a price the person stated (D-16.107) > keeps a stated price from a description, with its currency, kept to two decimals
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > shows a price the words stated, in its currency, and logs it with the food (D-16.107)
+  - Test: src/features/home/EntryRow.test.tsx > EntryRow > shows its price quietly before the time, and nothing for an entry without one (D-16.107)
+- **ACC-M19-2** No price is ever guessed: words without a figure, or a photo without a note, leave the price empty whatever the AI sends
+  - Test: src/ai/tasks/food.test.ts > a price the person states (D-16.107) > leaves the price empty when the description states none
+  - Test: src/ai/tasks/food.test.ts > a price the person states (D-16.107) > never keeps a price the AI gives for words without a figure, or photos without a note
+  - Test: src/ai/parse/foodReply.test.ts > readFoodReply: a price the person stated (D-16.107) > never takes a price from a request without words, or words without a figure
+  - Test: src/ai/prompts/food.test.ts > the price rule (D-16.107) > asks for a price the description states, in the person's currency when unnamed
+  - Test: src/ai/prompts/food.test.ts > the price rule (D-16.107) > asks for a null currency when the person has none to fall back on
+  - Test: src/ai/prompts/food.test.ts > the price rule (D-16.107) > asks a photo or label request for a price only from the person's note
+  - Test: src/ai/prompts/food.test.ts > the price rule (D-16.107) > names the price key in the contract every food request ends with, null unless stated
+- **ACC-M19-3** The editor and the review add, change and clear a price; text that is not an amount holds Save or Log back; a saved meal keeps its price when logged again
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > shows the entry's price in its own currency and saves an edit to it
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > takes the price away when the field is emptied
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > adds a price typed into an entry without one, in the person's currency
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > holds Save back while the price is not an amount
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > keeps the price when the amount on the serving card changes
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > takes a price the reprocessed note states, and keeps the typed one otherwise
+  - Test: src/features/log/EntryEditor.test.tsx > EntryEditor: price (D-16.107) > keeps the typed price after a reprocess that states none
+  - Test: src/features/log/review/PriceField.test.tsx > PriceField (D-16.107) > is a labelled amount field with its currency after it, described by the hint
+  - Test: src/features/log/review/PriceField.test.tsx > PriceField (D-16.107) > says so under the field when the text is not an amount
+  - Test: src/features/log/review/PriceField.test.tsx > withTypedPrice and priceTextInvalid > sets the typed amount in the currency, and takes the price away when empty
+  - Test: src/features/log/review/PriceField.test.tsx > withTypedPrice and priceTextInvalid > flags only text that is not an amount
+  - Test: src/features/log/review/ReviewSheet.test.tsx > ReviewSheet > holds Log back while the price is not an amount
+  - Test: src/data/repos/savedMealsRepo.test.ts > toggleFromEntry > keeps the entry's price on the saved copy (D-16.107)
+  - Test: src/domain/food/reuse.test.ts > reuseDraft > keeps the price of a saved meal or an entry, and none when it had none (D-16.107)
+- **ACC-M19-4** Home shows what the shown day's foods cost ("from n of m foods" when some have no price, never 0); no line without prices; its switch hides it; a tap opens Spending
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > says what the day's foods cost
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > says from how many foods when some have no price, never counting them as 0
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > adds other currencies apart, the person's own first
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > shows cents only when an amount has them
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > draws nothing on a day where no food has a price, or without food
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > counts a free meal: ₹0 spent
+  - Test: src/features/home/SpendLine.test.tsx > SpendLine (D-16.108) > opens Spending on a tap
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the spend line (D-16.108) > shows the shown day's spend, opens Spending from it, and its switch in All nutrients hides it
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the spend line (D-16.108) > is hidden by its switch beside Sugar on Home, and on a day without prices
+  - Test: src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > has the Spending on Home switch beside Sugar on Home, showing the stored value (D-16.108)
+  - Test: src/data/settingsSchema.test.ts > SETTING_SPECS > shows the spend line on Home until the person turns it off (D-16.108)
+  - Test: e2e/logging.spec.ts > a meal with a price, in India (D-16.107, D-16.108) > describes a meal with its price, logs it, and sees the spend on Home and in Spending
+- **ACC-M19-5** Progress › Spending: the last 7 or 30 days (days without prices marked, never 0), this month's total and average per priced day, months, by meal, the foods that cost most, other currencies apart
+  - Test: src/domain/money/spending.test.ts > spendOf (D-16.108) > adds the prices, counting the foods without one apart, never as 0
+  - Test: src/domain/money/spending.test.ts > spendOf (D-16.108) > has no totals when no food has a price
+  - Test: src/domain/money/spending.test.ts > spendOf (D-16.108) > counts a price of 0 as a price
+  - Test: src/domain/money/spending.test.ts > spendOf (D-16.108) > adds each currency apart, the person's first, the others by code
+  - Test: src/domain/money/spending.test.ts > spendOf (D-16.108) > adds in hundredths, so 0.10 and 0.20 make 0.30
+  - Test: src/domain/money/spending.test.ts > spendingWindow > starts on the first day of the oldest month the page lists
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > gives every day of the period a slot, a day without prices null, never 0
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > covers 30 days when asked
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > totals this month and averages over the days with a price, not the month's days
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > rounds the average to hundredths
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > lists the months newest first, from the first one with a price, at most 12
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > adds the period by meal in meal order, leaving out meals without a price
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > lists the foods that cost most by name, ignoring case and spaces, at most five
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > totals other currencies apart and leaves them out of the person's figures
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > says whether any price exists, in any currency
+  - Test: src/domain/money/spending.test.ts > spendingReport (D-16.108) > ignores entries after today
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > has a back link to Progress and the title
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > says how to add a price while no food has one
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > shows a message when the diary cannot be read
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > draws the last 7 days, a day without prices marked as such, never as 0
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > gives this month: the total, the days with a price and the average over them
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > lists the months, by meal and the foods that cost most
+  - Test: src/features/progress/spending/SpendingPage.test.tsx > SpendingPage (D-16.108) > switches to the last 30 days, the month figures unchanged
+  - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage: Spending (D-16.108) > has a row to Spending under the nutrition cards that opens its page
+  - Test: src/features/progress/ProgressPage.test.tsx > ProgressPage: Spending (D-16.108) > goes back to Progress from an address naming no page of it, drawing nothing first
+- **ACC-M19-6** The currency starts from the locale's region and is chosen in Settings › Units; logged prices keep their own currency
+  - Test: src/data/settingsSchema.test.ts > SETTING_SPECS > takes the currency from the locale's region and reads only a code (D-16.107)
+  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection: the currency (D-16.107) > shows the stored currency by code and name, and stores the one picked from the list
+  - Test: src/features/settings/app/UnitsSection.test.tsx > UnitsSection: the currency (D-16.107) > keeps a stored currency the list does not offer among the choices
+  - Test: src/domain/money/price.test.ts > readPrice (D-16.107) > reads an amount of 0 or more with a code, kept to two decimals
+  - Test: src/domain/money/price.test.ts > readPrice (D-16.107) > upper-cases and trims the code; anything else that is not three letters is no price
+  - Test: src/domain/money/price.test.ts > readPrice (D-16.107) > is no price without a finite amount of 0 or more, or without an object
+  - Test: src/domain/money/price.test.ts > readPrice (D-16.107) > leaves extra fields behind
+  - Test: src/domain/money/price.test.ts > currency codes > stores three capital letters only
+  - Test: src/domain/money/price.test.ts > currencyForLocale (D-16.107) > %j starts in %s
+- **ACC-M19-7** Backups and the JSON diary file carry prices; older files restore and import as before
+  - Test: src/services/backup/restore.test.ts > inspectBackup and applyBackup > carries prices and the currency through a backup and back; older rows stay without (D-16.107)
+  - Test: src/services/transfer/exportDiary.test.ts > buildDocument > writes the price of an item in its own currency, and none without one (D-16.107)
+  - Test: src/services/transfer/importDiary.test.ts > readDiaryFile > reads a price, tidied, and none from a file without one (D-16.107)
+  - Test: src/data/codecs.test.ts > other food codecs > keep a price on an entry, a saved meal and a stored draft, and none without one (D-16.107)
+- **ACC-M19-8** The Coach's food log rows carry the price and its context today's spend, with how many foods had one
+  - Test: src/services/coach/tools.test.ts > runCoachTool: food_log > gives the price in its own currency, and no price key for an entry without one (D-16.107)
+  - Test: src/services/coach/context.test.ts > coachContext: what today's food cost (D-16.108) > gives today's spend after sugar and before water, yesterday's left out
+  - Test: src/services/coach/context.test.ts > coachContext: what today's food cost (D-16.108) > says how many entries had a price when not all did, never counting the rest as 0
+  - Test: src/services/coach/context.test.ts > coachContext: what today's food cost (D-16.108) > gives each currency apart, never converted
+  - Test: src/services/coach/context.test.ts > coachContext: what today's food cost (D-16.108) > has no spend line while no entry today has a price
+
 ## Known gaps
 
 Behaviour of the reference that v1.0 ships without, decided on 2026-10-26 and recorded in `docs/plan/16-what-we-change.md` §2.8 (N-ids) or §2.6 (D-ids). None of these is a P0/P1 row.

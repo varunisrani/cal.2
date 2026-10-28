@@ -113,8 +113,11 @@ The bar at the bottom has four tabs:
   limit", with how far over in red). Foods that came without a figure for that nutrient are counted
   under the list ("1 food has no fibre figure"), never as 0. Tap a food to open it in the editor,
   which shows all of its nutrients (open Micronutrients for the vitamins, minerals and the rest).
-- **Progress:** weight and body fat with their history, calories over time, and a weekly recap.
-  Log a weigh-in here.
+
+  On a day where a food has a price, a line under the summary says what the day cost ("₹240
+  spent"); see [Prices and spending](logging-tips.md#prices-and-spending).
+- **Progress:** weight and body fat with their history, calories over time, a weekly recap, and
+  **Spending**: what your food cost by day, month, meal and food. Log a weigh-in here.
 - **Coach:** a chat about your own diary. See [The Coach](coach.md).
 - **Settings:** your details, goals, tracking and reminders, AI providers, how the app looks, and
   your data.
@@ -131,7 +134,8 @@ Settings always stay.
 - **AI providers:** your provider, model and key, standbys, time and length limits, notes for the
   AI, and the food database key. See [AI keys](ai-keys.md).
 - **App settings:** a light, dark or system look, accent colour, grams first, the first day of the
-  week and units. Under More: the Add menu editor, Product details and Tab bar.
+  week, units and the currency prices are typed in. Under More: the Add menu editor, Product
+  details and Tab bar.
 - **Your data:** export and import your diary, back up and restore, see storage, and erase data.
   See [Backup and restore](backup.md) and [Privacy and storage](privacy-and-storage.md).
 

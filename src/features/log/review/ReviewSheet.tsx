@@ -16,6 +16,8 @@ import {
   type ProductInfo,
   type ServingBasis,
 } from '../../../domain/model';
+import { DEFAULT_CURRENCY } from '../../../domain/money/price';
+import { priceInputText } from '../../../domain/money/priceText';
 import { applyLineChange, lineTotals, stretchFactor } from '../../../domain/servings/ingredients';
 import { keepSplit, SPLIT_MIN } from '../../../domain/servings/recipe';
 import {
@@ -47,6 +49,7 @@ import { IngredientsCard } from './IngredientsCard';
 import { MoreNutrition } from './MoreNutrition';
 import { NutritionRows } from './NutritionRows';
 import { PhotoStrip } from './PhotoStrip';
+import { PriceField, priceTextInvalid, withTypedPrice } from './PriceField';
 import { ProductBlock } from './ProductBlock';
 import styles from './review.module.css';
 import { ServingCard } from './ServingCard';
@@ -57,7 +60,7 @@ export const REVIEW_MEAL_SHEET = 'review-meal';
 /** How far back a meal may be dated. */
 export const REVIEW_YEARS_BACK = 10;
 
-const SETTINGS = ['log.gramsFirst', 'units.energy', 'meals.times'] as const;
+const SETTINGS = ['log.gramsFirst', 'units.energy', 'meals.times', 'money.currency'] as const;
 
 // ---- The sheet's copy of the draft ----------------------------------------------------------
 
@@ -238,11 +241,14 @@ export interface ReviewSheetProps {
 
 /**
  * Review before logging (02 §3.5): photos, name, serving, nutrition with its unlock,
- * micronutrients, meal and time, and the places later slices fill. Only Cancel and Log close it.
- * The sheet edits its own copy of the draft; Log stores every value at the shown amount, the
- * weight when it is known, the draft's note, plate-in-steps flag and photos, once (R02.11). The
- * meal follows the picked date and time until the person picks one (D-16.16). A fast in progress
- * keeps the sheet open behind the paused dialog, whose "End fast and log" logs it (D-16.35).
+ * micronutrients, meal, price and time, and the places later slices fill. Only Cancel and Log
+ * close it. The sheet edits its own copy of the draft; Log stores every value at the shown amount,
+ * the weight when it is known, the draft's note, plate-in-steps flag and photos, once (R02.11).
+ * The meal follows the picked date and time until the person picks one (D-16.16). The price opens
+ * with the draft's (one the person's words stated, or a saved meal's) in its currency, else empty
+ * in the person's currency (D-16.107); text that is not an amount holds Log back. A fast in
+ * progress keeps the sheet open behind the paused dialog, whose "End fast and log" logs it
+ * (D-16.35).
  */
 export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetProps) {
   const { diary, clock } = useServices();
@@ -260,6 +266,9 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   const [unlocked, setUnlocked] = useState(false);
   const [fitCheckOpen, setFitCheckOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [priceText, setPriceText] = useState(() =>
+    review.draft.price ? priceInputText(review.draft.price.amount) : '',
+  );
   const paused = useLogPause(onClose);
 
   const loaded = settings.status === 'ready' ? settings.value : null;
@@ -269,6 +278,8 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   const meal: MealKind =
     pickedMeal ?? (loaded ? mealAtInstant(loggedAt, loaded['meals.times']) : 'other');
   const source: EntrySource = review.source ?? (review.photoIds.length > 0 ? 'photo' : 'text');
+  const currency = review.draft.price?.currency ?? loaded?.['money.currency'] ?? DEFAULT_CURRENCY;
+  const priceInvalid = priceTextInvalid(priceText);
 
   const update = (change: (current: ReviewWorking) => ReviewWorking): void =>
     setEdits((previous) => {
@@ -277,10 +288,14 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
     });
 
   const foodOf = (current: ReviewWorking): ReviewFood => ({
-    draft: {
-      ...draftAtAmount(current.draft, current.shown),
-      name: name.trim() === '' ? review.draft.name : name.trim(),
-    },
+    draft: withTypedPrice(
+      {
+        ...draftAtAmount(current.draft, current.shown),
+        name: name.trim() === '' ? review.draft.name : name.trim(),
+      },
+      priceText,
+      currency,
+    ),
     loggedAt,
     meal,
     source,
@@ -288,7 +303,7 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
   });
 
   const log = async (): Promise<void> => {
-    if (!working || inFlight.current) return;
+    if (!working || priceInvalid || inFlight.current) return;
     inFlight.current = true;
     setSaving(true);
     const food = foodOf(working);
@@ -341,7 +356,7 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
           <Button
             variant="primary"
             busy={saving}
-            disabled={!working}
+            disabled={!working || priceInvalid}
             onClick={log}
             data-ui="review.log"
           >
@@ -420,6 +435,12 @@ export function ReviewSheet({ review, onClose, slots = NO_SLOTS }: ReviewSheetPr
             <span className={logStyles.mealValue}>{t(MEAL_NAME_KEYS[meal])}</span>
             <Icon name="chevronRight" size={18} className={logStyles.mealChevron} />
           </button>
+          <PriceField
+            value={priceText}
+            currency={currency}
+            onChange={setPriceText}
+            data-ui="price.review"
+          />
           <DateTimeField
             kind="datetime"
             label={t('review.when')}

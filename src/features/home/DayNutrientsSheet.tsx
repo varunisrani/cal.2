@@ -52,11 +52,16 @@ export interface DayNutrientsSheetProps {
   readonly onSugarLineChange: (on: boolean) => void;
   /** A nutrient's row: opens the foods it came from (D-16.105). */
   readonly onOpenSources: (nutrient: SourceNutrient) => void;
+  /** The spend line is switched on (setting `home.spendLine`, D-16.108). */
+  readonly spendLine: boolean;
+  /** The Spending on Home switch was turned; the stored value follows. */
+  readonly onSpendLineChange: (on: boolean) => void;
 }
 
 /**
  * Every nutrient of Home's selected day (05 §3.2.4): the pillars Home shows (a row that opens
- * the picker) and the Sugar on Home switch (D-16.98), the water while it is tracked, the energy and macros against the targets, then the
+ * the picker), the Sugar on Home switch (D-16.98) and the Spending on Home switch (D-16.108), the
+ * water while it is tracked, the energy and macros against the targets, then the
  * optional nutrients and the sports compounds, each with its unit and goal. A detailed total of
  * exactly 0 reads as a dash. Each food nutrient's row opens the foods it came from (D-16.105);
  * water's opens nothing (it is never food).
@@ -89,6 +94,8 @@ function SheetBody({
   sugarLine,
   onSugarLineChange,
   onOpenSources,
+  spendLine,
+  onSpendLineChange,
 }: BodyProps) {
   const plan = targets ?? NO_TARGETS;
   const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
@@ -122,6 +129,15 @@ function SheetBody({
             checked={sugarLine}
             onChange={onSugarLineChange}
             data-ui="home.nutrients.sugarLine"
+          />
+        </div>
+        <div className={styles.switch}>
+          <Switch
+            label={tx('home.nutrients.spendLine')}
+            description={tx('home.nutrients.spendLineHint')}
+            checked={spendLine}
+            onChange={onSpendLineChange}
+            data-ui="spending.home.switch"
           />
         </div>
       </Section>

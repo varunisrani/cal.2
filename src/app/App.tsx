@@ -51,7 +51,7 @@ const AnalysisOverlay = onDemand(() =>
 );
 const AnalysisReview = onDemand(() =>
   withPartitions(
-    ['review', 'editor', 'ingredients', 'fitCheck'],
+    ['review', 'editor', 'ingredients', 'fitCheck', 'price'],
     import('../features/log/review/ReviewSheet'),
   ).then((module) => module.AnalysisReview),
 );

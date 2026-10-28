@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { onDemand } from '../../app/onDemand';
 import { useToday } from '../../app/TodayProvider';
-import { WALK_ROUTE } from '../../app/router';
+import { SPENDING_ROUTE, WALK_ROUTE } from '../../app/router';
 import { useRouter, useSheet } from '../../app/useRoute';
 import {
   useActiveFast,
@@ -19,6 +19,7 @@ import type { DayKey } from '../../domain/dates/dayKey';
 import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
 import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
 import type { DiaryEntry, Fast } from '../../domain/model';
+import { spendOf } from '../../domain/money/spending';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import type { SourceNutrient } from '../../domain/nutrients/sources';
 import { withPartitions } from '../../i18n/onDemand';
@@ -45,6 +46,7 @@ import type { FoodRowActions } from './EntryRow';
 import styles from './home.module.css';
 import { PillarPicker } from './PillarPicker';
 import { SelectionBar } from './SelectionBar';
+import { SpendLine } from './SpendLine';
 import { tx } from './text';
 import { useSelectedDay } from './useSelectedDay';
 import { useSelection } from './useSelection';
@@ -83,7 +85,7 @@ const StartFastSheet = onDemand(() =>
 );
 const FastEditor = onDemand(() =>
   withPartitions(
-    ['editor', 'review', 'ingredients', 'fitCheck'],
+    ['editor', 'review', 'ingredients', 'fitCheck', 'price'],
     import('../fasting/FastEditor'),
   ).then((module) => module.FastEditor),
 );
@@ -101,7 +103,7 @@ export const EDITOR_SHEET = 'entry';
 // Fetched the first time a row is tapped.
 const EntryEditor = onDemand(() =>
   withPartitions(
-    ['editor', 'review', 'ingredients', 'fitCheck'],
+    ['editor', 'review', 'ingredients', 'fitCheck', 'price'],
     import('../log/EntryEditor'),
   ).then((module) => module.EntryEditor),
 );
@@ -127,6 +129,8 @@ const SETTINGS = [
   'display.weekStart',
   'home.pillars',
   'home.sugarLine',
+  'home.spendLine',
+  'money.currency',
   'water.on',
   'water.goalMl',
   'water.unit',
@@ -163,8 +167,11 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
  * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
  * the chosen pillars with water after them, then the Sugar line (D-16.98) (a sideways swipe over
  * them changes the day; "All nutrients" under them opens the day's nutrient sheet with the Sugar
- * on Home switch and, from it, the pillar picker; a nutrient's pillar, its row in that sheet and
- * the Sugar line open the foods it came from, each of which opens its entry, D-16.105), the diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
+ * and Spending on Home switches and, from it, the pillar picker; a nutrient's pillar, its row in
+ * that sheet and the Sugar line open the foods it came from, each of which opens its entry,
+ * D-16.105), the day's spend under the summary when a food has a price (D-16.108; a tap opens
+ * Progress › Spending), the diary with the day's food, water and fasts in the stored sort order
+ * (a fast's row opens its
  * editor, P07-05), and the "+" button with the add menu of the stored layout and the water and
  * fasting rows (P07-08). What is logged from here goes to the day shown. Nothing with a number is
  * drawn until the profile, the settings and the day's entries, water and fasts have been read, so
@@ -329,6 +336,15 @@ export function HomePage() {
     );
   };
 
+  const storeSpendLine = (on: boolean): void => {
+    (homePrefs?.setSpendLine(on) ?? Promise.reject(new Error('No homePrefs service'))).catch(
+      (error: unknown) => {
+        console.error('Storing the spend line switch failed', error);
+        toast.show(tx('appSettings.saveFailed'));
+      },
+    );
+  };
+
   const openFast = (fast: Fast): void => {
     setEditingFast(fast);
     fastSheet.show();
@@ -434,6 +450,12 @@ export function HomePage() {
             burn={plan && burned !== null ? { goalKcal: plan.kcal, burnedKcal: burned } : null}
           />
         </DaySwipe>
+        {settings.value['home.spendLine'] ? (
+          <SpendLine
+            spend={spendOf(entries.value, settings.value['money.currency'])}
+            onOpen={() => router.navigate(SPENDING_ROUTE)}
+          />
+        ) : null}
         {connected || walks ? (
           <Suspense fallback={null}>
             <ActivityCard
@@ -497,6 +519,8 @@ export function HomePage() {
           sugarLine={settings.value['home.sugarLine']}
           onSugarLineChange={storeSugarLine}
           onOpenSources={showSources}
+          spendLine={settings.value['home.spendLine']}
+          onSpendLineChange={storeSpendLine}
         />
         <PillarPicker
           open={pillarPicker.open}

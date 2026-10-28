@@ -55,6 +55,16 @@ describe('toggleFromEntry', () => {
     db.close();
   });
 
+  it("keeps the entry's price on the saved copy (D-16.107)", async () => {
+    const { db, saved } = await setUp();
+    const entry = makeEntry({ name: 'Paneer roll', price: { amount: 120, currency: 'INR' } });
+
+    await saved.toggleFromEntry(entry);
+    const [meal] = await saved.list();
+    expect(meal?.price).toEqual({ amount: 120, currency: 'INR' });
+    db.close();
+  });
+
   it('saves two different foods with the same name and calories separately (ACC-D17-1, D-16.17)', async () => {
     const { db, saved } = await setUp();
     const homemade = makeEntry({ name: 'Greek salad', kcal: 350, protein: 9, fat: 28 });

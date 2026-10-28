@@ -266,6 +266,14 @@ describe('runCoachTool: food_log', () => {
     expect(Object.keys(row ?? {})).not.toContain('loggedAt');
   });
 
+  it('gives the price in its own currency, and no price key for an entry without one (D-16.107)', () => {
+    const priced = entryOn('2026-10-25', '13:00', { price: { amount: 120, currency: 'INR' } });
+    const plain = entryOn('2026-10-25', '14:00');
+    const rows = items(call('food_log', {}, makeSnapshot({ entries: [priced, plain] })));
+    expect(rows[0]?.price).toEqual({ amount: 120, currency: 'INR' });
+    expect(rows[1]).not.toHaveProperty('price');
+  });
+
   it('lists entries by day, then by the time they were logged', () => {
     const snapshot = makeSnapshot({ entries: [...fixtureDiary()].reverse() });
     const names = items(call('food_log', WIDE, snapshot)).map((row) => row.name);

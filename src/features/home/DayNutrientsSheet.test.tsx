@@ -27,6 +27,8 @@ function renderSheet({
   sugarLine = true,
   onSugarLineChange = () => undefined,
   onOpenSources = () => undefined,
+  spendLine = true,
+  onSpendLineChange = () => undefined,
   onClose = () => undefined,
 }: {
   entries?: DiaryEntry[];
@@ -40,6 +42,8 @@ function renderSheet({
   sugarLine?: boolean;
   onSugarLineChange?: (on: boolean) => void;
   onOpenSources?: (nutrient: SourceNutrient) => void;
+  spendLine?: boolean;
+  onSpendLineChange?: (on: boolean) => void;
   onClose?: () => void;
 } = {}) {
   return render(
@@ -58,6 +62,8 @@ function renderSheet({
       sugarLine={sugarLine}
       onSugarLineChange={onSugarLineChange}
       onOpenSources={onOpenSources}
+      spendLine={spendLine}
+      onSpendLineChange={onSpendLineChange}
     />,
   );
 }
@@ -191,6 +197,25 @@ describe('DayNutrientsSheet', () => {
     expect(off).toHaveAttribute('aria-checked', 'false');
     fireEvent.click(off);
     expect(onSugarLineChange).toHaveBeenLastCalledWith(true);
+  });
+
+  it('has the Spending on Home switch beside Sugar on Home, showing the stored value (D-16.108)', () => {
+    const onSpendLineChange = vi.fn();
+    const { unmount } = renderSheet({ onSpendLineChange });
+    const pillars = within(sheet()).getByRole('region', { name: words.nutrients.pillarsHeading });
+    const toggle = within(pillars).getByRole('switch', { name: words.nutrients.spendLine });
+    expect(toggle).toHaveAttribute('data-ui', 'spending.home.switch');
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(toggle).toHaveAccessibleDescription(words.nutrients.spendLineHint);
+    fireEvent.click(toggle);
+    expect(onSpendLineChange).toHaveBeenCalledWith(false);
+    unmount();
+
+    renderSheet({ spendLine: false, onSpendLineChange });
+    const off = within(sheet()).getByRole('switch', { name: words.nutrients.spendLine });
+    expect(off).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(off);
+    expect(onSpendLineChange).toHaveBeenLastCalledWith(true);
   });
 
   it("shows the day's water against its goal in the water unit only while tracking is on", () => {

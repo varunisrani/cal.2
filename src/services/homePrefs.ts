@@ -1,8 +1,9 @@
 // Home's own choices (P07-04): which nutrients Home shows as pillars (setting `home.pillars`). The
 // picker keeps its draft to itself and stores it here only on Done; the settings repository checks
 // the list and tidies it (P01-07 rules: known names, no repeats, at most four). Also how the diary
-// forms its sections (setting `home.sort`, P07-05), and whether the Sugar line shows under the
-// pillars (setting `home.sugarLine`, D-16.98).
+// forms its sections (setting `home.sort`, P07-05), whether the Sugar line shows under the
+// pillars (setting `home.sugarLine`, D-16.98), and whether the spend line shows under the summary
+// (setting `home.spendLine`, D-16.108).
 
 import type { SettingsRepo } from '../data/repos/settingsRepo';
 import type { DiarySortMode } from '../domain/meals/diary';
@@ -18,6 +19,8 @@ export interface HomePrefsService {
   setSort(mode: DiarySortMode): Promise<void>;
   /** Stores whether Home shows the Sugar line under the pillars. */
   setSugarLine(on: boolean): Promise<void>;
+  /** Stores whether Home shows the day's spend under the summary. */
+  setSpendLine(on: boolean): Promise<void>;
 }
 
 export interface HomePrefsDeps {
@@ -32,6 +35,9 @@ export function createHomePrefsService({ settingsRepo }: HomePrefsDeps): HomePre
     },
     async setSugarLine(on) {
       await settingsRepo.set('home.sugarLine', on);
+    },
+    async setSpendLine(on) {
+      await settingsRepo.set('home.spendLine', on);
     },
   };
 }

@@ -137,6 +137,45 @@ describe('textMealPrompt', () => {
   });
 });
 
+describe('the price rule (D-16.107)', () => {
+  const RULE = 'says what the food cost';
+
+  it("asks for a price the description states, in the person's currency when unnamed", () => {
+    const { prompt } = textMealPrompt({ description: 'paneer roll ₹120', currency: 'INR' });
+    expect(prompt).toContain(`If the description ${RULE}`);
+    expect(prompt).toContain("is in INR, the person's own currency");
+    expect(prompt).toContain('Never estimate, convert or round it');
+    expect(prompt).toContain('When the description states no price, "price" is null.');
+    expect(prompt.indexOf(RULE)).toBeLessThan(prompt.indexOf(FOOD_REPLY_CONTRACT));
+    expect(prompt.endsWith(FOOD_REPLY_CONTRACT)).toBe(true);
+  });
+
+  it('asks for a null currency when the person has none to fall back on', () => {
+    const { prompt } = textMealPrompt({ description: 'roll, paid 120' });
+    expect(prompt).toContain('When the words name no currency, set currency to null.');
+    expect(prompt).not.toContain("the person's own currency");
+  });
+
+  it("asks a photo or label request for a price only from the person's note", () => {
+    expect(photoMealPrompt({ photoCount: 1, currency: 'INR' }).prompt).not.toContain(RULE);
+    expect(photoMealPrompt({ photoCount: 1, note: '  ', currency: 'INR' }).prompt).not.toContain(
+      RULE,
+    );
+    const photo = photoMealPrompt({ photoCount: 2, note: 'paid $12', currency: 'USD' }).prompt;
+    expect(photo).toContain(`If the note ${RULE}`);
+    expect(photo).toContain('is in USD');
+    const label = labelScanPrompt({ photoCount: 1, note: '₹40 a pack', currency: 'INR' }).prompt;
+    expect(label).toContain(`If the note ${RULE}`);
+  });
+
+  it('names the price key in the contract every food request ends with, null unless stated', () => {
+    expect(FOOD_REPLY_CONTRACT).toContain('"price": what the food cost');
+    expect(FOOD_REPLY_CONTRACT).toContain('"amount"');
+    expect(FOOD_REPLY_CONTRACT).toContain('"currency": a three-letter ISO 4217 code');
+    expect(FOOD_REPLY_CONTRACT).toContain('Never estimate or look up a price.');
+  });
+});
+
 describe('labelScanPrompt (Proposed D-16.62)', () => {
   it('is the photo request with a hint to read one labelled serving', () => {
     const label = labelScanPrompt({ photoCount: 2, note: 'family pack' }).prompt;

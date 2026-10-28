@@ -4,9 +4,10 @@
  * (`plan-ok`), and lands on Home at 08:30 UTC, inside breakfast. Then it logs food one way (a meal
  * photo, a typed meal, typed barcode digits, a label after a barcode miss, a pick from Recent) or
  * changes what was logged (an entry's calories, two entries combined); two more prove that a
- * review survives a reload and that a busy provider is asked again without an error. Open Food
- * Facts, its image host and FoodData Central answer from our fixtures (e2e/fixtures); a request to
- * any other host off loopback is aborted and fails the test.
+ * review survives a reload and that a busy provider is asked again without an error. One more, in
+ * India, describes a meal with its price and follows it to Home's spend line and Progress ›
+ * Spending (P18). Open Food Facts, its image host and FoodData Central answer from our fixtures
+ * (e2e/fixtures); a request to any other host off loopback is aborted and fails the test.
  */
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import { RETRY_WAITS_MS } from '../src/ai/retry';
@@ -28,6 +29,7 @@ import {
   routeFoodDatabases,
   ui,
   words,
+  type FakeFood,
   type FoodDatabaseLog,
 } from './support';
 
@@ -664,6 +666,89 @@ test.describe('logging flows (Demo 3)', () => {
     await test.step('Log: Home shows it', async () => {
       await logReview(page);
       await expect(diaryRow(page, 'breakfast', name, 410)).toBeVisible();
+    });
+  });
+});
+
+// ---- Prices and spending (P18-03, P18-04) ------------------------------------------------------
+
+/** "paneer roll, ₹120", typed: one roll of 220 g, its price stated by the person. */
+const PANEER_ROLL: FakeFood = {
+  name: 'Paneer roll',
+  emoji: '🌯',
+  kcal: 430,
+  protein: 18,
+  carbs: 48,
+  fat: 18,
+  servingGrams: 220,
+  nutrients: { fibre: 4 },
+  units: [{ unit: 'roll', count: 1, gramsEach: 220 }],
+  parts: [],
+  price: { amount: 120, currency: 'INR' },
+};
+
+test.describe('a meal with a price, in India (D-16.107, D-16.108)', () => {
+  // In Kolkata the start is Tuesday 27 October at 14:00: lunch, and rupees by default.
+  test.use({ locale: 'en-IN', timezoneId: 'Asia/Kolkata' });
+
+  test('describes a meal with its price, logs it, and sees the spend on Home and in Spending', async ({
+    page,
+  }) => {
+    await onboard(page);
+    await fakeAi.useReplies(foodScript(PANEER_ROLL));
+    const description = 'paneer roll, ₹120';
+    const review = reviewSheet(page);
+
+    await test.step('"+" → Describe → the words with the price → Analyse', async () => {
+      await choose(page, 'describe', 'describe');
+      const sheet = page.getByRole('dialog', { name: words('capture.describe.title') });
+      await sheet.getByRole('textbox', { name: words('capture.describe.label') }).fill(description);
+      await sheet.getByRole('button', { name: words('capture.analyse') }).click();
+      await expect(sheet).toBeHidden();
+    });
+
+    await test.step('the review shows the price the words stated, in rupees', async () => {
+      await expect(review).toBeVisible();
+      const price = review.getByRole('textbox', { name: words('price.label') });
+      await expect(price).toHaveAttribute('data-ui', 'price.review');
+      await expect(price).toHaveValue('120');
+      await expect(price).toHaveAccessibleDescription(`INR ${words('price.hint')}`);
+    });
+
+    await test.step('Log: the row shows ₹120 and Home says what the day cost', async () => {
+      await logReview(page);
+      const row = diaryRow(page, 'lunch', PANEER_ROLL.name, 430);
+      await expect(row).toBeVisible();
+      await expect(ui(row, 'price.row')).toHaveText('₹120');
+      await expect(ui(page, 'spending.home')).toHaveAccessibleName('₹120 spent');
+    });
+
+    await test.step('the AI was asked in rupees, with the words', async () => {
+      const requests = await fakeAi.requests();
+      const sent = JSON.stringify(requests[1]!.body);
+      expect(sent).toContain('paneer roll, ₹120');
+      expect(sent).toContain("is in INR, the person's own currency");
+    });
+
+    await test.step('a tap opens Progress › Spending with today priced', async () => {
+      await ui(page, 'spending.home').click();
+      await expect(page).toHaveURL(/#\/progress\/spending$/);
+      const screen = ui(page, 'screen.progress.spending');
+      await expect(screen.getByRole('heading', { level: 1 })).toHaveText(words('spending.title'));
+      await expect(ui(screen, 'spending.days.total')).toHaveText('₹120 in all');
+      const today = ui(screen, 'spending.bars').locator('[data-day="2026-10-27"]');
+      await expect(today.locator('[data-part="bar"]')).toHaveCount(1);
+      await expect(
+        ui(screen, 'spending.bars').locator('[data-day="2026-10-26"] [data-part="none"]'),
+      ).toHaveCount(1);
+      await expect(ui(screen, 'spending.month.total')).toHaveText('₹120');
+      await expect(ui(screen, 'spending.top.list')).toContainText('Paneer roll');
+    });
+
+    await test.step('Back goes to Progress', async () => {
+      await page.goBack();
+      await expect(page).toHaveURL(/#\/progress$/);
+      await expect(ui(page, 'spending.link')).toBeVisible();
     });
   });
 });

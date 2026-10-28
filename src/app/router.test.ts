@@ -5,6 +5,7 @@ import {
   ONBOARDING_ROUTE,
   parseHash,
   routeHash,
+  SPENDING_ROUTE,
   tabRoute,
   WALK_ROUTE,
   type Route,
@@ -47,12 +48,18 @@ describe('parseHash', () => {
     expect(parseHash('#/settings/units/weight')).toEqual(tabRoute('settings', 'units', 'weight'));
   });
 
+  it('parses one page under Progress: Spending (D-16.108)', () => {
+    expect(parseHash('#/progress/spending')).toEqual(SPENDING_ROUTE);
+    expect(routeHash(SPENDING_ROUTE)).toBe('#/progress/spending');
+  });
+
   it.each([
     '#/kitchen',
     '#home',
     '#/Home',
     '#/home/extra',
-    '#/progress/week',
+    '#/progress/spending/week',
+    '#/progress/Spending',
     '#/settings/units/weight/kg',
     '#/settings/Units',
     '#/settings//units',
@@ -228,6 +235,23 @@ describe('createRouter', () => {
     router.navigate(tabRoute('settings', 'units', 'weight'));
     router.selectTab('settings');
     expect(at()).toBe('#/settings');
+    expect(host.entries()).toMatchObject({ index: 1 });
+  });
+
+  it('returns to Progress when Progress is tapped on Spending, opened from Home (D-16.108)', () => {
+    const { host, router, at } = setup('#/home');
+    router.navigate(SPENDING_ROUTE);
+    expect(at()).toBe('#/progress/spending');
+    expect(host.entries()).toEqual({
+      hashes: ['#/home', '#/progress', '#/progress/spending'],
+      index: 2,
+    });
+    host.back();
+    expect(at()).toBe('#/progress');
+
+    router.navigate(SPENDING_ROUTE);
+    router.selectTab('progress');
+    expect(at()).toBe('#/progress');
     expect(host.entries()).toMatchObject({ index: 1 });
   });
 

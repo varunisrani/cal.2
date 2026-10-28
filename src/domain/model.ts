@@ -174,6 +174,16 @@ export interface ProductInfo {
 }
 
 /**
+ * What a food cost (D-16.107): `amount` in the major unit of `currency` (rupees, dollars), at most
+ * two decimals, never negative; `currency` an ISO 4217 code ("INR"). A food without a price has
+ * none at all, never a price of 0.
+ */
+export interface Price {
+  readonly amount: number;
+  readonly currency: string;
+}
+
+/**
  * The food values an analysis, lookup or saved meal produces before review. Every value
  * describes the amount in `basis`.
  */
@@ -202,6 +212,8 @@ export interface NutritionDraft {
   /** The photos show one plate built up in steps. */
   progressive: boolean;
   product?: ProductInfo;
+  /** What it cost, as the person typed or said it; not scaled with the amount (D-16.107). */
+  price?: Price;
 }
 
 /** One logged food row in the diary. */

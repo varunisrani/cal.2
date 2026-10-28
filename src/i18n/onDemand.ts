@@ -38,6 +38,8 @@ const LOADERS: {
   health: () => import('./en/health'),
   walk: () => import('./en/walk'),
   sources: () => import('./en/sources'),
+  price: () => import('./en/price'),
+  spending: () => import('./en/spending'),
 };
 
 /** The catalogue the app's `t()` reads: the start-up partitions, then each one registered. */

@@ -148,7 +148,7 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategory[] = defineCategories
     page: onDemand(() =>
       // It links to the other pages through the registry, so it needs their titles too.
       withPartitions(
-        ['settings', 'profile', 'goals', 'health', 'aiSetup', 'data', 'about'],
+        ['settings', 'profile', 'goals', 'health', 'aiSetup', 'data', 'about', 'price'],
         import('./app/AppPage'),
       ).then((module) => module.AppPage),
     ),

@@ -10,6 +10,8 @@ import {
   type MealKind,
   type NutritionDraft,
 } from '../../domain/model';
+import { DEFAULT_CURRENCY } from '../../domain/money/price';
+import { priceInputText } from '../../domain/money/priceText';
 import { draftAtAmount, initialAmount, scaleLine } from '../../domain/servings/scale';
 import { pickerUnits } from '../../domain/servings/units';
 import { t } from '../../i18n/t';
@@ -35,6 +37,7 @@ import { IngredientsCard } from './review/IngredientsCard';
 import { MoreNutrition } from './review/MoreNutrition';
 import { NutritionRows } from './review/NutritionRows';
 import { PhotoStrip } from './review/PhotoStrip';
+import { PriceField, priceTextInvalid, withTypedPrice } from './review/PriceField';
 import { ProductBlock } from './review/ProductBlock';
 import reviewStyles from './review/review.module.css';
 import {
@@ -53,7 +56,7 @@ import { ServingCard } from './review/ServingCard';
 /** The editor's meal picker on the sheet stack, above the editor. */
 export const EDITOR_MEAL_SHEET = 'editor-meal';
 
-const SETTINGS = ['log.gramsFirst', 'units.energy'] as const;
+const SETTINGS = ['log.gramsFirst', 'units.energy', 'money.currency'] as const;
 
 // ---- The editor's copy of the entry ---------------------------------------------------------
 
@@ -71,6 +74,10 @@ export interface EditorForm {
   readonly meal: MealKind;
   /** The picked local date and minute; null while untouched. */
   readonly when: DateTimeValue | null;
+  /** The price as typed; empty for none (D-16.107). */
+  readonly price: string;
+  /** The currency the price is in: the entry's own, else the person's when it opened. */
+  readonly priceCurrency: string;
 }
 
 /** The food values of an entry, without its place in the diary. */
@@ -90,9 +97,14 @@ function draftOf(entry: DiaryEntry): NutritionDraft {
 /**
  * The copy an editor opens with: the entry's own values and header (an edit made through the
  * unlock at review stays, even when the parts add up to something else), at scale 1 in the unit
- * the entry was logged in (grams first when that setting is on).
+ * the entry was logged in (grams first when that setting is on), and its price in its own
+ * currency; without one, a price typed in is in `currency` (the person's).
  */
-export function openingForm(entry: DiaryEntry, gramsFirst: boolean): EditorForm {
+export function openingForm(
+  entry: DiaryEntry,
+  gramsFirst: boolean,
+  currency: string = DEFAULT_CURRENCY,
+): EditorForm {
   const draft = draftOf(entry);
   const note = entry.note ?? '';
   return {
@@ -103,6 +115,8 @@ export function openingForm(entry: DiaryEntry, gramsFirst: boolean): EditorForm 
     savedNote: note.trim(),
     meal: entry.meal,
     when: null,
+    price: entry.price ? priceInputText(entry.price.amount) : '',
+    priceCurrency: entry.price?.currency ?? currency,
   };
 }
 
@@ -124,13 +138,19 @@ export function savedInstant(entry: DiaryEntry, when: DateTimeValue | null): num
 
 /**
  * The entry as Save writes it: every value at the shown amount with the parts and serving, the
- * name (blank keeps the copy's), the meal, the note trimmed (blank: none), the photos as edited
- * and the instant by `savedInstant`. Id, source and product stay the entry's.
+ * name (blank keeps the copy's), the meal, the note trimmed (blank: none), the price as typed
+ * (blank: none; the amount on the serving card never changes it), the photos as edited and the
+ * instant by `savedInstant`. Id, source and product stay the entry's.
  */
 export function editedEntry(entry: DiaryEntry, form: EditorForm): DiaryEntry {
   const loggedAt = savedInstant(entry, form.when);
+  const priced = withTypedPrice(
+    draftAtAmount(form.working.draft, form.working.shown),
+    form.price,
+    form.priceCurrency,
+  );
   const next: DiaryEntry = {
-    ...draftAtAmount(form.working.draft, form.working.shown),
+    ...priced,
     name: nameOf(form),
     id: entry.id,
     loggedAt,
@@ -164,8 +184,9 @@ export function withoutPhoto(form: EditorForm, photoId: string): EditorForm {
 
 /**
  * The copy after a reprocess: the answer's name, emoji, values, serving and parts replace the
- * copy's (a recipe split ends); the plate-in-steps flag and the product stay the entry's; the note
- * it was asked with counts as saved, so the primary button reads Save again.
+ * copy's (a recipe split ends); the plate-in-steps flag and the product stay the entry's; a price
+ * the note stated replaces the typed one, else the typed one stays; the note it was asked with
+ * counts as saved, so the primary button reads Save again.
  */
 export function afterReprocess(
   form: EditorForm,
@@ -183,6 +204,9 @@ export function afterReprocess(
     working: openingWorking(draft, gramsFirst),
     name: draft.name,
     savedNote: noteUsed.trim(),
+    ...(answer.price
+      ? { price: priceInputText(answer.price.amount), priceCurrency: answer.price.currency }
+      : {}),
   };
 }
 
@@ -207,8 +231,9 @@ type Busy = 'saving' | 'reprocessing' | null;
  * the note differs from the saved one the primary button reads Reprocess: the AI's answer replaces
  * the copy's values, and its failures show under the note. Save keeps the entry's instant to the
  * millisecond unless the date or minute changed (R02.21), then lets go of the photos the edit
- * dropped (a saved meal sharing one keeps it, R02.8). The Saved switch acts at once; Delete asks
- * first. Only Cancel, Save and Delete close it.
+ * dropped (a saved meal sharing one keeps it, R02.8). The Price field edits the entry's price in
+ * its own currency (D-16.107); text that is not an amount holds Save back. The Saved switch acts
+ * at once; Delete asks first. Only Cancel, Save and Delete close it.
  */
 export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
   const { diary, reprocess, clock } = useServices();
@@ -242,7 +267,11 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
   const entry = opened ?? stored;
   const missing = entry === null && read.status !== 'loading';
   const loaded = settings.status === 'ready' ? settings.value : null;
-  const form = edited ?? (entry && loaded ? openingForm(entry, loaded['log.gramsFirst']) : null);
+  const form =
+    edited ??
+    (entry && loaded
+      ? openingForm(entry, loaded['log.gramsFirst'], loaded['money.currency'])
+      : null);
   const saved =
     savedRead.status === 'ready' && savedRead.value.some((meal) => meal.originEntryId === entryId);
 
@@ -255,6 +284,7 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
     update((current) => ({ ...current, working: change(current.working) }));
 
   const noteChanged = form !== null && form.note.trim() !== form.savedNote;
+  const priceInvalid = form !== null && priceTextInvalid(form.price);
   const reprocessing = busy === 'reprocessing';
 
   const cancel = (): void => {
@@ -263,7 +293,7 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
   };
 
   const save = async (): Promise<void> => {
-    if (!form || !entry || !diary.updateEntry || inFlight.current) return;
+    if (!form || !entry || !diary.updateEntry || priceInvalid || inFlight.current) return;
     inFlight.current = true;
     setBusy('saving');
     try {
@@ -299,6 +329,7 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
       note: form.note,
       photoIds: form.photoIds,
       progressive: form.working.draft.progressive,
+      currency: loaded['money.currency'],
     };
     const gramsFirst = loaded['log.gramsFirst'];
     const controller = new AbortController();
@@ -371,7 +402,7 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
         <Button
           variant="primary"
           busy={busy !== null}
-          disabled={!form || (!noteChanged && !diary.updateEntry)}
+          disabled={!form || (!noteChanged && (!diary.updateEntry || priceInvalid))}
           onClick={noteChanged ? runReprocess : save}
           data-ui="editor.save"
         >
@@ -467,6 +498,12 @@ export function EntryEditor({ entryId, dayKey, onClose }: EntryEditorProps) {
             <span className={logStyles.mealValue}>{t(MEAL_NAME_KEYS[form.meal])}</span>
             <Icon name="chevronRight" size={18} className={logStyles.mealChevron} />
           </button>
+          <PriceField
+            value={form.price}
+            currency={form.priceCurrency}
+            onChange={(price) => update((current) => ({ ...current, price }))}
+            data-ui="price.editor"
+          />
           <div className={styles.note}>
             <label htmlFor={noteId} className={styles.noteLabel}>
               {t('editor.note.label')}

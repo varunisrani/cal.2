@@ -39,6 +39,7 @@ import {
   type WaterLog,
   type WeighIn,
 } from '../domain/model';
+import { readPrice } from '../domain/money/price';
 import { WEEKDAYS, isTimeOfDay, isWeekday } from '../domain/reminders/custom';
 import { UNMEASURED_WALK_MET } from '../domain/walks/mets';
 import type { SpeedSource, Walk, WalkHeartRate, WalkScoreParts } from '../domain/walks/model';
@@ -253,6 +254,8 @@ export const decodeNutritionDraft: Codec<NutritionDraft> = (raw) => {
   put(draft, 'emoji', text(fields.emoji));
   put(draft, 'note', text(fields.note));
   put(draft, 'product', decodeProduct(fields.product));
+  // A price that cannot be read is no price (D-16.107): the food stays readable without it.
+  put(draft, 'price', readPrice(fields.price));
   return draft;
 };
 

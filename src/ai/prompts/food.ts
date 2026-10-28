@@ -2,10 +2,15 @@
  * The food analysis requests (03 §3.5, §3.7): photos of one meal, a typed description, a label
  * scan and the unit repair. Every one asks for our reply contract (`contract.ts`). The person's
  * notes for the AI are not here: the client adds them to the system part of every request
- * (D-16.24), so these texts stay fixed. Food answers are JSON in kcal and never speak to the
- * person, so they carry no kJ line.
+ * (D-16.24), so these texts stay fixed, but for the person's currency in the price rule of a
+ * request that carries their words (D-16.107). Food answers are JSON in kcal and never speak to
+ * the person, so they carry no kJ line.
  */
-import { FOOD_REPLY_KEYS as FOOD, UNIT_REPLY_KEYS as UNIT } from '../parse/foodReply';
+import {
+  FOOD_REPLY_KEYS as FOOD,
+  PRICE_REPLY_KEYS as PRICE,
+  UNIT_REPLY_KEYS as UNIT,
+} from '../parse/foodReply';
 import { FOOD_REPLY_CONTRACT, UNIT_RULES } from './contract';
 import {
   bullets,
@@ -29,6 +34,8 @@ export interface PhotoMealInput {
   readonly note?: string;
   /** The person says the photos show one plate built up in steps. */
   readonly progressive?: boolean;
+  /** The person's currency (`money.currency`), for a price the note states without one. */
+  readonly currency?: string;
 }
 
 /** True when the step-by-step rules apply: asked for, and at least two photos to compare. */
@@ -50,6 +57,35 @@ function noteParagraph(note: string | undefined, about: string): string | undefi
       'is and how it was made:',
     quoted(text),
   );
+}
+
+/**
+ * When the person's words (`where`: their description, their note) state what the food cost, the
+ * reply carries it (D-16.107); a bare amount, or a symbol their currency shares, is in their
+ * currency. Never a price of the model's own.
+ */
+function priceParagraph(where: string, currency: string | undefined): string {
+  const unnamed =
+    currency === undefined
+      ? `When the words name no currency, set ${PRICE.currency} to null.`
+      : `An amount whose currency the words do not name ("paid 120", "120 bucks"), or a symbol ` +
+        `shared by several currencies that ${currency} uses too, is in ${currency}, the person's ` +
+        'own currency.';
+  return lines(
+    `If ${where} says what the food cost ("₹120", "Rs 120", "$5", "5 dollars"), give that as ` +
+      `${jsonKey(FOOD.price)}, for everything described.`,
+    bullets([
+      'Take the amount the person wrote. Never estimate, convert or round it; a price per item ' +
+        'times the items described is the total.',
+      unnamed,
+      `When ${where} states no price, ${jsonKey(FOOD.price)} is null.`,
+    ]),
+  );
+}
+
+/** The price rule for a request whose only words are the note, when there is one. */
+function notePriceParagraph(note: string | undefined, currency: string | undefined) {
+  return textOrNone(note) === undefined ? undefined : priceParagraph('the note', currency);
 }
 
 /** What the photos are and how to read them: several views of one meal, or a plate in steps. */
@@ -100,6 +136,7 @@ export function photoMealPrompt(input: PhotoMealInput): PromptText {
     prompt: paragraphs(
       photoTask(input),
       noteParagraph(input.note, 'these photos'),
+      notePriceParagraph(input.note, input.currency),
       progressiveLine(usesProgressive(input)),
       FOOD_REPLY_CONTRACT,
     ),
@@ -109,6 +146,8 @@ export function photoMealPrompt(input: PhotoMealInput): PromptText {
 export interface LabelScanInput {
   readonly photoCount: number;
   readonly note?: string;
+  /** The person's currency, for a price the note states without one. */
+  readonly currency?: string;
 }
 
 /**
@@ -129,6 +168,7 @@ export function labelScanPrompt(input: LabelScanInput): PromptText {
       photoTask({ photoCount: input.photoCount }),
       hint,
       noteParagraph(input.note, 'these photos'),
+      notePriceParagraph(input.note, input.currency),
       progressiveLine(false),
       FOOD_REPLY_CONTRACT,
     ),
@@ -138,6 +178,8 @@ export function labelScanPrompt(input: LabelScanInput): PromptText {
 export interface TextMealInput {
   /** What the person typed. */
   readonly description: string;
+  /** The person's currency, for a price the description states without one. */
+  readonly currency?: string;
 }
 
 /** A meal described in words: quantities, brands and several items, with one fitting emoji. */
@@ -157,6 +199,7 @@ export function textMealPrompt(input: TextMealInput): PromptText {
         ]),
       ),
       lines('Their description:', quoted(input.description)),
+      priceParagraph('the description', input.currency),
       progressiveLine(false),
       FOOD_REPLY_CONTRACT,
     ),

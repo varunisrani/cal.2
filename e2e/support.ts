@@ -7,7 +7,12 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import type { BrowserContext, Locator, Page, Route } from '@playwright/test';
-import { FOOD_REPLY_KEYS, PART_REPLY_KEYS, UNIT_REPLY_KEYS } from '../src/ai/parse/foodReply';
+import {
+  FOOD_REPLY_KEYS,
+  PART_REPLY_KEYS,
+  PRICE_REPLY_KEYS,
+  UNIT_REPLY_KEYS,
+} from '../src/ai/parse/foodReply';
 import type { NutrientKey } from '../src/domain/model';
 import { lookupMessage, type MessageKey } from '../src/i18n/catalogue';
 import { en } from '../src/i18n/en';
@@ -109,6 +114,8 @@ export interface FakeFood {
   /** Count × grams each comes to `servingGrams`; the first is the unit the review opens in. */
   readonly units: readonly { unit: string; count: number; gramsEach: number }[];
   readonly parts: readonly FakePart[];
+  /** A price the person's words stated (D-16.107); left out of the answer when absent. */
+  readonly price?: { readonly amount: number; readonly currency: string };
 }
 
 /** A photo of a chicken grain bowl: one serving of 360 g in two parts. */
@@ -187,6 +194,14 @@ export function foodAnswer(food: FakeFood): string {
       [P.fat]: part.fat,
     })),
     [K.progressive]: false,
+    ...(food.price
+      ? {
+          [K.price]: {
+            [PRICE_REPLY_KEYS.amount]: food.price.amount,
+            [PRICE_REPLY_KEYS.currency]: food.price.currency,
+          },
+        }
+      : {}),
   });
 }
 

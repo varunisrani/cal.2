@@ -8,7 +8,7 @@ import { Skeleton } from './Skeleton';
 // Home is the first screen, so it comes with the app; the other tabs are fetched on first open.
 const ProgressPage = onDemand(() =>
   withPartitions(
-    ['progress', 'charts', 'onboarding'],
+    ['progress', 'charts', 'onboarding', 'spending'],
     import('../features/progress/ProgressPage'),
   ).then((module) => module.ProgressPage),
 );
