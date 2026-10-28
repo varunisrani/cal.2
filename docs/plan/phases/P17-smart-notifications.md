@@ -55,6 +55,14 @@ happens while the app is open or just left.
   - The Coach is told in its instructions when to use them (a plan the person agreed to, a habit they want to build) and
     never to set more than the person asked for.
 
+- **D-16.103 Notification panel (Android app; the owner asked the same evening).** Every notice Platewise posts and every
+  notification that came from the plan (the person's reminders, the summary, the fasting goal, nudges) is kept in an
+  in-app inbox, newest first, up to 100 items or 30 days, as device state (out of backups). Planned notifications fire
+  while the app may be closed, so on start and on return the app adds every one from the last handed-over plan whose
+  time has passed. Home's header has a bell with the unread count; the panel lists the items by Today / Yesterday /
+  Earlier with an icon by kind, title, text and time; a tap opens the item's target and marks it read (as does tapping
+  the system notification); Mark all as read, delete one, Clear all (asks first), a link to Smart notifications.
+
 ## Contracts
 
 ```ts
@@ -73,15 +81,16 @@ interface Notices {
 
 ## Slices
 
-- **S1 nudges and notices** (P17-01, P17-02), wave 23, now: the planner (D-16.100), the `Notices` service and the
+- **S1 nudges, notices and the panel** (P17-01, P17-02, P17-04), wave 23, now: the planner (D-16.100), the `Notices` service and the
   events that do not need the Coach (sugar, calories, protein, active week, fasting, analysis ready, backup failed), the
-  Smart notifications settings, quiet hours, channels, the Home card, docs.
+  Smart notifications settings, quiet hours, channels, the Home card, the notification panel (D-16.103), docs.
 - **S2 the Coach** (P17-03), after P16's chats land: Let the Coach set reminders, check-ins, the Coach replied.
 
-## Tasks (3)
+## Tasks (4)
 
 | ID | Task | Verify |
 |---|---|---|
 | P17-01 | **Planned nudges.** Usual meal times from the diary (pure, tested), the meal check, water pace, empty day and weigh-in nudges in the native plan (7 days ahead, taken back when no longer true), Only if I haven't logged it on meal reminders, quiet hours, per-kind channels. | unit tests on the pure planner: a logged meal takes today's back, history decides the time, water pace, empty day, weigh-in age, quiet hours, ids never collide with reminders. |
 | P17-02 | **Event notices and settings.** The `Notices` service (once a day, quiet hours, permission, switches), the event hooks (sugar, calories, protein, active week, fasting, analysis ready in the background, backup failed twice), Settings › Smart notifications, the Home permission card, tap targets. Docs: `docs/user/android.md` (Notifications). | unit tests: each event posts once a day, nothing during quiet hours, nothing when off or not allowed, the card shows once; the web shows nothing new. |
 | P17-03 | **The Coach's notifications.** Let the Coach set reminders (direct add with Undo/Edit), the check-in tool (≤ 3 waiting, ≤ 14 days, opens its chat), the Coach replied notice, the prompt lines; Settings lists check-ins. | unit tests for the tool, the setting, the notice and its tap target; the engine tests for a check-in round. |
+| P17-04 | **Notification panel.** The inbox (device state, 100 items / 30 days), reconciling planned notifications that came while the app was closed, the bell with the unread count on Home, the panel (groups, open target, mark read, mark all read, delete, Clear all), the system notification's tap marking its item read. | unit tests: cap and age, reconcile without duplicates, unread count, open target, mark all read, clear, the bell; screenshots. |
