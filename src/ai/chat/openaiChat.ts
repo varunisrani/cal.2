@@ -5,7 +5,8 @@
  * provider wants (R03.10) and the provider extras. The model asks for tools with `tool_calls`; the
  * assistant message then goes back as it came, followed by one `tool` message per call id
  * (R04.12). A reply cut at the limit, or one that only reasoned, is asked again once; only
- * OpenRouter changes the body for that (R04.18).
+ * OpenRouter changes the body for that (R04.18). A streamed round adds `stream: true` (D-16.106,
+ * `openaiStream.ts`).
  */
 import {
   JPEG,
@@ -25,8 +26,10 @@ import {
 import { carriesError, hasReasoning, headersFor, tokenLimitField } from '../adapters/openaiCompat';
 import { fromReply, type ReplyContext, type SingleFailure } from '../errors';
 import { err, ok, type Result } from '../../lib/result';
+import { openAiStream } from './openaiStream';
 import {
   NAMELESS_CALL_RESULT,
+  argumentsOf,
   callId,
   isUser,
   toolName,
@@ -97,7 +100,12 @@ function open(opening: ChatOpening): Transcript {
   ];
 }
 
-function build(setup: ChatSetup, transcript: Transcript, compact: boolean): WireRequest {
+function build(
+  setup: ChatSetup,
+  transcript: Transcript,
+  compact: boolean,
+  stream = false,
+): WireRequest {
   const tools = setup.tools.map((tool) => ({
     type: 'function',
     function: { name: tool.name, description: tool.description, parameters: tool.parameters },
@@ -111,19 +119,8 @@ function build(setup: ChatSetup, transcript: Transcript, compact: boolean): Wire
     ...(tools.length > 0 ? { tools, tool_choice: 'auto' } : {}),
     [tokenLimitField(setup.provider, setup.model)]: tokenCap(setup.maxTokens),
     ...extras(setup, compact),
+    ...(stream ? { stream: true } : {}),
   });
-}
-
-/** The arguments of a call: a JSON object, sent as text by most servers; anything else is `{}`. */
-function argumentsOf(value: unknown): JsonRecord {
-  if (isRecord(value)) return value;
-  if (typeof value !== 'string') return {};
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return isRecord(parsed) ? parsed : {};
-  } catch {
-    return {};
-  }
 }
 
 /** The calls that can be answered: every one with an id. One without an id cannot be. */
@@ -188,4 +185,4 @@ function continueWith(transcript: Transcript, reply: ToolsReply, run: RunTool): 
   ];
 }
 
-export const openAiChat: ChatWire = { open, build, read, continueWith };
+export const openAiChat: ChatWire = { open, build, read, stream: openAiStream, continueWith };

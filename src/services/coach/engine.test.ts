@@ -2,6 +2,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { ImageBackend } from '../../ai/image';
 import { DEFAULT_AI_SETTINGS, type AiSettings, type ProviderKeys } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
+import {
+  anthropicTextStream,
+  openAiTextStream,
+  openAiToolStream,
+  streamReply,
+} from '../../ai/testing/streamWire';
 import { anthropicToolUse, openAiToolCalls } from '../../ai/testing/toolWire';
 import {
   anthropicAnswer,
@@ -819,5 +825,124 @@ describe('runTurn: recorded walks (D-16.96)', () => {
     expect(JSON.parse(String(answer?.content))).toMatchObject({ count: 1 });
     expect(web?.tools).toEqual([...NUTRITION_TOOL_NAMES]);
     expect(web?.system).not.toMatch(/walk_log|walk score/);
+  });
+});
+
+describe('runTurn: replies that stream in (D-16.106)', () => {
+  const opened: PlatewiseDb[] = [];
+  afterEach(() => closeAll(opened));
+
+  /** A turn that records every text handed up while it runs. */
+  async function streamed(fake: FakeFetch, changes: Partial<TurnInput> = {}, settings = SETTINGS) {
+    const shown: string[] = [];
+    const result = await runTurn(input({ ...changes, onText: (text) => shown.push(text) }), {
+      settings,
+      keys: KEYS,
+      fetch: fake.fetch,
+    });
+    return { result, shown };
+  }
+
+  it('hands up each round’s text, runs the tools when their round is over, then answers (ACC-I13-1)', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      streamReply(
+        openAiToolStream(
+          [
+            {
+              id: 's1',
+              name: 'food_log',
+              argPieces: ['{"from":"2026-10-25",', '"to":"2026-10-25"}'],
+            },
+          ],
+          { text: ['Let me ', 'check.'] },
+        ),
+        { pieceSize: 50 },
+      ),
+      streamReply(openAiTextStream(['Yesterday: ', 'a matcha oat latte, ', '180 kcal.'])),
+    );
+
+    const { result, shown } = await streamed(fake);
+
+    expect(result).toEqual(answered('Yesterday: a matcha oat latte, 180 kcal.'));
+    expect(shown).toEqual([
+      'Let me',
+      'Let me check.',
+      'Yesterday:',
+      'Yesterday: a matcha oat latte,',
+      'Yesterday: a matcha oat latte, 180 kcal.',
+    ]);
+    expect(bodyOf(fake.requests[0]).stream).toBe(true);
+    const [food] = toolResults(fake.requests[1]);
+    expect(food?.id).toBe('s1');
+    expect(JSON.stringify(food?.result)).toContain('Matcha oat latte');
+    // The round's message goes back as it came, its text included.
+    expect(messagesOf(fake.requests[1]).at(-2)).toMatchObject({
+      role: 'assistant',
+      content: 'Let me check.',
+      tool_calls: [{ id: 's1', function: { name: 'food_log' } }],
+    });
+  });
+
+  it('sets a reminder from a streamed round in the Android app (P17)', async () => {
+    const stores = await openCoachStores();
+    opened.push(stores.db);
+    await stores.settingsRepo.set('coach.setsReminders', true);
+    const actions = storedActions(stores);
+    const args = '{"text":"Drink a glass of water","time":"10:00","days":"daily"}';
+    const fake = fakeFetch().on(
+      MISTRAL,
+      streamReply(
+        openAiToolStream([
+          { id: 'r1', name: 'set_reminder', argPieces: [args.slice(0, 20), args.slice(20)] },
+        ]),
+      ),
+      streamReply(openAiTextStream(['Done: every day at 10:00.'])),
+    );
+
+    const { result } = await streamed(fake, {
+      reminders: { problemWith: actions.reminders.problemWith },
+      actions,
+      chatId: 'chat-1',
+    });
+
+    expect(result.ok && result.value.reminders).toEqual([
+      { text: 'Drink a glass of water', time: '10:00', days: WEEKDAYS, reminderId: 'set-1' },
+    ]);
+    expect(toolResults(fake.requests[1])[0]?.result).toMatchObject({ set: true });
+    expect(await stores.settingsRepo.get('remind.custom')).toHaveLength(1);
+  });
+
+  it('starts the standby afresh after a reply fails midway, its words gone first (ACC-I13-2)', async () => {
+    const fake = fakeFetch()
+      .on(
+        MISTRAL,
+        streamReply(openAiTextStream(['You had ', 'a latte and']).slice(0, 4), {
+          breakAtEnd: true,
+        }),
+      )
+      .on(ANTHROPIC, streamReply(anthropicTextStream(['You had a latte ', 'and lasagne.'])));
+
+    const { result, shown } = await streamed(fake, {}, WITH_STANDBY);
+
+    expect(result).toEqual(answered('You had a latte and lasagne.'));
+    expect(shown).toEqual([
+      'You had',
+      'You had a latte and',
+      '',
+      'You had a latte',
+      'You had a latte and lasagne.',
+    ]);
+    expect(fake.requests.map((request) => request.url)).toEqual([MISTRAL, ANTHROPIC]);
+  });
+
+  it('fails without a standby when the stream breaks off, giving no answer', async () => {
+    const fake = fakeFetch().on(
+      MISTRAL,
+      streamReply(openAiTextStream(['You had ', 'a latte']).slice(0, 3)),
+    );
+    const { result, shown } = await streamed(fake);
+    expect(result).toEqual({ ok: false, error: { kind: 'connection' } });
+    expect(shown).toEqual(['You had', 'You had a latte']);
   });
 });

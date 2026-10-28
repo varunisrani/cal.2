@@ -170,6 +170,113 @@ describe('MessageList: typing dots', () => {
   });
 });
 
+describe('MessageList: a reply streaming in (D-16.106)', () => {
+  const live = () => document.querySelector<HTMLElement>('[data-ui="coach.live"]');
+  const question = message({ role: 'user', text: 'What did I eat yesterday?' });
+
+  it('grows the reply in the pending bubble, the dots where the copy button comes (ACC-I13-1)', () => {
+    const { rerender } = renderList({ messages: [question], pending: true });
+    expect(live()).toBeNull();
+    expect(typing()).not.toBeNull();
+
+    rerender({ pending: true, live: 'Yesterday: a **latte**' });
+    expect(live()).not.toBeNull();
+    expect(lastItem()).toBe(live());
+    expect(within(live()!).getByText('latte').tagName).toBe('STRONG');
+    // The dots stay, now in the copy button's place under the words.
+    expect(live()!.contains(typing())).toBe(true);
+    expect(typing()!.parentElement!.previousElementSibling).toHaveAttribute('inert');
+    expect(within(live()!).queryByRole('button')).toBeNull();
+    // Not a stored message: no bubble, no copy.
+    expect(bubbles()).toHaveLength(1);
+
+    rerender({ pending: true, live: 'Yesterday: a **latte** and lasagne.' });
+    expect(live()).toHaveTextContent('Yesterday: a latte and lasagne.');
+  });
+
+  it('keeps the growing words out of what is read out, links included, until they are stored', () => {
+    renderList({
+      messages: [question],
+      pending: true,
+      live: 'See [the guide](https://example.test/guide) for',
+    });
+    const words = live()!.querySelector('[data-ui="coach.reply"]')!.parentElement!;
+    expect(words).toHaveAttribute('inert');
+    expect(words.querySelector('a')).not.toBeNull();
+    // The dots say a reply is being written, once.
+    expect(within(live()!).getByRole('status')).toHaveTextContent(coach.coach.typing);
+  });
+
+  it('keeps the words when the turn ends until the stored reply takes their place', () => {
+    const text = 'Yesterday: a latte.';
+    const { rerender } = renderList({ messages: [question], pending: true, live: text });
+
+    rerender({ pending: false, live: undefined });
+    expect(live()).toHaveTextContent(text);
+    expect(typing()).toBeNull();
+
+    rerender({
+      messages: [question, message({ role: 'assistant', text })],
+      pending: false,
+      live: undefined,
+    });
+    expect(live()).toBeNull();
+    expect(bubbles()).toHaveLength(2);
+  });
+
+  it('shows the stored reply alone when it comes back before the turn lets the words go', () => {
+    const text = 'Yesterday: a latte.';
+    const { rerender } = renderList({ messages: [question], pending: true, live: text });
+    const stored = [question, message({ role: 'assistant', text })];
+    rerender({ messages: stored, pending: true, live: text });
+    expect(live()).toBeNull();
+    rerender({ messages: stored, pending: false, live: undefined });
+    expect(live()).toBeNull();
+    expect(bubbles()).toHaveLength(2);
+  });
+
+  it('lets the words go for the banner when the turn fails', () => {
+    const { rerender } = renderList({ messages: [question], pending: true, live: 'Yesterday: a' });
+    rerender({ pending: false, live: undefined });
+    expect(live()).not.toBeNull();
+
+    rerender({
+      messages: [{ ...question, state: { status: 'failed', kind: 'connection' } }],
+      pending: false,
+      live: undefined,
+    });
+    expect(live()).toBeNull();
+    expect(banner()).not.toBeNull();
+  });
+
+  it('shows the dots alone again when the reply starts over (the standby)', () => {
+    const { rerender } = renderList({ messages: [question], pending: true, live: 'Yesterday: a' });
+    rerender({ pending: true, live: undefined });
+    expect(live()).toBeNull();
+    expect(typing()).not.toBeNull();
+  });
+
+  it('follows the growing reply at the end, and stays put when the person scrolled up', () => {
+    contentHeight = 700;
+    viewHeight = 300;
+    const { rerender } = renderList({ messages: [question], pending: true });
+    expect(list().scrollTop).toBe(700);
+
+    contentHeight = 760;
+    rerender({ pending: true, live: 'Yesterday' });
+    expect(list().scrollTop).toBe(760);
+    contentHeight = 820;
+    rerender({ pending: true, live: 'Yesterday: a latte' });
+    expect(list().scrollTop).toBe(820);
+
+    list().scrollTop = 100;
+    fireEvent.scroll(list());
+    contentHeight = 900;
+    rerender({ pending: true, live: 'Yesterday: a latte and lasagne' });
+    expect(list().scrollTop).toBe(100);
+  });
+});
+
 describe('MessageList: error banner', () => {
   const failed = (text: string, details?: string) =>
     message({

@@ -56,7 +56,7 @@ afterEach(async () => {
   await closeHarnesses();
 });
 
-const IDLE = { waiting: [] } as const;
+const IDLE = { waiting: [], live: {} } as const;
 
 /** The one chat the conversation is in. */
 const CHAT = 'chat-reminders';

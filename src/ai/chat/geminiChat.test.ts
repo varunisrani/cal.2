@@ -49,6 +49,8 @@ const setup = (changes: Partial<ChatSetup> = {}): ChatSetup => ({
 });
 
 const ROUTE = `${BASE}/models/${MODEL}:generateContent`;
+/** Where a round goes: it asks for a stream (D-16.106); these tests answer whole. */
+const STREAM_ROUTE = `${BASE}/models/${MODEL}:streamGenerateContent?alt=sse`;
 
 const bodyOf = (request: WireRequest): Record<string, unknown> =>
   JSON.parse(String(request.init.body)) as Record<string, unknown>;
@@ -266,7 +268,7 @@ describe('askRound on the Gemini wire (R04.15)', () => {
 
   it('asks again once with the same body after a MAX_TOKENS stop', async () => {
     const fake = fakeFetch().on(
-      ROUTE,
+      STREAM_ROUTE,
       { json: geminiAnswer('Yes, you', { finishReason: 'MAX_TOKENS' }) },
       { json: answer },
     );
@@ -280,7 +282,7 @@ describe('askRound on the Gemini wire (R04.15)', () => {
 
   it('gives truncated after a second MAX_TOKENS stop', async () => {
     const cut = { json: geminiAnswer('Yes', { finishReason: 'MAX_TOKENS' }) };
-    const fake = fakeFetch().on(ROUTE, cut, cut);
+    const fake = fakeFetch().on(STREAM_ROUTE, cut, cut);
     expect(await round(fake, setup(), geminiChat.open(OPENING))).toEqual({
       ok: false,
       error: { kind: 'truncated' },
@@ -292,7 +294,7 @@ describe('askRound on the Gemini wire (R04.15)', () => {
     const calls = geminiFunctionCalls([{ id: 'fc-9', name: 'food_log', args: {} }], {
       signature: 'c2lnLW5pbmU=',
     });
-    const fake = fakeFetch().on(ROUTE, { json: calls }, { json: answer });
+    const fake = fakeFetch().on(STREAM_ROUTE, { json: calls }, { json: answer });
     const start = geminiChat.open(OPENING);
     const first = await round(fake, setup(), start);
     if (!first.ok || first.value.kind !== 'tools') throw new Error('expected tool calls');

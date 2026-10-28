@@ -4,7 +4,8 @@
  * with the same headers as the landed adapter (the browser-access one included, R03.1). The model
  * asks for tools with `tool_use` blocks: its content goes back as it came, then one user message
  * answers every id with a `tool_result` block (R04.12). A reply stopped by the limit is cut off and
- * asked again once with the same body (R04.15).
+ * asked again once with the same body (R04.15). A streamed round adds `stream: true` (D-16.106,
+ * `anthropicStream.ts`).
  */
 import { ANTHROPIC_VERSION } from '../adapters/anthropic';
 import {
@@ -23,6 +24,7 @@ import {
 } from '../adapters/request';
 import type { ReplyContext, SingleFailure } from '../errors';
 import { ok, type Result } from '../../lib/result';
+import { anthropicStream } from './anthropicStream';
 import {
   NAMELESS_CALL_RESULT,
   callId,
@@ -56,7 +58,12 @@ function open(opening: ChatOpening): Transcript {
 }
 
 /** The re-ask is the same request on this format: `compact` changes nothing. */
-function build(setup: ChatSetup, transcript: Transcript, _compact: boolean): WireRequest {
+function build(
+  setup: ChatSetup,
+  transcript: Transcript,
+  _compact: boolean,
+  stream = false,
+): WireRequest {
   const key = keyOf(setup);
   const tools = setup.tools.map((tool) => ({
     name: tool.name,
@@ -76,6 +83,7 @@ function build(setup: ChatSetup, transcript: Transcript, _compact: boolean): Wir
       ...(hasText(setup.system) ? { system: setup.system } : {}),
       ...(tools.length > 0 ? { tools } : {}),
       messages: transcript,
+      ...(stream ? { stream: true } : {}),
     },
   );
 }
@@ -137,4 +145,10 @@ function continueWith(transcript: Transcript, reply: ToolsReply, run: RunTool): 
   return [...transcript, reply.echo, { role: 'user', content: results }];
 }
 
-export const anthropicChat: ChatWire = { open, build, read, continueWith };
+export const anthropicChat: ChatWire = {
+  open,
+  build,
+  read,
+  stream: anthropicStream,
+  continueWith,
+};

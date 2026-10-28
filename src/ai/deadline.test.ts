@@ -98,6 +98,64 @@ describe('Deadline: the time limit and Cancel', () => {
   });
 });
 
+describe('Deadline.hold: a reply streaming in (D-16.106)', () => {
+  it('stops the count while held and counts on from there when let go', async () => {
+    useFakeTime(START);
+    const deadline = startDeadline({ timeoutSeconds: 30 });
+    await advanceAsync(10_000);
+    const release = deadline.hold();
+    await advanceAsync(120_000);
+    expect(deadline.remainingMs()).toBe(20_000);
+    expect(deadline.signal.aborted).toBe(false);
+
+    release();
+    release();
+    await advanceAsync(19_999);
+    expect(deadline.remainingMs()).toBe(1);
+    await advanceAsync(1);
+    expect(deadline.stoppedBy()).toBe('deadline');
+  });
+
+  it('counts again only when the last of nested holds lets go', async () => {
+    useFakeTime(START);
+    const deadline = startDeadline({ timeoutSeconds: 30 });
+    const outer = deadline.hold();
+    const inner = deadline.hold();
+    await advanceAsync(60_000);
+    inner();
+    await advanceAsync(60_000);
+    expect(deadline.remainingMs()).toBe(30_000);
+    outer();
+    await advanceAsync(5_000);
+    expect(deadline.remainingMs()).toBe(25_000);
+    deadline.end();
+  });
+
+  it('still stops at once for Cancel while held', async () => {
+    useFakeTime(START);
+    const cancel = new AbortController();
+    const deadline = startDeadline({ timeoutSeconds: 30, cancel: cancel.signal });
+    const release = deadline.hold();
+    await advanceAsync(40_000);
+    cancel.abort();
+    expect(deadline.stoppedBy()).toBe('cancel');
+    release();
+    expect(deadline.remainingMs()).toBe(0);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('starts no timer again for a hold let go after the action ended', async () => {
+    useFakeTime(START);
+    const deadline = startDeadline({ timeoutSeconds: 30 });
+    const release = deadline.hold();
+    deadline.end();
+    release();
+    expect(vi.getTimerCount()).toBe(0);
+    expect(deadline.hold()).toBeTypeOf('function');
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});
+
 describe('attemptCapMs: the limit of one attempt (D-16.60)', () => {
   it('gives a fixed cloud provider 75 s, or less when less is left', async () => {
     useFakeTime(START);

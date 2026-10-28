@@ -35,9 +35,12 @@ const CHAT = 'chat-1';
 
 // ---- A session the test drives -------------------------------------------------------------
 
-/** The coach session's shape, with each action a spy and the waiting chats set by the test. */
+/**
+ * The coach session's shape, with each action a spy and the waiting chats and the replies
+ * streaming in set by the test.
+ */
 function fakeSession() {
-  let state: CoachSessionState = { waiting: [] };
+  let state: CoachSessionState = { waiting: [], live: {} };
   let made = 0;
   const listeners = new Set<() => void>();
   const session = {
@@ -62,13 +65,20 @@ function fakeSession() {
   /** Marks these chats as waiting for a reply (none: nothing waits). */
   const setWaiting = (...chats: string[]): void => {
     act(() => {
-      state = { waiting: chats };
+      state = { waiting: chats, live: state.live };
+      for (const listener of [...listeners]) listener();
+    });
+  };
+  /** Sets the replies streaming in, by chat (D-16.106). */
+  const setLive = (live: Record<string, string>): void => {
+    act(() => {
+      state = { waiting: state.waiting, live };
       for (const listener of [...listeners]) listener();
     });
   };
   /** The id the last New chat (or the first open of a tab with no chats) got. */
   const lastNewId = (): string => `chat-new-${made}`;
-  return { session, setWaiting, lastNewId };
+  return { session, setWaiting, setLive, lastNewId };
 }
 
 // ---- Object URLs (jsdom has none) ----------------------------------------------------------
@@ -485,6 +495,24 @@ describe('CoachPage: several chats (P16-03, D-16.99)', () => {
     expect(rows[1]).toHaveAttribute('data-waiting');
     await user.click(opener(rows[1]!));
     await untilShown('[data-ui="coach.typing"]');
+  });
+
+  it('shows a reply streaming in another chat live once that chat is opened (D-16.106)', async () => {
+    const user = userEvent.setup();
+    const { setWaiting, setLive } = await twoChats();
+    await until(() => chatName() === 'Dinners');
+    const live = () => document.querySelector('[data-ui="coach.live"] [data-ui="coach.reply"]');
+
+    setWaiting('chat-a');
+    setLive({ 'chat-a': 'Older chat, growing' });
+    expect(live()).toBeNull();
+
+    const rows = await openChats(user);
+    await user.click(opener(rows[1]!));
+    await until(() => live()?.textContent === 'Older chat, growing');
+    setLive({ 'chat-a': 'Older chat, growing still.' });
+    expect(live()?.textContent).toBe('Older chat, growing still.');
+    expect(shownTexts()).toEqual(['Older question', 'Older answer.']);
   });
 
   it('renames a chat from the list in its own sheet, then shows the list again', async () => {

@@ -3,17 +3,18 @@ import type { CoachMessage } from '../../domain/model';
 import { t } from '../../i18n/t';
 import type { CheckIn } from '../../services/coach/checkIns';
 import { Icon } from '../../ui/icons';
-import { AssistantBadge, Bubble } from './Bubble';
+import { Bubble, PendingReply } from './Bubble';
 import styles from './coach.module.css';
 import { ErrorBanner } from './ErrorBanner';
 import { useFollowEnd } from './followEnd';
-import { TypingDots } from './TypingDots';
 
 export interface MessageListProps {
   /** The stored conversation, oldest first. */
   readonly messages: readonly CoachMessage[];
   /** A reply is on its way: the dots show and the banner waits. */
   readonly pending: boolean;
+  /** The reply as far as it came while it streams in (D-16.106); undefined before its first word. */
+  readonly live?: string;
   /** Asks a failed question again. */
   readonly onRetry: (id: string) => void;
   /** How much of the screen the on-screen keyboard covers; the list follows the end when it moves. */
@@ -29,17 +30,48 @@ function failedQuestion(messages: readonly CoachMessage[], pending: boolean): Co
   return newest.role === 'user' && newest.state?.status === 'failed' ? newest : null;
 }
 
+/** The words of a reply streaming in, and the newest message when they began. */
+interface Shown {
+  readonly text: string;
+  readonly since: string | undefined;
+}
+
 /**
- * The conversation (P08-10): every message as a bubble, then the typing dots while a reply is on
- * its way, then the banner when the newest question failed. It is a polite log: replies arrive
- * whole, so each is announced once. It opens at the newest message and follows what arrives while
- * the person is at the end (or within 80 px of it); once they scroll up to read it stays put and
- * "Jump to latest" floats over its bottom edge with the count of new messages (P13). Their own
+ * The reply to show as it streams in. When its turn ends the session lets the words go a moment
+ * before the stored reply (or the failure) comes back from storage; the words stay until then, so
+ * the conversation never shrinks and grows again. A stored reply that comes back first shows in
+ * their place.
+ */
+function useShownReply(
+  live: string | undefined,
+  pending: boolean,
+  newest: CoachMessage | undefined,
+  failed: boolean,
+): string | undefined {
+  // A ref, not state: kept from the last draw for the next, never a draw of its own.
+  const shown = useRef<Shown | null>(null);
+  if (live !== undefined) {
+    shown.current = { text: live, since: shown.current?.since ?? newest?.id };
+  } else if (pending || failed || shown.current?.since !== newest?.id) {
+    shown.current = null;
+  }
+  const text = shown.current?.text;
+  return newest?.role === 'assistant' && newest.text === text ? undefined : text;
+}
+
+/**
+ * The conversation (P08-10): every message as a bubble, then the reply on its way (the typing
+ * dots, then its words as they stream in, D-16.106), then the banner when the newest question
+ * failed. It is a polite log of what is added: a reply is announced once, when it is stored, never
+ * word by word. It opens at the newest message and follows what arrives, a growing reply included,
+ * while the person is at the end (or within 80 px of it); once they scroll up to read it stays put
+ * and "Jump to latest" floats over its bottom edge with the count of new messages (P13). Their own
  * question always brings the end back.
  */
 export function MessageList({
   messages,
   pending,
+  live,
   onRetry,
   keyboardInset,
   checkIns,
@@ -47,11 +79,13 @@ export function MessageList({
   const listRef = useRef<HTMLDivElement>(null);
   const threadRef = useRef<HTMLDivElement>(null);
   const failed = failedQuestion(messages, pending);
+  const shown = useShownReply(live, pending, messages.at(-1), failed !== null);
   const { away, unseen, jump } = useFollowEnd({
     listRef,
     threadRef,
     messages,
     pending,
+    live: shown,
     keyboardInset,
   });
 
@@ -76,14 +110,7 @@ export function MessageList({
           {messages.map((message) => (
             <Bubble key={message.id} message={message} checkIns={checkIns?.get(message.id)} />
           ))}
-          {pending ? (
-            <div className={styles.assistantRow}>
-              <AssistantBadge />
-              <div className={styles.typingBubble}>
-                <TypingDots />
-              </div>
-            </div>
-          ) : null}
+          {pending || shown !== undefined ? <PendingReply text={shown} working={pending} /> : null}
           {failed?.state ? (
             <ErrorBanner
               key={failed.id}

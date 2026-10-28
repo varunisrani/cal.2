@@ -21,6 +21,12 @@
 // (D-16.23). When an attempt fails for any reason but Cancel or the deadline, a standby set up for
 // this kind of question runs the whole turn again from its first round, in a conversation of its
 // own: nothing the failed attempt sent or received goes with it (R04.1). Failures are values.
+//
+// Every round's reply streams in where the provider can (D-16.106): `onText` gets the answer's
+// text so far, each request from its own first piece, so the next round and the re-ask replace
+// what the last one wrote; when an attempt fails it gets '' before the standby starts. Tool calls
+// are read whole from their pieces and run when their round is over; the answer is given only
+// once it is complete, so nothing partial is ever stored.
 
 import { PROVIDERS } from '../../ai/catalog/providers';
 import { askRound, chatWireFor } from '../../ai/chat/round';
@@ -76,6 +82,8 @@ export interface TurnInput {
    * check-ins. Used only with `reminders` and `chatId`.
    */
   readonly actions?: CoachActions;
+  /** The reply as it is written: the text so far, '' when it starts over (D-16.106). */
+  readonly onText?: (text: string) => void;
 }
 
 /**
@@ -201,6 +209,8 @@ async function turn(
   const standby = standbyFor(role, settings, keys);
   if (standby === null) return first;
 
+  // Nothing the failed attempt wrote stays in view while the standby starts afresh.
+  input.onText?.('');
   const second = await attempt(plan, standby);
   if (second.ok) return second;
   return err(bothFailed(nameOf(role), nameOf(standby), second.error));
@@ -259,6 +269,7 @@ async function rounds(
         fetch: deps.fetch,
         deadline,
         secrets: plan.secrets,
+        ...(input.onText === undefined ? {} : { onText: input.onText }),
       });
       if (!reply.ok) return reply;
       if (reply.value.kind === 'answer') {

@@ -137,6 +137,55 @@ describe('fakeFetch: delays on fake timers', () => {
   });
 });
 
+describe('fakeFetch: a body in pieces', () => {
+  it('hands each piece over after its wait, as a stream of server-sent events', async () => {
+    useFakeTime('2026-10-26T12:00:00Z');
+    const fake = fakeFetch().on(CHAT, {
+      chunks: [{ text: 'data: one\n\n' }, { text: 'data: two\n\n', delayMs: 1000 }],
+    });
+
+    const response = await fake.fetch(CHAT);
+    expect(response.headers.get('content-type')).toBe('text/event-stream');
+    const reader = response.body!.getReader();
+    const decode = (bytes: Uint8Array | undefined) => new TextDecoder().decode(bytes);
+    expect(decode((await reader.read()).value)).toBe('data: one\n\n');
+    const next = reader.read();
+    const state = watch(next);
+    await advanceAsync(999);
+    expect(state.settled()).toBe(false);
+    await advanceAsync(1);
+    expect(decode((await next).value)).toBe('data: two\n\n');
+    expect((await reader.read()).done).toBe(true);
+  });
+
+  it('breaks the connection at a fail piece, after the pieces before it were read', async () => {
+    const fake = fakeFetch().on(CHAT, { chunks: [{ text: 'data: one\n\n' }, { fail: 'network' }] });
+    const reader = (await fake.fetch(CHAT)).body!.getReader();
+    expect((await reader.read()).done).toBe(false);
+    await expect(reader.read()).rejects.toThrow(TypeError);
+  });
+
+  it('fails the read when the abort comes between pieces', async () => {
+    useFakeTime('2026-10-26T12:00:00Z');
+    const controller = new AbortController();
+    const fake = fakeFetch().on(CHAT, {
+      chunks: [{ text: 'data: one\n\n' }, { text: 'data: two\n\n', delayMs: 5000 }],
+    });
+    const reader = (await fake.fetch(CHAT, { signal: controller.signal })).body!.getReader();
+    await reader.read();
+    const next = reader.read();
+    controller.abort();
+    await expect(next).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('refuses chunks together with json, text or a body delay', () => {
+    expect(() => fakeFetch().on(CHAT, { chunks: [], text: 'x' })).toThrow(TypeError);
+    expect(() => fakeFetch().on(CHAT, { chunks: [{ text: 'x', delayMs: -1 }] })).toThrow(
+      RangeError,
+    );
+  });
+});
+
 describe('fakeFetch: AbortSignal', () => {
   it('rejects with an AbortError when the signal is already aborted, using no reply', async () => {
     const fake = fakeFetch().on(CHAT, { json: {} });

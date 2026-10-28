@@ -190,7 +190,7 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | I10 | Conversations kept locally: newest 200 messages per chat, small thumbnails, included in backups (D-16.29, D-16.99) | P1 | M D | 04 §3.7; 16 D-16.29 |
 | I11 | Friendly errors with Details and Retry on the failed turn (D-16.31) | P1 | M D | 04 §3.6; 16 D-16.31 |
 | I12 | The standby provider re-runs the whole turn when the primary fails | P1 | M D | 04 §3.12, R04.1 |
-| I13 | Streaming replies | P3 (D-16.47) | — | 04 Q6 |
+| I13 | Streaming replies | P1 (P18, D-16.106; was P3, D-16.47) | M D | 04 Q6; 16 D-16.106 |
 | I14 | Several Coach chats: New chat and chat history | P1 (P16, D-16.99) | M D | 16 D-16.99 |
 | I15 | The Coach's own reminders, check-ins and reply notices | P1 on Android (P17, D-16.102) | M | 16 D-16.102 |
 
@@ -272,9 +272,9 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 143 |
+| Tier P1 | 144 |
 | Tier P2 | 8 |
-| Tier P3 | 22 |
+| Tier P3 | 21 |
 | All tiers | 191 |
 
 Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16, M18, I15, J14 and J15 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

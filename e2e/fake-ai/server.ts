@@ -2,10 +2,14 @@
  * A scripted OpenAI-compatible provider for e2e and parity runs, so no run needs a key or the
  * internet and every run gets the same answers. It listens on 127.0.0.1 only (plain HTTP is
  * allowed for loopback, D-16.26); the app reaches it as the Custom provider at
- * `http://127.0.0.1:<port>/v1`.
+ * `http://127.0.0.1:<port>/v1`. A reply may also come as a stream of server-sent events (the
+ * Coach's live replies, D-16.106), written one event at a time; the script holds each event's
+ * data in the format of the route it answers.
  *
  * Routes (every reply carries `Access-Control-Allow-Origin: *`):
  * - `POST /v1/chat/completions`: recorded, then answered with the script's next reply.
+ * - `POST /v1/messages` (Anthropic's format) and `POST /v1beta/models/<model>:generateContent` or
+ *   `:streamGenerateContent` (Gemini's): the same, for streams in those formats.
  * - `POST /__script`: `{ "name": "<file in scripts/ without .json>" }` or an inline script.
  * - `GET /__requests`: the recorded chat requests, oldest first, never with `authorization`.
  * - `POST /__reset`: an empty script and nothing recorded.
@@ -24,13 +28,33 @@ export const HOST = '127.0.0.1';
 export const DEFAULT_PORT = 4320;
 export const PORT_ENV = 'PLATEWISE_FAKE_AI_PORT';
 export const CHAT_PATH = '/v1/chat/completions';
+export const MESSAGES_PATH = '/v1/messages';
+/** Gemini's two routes, whole and streamed, for any model. */
+export const GEMINI_PATH = /^\/v1beta\/models\/[^/:]+:(?:generateContent|streamGenerateContent)$/;
 export const SCRIPTS_DIR = fileURLToPath(new URL('./scripts/', import.meta.url));
 
-/** One canned answer: an HTTP status, a body, and an optional wait before answering. */
+/** One server-sent event of a streamed reply. */
+export interface ScriptEvent {
+  /** The `event:` name (Anthropic names every event); none when left out. */
+  event?: string;
+  /** A string is sent as-is (`[DONE]`); anything else as JSON. */
+  data: unknown;
+}
+
+/**
+ * One canned answer: an HTTP status, a body or a stream of events, and an optional wait before
+ * answering.
+ */
 export interface ScriptReply {
   status: number;
   /** A string is sent as-is (so a script can send text that is not JSON); anything else as JSON. */
-  body: unknown;
+  body?: unknown;
+  /** Sent as `text/event-stream` in place of a body, one event at a time. */
+  events?: ScriptEvent[];
+  /** The wait before each event. */
+  eventDelayMs?: number;
+  /** The stream stops after this many events, the rest never sent: a reply cut short. */
+  cutAfter?: number;
   delayMs?: number;
 }
 
@@ -66,11 +90,14 @@ export class ScriptError extends Error {
 
 const PREFLIGHT_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, content-type',
+  'Access-Control-Allow-Headers':
+    'authorization, content-type, x-api-key, anthropic-version, ' +
+    'anthropic-dangerous-direct-browser-access, x-goog-api-key',
 };
 
 const SCRIPT_KEYS = ['description', 'replies'];
-const REPLY_KEYS = ['status', 'body', 'delayMs'];
+const REPLY_KEYS = ['status', 'body', 'events', 'eventDelayMs', 'cutAfter', 'delayMs'];
+const EVENT_KEYS = ['event', 'data'];
 
 const isRecord = (v: unknown): v is Record<string, unknown> =>
   typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -89,6 +116,57 @@ export function portFromEnv(env: Record<string, string | undefined> = process.en
   return port;
 }
 
+/** A wait in milliseconds, 0 or more, or undefined when left out. */
+function waitOf(value: unknown, where: string, key: string): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    throw new ScriptError(`${where}: ${key} must be a number of milliseconds, 0 or more`);
+  }
+  return value;
+}
+
+function parseEvent(value: unknown, where: string): ScriptEvent {
+  if (!isRecord(value) || !('data' in value)) {
+    throw new ScriptError(`${where} is not an object with "data"`);
+  }
+  const unknownKey = Object.keys(value).find((key) => !EVENT_KEYS.includes(key));
+  if (unknownKey !== undefined) {
+    throw new ScriptError(
+      `${where}: unknown key "${unknownKey}" (allowed: ${EVENT_KEYS.join(', ')})`,
+    );
+  }
+  if (value.event === undefined) return { data: value.data };
+  if (typeof value.event !== 'string' || /[\r\n]/.test(value.event)) {
+    throw new ScriptError(`${where}: event must be a name on one line`);
+  }
+  return { event: value.event, data: value.data };
+}
+
+/** A stream's events and its options, checked. */
+function parseStream(value: Record<string, unknown>, where: string): Omit<ScriptReply, 'status'> {
+  if ('body' in value) throw new ScriptError(`${where}: a reply has a body or events, not both`);
+  if (!Array.isArray(value.events) || value.events.length === 0) {
+    throw new ScriptError(`${where}: events must be a list of at least one event`);
+  }
+  const events = value.events.map((event, i) => parseEvent(event, `${where} event ${i + 1}`));
+  const eventDelayMs = waitOf(value.eventDelayMs, where, 'eventDelayMs');
+  const { cutAfter } = value;
+  if (
+    cutAfter !== undefined &&
+    (typeof cutAfter !== 'number' ||
+      !Number.isInteger(cutAfter) ||
+      cutAfter < 0 ||
+      cutAfter >= events.length)
+  ) {
+    throw new ScriptError(`${where}: cutAfter must be a whole number below the number of events`);
+  }
+  return {
+    events,
+    ...(eventDelayMs === undefined ? {} : { eventDelayMs }),
+    ...(cutAfter === undefined ? {} : { cutAfter }),
+  };
+}
+
 function parseReply(value: unknown, n: number): ScriptReply {
   const where = `reply ${n}`;
   if (!isRecord(value)) throw new ScriptError(`${where} is not an object`);
@@ -98,16 +176,18 @@ function parseReply(value: unknown, n: number): ScriptReply {
       `${where}: unknown key "${unknownKey}" (allowed: ${REPLY_KEYS.join(', ')})`,
     );
   }
-  const { status, delayMs } = value;
+  const { status } = value;
   if (typeof status !== 'number' || !Number.isInteger(status) || status < 200 || status > 599) {
     throw new ScriptError(`${where}: status must be a whole number from 200 to 599`);
   }
-  if (!('body' in value)) throw new ScriptError(`${where}: body is missing`);
-  if (delayMs === undefined) return { status, body: value.body };
-  if (typeof delayMs !== 'number' || !Number.isFinite(delayMs) || delayMs < 0) {
-    throw new ScriptError(`${where}: delayMs must be a number of milliseconds, 0 or more`);
+  const delayMs = waitOf(value.delayMs, where, 'delayMs');
+  const delay = delayMs === undefined ? {} : { delayMs };
+  if ('events' in value) return { status, ...parseStream(value, where), ...delay };
+  if ('eventDelayMs' in value || 'cutAfter' in value) {
+    throw new ScriptError(`${where}: eventDelayMs and cutAfter go with events`);
   }
-  return { status, body: value.body, delayMs };
+  if (!('body' in value)) throw new ScriptError(`${where}: body is missing`);
+  return { status, body: value.body, ...delay };
 }
 
 /** Checks a script's shape; throws a ScriptError naming the first problem. */
@@ -166,6 +246,13 @@ function send(res: ServerResponse, status: number, body: unknown): void {
     'Content-Length': Buffer.byteLength(text),
   });
   res.end(text);
+}
+
+/** One event as written on the wire. */
+export function sseText(event: ScriptEvent): string {
+  const data = typeof event.data === 'string' ? event.data : JSON.stringify(event.data);
+  const lines = data.split(/\r\n|\r|\n/).map((line) => `data: ${line}\n`);
+  return `${event.event === undefined ? '' : `event: ${event.event}\n`}${lines.join('')}\n`;
 }
 
 async function readText(req: IncomingMessage): Promise<string> {
@@ -254,7 +341,29 @@ export function startFakeAiServer(options: { port?: number } = {}): Promise<Fake
     if (reply.delayMs) await wait(reply.delayMs);
     // The client left while the reply waited (a Coach Reset, a closed page): nothing to answer.
     if (req.socket.destroyed) return;
-    send(res, reply.status, reply.body);
+    if (reply.events === undefined) send(res, reply.status, reply.body);
+    else await stream(req, res, reply, reply.events);
+  }
+
+  /** Writes a reply's events one at a time, each after its wait; stops when the client left. */
+  async function stream(
+    req: IncomingMessage,
+    res: ServerResponse,
+    reply: ScriptReply,
+    events: ScriptEvent[],
+  ): Promise<void> {
+    res.writeHead(reply.status, {
+      'Content-Type': 'text/event-stream; charset=utf-8',
+      'Cache-Control': 'no-cache',
+    });
+    res.flushHeaders();
+    const sent = reply.cutAfter === undefined ? events : events.slice(0, reply.cutAfter);
+    for (const event of sent) {
+      if (reply.eventDelayMs) await wait(reply.eventDelayMs);
+      if (req.socket.destroyed) return;
+      res.write(sseText(event));
+    }
+    res.end();
   }
 
   async function loadScript(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -282,7 +391,10 @@ export function startFakeAiServer(options: { port?: number } = {}): Promise<Fake
     if (method === 'OPTIONS') {
       res.writeHead(204, PREFLIGHT_HEADERS);
       res.end();
-    } else if (method === 'POST' && path === CHAT_PATH) {
+    } else if (
+      method === 'POST' &&
+      (path === CHAT_PATH || path === MESSAGES_PATH || GEMINI_PATH.test(path))
+    ) {
       await chat(req, res);
     } else if (method === 'POST' && path === '/__script') {
       await loadScript(req, res);

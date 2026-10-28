@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   CHAT_PATH,
   DEFAULT_PORT,
+  MESSAGES_PATH,
   PORT_ENV,
   portFromEnv,
   readNamedScript,
   scriptNames,
+  sseText,
   startFakeAiServer,
   type FakeAiServer,
   type RecordedRequest,
@@ -119,7 +121,10 @@ describe('CORS', () => {
     expect(answer.status).toBe(204);
     expect(answer.headers['access-control-allow-origin']).toBe('*');
     expect(answer.headers['access-control-allow-methods']).toBe('GET, POST, OPTIONS');
-    expect(answer.headers['access-control-allow-headers']).toBe('authorization, content-type');
+    expect(answer.headers['access-control-allow-headers']).toBe(
+      'authorization, content-type, x-api-key, anthropic-version, ' +
+        'anthropic-dangerous-direct-browser-access, x-goog-api-key',
+    );
     expect(answer.text).toBe('');
     expect(await recorded()).toEqual([]);
   });
@@ -215,6 +220,129 @@ describe('scripted replies', () => {
     const answer = await reply;
     expect(answer.status).toBe(200);
     expect(json(answer)).toEqual({ late: true });
+  });
+});
+
+describe('streamed replies (D-16.106)', () => {
+  const chunk = (content: string) => ({
+    data: { object: 'chat.completion.chunk', choices: [{ index: 0, delta: { content } }] },
+  });
+
+  it('writes the events as server-sent events, in order, on the OpenAI-compatible route', async () => {
+    const events = [chunk('Two '), chunk('eggs.'), { data: '[DONE]' }];
+    await load({ replies: [{ status: 200, events }] });
+    const answer = await ask('breakfast?');
+    expect(answer.status).toBe(200);
+    expect(answer.headers['content-type']).toBe('text/event-stream; charset=utf-8');
+    expect(answer.headers['access-control-allow-origin']).toBe('*');
+    expect(answer.text).toBe(
+      'data: {"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Two "}}]}\n\n' +
+        'data: {"object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"eggs."}}]}\n\n' +
+        'data: [DONE]\n\n',
+    );
+  });
+
+  it('names the events on Anthropic’s route, and records the request there', async () => {
+    const events = [
+      { event: 'message_start', data: { type: 'message_start' } },
+      { event: 'message_stop', data: { type: 'message_stop' } },
+    ];
+    await load({ replies: [{ status: 200, events }] });
+    const answer = await call('POST', MESSAGES_PATH, { body: { stream: true } });
+    expect(answer.text).toBe(
+      'event: message_start\ndata: {"type":"message_start"}\n\n' +
+        'event: message_stop\ndata: {"type":"message_stop"}\n\n',
+    );
+    expect((await recorded()).map((r) => [r.path, r.body])).toEqual([
+      [MESSAGES_PATH, { stream: true }],
+    ]);
+  });
+
+  it('answers Gemini’s streamGenerateContent with alt=sse, and its whole route too', async () => {
+    const piece = {
+      candidates: [{ content: { parts: [{ text: 'On track.' }] }, finishReason: 'STOP' }],
+    };
+    await load({
+      replies: [
+        { status: 200, events: [{ data: piece }] },
+        { status: 200, body: piece },
+      ],
+    });
+    const path = '/v1beta/models/gemini-3-flash:streamGenerateContent?alt=sse';
+    const streamed = await call('POST', path, { body: { contents: [] } });
+    expect(streamed.text).toBe(`data: ${JSON.stringify(piece)}\n\n`);
+    const whole = await call('POST', '/v1beta/models/gemini-3-flash:generateContent', {
+      body: { contents: [] },
+    });
+    expect(json(whole)).toEqual(piece);
+    expect((await recorded()).map((r) => r.path)).toEqual([
+      path,
+      '/v1beta/models/gemini-3-flash:generateContent',
+    ]);
+  });
+
+  it('writes data over several lines as several data lines', () => {
+    expect(sseText({ data: 'one\ntwo' })).toBe('data: one\ndata: two\n\n');
+  });
+
+  it('stops a stream after cutAfter events, without the rest', async () => {
+    await load({
+      replies: [
+        {
+          status: 200,
+          events: [chunk('Half '), chunk('a reply'), { data: '[DONE]' }],
+          cutAfter: 1,
+        },
+      ],
+    });
+    expect((await ask('cut?')).text).toBe(sseText(chunk('Half ')));
+  });
+
+  it('spaces the events by eventDelayMs, on fake timers (no real wait)', async () => {
+    await load({
+      replies: [
+        { status: 200, events: [chunk('a'), chunk('b'), { data: '[DONE]' }], eventDelayMs: 1_000 },
+      ],
+    });
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+
+    let answered = false;
+    const reply = ask('slowly').then((answer) => {
+      answered = true;
+      return answer;
+    });
+    for (let tries = 1; vi.getTimerCount() === 0; tries++) {
+      if (tries === 100) throw new Error('the stream never started');
+      await recorded();
+    }
+    vi.advanceTimersByTime(1_000);
+    await recorded();
+    vi.advanceTimersByTime(1_000);
+    await recorded();
+    expect(answered).toBe(false);
+
+    vi.advanceTimersByTime(1_000);
+    const answer = await reply;
+    expect(answer.text).toBe(
+      [chunk('a'), chunk('b'), { data: '[DONE]' }].map((event) => sseText(event)).join(''),
+    );
+  });
+
+  it.each([
+    ['both a body and events', { status: 200, body: {}, events: [{ data: 1 }] }, /body or events/],
+    ['no events', { status: 200, events: [] }, /events must be a list of at least one/],
+    [
+      'an event without data',
+      { status: 200, events: [{ event: 'x' }] },
+      /event 1 is not an object/,
+    ],
+    ['a name over two lines', { status: 200, events: [{ event: 'a\nb', data: 1 }] }, /one line/],
+    ['a cut past the end', { status: 200, events: [{ data: 1 }], cutAfter: 1 }, /cutAfter/],
+    ['a wait without events', { status: 200, body: {}, eventDelayMs: 5 }, /go with events/],
+  ])('refuses a stream with %s', async (_case, reply, message) => {
+    const refused = await load({ replies: [reply] });
+    expect(refused.status).toBe(400);
+    expect(errorMessage(refused)).toMatch(message);
   });
 });
 
@@ -391,6 +519,23 @@ describe('starter scripts', () => {
       days: expect.any(String),
     });
     expect(firstChoice(replies[1]!.body).finish_reason).toBe('stop');
+  });
+
+  it('coach-stream streams a Coach answer in pieces, then its finish and [DONE] (D-16.106)', () => {
+    const { replies } = readNamedScript('coach-stream');
+    expect(replies).toHaveLength(1);
+    const [reply] = replies as [NonNullable<(typeof replies)[number]>];
+    expect(reply.eventDelayMs).toBeGreaterThan(0);
+    const events = reply.events ?? [];
+    expect(events.at(-1)).toEqual({ data: '[DONE]' });
+    const pieces = events.slice(0, -2).map((event) => {
+      const delta = (event.data as Completion & { choices: { delta: { content?: string } }[] })
+        .choices[0]!.delta;
+      return delta.content ?? '';
+    });
+    expect(pieces.filter((piece) => piece !== '').length).toBeGreaterThanOrEqual(6);
+    expect(pieces.join('')).toMatch(/\w.*\.$/);
+    expect(firstChoice(events.at(-2)!.data).finish_reason).toBe('stop');
   });
 
   it('garbage is a 200 whose body no JSON parser accepts', () => {

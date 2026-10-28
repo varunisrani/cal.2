@@ -4,6 +4,7 @@ import { DEFAULT_AI_SETTINGS, type AiSettings } from '../../ai/settings';
 import { fakeFetch, type FakeFetch, type RecordedRequest } from '../../ai/testing/fakeFetch';
 import { openAiToolCalls } from '../../ai/testing/toolWire';
 import { anthropicError, openAiAnswer, openAiError, type JsonObject } from '../../ai/testing/wire';
+import { OPENAI_DONE, openAiChunk, openAiTextStream, streamOf } from '../../ai/testing/streamWire';
 import { createHealthRepo } from '../../data/repos/healthRepo';
 import type { PlatewiseDb } from '../../data/schema';
 import { CUSTOM_REMINDER_LIMIT, WEEKDAYS } from '../../domain/reminders/custom';
@@ -167,6 +168,8 @@ interface SetUpOptions {
   readonly reminders?: boolean;
   /** What the Android app lets the Coach do, with `reminders` (P17; none by default: the web). */
   readonly android?: boolean;
+  /** The fetch the session gets, in place of the fake's (streams the test writes by hand). */
+  readonly fetch?: typeof fetch;
 }
 
 async function setUp(options: SetUpOptions = {}): Promise<Harness> {
@@ -192,7 +195,7 @@ async function setUp(options: SetUpOptions = {}): Promise<Harness> {
     coachRepo: stores.coachRepo,
     data: activityRepo === undefined ? stores.sources : { ...stores.sources, activityRepo },
     aiAccess: () => Promise.resolve(access),
-    fetch: hold?.fetch ?? gate?.fetch ?? fake.fetch,
+    fetch: options.fetch ?? hold?.fetch ?? gate?.fetch ?? fake.fetch,
     photoOnlyText: () => PHOTO_ONLY,
     codec: codec.codec,
     imageBackend: backend,
@@ -242,11 +245,11 @@ describe('createCoachSession: send (04 §3.6)', () => {
     h.fake.on(MISTRAL, { json: openAiAnswer('  About 1 650 kcal so far today.  ') });
 
     const turn = h.session.send(CHAT, '  How am I doing today?  ');
-    expect(h.session.getState()).toEqual({ waiting: [CHAT] });
+    expect(h.session.getState()).toEqual({ waiting: [CHAT], live: {} });
     expect(h.changes()).toBe(1);
 
     expect(await turn).toBe('answered');
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
     expect(h.changes()).toBe(2);
     expect(await chat(h.stores)).toEqual([
       { role: 'user', text: 'How am I doing today?' },
@@ -306,7 +309,7 @@ describe('createCoachSession: send (04 §3.6)', () => {
     );
     expect(await chat(h.stores)).toEqual([]);
     expect(h.fake.requests).toHaveLength(0);
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
   });
 
   it('runs the tools on the data as it stood at Send, not on what is logged meanwhile (R04.22)', async () => {
@@ -349,7 +352,7 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
         state: { status: 'failed', kind: 'keyRejected', details: 'Bad key •••; also tried •••' },
       },
     ]);
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
   });
 
   it('stores the standby’s failure when both providers fail', async () => {
@@ -379,7 +382,7 @@ describe('createCoachSession: failures and Retry (D-16.31, R04.4)', () => {
     const [failed] = await h.stores.coachRepo.list(CHAT);
 
     const retry = h.session.retry(CHAT, failed?.id ?? '');
-    expect(h.session.getState()).toEqual({ waiting: [CHAT] });
+    expect(h.session.getState()).toEqual({ waiting: [CHAT], live: {} });
     expect(await retry).toBe('answered');
 
     expect(await chat(h.stores)).toEqual([
@@ -457,7 +460,7 @@ describe('createCoachSession: Reset (R04.6, D-16.34)', () => {
     const turn = h.session.send(CHAT, 'How am I doing today?');
     await h.hold?.reached;
     const deleting = h.session.deleteChat(CHAT);
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
     await deleting;
 
     expect(await turn).toBe('dropped');
@@ -527,7 +530,7 @@ describe('createCoachSession: Reset (R04.6, D-16.34)', () => {
 
     expect(await chat(h.stores)).toEqual([]);
     expect(await h.stores.coachRepo.chats()).toEqual([]);
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
   });
 });
 
@@ -565,17 +568,17 @@ describe('createCoachSession: several chats (P16-02, D-16.99)', () => {
 
     const inA = h.session.send(A, 'Question in A');
     const inB = h.session.send(B, 'Question in B');
-    expect(h.session.getState()).toEqual({ waiting: [A, B] });
+    expect(h.session.getState()).toEqual({ waiting: [A, B], live: {} });
     await h.gate?.reached('Question in A');
     await h.gate?.reached('Question in B');
 
     // B's request goes through first and takes the first answer.
     h.gate?.release('Question in B');
     expect(await inB).toBe('answered');
-    expect(h.session.getState()).toEqual({ waiting: [A] });
+    expect(h.session.getState()).toEqual({ waiting: [A], live: {} });
     h.gate?.release('Question in A');
     expect(await inA).toBe('answered');
-    expect(h.session.getState()).toEqual({ waiting: [] });
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
 
     expect(await chat(h.stores, B)).toEqual([
       { role: 'user', text: 'Question in B' },
@@ -614,7 +617,7 @@ describe('createCoachSession: several chats (P16-02, D-16.99)', () => {
     expect(fresh).not.toBe(A);
     expect(await h.session.send(A, 'Again in A')).toBe('ignored');
     const inFresh = h.session.send(fresh, 'A quick question');
-    expect(h.session.getState()).toEqual({ waiting: [A, fresh] });
+    expect(h.session.getState()).toEqual({ waiting: [A, fresh], live: {} });
     h.gate?.release('A quick question');
     expect(await inFresh).toBe('answered');
 
@@ -640,7 +643,7 @@ describe('createCoachSession: several chats (P16-02, D-16.99)', () => {
     await h.gate?.reached('Question in B');
 
     await h.session.deleteChat(A);
-    expect(h.session.getState()).toEqual({ waiting: [B] });
+    expect(h.session.getState()).toEqual({ waiting: [B], live: {} });
     expect(await inA).toBe('dropped');
     expect(requestFor(h, 'Question in A')?.signal?.aborted).toBe(true);
     h.gate?.release('Question in B');
@@ -1035,5 +1038,157 @@ describe('createCoachSession: what the Coach does itself in the Android app (P17
     expect(tools).toContain('propose_reminder');
     expect(tools).not.toContain('set_reminder');
     expect(tools).not.toContain('schedule_check_in');
+  });
+});
+
+describe('createCoachSession: replies that stream in (D-16.106)', () => {
+  /**
+   * A fetch whose answers to the questions in `streamed` are streams the test writes piece by
+   * piece; every other question goes to `inner`.
+   */
+  function handStreams(inner: typeof fetch, streamed: readonly string[]) {
+    const encoder = new TextEncoder();
+    const writers = new Map<string, ReadableStreamDefaultController<Uint8Array>>();
+    const arrivals = new Map<string, () => void>();
+    const reached = new Map(
+      streamed.map((question) => [
+        question,
+        new Promise<void>((resolve) => arrivals.set(question, resolve)),
+      ]),
+    );
+    const handFetch: typeof fetch = async (input, init) => {
+      const question = askedIn(init);
+      if (!streamed.includes(question)) return inner(input, init);
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          writers.set(question, controller);
+        },
+      });
+      init?.signal?.addEventListener(
+        'abort',
+        () => writers.get(question)?.error(init.signal?.reason),
+        { once: true },
+      );
+      arrivals.get(question)?.();
+      return new Response(body, { headers: { 'content-type': 'text/event-stream' } });
+    };
+    const writer = (question: string) => {
+      const found = writers.get(question);
+      if (found === undefined) throw new Error(`no stream for "${question}" yet`);
+      return found;
+    };
+    return {
+      fetch: handFetch,
+      reached: (question: string) => reached.get(question)!,
+      write: (question: string, events: readonly string[]) =>
+        writer(question).enqueue(encoder.encode(streamOf(events))),
+      close: (question: string) => writer(question).close(),
+      break: (question: string) => writer(question).error(new TypeError('connection reset')),
+    };
+  }
+
+  /** Waits until the session's state says so. */
+  function until(h: Harness, check: (state: ReturnType<CoachSession['getState']>) => boolean) {
+    return new Promise<void>((resolve) => {
+      if (check(h.session.getState())) {
+        resolve();
+        return;
+      }
+      const stop = h.session.subscribe(() => {
+        if (!check(h.session.getState())) return;
+        stop();
+        resolve();
+      });
+    });
+  }
+
+  const QUESTION = 'What did I eat yesterday?';
+
+  it('holds the reply as far as it came, by chat, and lets it go once the reply is stored (ACC-I13-1)', async () => {
+    const fake = fakeFetch();
+    const hand = handStreams(fake.fetch, [QUESTION]);
+    const h = await setUp({ fetch: hand.fetch });
+
+    const turn = h.session.send(CHAT, QUESTION);
+    await hand.reached(QUESTION);
+    hand.write(QUESTION, [openAiChunk({ role: 'assistant', content: '' })]);
+    hand.write(QUESTION, [openAiChunk({ content: 'Yesterday: ' })]);
+    await until(h, (state) => state.live[CHAT] === 'Yesterday:');
+    expect(h.session.getState()).toEqual({ waiting: [CHAT], live: { [CHAT]: 'Yesterday:' } });
+    hand.write(QUESTION, [openAiChunk({ content: 'a matcha oat latte.' })]);
+    await until(h, (state) => state.live[CHAT] === 'Yesterday: a matcha oat latte.');
+    // Nothing is stored before the reply is complete.
+    expect(await chat(h.stores)).toEqual([{ role: 'user', text: QUESTION }]);
+
+    hand.write(QUESTION, [openAiChunk({}, 'stop'), OPENAI_DONE]);
+    hand.close(QUESTION);
+    expect(await turn).toBe('answered');
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
+    expect(await chat(h.stores)).toEqual([
+      { role: 'user', text: QUESTION },
+      { role: 'assistant', text: 'Yesterday: a matcha oat latte.' },
+    ]);
+    expect(h.onReply).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores nothing of a reply that breaks off, and marks the question for Retry (ACC-I13-2)', async () => {
+    const fake = fakeFetch();
+    const hand = handStreams(fake.fetch, [QUESTION]);
+    const h = await setUp({ fetch: hand.fetch });
+
+    const turn = h.session.send(CHAT, QUESTION);
+    await hand.reached(QUESTION);
+    hand.write(QUESTION, openAiTextStream(['Yesterday: ', 'a matcha']).slice(0, 3));
+    await until(h, (state) => state.live[CHAT] === 'Yesterday: a matcha');
+    hand.break(QUESTION);
+
+    expect(await turn).toBe('failed');
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
+    expect(await chat(h.stores)).toEqual([
+      { role: 'user', text: QUESTION, state: { status: 'failed', kind: 'connection' } },
+    ]);
+    expect(h.onReply).not.toHaveBeenCalled();
+  });
+
+  it('keeps a streaming reply apart from another chat’s, which answers whole meanwhile', async () => {
+    const fake = fakeFetch().on(MISTRAL, { json: openAiAnswer('Whole, in B.') });
+    const hand = handStreams(fake.fetch, ['Streamed in A?']);
+    const h = await setUp({ fetch: hand.fetch });
+
+    const inA = h.session.send('chat-a', 'Streamed in A?');
+    await hand.reached('Streamed in A?');
+    hand.write('Streamed in A?', openAiTextStream(['Growing ']).slice(0, 2));
+    await until(h, (state) => state.live['chat-a'] === 'Growing');
+
+    expect(await h.session.send('chat-b', 'Whole in B?')).toBe('answered');
+    expect(h.session.getState()).toEqual({ waiting: ['chat-a'], live: { 'chat-a': 'Growing' } });
+
+    hand.write('Streamed in A?', openAiTextStream(['in A.']).slice(1));
+    hand.close('Streamed in A?');
+    expect(await inA).toBe('answered');
+    expect((await chat(h.stores, 'chat-a')).at(-1)).toEqual({
+      role: 'assistant',
+      text: 'Growing in A.',
+    });
+    expect((await chat(h.stores, 'chat-b')).at(-1)).toEqual({
+      role: 'assistant',
+      text: 'Whole, in B.',
+    });
+  });
+
+  it('drops a streaming reply at once when its chat is deleted, storing nothing', async () => {
+    const fake = fakeFetch();
+    const hand = handStreams(fake.fetch, [QUESTION]);
+    const h = await setUp({ fetch: hand.fetch });
+
+    const turn = h.session.send(CHAT, QUESTION);
+    await hand.reached(QUESTION);
+    hand.write(QUESTION, openAiTextStream(['Yesterday']).slice(0, 2));
+    await until(h, (state) => state.live[CHAT] === 'Yesterday');
+
+    await h.session.deleteChat(CHAT);
+    expect(h.session.getState()).toEqual({ waiting: [], live: {} });
+    expect(await turn).toBe('dropped');
+    expect(await chat(h.stores)).toEqual([]);
   });
 });

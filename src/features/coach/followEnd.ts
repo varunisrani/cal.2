@@ -1,7 +1,8 @@
 // Keeping the Coach's conversation at its newest message (P13, the owner's "easy to use" chat).
-// The list follows a reply, the waiting dots and anything that grows while the person is at the
-// end or close to it; once they scroll up to read, it stays where they are and counts what
-// arrives, for the "Jump to latest" button. Their own question always brings the end back.
+// The list follows a reply, the waiting dots, a reply growing as it streams in (D-16.106) and
+// anything that grows while the person is at the end or close to it; once they scroll up to read,
+// it stays where they are and counts what arrives, for the "Jump to latest" button. Their own
+// question always brings the end back.
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import type { CoachMessage } from '../../domain/model';
@@ -73,6 +74,8 @@ export interface FollowEndInput {
   readonly threadRef: RefObject<HTMLElement | null>;
   readonly messages: readonly CoachMessage[];
   readonly pending: boolean;
+  /** The reply streaming in, as far as it came; the end follows it while it grows. */
+  readonly live?: string;
   /** The on-screen keyboard's cover; the end stays in view when it moves. */
   readonly keyboardInset: number;
 }
@@ -86,6 +89,7 @@ export function useFollowEnd({
   threadRef,
   messages,
   pending,
+  live,
   keyboardInset,
 }: FollowEndInput): FollowEnd {
   /** Following the end. A ref: scroll events and observers read it between renders. */
@@ -126,11 +130,12 @@ export function useFollowEnd({
     if (following.current) setSeenId(newestId);
   }, [listRef, newestId, newestRole, settle, toEnd]);
 
-  // The waiting dots and the keyboard move the end; the list follows only while it follows.
+  // The waiting dots, a growing reply and the keyboard move the end; the list follows only while
+  // it follows.
   useLayoutEffect(() => {
     const list = listRef.current;
     if (list && opened.current && following.current) toEnd(list);
-  }, [listRef, pending, keyboardInset, toEnd]);
+  }, [listRef, pending, live, keyboardInset, toEnd]);
 
   useEffect(() => {
     const list = listRef.current;

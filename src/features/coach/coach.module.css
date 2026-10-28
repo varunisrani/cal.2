@@ -279,6 +279,16 @@
   color: var(--text-muted);
 }
 
+/* While a reply streams in, the dots hold the copy button's place, so nothing moves when it lands. */
+.liveMark {
+  display: grid;
+  place-items: center;
+  justify-self: end;
+  min-block-size: calc(var(--space-8) + var(--space-3));
+  min-inline-size: calc(var(--space-8) + var(--space-3));
+  margin-inline-end: calc(var(--space-3) * -1);
+}
+
 /* ---- Reminder cards ------------------------------------------------------------------------ */
 
 .reminderCard {

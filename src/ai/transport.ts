@@ -14,8 +14,10 @@ export interface Reply {
   readonly status: number;
   /** True for every 2xx status, 204 and 299 included (R03.26). */
   readonly ok: boolean;
-  /** The body as text; empty when there is none. */
+  /** The body as text; empty when there is none, or when it came as a stream. */
   readonly body: string;
+  /** The body came as server-sent events and went to the reader as it arrived (D-16.106). */
+  readonly streamed?: boolean;
 }
 
 /** A request without a signal: `send` owns it. */

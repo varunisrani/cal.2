@@ -65,14 +65,16 @@ function useCoachSession(): CoachSession {
  * (P08-11). The tab opens the most recent chat, or a new one when there is none. Only the
  * conversation scrolls: the heading and the composer stay put, the composer above the tab bar, or
  * with the on-screen keyboard open just above it (P13, P14). Replies in flight live in the app's
- * coach session, one per chat, so they survive switching tabs and chats; the messages come from
- * storage, live. In the Android app (P17) the screen says which chat it shows, so a reply there is
+ * coach session, one per chat, so they survive switching tabs and chats, and the open chat's reply
+ * shows as it is written (D-16.106); the messages come from storage, live. In the Android app (P17) the screen says which chat it shows, so a reply there is
  * not announced, opens the chat a notification's tap asked for, and shows the waiting check-ins
  * under the replies that set them.
  */
 export function CoachPage() {
   const session = useCoachSession();
-  const { waiting } = useSyncExternalStore(session.subscribe, session.getState);
+  // Two reads of the session: the waiting chats change with turns, the open chat's reply with
+  // every piece of it, so the rest of the page is not drawn again for each word.
+  const waiting = useSyncExternalStore(session.subscribe, () => session.getState().waiting);
   const chats = useCoachChats();
   const [open, setOpen] = useState<OpenChat | null>(null);
   const messages = useCoachMessages(open?.id ?? '');
@@ -109,6 +111,9 @@ export function CoachPage() {
   }, [chatId]);
   const openChat = open?.stored ? stored?.find((chat) => chat.id === open.id) : undefined;
   const pending = chatId !== null && waiting.includes(chatId);
+  const live = useSyncExternalStore(session.subscribe, () =>
+    chatId === null ? undefined : session.getState().live[chatId],
+  );
   const conversation = chatId !== null && messages.status === 'ready' ? messages.value : null;
   const hasMessages = conversation !== null && conversation.length > 0;
 
@@ -234,6 +239,7 @@ export function CoachPage() {
             key={chatId}
             messages={conversation}
             pending={pending}
+            live={live}
             onRetry={(id) => {
               if (chatId !== null) void session.retry(chatId, id);
             }}

@@ -25,6 +25,11 @@
 // stored as a `set` card, whose Undo goes through here too; what it set follows the reply (taken
 // back when the reply is not stored); a deleted chat's check-ins go with it; and every stored
 // reply is reported (`onReply`), so a reply the person is not looking at can be announced.
+//
+// A reply streams in as it is written (D-16.106): the state holds each running chat's text so far,
+// so whichever chat is open shows its own reply growing, and one started in another chat shows
+// live when that chat is opened. The text goes when its turn ends; the stored reply (or the
+// failure) takes its place.
 
 import type { AiFailure } from '../../ai/errors';
 import type { ImageBackend } from '../../ai/image';
@@ -52,8 +57,13 @@ import { takeSnapshot, type SnapshotSources } from './snapshot';
 export const COACH_THUMB = { maxEdge: 700, quality: 0.68 } as const;
 
 export interface CoachSessionState {
-  /** The chats with a turn running, in the order they started: their Send, chips and Retry wait. */
+  /**
+   * The chats with a turn running, in the order they started: their Send, chips and Retry wait.
+   * The same array until a turn starts or ends.
+   */
   readonly waiting: readonly string[];
+  /** The reply streaming in, as far as it came, by chat; a chat waiting for its first word has none. */
+  readonly live: Readonly<Record<string, string>>;
 }
 
 /** How a send or a retry ended. */
@@ -145,7 +155,10 @@ interface KeptPhoto {
   readonly photo: Blob;
 }
 
-const IDLE: CoachSessionState = Object.freeze({ waiting: Object.freeze([]) });
+const IDLE: CoachSessionState = Object.freeze({
+  waiting: Object.freeze([]),
+  live: Object.freeze({}),
+});
 
 /** The stored copy of a photo; null when the browser cannot read or draw it. */
 async function thumbnailOf(photo: Blob, codec: ImageCodec): Promise<Blob | null> {
@@ -194,6 +207,8 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
   let state = IDLE;
   /** The running turns, by chat. */
   const runs = new Map<string, Run>();
+  /** The replies streaming in, by chat. */
+  let live: Readonly<Record<string, string>> = IDLE.live;
   /** Photos of failed questions, by question, for Retry while the app stays open. */
   const photos = new Map<string, KeptPhoto>();
   /** Add and Dismiss on the reminder cards, made on first use. */
@@ -206,22 +221,42 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
     return cards;
   }
 
-  function publish(): void {
-    state = runs.size === 0 ? IDLE : Object.freeze({ waiting: Object.freeze([...runs.keys()]) });
+  /** Tells the listeners; `turns` when a turn started or ended (a new `waiting` list). */
+  function publish(turns: boolean): void {
+    const waiting = turns ? Object.freeze([...runs.keys()]) : state.waiting;
+    state =
+      waiting.length === 0 && Object.keys(live).length === 0
+        ? IDLE
+        : Object.freeze({ waiting, live });
     for (const listener of [...listeners]) listener();
+  }
+
+  /** Sets (or with '', drops) a chat's reply so far. */
+  function setLive(chatId: string, text: string): boolean {
+    if ((live[chatId] ?? '') === text) return false;
+    const { [chatId]: _gone, ...others } = live;
+    live = Object.freeze(text === '' ? others : { ...others, [chatId]: text });
+    return true;
   }
 
   function begin(chatId: string): Run {
     const run: Run = { chatId, controller: new AbortController(), dropped: false };
     runs.set(chatId, run);
-    publish();
+    publish(true);
     return run;
   }
 
   function end(run: Run): void {
     if (runs.get(run.chatId) !== run) return;
     runs.delete(run.chatId);
-    publish();
+    setLive(run.chatId, '');
+    publish(true);
+  }
+
+  /** The text so far of a run's reply, while the run is still its chat's. */
+  function showLive(run: Run, text: string): void {
+    if (run.dropped || runs.get(run.chatId) !== run) return;
+    if (setLive(run.chatId, text)) publish(false);
   }
 
   async function markFailed(
@@ -274,6 +309,7 @@ export function createCoachSession(deps: CoachSessionDeps): CoachSession {
         snapshot,
         ...(deps.reminders === undefined ? {} : { reminders: deps.reminders }),
         ...(deps.actions === undefined ? {} : { actions: deps.actions, chatId: run.chatId }),
+        onText: (text) => showLive(run, text),
       },
       {
         settings: access.settings,

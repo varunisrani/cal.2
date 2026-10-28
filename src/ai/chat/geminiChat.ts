@@ -4,7 +4,8 @@
  * and the answer limit with the model's thinking level (R04.15, R03.8). The model asks for tools
  * with `functionCall` parts: its parts go back exactly as they came, so thought signatures survive,
  * then one user turn holds a `functionResponse` per call, echoing the call's id when it had one
- * (R04.13). A reply stopped by the limit is cut off and asked again once with the same body.
+ * (R04.13). A reply stopped by the limit is cut off and asked again once with the same body. A
+ * streamed round asks `streamGenerateContent` with `alt=sse` instead (D-16.106, `geminiStream.ts`).
  */
 import { geminiThinkingLevel } from '../adapters/gemini';
 import {
@@ -23,16 +24,14 @@ import {
 } from '../adapters/request';
 import type { ReplyContext, SingleFailure } from '../errors';
 import { ok, type Result } from '../../lib/result';
+import { functionCalls, geminiStream } from './geminiStream';
 import {
-  callId,
   isUser,
-  toolName,
   type ChatOpening,
   type ChatSetup,
   type ChatWire,
   type RoundReply,
   type RunTool,
-  type ToolCall,
   type ToolsReply,
   type Transcript,
 } from './types';
@@ -55,8 +54,16 @@ function open(opening: ChatOpening): Transcript {
   ];
 }
 
-/** The re-ask is the same request on this format: `compact` changes nothing. */
-function build(setup: ChatSetup, transcript: Transcript, _compact: boolean): WireRequest {
+/**
+ * The re-ask is the same request on this format: `compact` changes nothing. A streamed request
+ * goes to `streamGenerateContent` and asks for server-sent events.
+ */
+function build(
+  setup: ChatSetup,
+  transcript: Transcript,
+  _compact: boolean,
+  stream = false,
+): WireRequest {
   const key = keyOf(setup);
   const declarations = setup.tools.map((tool) => ({
     name: tool.name,
@@ -65,7 +72,10 @@ function build(setup: ChatSetup, transcript: Transcript, _compact: boolean): Wir
   }));
   const level = geminiThinkingLevel(setup.model);
   return postJson(
-    endpoint(setup.baseUrl, `/models/${setup.model.trim()}:generateContent`),
+    endpoint(
+      setup.baseUrl,
+      `/models/${setup.model.trim()}:${stream ? 'streamGenerateContent?alt=sse' : 'generateContent'}`,
+    ),
     key === undefined ? {} : { 'x-goog-api-key': key },
     {
       ...(hasText(setup.system) ? { systemInstruction: { parts: [{ text: setup.system }] } } : {}),
@@ -77,21 +87,6 @@ function build(setup: ChatSetup, transcript: Transcript, _compact: boolean): Wir
       },
     },
   );
-}
-
-/** The calls that can be answered: every one with a name (a response must name its tool). */
-function callsOf(parts: readonly JsonRecord[]): ToolCall[] {
-  const calls: ToolCall[] = [];
-  for (const part of parts) {
-    const call = part.functionCall;
-    if (!isRecord(call)) continue;
-    const name = toolName(call.name);
-    if (name === '') continue;
-    const id = callId(call.id);
-    const args = isRecord(call.args) ? call.args : {};
-    calls.push(id === undefined ? { name, args } : { id, name, args });
-  }
-  return calls;
 }
 
 /**
@@ -116,7 +111,7 @@ function read(
   const parts = rawParts.filter(isRecord);
 
   if (parts.some((part) => part.functionCall !== undefined)) {
-    const calls = callsOf(parts);
+    const calls = functionCalls(parts);
     // No call can be answered, so the next round could only be refused.
     if (calls.length === 0) return unusable();
     return ok({ kind: 'tools', calls, echo: { role: 'model', parts: rawParts } });
@@ -153,4 +148,4 @@ function continueWith(transcript: Transcript, reply: ToolsReply, run: RunTool): 
   return [...transcript, reply.echo, { role: 'user', parts }];
 }
 
-export const geminiChat: ChatWire = { open, build, read, continueWith };
+export const geminiChat: ChatWire = { open, build, read, stream: geminiStream, continueWith };

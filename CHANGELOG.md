@@ -5,6 +5,13 @@ What changed in each release of Platewise, newest first. Version numbers follow
 
 ## Unreleased (1.6.0)
 
+### Live Coach replies
+
+- The Coach's replies appear as they are written, with three dots under them until they are complete; only the complete
+  reply is kept. A server that answers in one piece (some Custom or older Ollama servers) works as before.
+- Give up after now counts the wait for a reply to start and any pause in it, not a long reply that keeps coming.
+- A reply that stops halfway shows the error with Details and Retry, and nothing of it is kept.
+
 ### Nutrient sources
 
 - Tap a nutrient in All nutrients, a pillar on Home or the Sugar line to see which foods gave the day that nutrient,

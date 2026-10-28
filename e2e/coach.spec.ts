@@ -5,15 +5,23 @@
  * answers after a `food_log` call on the person's own diary, a card and a chip (the chip with a
  * photo), a turn that fails and is retried, a slow reply cut off by Delete chat, enough short
  * exchanges to pass the 200-message cap, (P13) a reminder the fake proposes, added from its card
- * and found in Settings › Tracking & reminders, and (P16) several chats: New chat, Chats, a reply
- * that lands in its own chat while another is open, Rename and Delete. As in the logging spec,
- * every request off loopback is aborted and fails the test.
+ * and found in Settings › Tracking & reminders, (P16) several chats: New chat, Chats, a reply
+ * that lands in its own chat while another is open, Rename and Delete, and (P18) replies that
+ * stream in: the words grow in the pending bubble and the whole reply is stored, also in a chat
+ * opened while its reply streams. As in the logging spec, every request off loopback is aborted
+ * and fails the test.
  */
 import { AxeBuilder } from '@axe-core/playwright';
 import { devices, expect, test, type Locator, type Page } from '@playwright/test';
 import { failureMessages } from '../src/ai/errors';
 import { NUTRITION_TOOL_NAMES, REMINDER_TOOL_NAME } from '../src/services/coach/toolSchemas';
-import { CHAT_PATH, readNamedScript, type RecordedRequest } from './fake-ai/server';
+import {
+  CHAT_PATH,
+  readNamedScript,
+  type RecordedRequest,
+  type ScriptEvent,
+  type ScriptReply,
+} from './fake-ai/server';
 import {
   FAKE_AI_BASE_URL,
   LOCALE,
@@ -73,6 +81,7 @@ const CHIPS = [
   words('coach.chips.maintain.trend'),
 ] as const;
 
+const COACH_STREAM = readNamedScript('coach-stream');
 const COACH_TOOL = readNamedScript('coach-tool');
 const COACH_REMINDER = readNamedScript('coach-reminder');
 const FAIL_THEN_OK = readNamedScript('coach-fail-then-ok');
@@ -766,6 +775,182 @@ test.describe('reminders through the Coach (P13, D-16.93)', () => {
       await expect(row).toHaveAttribute('aria-checked', 'true');
       await expect(row).toHaveAccessibleDescription(when);
       await expect(ui(yours, 'reminders.yours.item')).toHaveCount(1);
+    });
+  });
+});
+
+// ---- Replies that stream in (P18, D-16.106) ---------------------------------------------------
+
+/** The words of a streamed reply in the OpenAI-compatible shape: its content pieces, trimmed. */
+function streamedAnswer(reply: ScriptReply | undefined): string {
+  const pieces = (reply?.events ?? []).map((event) => {
+    const data = event.data as { choices?: { delta?: { content?: unknown } }[] } | string;
+    const content = typeof data === 'string' ? undefined : data.choices?.[0]?.delta?.content;
+    return typeof content === 'string' ? content : '';
+  });
+  return pieces.join('').trim();
+}
+
+/** A reply streamed in `pieces`, `gapMs` apart, as an OpenAI-compatible server sends it. */
+function streamedReply(pieces: readonly string[], gapMs: number): ScriptReply {
+  const chunk = (delta: Record<string, unknown>, finish: string | null = null): ScriptEvent => ({
+    data: {
+      id: 'chatcmpl-e2e-stream',
+      object: 'chat.completion.chunk',
+      created: 1793000000,
+      model: 'fake-model',
+      choices: [{ index: 0, delta, finish_reason: finish }],
+    },
+  });
+  return {
+    status: 200,
+    eventDelayMs: gapMs,
+    events: [
+      chunk({ role: 'assistant', content: '' }),
+      ...pieces.map((content) => chunk({ content })),
+      chunk({}, 'stop'),
+      { data: '[DONE]' },
+    ],
+  };
+}
+
+/** Where the init script below keeps the texts of the reply streaming in. */
+const LIVE_KEY = '__platewiseLiveTexts';
+
+/**
+ * Records, from each document's start, every text the reply streaming in shows (the words of the
+ * `coach.live` bubble), each change once, in order. Read it with `liveSeen`.
+ */
+async function recordLive(page: Page): Promise<void> {
+  await page.addInitScript((key) => {
+    const seen: string[] = [];
+    Object.defineProperty(window, key, { value: seen });
+    const look = (): void => {
+      const reply = document.querySelector('[data-ui="coach.live"] [data-ui="coach.reply"]');
+      const text = reply?.textContent ?? null;
+      if (text !== null && text !== seen.at(-1)) seen.push(text);
+    };
+    new MutationObserver(look).observe(document, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+  }, LIVE_KEY);
+}
+
+function liveSeen(page: Page): Promise<string[]> {
+  return page.evaluate(
+    (key) => [...((window as unknown as Record<string, string[] | undefined>)[key] ?? [])],
+    LIVE_KEY,
+  );
+}
+
+test.describe('replies that stream in (P18, D-16.106)', () => {
+  test('grows the reply in the pending bubble as it streams, then stores it whole (ACC-I13-1)', async ({
+    page,
+  }) => {
+    const question = 'How did my week go?';
+    const answer = streamedAnswer(COACH_STREAM.replies[0]);
+    const live = ui(page, 'coach.live');
+    await recordLive(page);
+    await onboard(page);
+    await openEmptyCoach(page);
+    await fakeAi.useScript('coach-stream');
+
+    await test.step('the question → the words grow in the pending bubble, the dots under them', async () => {
+      await ask(page, question);
+      await expect(live).toBeVisible();
+      await expect(ui(live, 'coach.typing')).toBeVisible();
+      await expect(ui(live, 'coach.reply')).toContainText('This week');
+      // Not stored yet: the conversation holds the question alone.
+      await expect(messages(page)).toHaveCount(1);
+    });
+
+    await test.step('the whole reply is stored once, in the bubble’s place', async () => {
+      await expectChat(page, [
+        ['user', question],
+        ['assistant', answer],
+      ]);
+      await expect(live).toHaveCount(0);
+      expect(await hooksSeen(page)).not.toContain('coach.error');
+    });
+
+    await test.step('the words grew piece by piece, each step a start of the next', async () => {
+      const seen = await liveSeen(page);
+      expect(seen.length).toBeGreaterThanOrEqual(4);
+      for (const [index, text] of seen.slice(1).entries()) {
+        expect(text.startsWith(seen[index]!)).toBe(true);
+      }
+      expect(seen.at(-1)).toBe(answer);
+    });
+
+    await test.step('the request asked for a stream', async () => {
+      const [asked] = (await coachRequests()) as [RecordedRequest];
+      expect((asked.body as Record<string, unknown>).stream).toBe(true);
+    });
+
+    await test.step('after a reload the reply is there, whole', async () => {
+      await page.reload();
+      await expectChat(page, [
+        ['user', question],
+        ['assistant', answer],
+      ]);
+      expect(await coachRequests()).toHaveLength(1);
+    });
+  });
+
+  test('keeps a reply streaming in its own chat while another is open, and shows it live there (D-16.99)', async ({
+    page,
+  }) => {
+    const first = 'Plan my meals for tomorrow?';
+    const second = 'Is coffee fine?';
+    const secondAnswer = 'Yes: two cups a day fits your plan.';
+    // Twenty pieces half a second apart: the first chat's reply streams for ten seconds.
+    const pieces = Array.from({ length: 20 }, (_, n) => `Step ${n + 1} of your day. `);
+    const slow = streamedReply(pieces, 500);
+    const firstAnswer = streamedAnswer(slow);
+    const live = ui(page, 'coach.live');
+    const chats = ui(page, 'coach.chats');
+    await onboard(page);
+    await openEmptyCoach(page);
+    await fakeAi.useReplies({ replies: [slow, textReply(secondAnswer)] });
+
+    await test.step('the first question’s reply starts streaming', async () => {
+      await ask(page, first);
+      await expect(ui(live, 'coach.reply')).toContainText('Step 1');
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(first);
+    });
+
+    await test.step('New chat: its own question is answered, with no live bubble there', async () => {
+      await page.getByRole('button', { name: words('coach.page.newChat') }).click();
+      await expect(ui(page, 'coach.empty')).toBeVisible();
+      await expect(live).toHaveCount(0);
+      await ask(page, second);
+      await expectChat(page, [
+        ['user', second],
+        ['assistant', secondAnswer],
+      ]);
+      await expect(live).toHaveCount(0);
+    });
+
+    await test.step('back in the first chat the reply shows live, then lands whole', async () => {
+      await page.getByRole('button', { name: words('coach.page.chats') }).click();
+      await expect(chats).toBeVisible();
+      const row = ui(chats, 'coach.chats.item').filter({
+        has: page.locator('[data-ui="coach.chats.item.title"]', { hasText: first }),
+      });
+      await ui(row, 'coach.chats.item.open').click();
+      await expect(chats).toBeHidden();
+      await expect(ui(page, 'coach.chatTitle')).toHaveText(first);
+      await expect(live).toBeVisible();
+      await expect(ui(live, 'coach.reply')).toContainText('Step');
+      // What is left of the ten seconds of reply.
+      await expect(messages(page)).toHaveCount(2, { timeout: 20_000 });
+      await expectChat(page, [
+        ['user', first],
+        ['assistant', firstAnswer],
+      ]);
+      await expect(live).toHaveCount(0);
     });
   });
 });

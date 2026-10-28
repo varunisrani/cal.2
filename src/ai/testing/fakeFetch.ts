@@ -19,6 +19,22 @@ export interface FakeReply {
   readonly delayMs?: number;
   /** Then wait this long before its body arrives (an abort meanwhile fails the body read). */
   readonly bodyDelayMs?: number;
+  /**
+   * A body sent in pieces, each after its own wait (a stream; content type text/event-stream
+   * unless `headers` set one). An abort meanwhile fails the read; a `fail` piece breaks the
+   * connection there, as a network failure mid-body does.
+   */
+  readonly chunks?: readonly FakeChunk[];
+}
+
+/** One piece of a body sent in pieces. */
+export interface FakeChunk {
+  /** Wait this long after the headers or the piece before. */
+  readonly delayMs?: number;
+  /** The piece's text. */
+  readonly text?: string;
+  /** The connection breaks here: the read fails with a TypeError. */
+  readonly fail?: 'network';
 }
 
 /** No reply at all: rejects with a TypeError, as a browser does for network and CORS failures. */
@@ -148,7 +164,8 @@ function samePattern(a: UrlPattern, b: UrlPattern): boolean {
 }
 
 function checkStep(step: FakeStep): void {
-  for (const ms of [step.delayMs, 'fail' in step ? undefined : step.bodyDelayMs]) {
+  const pieceDelays = 'chunks' in step ? (step.chunks ?? []).map((chunk) => chunk.delayMs) : [];
+  for (const ms of [step.delayMs, 'fail' in step ? undefined : step.bodyDelayMs, ...pieceDelays]) {
     if (ms !== undefined && !(Number.isFinite(ms) && ms >= 0)) {
       throw new RangeError(`fakeFetch: a delay must be a finite number ≥ 0, got ${ms}`);
     }
@@ -163,6 +180,12 @@ function checkStep(step: FakeStep): void {
   }
   if ('json' in step && step.json === undefined) {
     throw new TypeError('fakeFetch: json: undefined is not JSON (leave json out for no body)');
+  }
+  if (
+    step.chunks !== undefined &&
+    ('json' in step || step.text !== undefined || step.bodyDelayMs)
+  ) {
+    throw new TypeError('fakeFetch: a reply sent in chunks has no json, text or bodyDelayMs');
   }
 }
 
@@ -212,8 +235,78 @@ function buildResponse(reply: FakeReply, signal: AbortSignal | undefined): Respo
     if (!headers.has('content-type')) headers.set('content-type', 'text/plain;charset=UTF-8');
   }
   if (NO_BODY_STATUSES.has(status)) return new Response(null, { status, headers });
+  if (reply.chunks !== undefined) {
+    if (!headers.has('content-type')) headers.set('content-type', 'text/event-stream');
+    return new Response(chunkedBody(reply.chunks, signal), { status, headers });
+  }
   const body = reply.bodyDelayMs ? slowBody(text ?? '', reply.bodyDelayMs, signal) : (text ?? '');
   return new Response(body, { status, headers });
+}
+
+/**
+ * A body that arrives in pieces, each after its wait once the reader asks for it (as a network
+ * hands over bytes); an abort fails the read with the abort reason, a `fail` piece with a
+ * TypeError once the pieces before it were read. The reader cancelling it stops the pieces.
+ */
+function chunkedBody(
+  chunks: readonly FakeChunk[],
+  signal: AbortSignal | undefined,
+): ReadableStream<Uint8Array> {
+  const encoder = new TextEncoder();
+  let next = 0;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let onAbort: (() => void) | undefined;
+  const stopListening = (): void => {
+    clearTimeout(timer);
+    if (onAbort) signal?.removeEventListener('abort', onAbort);
+  };
+  return new ReadableStream<Uint8Array>(
+    {
+      start(controller) {
+        if (signal?.aborted) {
+          controller.error(signal.reason);
+          return;
+        }
+        onAbort = (): void => {
+          stopListening();
+          controller.error(signal?.reason);
+        };
+        signal?.addEventListener('abort', onAbort, { once: true });
+      },
+      pull(controller) {
+        const chunk = chunks[next];
+        if (chunk === undefined) {
+          stopListening();
+          controller.close();
+          return undefined;
+        }
+        next += 1;
+        const deliver = (): void => {
+          if (chunk.fail === 'network') {
+            stopListening();
+            controller.error(new TypeError('fakeFetch: scripted network failure mid-body'));
+          } else if (chunk.text !== undefined && chunk.text !== '') {
+            controller.enqueue(encoder.encode(chunk.text));
+          }
+        };
+        // A piece without a wait goes at once: fake timers need no advance for it.
+        if (!chunk.delayMs) {
+          deliver();
+          return undefined;
+        }
+        return new Promise<void>((resolve) => {
+          timer = setTimeout(() => {
+            deliver();
+            resolve();
+          }, chunk.delayMs);
+        });
+      },
+      cancel() {
+        stopListening();
+      },
+    },
+    { highWaterMark: 0 },
+  );
 }
 
 /** A body that arrives after `ms`; an abort before then fails the read with the abort reason. */

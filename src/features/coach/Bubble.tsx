@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import type { CoachMessage } from '../../domain/model';
 import { t } from '../../i18n/t';
 import type { CheckIn } from '../../services/coach/checkIns';
@@ -8,6 +8,7 @@ import styles from './coach.module.css';
 import { CopyButton } from './CopyButton';
 import { MarkdownReply } from './markdown';
 import { ReminderCard } from './ReminderCard';
+import { TypingDots } from './TypingDots';
 
 /** An address for showing `blob` in an image while it is mounted; null without a blob. */
 export function useBlobUrl(blob: Blob | null | undefined): string | null {
@@ -69,7 +70,7 @@ export interface BubbleProps {
  * it a card for each reminder the reply proposed (P13), until the person dismisses it, and for each
  * check-in it set that still waits (P17).
  */
-export function Bubble({ message, checkIns }: BubbleProps) {
+export const Bubble = memo(function Bubble({ message, checkIns }: BubbleProps) {
   if (message.role === 'user') {
     return (
       <div className={styles.userRow} data-ui="coach.message" data-role="user">
@@ -94,6 +95,41 @@ export function Bubble({ message, checkIns }: BubbleProps) {
         {checkIns?.map((checkIn) => (
           <CheckInCard key={checkIn.id} checkIn={checkIn} />
         ))}
+      </div>
+    </div>
+  );
+});
+
+export interface PendingReplyProps {
+  /** The reply as far as it came; undefined before its first word. */
+  readonly text?: string;
+  /** The reply is still on its way: the working mark shows. */
+  readonly working: boolean;
+}
+
+/**
+ * The Coach's reply while it is on its way (P08-10, D-16.106): the typing dots alone until the
+ * first words arrive, then the words as they grow, drawn as the stored reply will be, with the dots
+ * where its copy button will come, so the reply lands without anything moving. The growing words
+ * are inert: never read out piece by piece, and their links not reachable until the reply is
+ * stored and announced whole; the dots say a reply is being written.
+ */
+export function PendingReply({ text, working }: PendingReplyProps) {
+  const writing = text !== undefined;
+  return (
+    <div className={styles.assistantRow} data-ui={writing ? 'coach.live' : undefined}>
+      <AssistantBadge />
+      <div className={writing ? styles.assistantColumn : undefined}>
+        <div className={writing ? styles.assistantBubble : styles.typingBubble}>
+          {writing ? (
+            <div inert>
+              <MarkdownReply text={text} />
+            </div>
+          ) : null}
+          <div className={writing ? styles.liveMark : undefined}>
+            {working ? <TypingDots /> : null}
+          </div>
+        </div>
       </div>
     </div>
   );

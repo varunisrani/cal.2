@@ -979,6 +979,78 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
 - **ACC-I12-1** With the primary failing, the standby answers and nothing from the failed attempt remains
   - Test: src/services/coach/engine.test.ts > runTurn: the standby (R04.1, D-16.22) > re-runs the whole turn on the standby after the primary fails, with nothing from the first attempt (ACC-I12-1)
 
+### I13 · Streaming replies (P1, P18)
+
+- **ACC-I13-1** The Coach's reply grows in the pending bubble as it streams and is stored whole once complete
+  - Test: e2e/coach.spec.ts > replies that stream in (P18, D-16.106) > grows the reply in the pending bubble as it streams, then stores it whole (ACC-I13-1)
+  - Test: src/services/coach/session.test.ts > createCoachSession: replies that stream in (D-16.106) > holds the reply as far as it came, by chat, and lets it go once the reply is stored (ACC-I13-1)
+  - Test: src/services/coach/engine.test.ts > runTurn: replies that stream in (D-16.106) > hands up each round’s text, runs the tools when their round is over, then answers (ACC-I13-1)
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > grows the reply in the pending bubble, the dots where the copy button comes (ACC-I13-1)
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > keeps the growing words out of what is read out, links included, until they are stored
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > keeps the words when the turn ends until the stored reply takes their place
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > shows the stored reply alone when it comes back before the turn lets the words go
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > lets the words go for the banner when the turn fails
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > shows the dots alone again when the reply starts over (the standby)
+  - Test: src/features/coach/MessageList.test.tsx > MessageList: a reply streaming in (D-16.106) > follows the growing reply at the end, and stays put when the person scrolled up
+- **ACC-I13-2** A reply that fails midway stores nothing and offers Retry; the standby starts afresh
+  - Test: src/services/coach/session.test.ts > createCoachSession: replies that stream in (D-16.106) > stores nothing of a reply that breaks off, and marks the question for Retry (ACC-I13-2)
+  - Test: src/services/coach/engine.test.ts > runTurn: replies that stream in (D-16.106) > starts the standby afresh after a reply fails midway, its words gone first (ACC-I13-2)
+- **ACC-I13-3** Each wire format's stream (Anthropic, OpenAI-compatible, Gemini) reads into the same reply as a whole answer, tool calls included; an answer that is not a stream is read whole
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: text (D-16.106) > grows the answer with each text delta, through pings, and ends at message_stop
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: text (D-16.106) > never shows thinking
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: text (D-16.106) > is cut off at a max_tokens stop (R04.15)
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: text (D-16.106) > is unusable when the text is blank
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: text (D-16.106) > takes a stream that ends after its stop reason without message_stop
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: failures > fails as a broken connection when the stream stops before its stop reason
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: failures > classifies an error event by its type, status 0, key cut out, and reads no further
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: failures > reads the other error types as their statuses would
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: tool rounds > shows the text before the calls, then gives the calls with their joined input
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: tool rounds > echoes every block as the whole reply would hold it, thinking with its signature
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: tool rounds > continues the transcript with one tool_result per call (R04.12)
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: tool rounds > reads malformed input as {}, and is unusable when no block has an id
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicStream: tool rounds > is cut off when a tool’s input stops at max_tokens
+  - Test: src/ai/chat/anthropicStream.test.ts > anthropicChat.build with a stream > adds stream: true to the same request
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > grows the answer piece by piece and gives it trimmed at the end
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > takes a reply whose stream ends at its finish reason, without [DONE]
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > never shows reasoning, and a reply that only reasoned is cut off (R04.18)
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > is cut off at a length stop, text or not
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > is unusable when it ends with nothing to say
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: text (D-16.106) > skips lines that are not JSON, and chunks without a choice
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: failures > fails as a broken connection when the stream stops before its end
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: failures > classifies an error object in the stream like an error reply, status 0, key cut out
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: failures > classifies a finish_reason of error, status 0
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > assembles each call from its pieces and echoes the message as it came (R04.12)
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > shows the text a tool round writes first, and keeps it in the echo
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > reads malformed arguments as {} and answers a call without a name with an error
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > is cut off when the arguments stop at the length limit
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > is unusable when no call has an id to answer
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > follows pieces without an index by their id, and keeps the first name of a repeated one
+  - Test: src/ai/chat/openaiStream.test.ts > openAiStream: tool calls > rebuilds the reasoning in the echo, its detail pieces joined by index
+  - Test: src/ai/chat/openaiStream.test.ts > openAiChat.build with a stream > adds stream: true and nothing else
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: text (D-16.106) > grows the answer with each response and gives it at the finish
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: text (D-16.106) > never shows thought parts
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: text (D-16.106) > is cut off at a MAX_TOKENS finish (R04.15)
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: text (D-16.106) > is unusable for a blocked prompt and for a finish with no text
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: failures > fails as a broken connection when the stream ends before a finish reason
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: failures > classifies an error object in the stream by its code, status 0, key cut out
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: tool rounds > gives the whole function calls, with their ids when they have one
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: tool rounds > echoes every part exactly as it came, so the signature survives (R04.13)
+  - Test: src/ai/chat/geminiStream.test.ts > geminiStream: tool rounds > is unusable when no call names a tool
+  - Test: src/ai/chat/geminiStream.test.ts > geminiChat.build with a stream > asks streamGenerateContent for server-sent events, with the same body
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > asks for a stream and hands the text up as it grows, then gives the answer
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > reads an answer that comes whole, as before, and hands nothing up
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > reads a body that is plainly a stream under another content type as one
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > asks once more without a stream when the server refuses one, and remembers it
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > takes a refused key or an unknown model that names streaming for what it is
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > never asks Cerebras for a stream (its errors hide behind CORS)
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > streams the re-ask after a cut reply, whose text replaces the cut one (R04.18)
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > retries a busy provider before its stream, but never a stream that failed midway
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > fails a stream cut before its end as a broken connection, keeping nothing
+  - Test: src/ai/chat/round.test.ts > askRound: streamed replies (D-16.106) > streams Gemini from streamGenerateContent with alt=sse
+- **ACC-I13-4** A reply streaming in another chat shows live when that chat is opened
+  - Test: e2e/coach.spec.ts > replies that stream in (P18, D-16.106) > keeps a reply streaming in its own chat while another is open, and shows it live there (D-16.99)
+  - Test: src/features/coach/CoachPage.test.tsx > CoachPage: several chats (P16-03, D-16.99) > shows a reply streaming in another chat live once that chat is opened (D-16.106)
+
 ### I14 · Several Coach chats: New chat and chat history (P1, P16)
 
 - **ACC-I14-1** New chat opens an empty chat with the goal's prompts; it is stored with its first question; the Coach tab opens the most recent chat

@@ -9,7 +9,10 @@ with a photo always goes to the main provider.
 
 ## Asking
 
-- Type a question and press Send. The reply appears when it is complete.
+- Type a question and press Send. The reply appears as the Coach writes it, word by word, with
+  three dots under it until it is complete. Only the complete reply is kept in the chat. If the
+  conversation is at its newest message, it moves along with the reply; if you scrolled up to
+  read, it stays where you are.
 - Suggested questions match your goal (lose, keep or gain weight). Tapping one sends it as your
   question, with the photo you added if there is one; what you typed stays in the box.
 - Press **+** in the message box to add one photo from the camera or your photo library, for
@@ -20,6 +23,16 @@ with a photo always goes to the main provider.
   copies a reply.
 
 While a reply is on its way, Send and the suggested questions of that chat wait for it.
+
+**Live replies.** Platewise asks every provider to send the reply as it is written. A server that
+answers only in one piece (some Custom or older Ollama servers) still works: its reply appears
+when it is complete, as before. Cerebras replies always come in one piece. When the Coach looks
+something up in your data first, any words it writes before looking show until the next part of
+its answer replaces them. The model's own thinking is never shown. Screen readers hear "The Coach
+is writing a reply" while it comes, and the reply itself once, when it is complete.
+
+The time limit in AI settings (Give up after) counts the waiting: the wait for the reply to start
+and any pause in the middle of it. A long reply that keeps coming is never cut off for its length.
 
 ## Chats
 
@@ -38,9 +51,9 @@ chat shows under the Coach heading.
 - The Coach tab opens on the chat you used most recently.
 
 **A reply keeps going when you switch.** If you open another chat or start a new one while the
-Coach is answering, the reply still arrives, in the chat you asked in. Chats shows "Replying…" on a
-chat whose reply is on its way, and you can ask in another chat meanwhile; several chats can wait
-for replies at the same time.
+Coach is answering, the reply still arrives, in the chat you asked in; open that chat again and you
+see it being written. Chats shows "Replying…" on a chat whose reply is on its way, and you can ask
+in another chat meanwhile; several chats can wait for replies at the same time.
 
 Each chat sends only its own messages to your AI provider. What the Coach knows about you (below)
 is the same in every chat.
@@ -143,7 +156,9 @@ are looking at. Its switch is **Coach replies** in Smart notifications, and quie
 ## When something goes wrong
 
 A failed question stays in the chat with a short message. **Details** shows the provider's own
-error text, with your keys removed. **Retry** asks the same question again.
+error text, with your keys removed. **Retry** asks the same question again. This is also what
+happens when a reply stops halfway (the connection breaks, or the provider reports a problem in the
+middle of it): the words written so far go, and nothing of the unfinished reply is kept.
 
 If you set a standby for text or photos, it takes over once when the first provider fails, and
 starts the question afresh.

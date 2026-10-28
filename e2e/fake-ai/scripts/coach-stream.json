@@ -1,0 +1,251 @@
+{
+  "description": "A Coach answer streamed in twelve pieces, 300 ms apart (D-16.106), as an OpenAI-compatible server sends it.",
+  "replies": [
+    {
+      "status": 200,
+      "eventDelayMs": 300,
+      "events": [
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "role": "assistant",
+                  "content": ""
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "This week "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "you logged food "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "on six of seven days. "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "Your average "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "was about "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "2 150 kcal, "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "close to your target. "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "Protein held up well; "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "the lighter days "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "were short on vegetables, "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "so a side salad at dinner "
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {
+                  "content": "would help."
+                },
+                "finish_reason": null
+              }
+            ]
+          }
+        },
+        {
+          "data": {
+            "id": "chatcmpl-fake-coach-stream",
+            "object": "chat.completion.chunk",
+            "created": 1793000000,
+            "model": "fake-model",
+            "choices": [
+              {
+                "index": 0,
+                "delta": {},
+                "finish_reason": "stop"
+              }
+            ]
+          }
+        },
+        {
+          "data": "[DONE]"
+        }
+      ]
+    }
+  ]
+}
