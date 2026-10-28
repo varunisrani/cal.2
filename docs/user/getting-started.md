@@ -95,6 +95,16 @@ The bar at the bottom has four tabs:
   track it) and the day's diary. Pick a day in the week bar (slide it sideways for earlier weeks,
   up to about a year back), or swipe across the gauge to move one day. Future days are shown but
   cannot be picked.
+
+  Under the pillars, the **Sugar** line shows the day's sugar against your Sugar limit (Settings ›
+  Goals and nutrition › Nutrient goals, 50 g unless you change it), for example "32 g of 50 g".
+  Past the limit the bar turns red and says how far over you are; with the limit turned off you
+  see the grams alone. Sugar is only known for foods that come with a sugar figure (photos, labels
+  and barcodes usually have one, foods you enter by hand do not), so the line says "from 4 of 6
+  foods" when some are missing it, and "No sugar figures" when none has one, rather than counting
+  them as 0 g. When some foods give added sugar it shows that too ("12 g added"). Tap the line to
+  see All nutrients. It is hidden while Sugar is one of your pillars, and **Sugar on Home** in All
+  nutrients turns it off.
 - **Progress:** weight and body fat with their history, calories over time, and a weekly recap.
   Log a weigh-in here.
 - **Coach:** a chat about your own diary. See [The Coach](coach.md).

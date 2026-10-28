@@ -577,6 +577,66 @@ describe("HomePage: pillars and the day's nutrients (P07-03, P07-04)", () => {
   });
 });
 
+describe('HomePage: the Sugar line (D-16.98)', () => {
+  const sugarLine = () => document.querySelector<HTMLElement>('[data-ui="home.sugar"]');
+
+  it("shows the shown day's sugar, opens All nutrients from it, and its switch there hides it", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ nutrients: { sugar: 20, addedSugar: 4 }, loggedAt: FACTORY_NOW - HOUR }),
+      // No sugar figure: unknown, never 0 g.
+      makeEntry({ nutrients: { fibre: 3 }, loggedAt: FACTORY_NOW - 2 * HOUR }),
+      makeEntry({ nutrients: { sugar: 70 }, loggedAt: FACTORY_NOW - 24 * HOUR }),
+    ]);
+    mount();
+    await untilShown('[data-ui="home.sugar"]');
+    expect(sugarLine()).toHaveAccessibleName('Sugar 20 g of 50 g from 1 of 2 foods 4 g added');
+
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => textOf('home.sugar.amount') === '70 g of 50 g');
+    expect(sugarLine()).toHaveAccessibleName('Sugar 70 g of 50 g 20 g over');
+
+    fireEvent.click(screen.getByRole('button', { name: /^Sugar 70 g/ }));
+    await untilShown('[data-ui="home.nutrients"]');
+    expect(h.router.current().sheets).toEqual(['nutrients']);
+    expect(within(nutrientsSheet()).getByText(dayName('2026-10-25'))).toBeVisible();
+
+    const toggle = within(nutrientsSheet()).getByRole('switch', {
+      name: words.nutrients.sugarLine,
+    });
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(toggle);
+    await untilGone('[data-ui="home.sugar"]');
+    expect(await h.repos.settingsRepo.get('home.sugarLine')).toBe(false);
+    expect(toggle).toHaveAttribute('aria-checked', 'false');
+
+    fireEvent.click(toggle);
+    await untilShown('[data-ui="home.sugar"]');
+    expect(await h.repos.settingsRepo.get('home.sugarLine')).toBe(true);
+  });
+
+  it('is hidden while Sugar is a pillar, and on a day with nothing eaten', async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.settingsRepo.set('home.pillars', ['protein', 'sugar']);
+    await h.repos.diaryRepo.add(
+      makeEntry({ nutrients: { sugar: 12 }, loggedAt: FACTORY_NOW - 24 * HOUR }),
+    );
+    mount();
+    await untilShown('[data-ui="home.pillar.sugar"]');
+    expect(sugarLine()).toBeNull();
+
+    await act(async () => {
+      await h.repos.settingsRepo.set('home.pillars', ['protein']);
+    });
+    await until(() => !shownPillars().includes('home.pillar.sugar'));
+    // Today has no food: no line, even with Sugar off the pillars.
+    expect(sugarLine()).toBeNull();
+    fireEvent.click(dayTile('2026-10-25'));
+    await untilShown('[data-ui="home.sugar"]');
+    expect(sugarLine()).toHaveAccessibleName('Sugar 12 g of 50 g');
+  });
+});
+
 // ---- The add menu's sheets (P06-01) ------------------------------------------------------------
 
 const NO_DRAFT: CaptureDraft = { photoIds: [], note: '', progressive: false };

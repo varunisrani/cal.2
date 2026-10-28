@@ -72,6 +72,18 @@ describe('takeSnapshot (R04.22)', () => {
     expect(snapshot?.activity).toBeNull();
   });
 
+  it('copies the Sugar limit from Nutrient goals, 0 while it is off (D-16.98)', async () => {
+    const s = await stores();
+    await s.profileRepo.save(makeProfile());
+    expect((await takeSnapshot(s.sources))?.sugarLimitG).toBe(50);
+
+    const goals = await s.settingsRepo.get('goals.nutrients');
+    await s.settingsRepo.set('goals.nutrients', { ...goals, sugar: 35 });
+    expect((await takeSnapshot(s.sources))?.sugarLimitG).toBe(35);
+    await s.settingsRepo.set('goals.nutrients', { ...goals, sugar: 0 });
+    expect((await takeSnapshot(s.sources))?.sugarLimitG).toBe(0);
+  });
+
   it('is a copy: data stored after it was taken is not in it', async () => {
     const s = await stores();
     await s.profileRepo.save(makeProfile());

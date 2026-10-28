@@ -106,6 +106,7 @@ const SETTINGS = [
   'menu.layout',
   'display.weekStart',
   'home.pillars',
+  'home.sugarLine',
   'water.on',
   'water.goalMl',
   'water.unit',
@@ -140,9 +141,9 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
 
 /**
  * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
- * the chosen pillars with water after them (a sideways swipe over them changes the day; "All
- * nutrients" under them opens the day's nutrient sheet and, from it, the pillar picker), the
- * diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
+ * the chosen pillars with water after them, then the Sugar line (D-16.98) (a sideways swipe over
+ * them changes the day; "All nutrients" under them, or the Sugar line, opens the day's nutrient
+ * sheet with the Sugar on Home switch and, from it, the pillar picker), the diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
  * editor, P07-05), and the "+" button with the add menu of the stored layout and the water and
  * fasting rows (P07-08). What is logged from here goes to the day shown. Nothing with a number is
  * drawn until the profile, the settings and the day's entries, water and fasts have been read, so
@@ -295,6 +296,15 @@ export function HomePage() {
     });
   };
 
+  const storeSugarLine = (on: boolean): void => {
+    (homePrefs?.setSugarLine(on) ?? Promise.reject(new Error('No homePrefs service'))).catch(
+      (error: unknown) => {
+        console.error('Storing the Sugar line switch failed', error);
+        toast.show(tx('appSettings.saveFailed'));
+      },
+    );
+  };
+
   const openFast = (fast: Fast): void => {
     setEditingFast(fast);
     fastSheet.show();
@@ -387,6 +397,7 @@ export function HomePage() {
             energyUnit={unit}
             pillars={pillars}
             water={water}
+            sugarLine={settings.value['home.sugarLine']}
             onShowAll={nutrients.show}
             burn={plan && burned !== null ? { goalKcal: plan.kcal, burnedKcal: burned } : null}
           />
@@ -451,6 +462,8 @@ export function HomePage() {
           pillars={pillars}
           water={water}
           onChoosePillars={pillarPicker.show}
+          sugarLine={settings.value['home.sugarLine']}
+          onSugarLineChange={storeSugarLine}
         />
         <PillarPicker
           open={pillarPicker.open}

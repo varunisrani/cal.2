@@ -50,6 +50,7 @@ describe('SETTING_SPECS', () => {
         'health.writeBack',
         'home.pillars',
         'home.sort',
+        'home.sugarLine',
         'log.gramsFirst',
         'meals.times',
         'menu.layout',
@@ -111,6 +112,13 @@ describe('SETTING_SPECS', () => {
     expect(readSetting('health.connected', 'yes')).toBeUndefined();
   });
 
+  it('shows the Sugar line on Home until the person turns it off (D-16.98)', () => {
+    expect(settingDefault('home.sugarLine', metric)).toBe(true);
+    expect(readSetting('home.sugarLine', false)).toBe(false);
+    expect(readSetting('home.sugarLine', 'off')).toBeUndefined();
+    expect(readSetting('home.sugarLine', undefined)).toBeUndefined();
+  });
+
   it('reads the tune-up switch as on when nothing is stored', () => {
     expect(settingDefault('tuneUp.on', metric)).toBe(true);
     expect(readSetting('tuneUp.on', undefined)).toBeUndefined();
@@ -137,6 +145,7 @@ describe('SETTING_SPECS', () => {
       'meals.times': { breakfast: 300, lunch: 720, dinner: 1_080, lateSnack: 1_380 },
       'home.sort': 'byMeal',
       'home.pillars': ['protein', 'carbs', 'fat', 'fibre'],
+      'home.sugarLine': true,
       'tabs.hidden': [],
       'menu.layout': null,
       'product.show': true,

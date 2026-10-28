@@ -79,6 +79,11 @@ export interface CoachSnapshot {
   readonly activity: CoachActivity | null;
   /** The recorded walks (P15); null where the app records none (the web). */
   readonly walks: CoachWalks | null;
+  /**
+   * The Sugar limit from Nutrient goals in g, 0 while it is off (D-16.98). Left out, it reads as
+   * the default limit, as an unset setting does.
+   */
+  readonly sugarLimitG?: number;
 }
 
 /** The local day the snapshot was taken on. */
@@ -159,12 +164,13 @@ export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnaps
     activityOf(sources),
     walksOf(sources),
   ]);
-  const [energy, height, on, goalMl, unit] = await Promise.all([
+  const [energy, height, on, goalMl, unit, goals] = await Promise.all([
     settingsRepo.get('units.energy'),
     settingsRepo.get('units.height'),
     settingsRepo.get('water.on'),
     settingsRepo.get('water.goalMl'),
     settingsRepo.get('water.unit'),
+    settingsRepo.get('goals.nutrients'),
   ]);
   return {
     now,
@@ -178,5 +184,6 @@ export async function takeSnapshot(sources: SnapshotSources): Promise<CoachSnaps
     water: { on, goalMl, unit, logs },
     activity,
     walks,
+    sugarLimitG: goals.sugar,
   };
 }

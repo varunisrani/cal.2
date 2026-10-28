@@ -1,6 +1,8 @@
 import type { DiaryEntry, Targets } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import type { GoalValues } from '../../domain/nutrients/goalDefaults';
+import { MAX_PILLARS } from '../../domain/nutrients/pillars';
+import { sugarOfDay } from '../../domain/nutrients/sugar';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { Button } from '../../ui/Button';
 import { Card } from '../../ui/Card';
@@ -9,6 +11,7 @@ import { NO_TARGETS, type WaterDay } from './dayNutrients';
 import { energyAmount } from './energy';
 import styles from './home.module.css';
 import { PillarRow } from './PillarRow';
+import { SugarLine } from './SugarLine';
 import { tx } from './text';
 
 /** The gauge's line: compared in kcal, the difference shown in the person's unit. */
@@ -35,7 +38,9 @@ export interface DaySummaryProps {
   readonly pillars: readonly PillarKey[];
   /** The day's water, or null while water tracking is off. */
   readonly water: WaterDay | null;
-  /** "All nutrients": opens the day's nutrient sheet. */
+  /** The Sugar line is switched on (setting `home.sugarLine`, D-16.98). */
+  readonly sugarLine: boolean;
+  /** "All nutrients", and a tap on the Sugar line: opens the day's nutrient sheet. */
   readonly onShowAll: () => void;
   /**
    * The burn counted in the energy target (P11-04): `targets` already holds goal + burn, and a
@@ -46,8 +51,9 @@ export interface DaySummaryProps {
 
 /**
  * The top of Home for one day: the energy gauge (headed Calories or Kilojoules), with the counted
- * burn under it on the Android app, the chosen pillars with water after them, and the link to
- * every nutrient of the day.
+ * burn under it on the Android app, the chosen pillars with water after them, the Sugar line
+ * while it is switched on and Sugar is not one of the pillars (D-16.98), and the link to every
+ * nutrient of the day.
  */
 export function DaySummary({
   entries,
@@ -56,11 +62,14 @@ export function DaySummary({
   energyUnit,
   pillars,
   water,
+  sugarLine,
   onShowAll,
   burn = null,
 }: DaySummaryProps) {
   const eaten = entries.reduce((sum, entry) => sum + entry.kcal, 0);
   const plan = targets ?? NO_TARGETS;
+  // Never shown twice: a Sugar pillar already shows the day's sugar against the limit.
+  const showSugar = sugarLine && !pillars.slice(0, MAX_PILLARS).includes('sugar');
 
   return (
     <Card className={styles.summary} data-ui="home.summary">
@@ -81,6 +90,9 @@ export function DaySummary({
         </p>
       )}
       <PillarRow entries={entries} pillars={pillars} targets={plan} goals={goals} water={water} />
+      {showSugar ? (
+        <SugarLine sugar={sugarOfDay(entries)} limit={goals.sugar} onOpen={onShowAll} />
+      ) : null}
       <Button
         variant="quiet"
         className={styles.allNutrients}

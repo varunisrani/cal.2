@@ -387,6 +387,8 @@ export const SETTING_SPECS = {
     (stored) => (isDiarySortMode(stored) ? stored : undefined),
   ),
   'home.pillars': setting<readonly PillarKey[]>(() => [...DEFAULT_PILLARS], readPillars),
+  /** The Sugar line under the pillars (D-16.98); its switch is in Home › All nutrients. */
+  'home.sugarLine': setting(on, readFlag),
 
   // Tabs, menus and the product block
   'tabs.hidden': setting<readonly HideableTab[]>(() => [], subsetOf(HIDEABLE_TABS)),

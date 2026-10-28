@@ -8,6 +8,7 @@ import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { formatDay, formatNameList } from '../../i18n/format';
 import { Icon } from '../../ui/icons';
 import { Sheet } from '../../ui/Sheet';
+import { Switch } from '../../ui/Switch';
 import {
   amountText,
   amountWithUnit,
@@ -44,11 +45,15 @@ export interface DayNutrientsSheetProps {
   readonly water: WaterDay | null;
   /** The first row: opens the pillar picker over the sheet. */
   readonly onChoosePillars: () => void;
+  /** The Sugar line is switched on (setting `home.sugarLine`, D-16.98). */
+  readonly sugarLine: boolean;
+  /** The Sugar on Home switch was turned; the stored value follows. */
+  readonly onSugarLineChange: (on: boolean) => void;
 }
 
 /**
  * Every nutrient of Home's selected day (05 §3.2.4): the pillars Home shows (a row that opens
- * the picker), the water while it is tracked, the energy and macros against the targets, then the
+ * the picker) and the Sugar on Home switch (D-16.98), the water while it is tracked, the energy and macros against the targets, then the
  * optional nutrients and the sports compounds, each with its unit and goal. A detailed total of
  * exactly 0 reads as a dash.
  */
@@ -77,6 +82,8 @@ function SheetBody({
   pillars,
   water,
   onChoosePillars,
+  sugarLine,
+  onSugarLineChange,
 }: BodyProps) {
   const plan = targets ?? NO_TARGETS;
   const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
@@ -103,6 +110,15 @@ function SheetBody({
           </span>
           <Icon name="chevronRight" size={18} className={styles.mark} />
         </button>
+        <div className={styles.switch}>
+          <Switch
+            label={tx('home.nutrients.sugarLine')}
+            description={tx('home.nutrients.sugarLineHint')}
+            checked={sugarLine}
+            onChange={onSugarLineChange}
+            data-ui="home.nutrients.sugarLine"
+          />
+        </div>
       </Section>
 
       {water ? (

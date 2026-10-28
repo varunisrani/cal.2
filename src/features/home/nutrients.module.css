@@ -114,7 +114,7 @@
   color: var(--text-muted);
 }
 
-/* ---- The home-pillars row and the picker's choices --------------------------------------- */
+/* ---- The home-pillars row, the Sugar switch and the picker's choices --------------------- */
 
 .choose {
   inline-size: 100%;
@@ -128,6 +128,11 @@
 
 .choice {
   cursor: pointer;
+}
+
+/* The Sugar on Home switch (D-16.98), lined up with the row above it. */
+.switch {
+  padding-inline: var(--space-4);
 }
 
 .choose:focus-visible,

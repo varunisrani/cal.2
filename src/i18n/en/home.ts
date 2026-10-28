@@ -1,8 +1,8 @@
 import type { MessageTree } from '../catalogue';
 
 /**
- * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the all-nutrients
- * sheet and the pillar picker, the diary with its sort control and its food, water and fast rows,
+ * Words of Home (src/features/home): the week bar, the energy gauge, the pillars, the Sugar line,
+ * the all-nutrients sheet and the pillar picker, the diary with its sort control and its food, water and fast rows,
  * the add button, and picking rows to combine (the bar and the combined entry's name). Meal names
  * are logging words, in `log.meal`.
  */
@@ -91,12 +91,22 @@ export const home = {
       overFlOz: '{amount} fl oz over',
       reached: 'Goal reached',
     },
+    // The Sugar line under the pillars (D-16.98); its name, "over" and the grams alone are the
+    // pillar's and `amount.g`.
+    sugar: {
+      ofLimit: '{amount} g of {limit} g',
+      coverage: 'from {count} of {total} foods',
+      noFigures: 'No sugar figures',
+      added: '{amount} g added',
+    },
     nutrients: {
       link: 'All nutrients',
       title: 'All nutrients',
       today: 'Today',
       pillarsHeading: 'Home pillars',
       pillarsRow: 'Choose pillars',
+      sugarLine: 'Sugar on Home',
+      sugarLineHint: 'Hidden while Sugar is a pillar.',
       waterHeading: 'Water',
       waterNote: 'While water tracking is on, Home shows water after the pillars you choose.',
       macrosHeading: 'Macros',

@@ -139,6 +139,7 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | F11 | "+" button opening food methods, Water and fasting entries | P0 (food) → P1 (water and fasting) | M D | 05 §3.4 |
 | F12 | Long-press multi-select with a combine bar | P1 | M D | 02 §3.15; 05 §3.4 |
 | F13 | Gauge and pillars fill from zero on launch and real returns to the app | P2 | M D | 05 §3.2.2, R05.18 |
+| F14 | Sugar on Home against the sugar limit | P1 (P16, D-16.98) | M D | 16 D-16.98 |
 
 ## G. Progress, weight and body fat
 
@@ -266,9 +267,9 @@ Surfaces: **M** = phone browser or installed app, **D** = desktop browser, — =
 | Tier | Features |
 |---|---|
 | Tier P0 | 18 |
-| Tier P1 | 137 |
+| Tier P1 | 138 |
 | Tier P2 | 8 |
 | Tier P3 | 22 |
-| All tiers | 185 |
+| All tiers | 186 |
 
 Mixed rows count once under their first tier (D3, F4, F7, F11 and J1 under P0; D23 and M11 under P1; M11, M16 and M18 are P1 in the Android app only). The roadmap (`15-roadmap.md`) turns these tiers into milestones; the acceptance map (`../internals/acceptance-map.md`) maps every P0/P1 row to tests.

@@ -658,6 +658,33 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/SelectionBar.test.tsx > SelectionBar > says how many rows are picked and offers Combine from two (ACC-F12-1)
   - Test: e2e/home-progress.spec.ts > Fasting on Home (Demo 4) > pauses a combine during a fast; End fast and log ends it and combines (ACC-F12-1, R05.1, D-16.35)
 
+### F14 · Sugar on Home against the sugar limit (P1, P16)
+
+- **ACC-F14-1** Home shows the shown day's sugar against the Sugar limit with a thin bar; past it the bar is full and "over" shows in the warning colour; with the limit off, the grams alone
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > reads the grams against the limit, with a bar filled that far
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > says how far over past the limit, with the bar full, both in the warning colour
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > shows the grams alone, with no bar and never over, while the limit is off
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary Sugar line (D-16.98) > sits under the pillars, above All nutrients, against the Sugar limit of the goals
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the Sugar line (D-16.98) > shows the shown day's sugar, opens All nutrients from it, and its switch there hides it
+- **ACC-F14-2** A food without a sugar figure never counts as 0 g ("from n of m foods", "No sugar figures")
+  - Test: src/domain/nutrients/sugar.test.ts > sugarOfDay (D-16.98) > never counts a food without a sugar figure as 0 g: it is left out and counted apart
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > says from how many foods when some have no sugar figure, never counting them as 0 g
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > says there are no sugar figures, with no number and no bar, when no food has one
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)
+- **ACC-F14-3** Added sugar shows when any food has the figure
+  - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > adds the added sugar when any food carries it, after the rest, in reading order
+- **ACC-F14-4** The Sugar line is hidden while Sugar is a pillar, and the Sugar on Home switch (on by default) turns it off
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary Sugar line (D-16.98) > is hidden while Sugar is one of the pillars, which shows it instead
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary Sugar line (D-16.98) > is hidden while its switch is off
+  - Test: src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > has the Sugar on Home switch under Choose pillars, showing the stored value (D-16.98)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the Sugar line (D-16.98) > is hidden while Sugar is a pillar, and on a day with nothing eaten
+  - Test: src/data/settingsSchema.test.ts > SETTING_SPECS > shows the Sugar line on Home until the person turns it off (D-16.98)
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > chooses pillars from All nutrients: a fifth pick takes the latest place, and Done keeps it (ACC-F4-1, ACC-F5-1, ACC-F6-1)
+- **ACC-F14-5** The Coach's fresh context gives today's sugar and the limit, and how many entries had a figure
+  - Test: src/services/coach/context.test.ts > coachContext: today's sugar against the Sugar limit (D-16.98) > says how many entries had a figure when not all did, never counting the rest as 0 g
+  - Test: src/services/coach/context.test.ts > coachContext: today's sugar against the Sugar limit (D-16.98) > says sugar is not known, rather than 0 g, when no entry today has a figure
+  - Test: src/services/coach/snapshot.test.ts > takeSnapshot (R04.22) > copies the Sugar limit from Nutrient goals, 0 while it is off (D-16.98)
+
 ## G · Progress, weight and body fat
 
 ### G1 · Ranges 1W, 1M, 3M, 6M, 1Y and All with period arrows and labels (P1)

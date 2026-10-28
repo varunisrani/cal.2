@@ -23,6 +23,8 @@ function renderSheet({
   day = '2026-10-26',
   isToday = true,
   onChoosePillars = () => undefined,
+  sugarLine = true,
+  onSugarLineChange = () => undefined,
   onClose = () => undefined,
 }: {
   entries?: DiaryEntry[];
@@ -33,6 +35,8 @@ function renderSheet({
   day?: string;
   isToday?: boolean;
   onChoosePillars?: () => void;
+  sugarLine?: boolean;
+  onSugarLineChange?: (on: boolean) => void;
   onClose?: () => void;
 } = {}) {
   return render(
@@ -48,6 +52,8 @@ function renderSheet({
       pillars={pillars}
       water={water}
       onChoosePillars={onChoosePillars}
+      sugarLine={sugarLine}
+      onSugarLineChange={onSugarLineChange}
     />,
   );
 }
@@ -162,6 +168,25 @@ describe('DayNutrientsSheet', () => {
     expect(within(sheet()).getByRole('button', { name: /Choose pillars/ })).toHaveTextContent(
       'Protein, Carbs, Fat, Fibre, Water',
     );
+  });
+
+  it('has the Sugar on Home switch under Choose pillars, showing the stored value (D-16.98)', () => {
+    const onSugarLineChange = vi.fn();
+    const { unmount } = renderSheet({ onSugarLineChange });
+    const pillars = within(sheet()).getByRole('region', { name: words.nutrients.pillarsHeading });
+    const toggle = within(pillars).getByRole('switch', { name: words.nutrients.sugarLine });
+    expect(toggle).toHaveAttribute('data-ui', 'home.nutrients.sugarLine');
+    expect(toggle).toHaveAttribute('aria-checked', 'true');
+    expect(toggle).toHaveAccessibleDescription(words.nutrients.sugarLineHint);
+    fireEvent.click(toggle);
+    expect(onSugarLineChange).toHaveBeenCalledWith(false);
+    unmount();
+
+    renderSheet({ sugarLine: false, onSugarLineChange });
+    const off = within(sheet()).getByRole('switch', { name: words.nutrients.sugarLine });
+    expect(off).toHaveAttribute('aria-checked', 'false');
+    fireEvent.click(off);
+    expect(onSugarLineChange).toHaveBeenLastCalledWith(true);
   });
 
   it("shows the day's water against its goal in the water unit only while tracking is on", () => {

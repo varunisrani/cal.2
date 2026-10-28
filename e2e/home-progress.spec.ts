@@ -483,6 +483,26 @@ test.describe('Home: days, pillars and the diary (Demo 4)', () => {
       );
     });
 
+    await test.step('the Sugar line: a food entered by hand has no sugar figure, and Sugar on Home hides the line (D-16.98)', async () => {
+      const sugar = ui(page, 'home.sugar');
+      await expect(sugar).toHaveAccessibleName(
+        `${words('home.pillar.sugar')} ${words('home.sugar.noFigures')}`,
+      );
+      await sugar.click();
+      await expect(nutrients).toHaveAttribute('data-ui', 'home.nutrients');
+      const toggle = ui(nutrients, 'home.nutrients.sugarLine');
+      await expect(toggle).toHaveAccessibleName(words('home.nutrients.sugarLine'));
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'false');
+      await expect(sugar).toHaveCount(0);
+      await toggle.click();
+      await expect(toggle).toHaveAttribute('aria-checked', 'true');
+      await ui(nutrients, 'home.nutrients.done').click();
+      await expect(nutrients).toBeHidden();
+      await expect(sugar).toBeVisible();
+    });
+
     await test.step("All nutrients lists today's amounts against their goals", async () => {
       await ui(page, 'home.allNutrients').click();
       await expect(nutrients).toHaveAttribute('data-ui', 'home.nutrients');

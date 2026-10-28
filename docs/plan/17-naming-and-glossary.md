@@ -48,7 +48,7 @@ Identifier lists inside a cell are sorted alphabetically, not in the reference's
 | Units | `energyUnit` (`kcal`/`kj`), `heightUnit` (`cm`/`ftin`), `useMetric`, `weightUnit` (`kg`/`lbs`) | `units.energy` (`kcal` or `kJ`), `units.height` (`cm` or `ftIn`), `units.weight` (`kg` or `lb`); no legacy flag |
 | Logging | `foodMeasurementPreferGramsByDefault`, `lastRecentsSegment`, `saveMealPhotosToGallery` | `log.gramsFirst`; the other two are not carried |
 | Meal times | `mealBreakfastStartMinutes`, `mealDinnerStartMinutes`, `mealLunchStartMinutes`, `mealSnackStartMinutes` | `meals.times` (one record `{breakfast, lunch, dinner, lateSnack}`) |
-| Home | `foodLogSortOrder` (`latestMealsFirst`/`standard`), `homeTopNutrients` | `home.sort` (`byMeal` or `newestFirst`), `home.pillars` |
+| Home | `foodLogSortOrder` (`latestMealsFirst`/`standard`), `homeTopNutrients` | `home.sort` (`byMeal` or `newestFirst`), `home.pillars`, `home.sugarLine` |
 | Tabs and menus | `addMenu.config`, `hiddenTabs`, `productInfoHiddenFields`, `productInfoShown`, `quickAction.slot1..3` | `menu.layout`, `tabs.hidden`, `product.hiddenFields`, `product.show`; quick-action slots not carried |
 | Progress | `progressIncludeToday` | `progress.countToday` |
 | Water | `waterDailyGoalMl`, `waterQuickAddPresetsMl`, `waterTrackingEnabled`, `waterUnit` (`floz`/`ml`) | `water.goalMl`, `water.quickAddMl`, `water.on`, `water.unit` (`flOz` or `ml`) |

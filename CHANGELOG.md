@@ -3,6 +3,17 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.4.0)
+
+### Sugar on Home
+
+- Home: a Sugar line under the pillars shows the day's sugar against your Sugar limit ("32 g of 50 g"), how far over
+  you are and any added sugar. Foods without a sugar figure are never counted as 0 g ("from 4 of 6 foods", "No sugar
+  figures"). Tap it for All nutrients.
+- All nutrients: a new Sugar on Home switch (on by default). The line also stays hidden while Sugar is one of your
+  pillars.
+- Coach: it now knows today's sugar and your Sugar limit, and how many of today's foods had a sugar figure.
+
 ## 1.3.0 (2026-10-28)
 
 Platewise 1.3 records your walks and tells you how effective they were, and copies your backups to

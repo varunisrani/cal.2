@@ -2,7 +2,8 @@
 // snapshot on every question, so the model always sees the data as it stood when the person
 // pressed Send: the local day, time and zone, the profile in the person's own units, how the energy
 // numbers are worked out, the weight forecast (P01-18) or what it still needs, how much data is
-// stored, and today so far (eaten, left of each target, water). It holds counts and totals only:
+// stored, and today so far (eaten, left of each target, sugar against the Sugar limit with how many
+// entries had a figure, D-16.98, and water). It holds counts and totals only:
 // no food name, note or ingredient ever enters it. In the Android app, while Health Connect is
 // connected, it ends with today's activity: steps, active and total calories, distance, the
 // workouts (type, time and length, never their titles), and whether "Count active calories" adds
@@ -33,7 +34,9 @@ import {
   tdee,
 } from '../../domain/goals/formulas';
 import { effectiveTargets } from '../../domain/goals/targets';
-import type { Profile, Targets } from '../../domain/model';
+import type { DiaryEntry, Profile, Targets } from '../../domain/model';
+import { DEFAULT_GOAL_VALUES } from '../../domain/nutrients/goalDefaults';
+import { sugarOfDay } from '../../domain/nutrients/sugar';
 import {
   feetInches,
   formatPace,
@@ -247,6 +250,22 @@ function waterLine(water: CoachWater, today: DayKey): string {
 }
 
 /**
+ * Today's sugar against the Sugar limit, counted as Home's Sugar line counts it (D-16.98): only the
+ * entries with a sugar figure add to it, and an entry without one is unknown, never 0 g.
+ */
+function sugarLine(todays: readonly DiaryEntry[], limitG: number): string {
+  const { foods, withFigure, grams } = sugarOfDay(todays);
+  const limit = limitG > 0 ? `daily limit ${num(limitG)} g` : 'no daily limit set';
+  if (grams === null) {
+    const why = foods > 0 ? 'not known, no entry today has a sugar figure' : 'nothing logged yet';
+    return `Sugar: ${why} (${limit})`;
+  }
+  const part =
+    withFigure < foods ? `, from ${withFigure} of ${foods} entries; the rest have no figure` : '';
+  return `Sugar: ${num(grams)} g (${limit})${part}`;
+}
+
+/**
  * Whole kcal of today's active energy the energy target gains, or null when it gains nothing: the
  * switch is off, the goal is not above 0, or today has no active calories above 0. Home's rule
  * (P11-04, `countedBurn`), written again here because that one belongs to the screen.
@@ -269,9 +288,11 @@ function todaySoFar(
   counted: number | null,
 ): string {
   const eaten: Targets = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+  const todays: DiaryEntry[] = [];
   let count = 0;
   for (const entry of snapshot.entries) {
     if (entry.dayKey !== today) continue;
+    todays.push(entry);
     count += 1;
     eaten.kcal += entry.kcal;
     eaten.protein += entry.protein;
@@ -293,6 +314,7 @@ function todaySoFar(
         ? 'Eaten: nothing logged yet today'
         : `Eaten: ${energyAndMacros(eaten)}, from ${plural(count, 'entry', 'entries')}`,
       `Left of ${leftOf}: ${energyAndMacros(left)} (a negative amount is over the target)`,
+      sugarLine(todays, snapshot.sugarLimitG ?? DEFAULT_GOAL_VALUES.sugar),
       waterLine(snapshot.water, today),
     ]),
   );

@@ -289,6 +289,71 @@ describe('coachContext: today so far (D-16.27)', () => {
   });
 });
 
+describe("coachContext: today's sugar against the Sugar limit (D-16.98)", () => {
+  /** Today's two entries with these sugar figures (none for undefined), and yesterday's 90 g. */
+  function sugarDay(today: readonly (number | undefined)[], changes: Partial<CoachSnapshot> = {}) {
+    return coachContext(
+      makeSnapshot({
+        entries: [
+          entryOn('2026-10-25', '19:00', { nutrients: { sugar: 90 } }),
+          ...today.map((sugar, index) =>
+            entryOn(SNAPSHOT_TODAY, `${String(8 + index).padStart(2, '0')}:00`, {
+              nutrients: sugar === undefined ? { fibre: 3 } : { sugar, addedSugar: 2 },
+            }),
+          ),
+        ],
+        ...changes,
+      }),
+    );
+  }
+
+  it("gives today's grams against the limit, between what is left and water", () => {
+    const text = sugarDay([20, 12], { sugarLimitG: 50 });
+    expect(text).toMatch(
+      /\n- Left of the daily targets: [^\n]+\n- Sugar: 32 g \(daily limit 50 g\)\n- Water: /,
+    );
+    expect(text).not.toContain('90 g');
+  });
+
+  it('gives the grams to one decimal, over the limit or not', () => {
+    expect(sugarDay([40, 18.44], { sugarLimitG: 50 })).toContain(
+      '- Sugar: 58.4 g (daily limit 50 g)',
+    );
+  });
+
+  it("uses the person's own limit, and says when none is set", () => {
+    expect(sugarDay([20, 12], { sugarLimitG: 25 })).toContain('- Sugar: 32 g (daily limit 25 g)');
+    expect(sugarDay([20, 12], { sugarLimitG: 0 })).toContain('- Sugar: 32 g (no daily limit set)');
+  });
+
+  it('reads an unset limit as the default 50 g', () => {
+    expect(sugarDay([20])).toContain('- Sugar: 20 g (daily limit 50 g)');
+  });
+
+  it('says how many entries had a figure when not all did, never counting the rest as 0 g', () => {
+    expect(sugarDay([12, undefined, 6], { sugarLimitG: 50 })).toContain(
+      '- Sugar: 18 g (daily limit 50 g), from 2 of 3 entries; the rest have no figure',
+    );
+  });
+
+  it('says sugar is not known, rather than 0 g, when no entry today has a figure', () => {
+    const text = sugarDay([undefined, undefined], { sugarLimitG: 50 });
+    expect(text).toContain(
+      '- Sugar: not known, no entry today has a sugar figure (daily limit 50 g)',
+    );
+    expect(text).not.toMatch(/Sugar: 0/);
+  });
+
+  it('gives the limit alone when nothing is logged today', () => {
+    expect(coachContext(makeSnapshot({ sugarLimitG: 40 }))).toContain(
+      '- Sugar: nothing logged yet (daily limit 40 g)',
+    );
+    expect(coachContext(makeSnapshot({ sugarLimitG: 0 }))).toContain(
+      '- Sugar: nothing logged yet (no daily limit set)',
+    );
+  });
+});
+
 /** Today's Health Connect day: a run in the morning and a gym session in the evening. */
 function activeToday() {
   return activityOn(SNAPSHOT_TODAY, {

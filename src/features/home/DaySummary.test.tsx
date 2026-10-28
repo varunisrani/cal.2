@@ -20,6 +20,7 @@ function summaryProps({
   unit = 'kcal',
   pillars = DEFAULT_PILLARS,
   water = null,
+  sugarLine = true,
   onShowAll = () => undefined,
 }: {
   entries?: DiaryEntry[];
@@ -28,9 +29,10 @@ function summaryProps({
   unit?: EnergyDisplayUnit;
   pillars?: readonly PillarKey[];
   water?: WaterDay | null;
+  sugarLine?: boolean;
   onShowAll?: () => void;
 } = {}): DaySummaryProps {
-  return { entries, targets, goals, energyUnit: unit, pillars, water, onShowAll };
+  return { entries, targets, goals, energyUnit: unit, pillars, water, sugarLine, onShowAll };
 }
 
 function renderSummary(options: Parameters<typeof summaryProps>[0] = {}) {
@@ -187,6 +189,65 @@ describe('DaySummary pillars, chosen (P07-03)', () => {
     expect(document.querySelector('[data-ui="home.pillars"]')?.nextElementSibling).toBe(link);
     fireEvent.click(link);
     expect(onShowAll).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('DaySummary Sugar line (D-16.98)', () => {
+  const sugarLine = () => document.querySelector('[data-ui="home.sugar"]');
+  /** A day of three foods, two with sugar figures: 32 g known. */
+  const sweetDay = () => [
+    makeEntry({ nutrients: { sugar: 20 } }),
+    makeEntry({ nutrients: { sugar: 12, fibre: 2 } }),
+    makeEntry({ nutrients: { fibre: 6 } }),
+  ];
+
+  it('sits under the pillars, above All nutrients, against the Sugar limit of the goals', () => {
+    renderSummary({ entries: sweetDay(), goals: { ...DEFAULT_GOAL_VALUES, sugar: 40 } });
+
+    const line = screen.getByRole('button', { name: 'Sugar 32 g of 40 g from 2 of 3 foods' });
+    expect(document.querySelector('[data-ui="home.pillars"]')?.nextElementSibling).toBe(line);
+    expect(line.nextElementSibling).toBe(
+      screen.getByRole('button', { name: words.nutrients.link }),
+    );
+  });
+
+  it("opens the day's nutrients on a tap, as All nutrients does", () => {
+    const onShowAll = vi.fn();
+    renderSummary({ entries: sweetDay(), onShowAll });
+    fireEvent.click(screen.getByRole('button', { name: /^Sugar 32 g of 50 g/ }));
+    expect(onShowAll).toHaveBeenCalledTimes(1);
+  });
+
+  it('is hidden while Sugar is one of the pillars, which shows it instead', () => {
+    renderSummary({ entries: sweetDay(), pillars: ['protein', 'sugar'] });
+    expect(sugarLine()).toBeNull();
+    expect(screen.getByRole('group', { name: words.pillar.sugar })).toHaveAccessibleDescription(
+      '32 18 g left',
+    );
+  });
+
+  it('shows while Sugar is only past the fourth stored pillar, which Home never draws', () => {
+    renderSummary({
+      entries: sweetDay(),
+      pillars: ['protein', 'carbs', 'fat', 'fibre', 'sugar'],
+    });
+    expect(screen.queryByRole('group', { name: words.pillar.sugar })).toBeNull();
+    expect(sugarLine()).not.toBeNull();
+  });
+
+  it('is hidden while its switch is off', () => {
+    renderSummary({ entries: sweetDay(), sugarLine: false });
+    expect(sugarLine()).toBeNull();
+  });
+
+  it('is not drawn on a day without food', () => {
+    renderSummary({ entries: [] });
+    expect(sugarLine()).toBeNull();
+  });
+
+  it('says No sugar figures, never 0 g, on a day whose foods have none', () => {
+    renderSummary({ entries: [makeEntry({ nutrients: { fibre: 14 } })] });
+    expect(sugarLine()).toHaveAccessibleName(`Sugar ${words.sugar.noFigures}`);
   });
 });
 

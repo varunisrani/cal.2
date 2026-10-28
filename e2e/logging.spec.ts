@@ -543,6 +543,8 @@ test.describe('logging flows (Demo 3)', () => {
 
     await test.step('a long-press on Toast starts picking; the bar takes the "+" place', async () => {
       const toast = page.getByRole('button', { name: words('home.entry.open', { name: 'Toast' }) });
+      // Clear of the tab bar and the "+" button, which float over the page's lower part.
+      await toast.evaluate((row) => row.scrollIntoView({ block: 'center' }));
       const box = await toast.boundingBox();
       if (box === null) throw new Error('The Toast row is not on screen');
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);

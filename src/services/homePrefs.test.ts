@@ -49,3 +49,16 @@ describe('setSort', () => {
     expect(await h.settingsRepo.get('home.sort')).toBe('newestFirst');
   });
 });
+
+describe('setSugarLine (D-16.98)', () => {
+  it('stores whether Home shows the Sugar line, on until turned off', async () => {
+    const h = await setUp();
+    expect(await h.settingsRepo.get('home.sugarLine')).toBe(true);
+
+    await h.service.setSugarLine(false);
+    expect(await h.settingsRepo.get('home.sugarLine')).toBe(false);
+
+    await h.service.setSugarLine(true);
+    expect(await h.settingsRepo.get('home.sugarLine')).toBe(true);
+  });
+});
