@@ -2,10 +2,10 @@
   "agent": "AGENT_1",
   "account": "Account 1 (Claude Code cloud session)",
   "state": "ACTIVE",
-  "usage_pct": 48,
-  "remaining_pct": 52,
-  "resets_at": "2026-10-28T06:20:00+05:30",
-  "last_check": "2026-10-28T11:45:00+05:30",
-  "current_step": "P14 (user request): automatic backup (Android) and the keyboard covering the Coach composer; two builders",
+  "usage_pct": 19,
+  "remaining_pct": 81,
+  "resets_at": "2026-10-28T15:50:00+05:30",
+  "last_check": "2026-10-28T13:12:00+05:30",
+  "current_step": "P14 keyboard + auto backup stacked in /root/wt/verify (ac05bd6, b67e07a); test-fix agent running; then 1.2.0",
   "last_commit": "e94f7a7"
 }
