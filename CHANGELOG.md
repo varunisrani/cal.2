@@ -3,6 +3,16 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased (1.6.0)
+
+### Nutrient sources
+
+- Tap a nutrient in All nutrients, a pillar on Home or the Sugar line to see which foods gave the day that nutrient,
+  largest first. Each food shows its amount and share of the day's total, under the total against your goal or limit.
+  Foods without a figure for it are counted apart ("1 food has no fibre figure"), never as 0. Tap a food to open it
+  with all its nutrients.
+- The Sugar line now opens Sugar's sources; All nutrients is still under the pillars.
+
 ## 1.5.0 (2026-10-28)
 
 Platewise 1.5 nudges you when it helps, keeps what it sent in a notification panel, lets the Coach set reminders and

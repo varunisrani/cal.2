@@ -26,26 +26,39 @@ export interface PillarRowProps {
   readonly goals: Readonly<GoalValues>;
   /** The day's water against its goal, or null while water tracking is off. */
   readonly water: WaterDay | null;
+  /** A tap on a nutrient's pillar: opens the foods it came from (D-16.105). Water opens nothing. */
+  readonly onOpen?: (key: PillarKey) => void;
 }
 
 /**
  * The pillars under the gauge (05 §3.2.3): the one to four chosen nutrients in their order, then
  * water while it is tracked. Each shows the day's total (one decimal only when not whole), a tube
- * toward the goal and a line in the nutrient's unit: left, over, reached, or no goal for 0.
+ * toward the goal and a line in the nutrient's unit: left, over, reached, or no goal for 0. With
+ * `onOpen`, a nutrient's name is a button whose hit area and focus ring cover its whole pillar, so
+ * the group keeps its name and description and the button is named by the name it shows.
  */
-export function PillarRow({ entries, pillars, targets, goals, water }: PillarRowProps) {
+export function PillarRow({ entries, pillars, targets, goals, water, onOpen }: PillarRowProps) {
   return (
     <div className={styles.pillars} data-ui="home.pillars">
       {pillars.slice(0, MAX_PILLARS).map((key) => {
         const shown = shownTotal(dayTotal(entries, key));
         const goal = pillarGoal(key, targets, goals);
+        const name = nutrientName(key);
         return (
           <Pillar
             key={key}
             current={shown}
             goal={goal}
             value={amountText(shown)}
-            label={nutrientName(key)}
+            label={
+              onOpen ? (
+                <button type="button" className={styles.pillarOpen} onClick={() => onOpen(key)}>
+                  {name}
+                </button>
+              ) : (
+                name
+              )
+            }
             status={statusLine(shown, goal, unitOf(key))}
             data-ui={`home.pillar.${key}`}
           />

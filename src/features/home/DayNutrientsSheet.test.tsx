@@ -4,6 +4,7 @@ import type { DiaryEntry, Targets } from '../../domain/model';
 import { GOAL_KEYS, type PillarKey } from '../../domain/nutrients/catalogue';
 import { DEFAULT_GOAL_VALUES } from '../../domain/nutrients/goalDefaults';
 import { DEFAULT_PILLARS } from '../../domain/nutrients/pillars';
+import type { SourceNutrient } from '../../domain/nutrients/sources';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { common } from '../../i18n/en/common';
 import { home } from '../../i18n/en/home';
@@ -25,6 +26,7 @@ function renderSheet({
   onChoosePillars = () => undefined,
   sugarLine = true,
   onSugarLineChange = () => undefined,
+  onOpenSources = () => undefined,
   onClose = () => undefined,
 }: {
   entries?: DiaryEntry[];
@@ -37,6 +39,7 @@ function renderSheet({
   onChoosePillars?: () => void;
   sugarLine?: boolean;
   onSugarLineChange?: (on: boolean) => void;
+  onOpenSources?: (nutrient: SourceNutrient) => void;
   onClose?: () => void;
 } = {}) {
   return render(
@@ -54,6 +57,7 @@ function renderSheet({
       onChoosePillars={onChoosePillars}
       sugarLine={sugarLine}
       onSugarLineChange={onSugarLineChange}
+      onOpenSources={onOpenSources}
     />,
   );
 }
@@ -210,6 +214,37 @@ describe('DayNutrientsSheet', () => {
       words.nutrients.macrosHeading,
       words.nutrients.detailHeading,
     ]);
+  });
+
+  it("opens a nutrient's sources from its row: energy, the macros, every detail; water opens nothing (D-16.105)", () => {
+    const onOpenSources = vi.fn();
+    renderSheet({
+      entries: [makeEntry({ kcal: 500, nutrients: { sodium: 640 } })],
+      water: { totalMl: 750, goalMl: 2_000, unit: 'ml' },
+      onOpenSources,
+    });
+    // Each row is one button named by its words.
+    const energy = within(sheet()).getByRole('button', { name: 'Calories 500 kcal / 2,000 kcal' });
+    fireEvent.click(energy);
+    fireEvent.click(within(sheet()).getByRole('button', { name: /^Protein / }));
+    fireEvent.click(within(sheet()).getByRole('button', { name: 'Sodium 640 mg / 2,300 mg' }));
+    fireEvent.click(
+      within(sheet()).getByRole('button', { name: `Taurine ${words.nutrients.none} No goal` }),
+    );
+    expect(onOpenSources.mock.calls).toEqual([['kcal'], ['protein'], ['sodium'], ['taurine']]);
+
+    const rows = within(sheet()).getAllByRole('listitem');
+    const opening = rows.filter((item) => within(item).queryByRole('button') !== null);
+    expect(opening.map((item) => item.getAttribute('data-ui'))).toEqual(
+      ['energy', 'protein', 'carbs', 'fat', ...DETAIL_ORDER].map(
+        (id) => `home.nutrients.row.${id}`,
+      ),
+    );
+    expect(
+      within(
+        document.querySelector<HTMLElement>('[data-ui="home.nutrients.row.water"]')!,
+      ).queryByRole('button'),
+    ).toBeNull();
   });
 
   it('closes with Done', () => {

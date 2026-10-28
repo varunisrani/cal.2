@@ -665,7 +665,7 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > says how far over past the limit, with the bar full, both in the warning colour
   - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > shows the grams alone, with no bar and never over, while the limit is off
   - Test: src/features/home/DaySummary.test.tsx > DaySummary Sugar line (D-16.98) > sits under the pillars, above All nutrients, against the Sugar limit of the goals
-  - Test: src/features/home/HomePage.test.tsx > HomePage: the Sugar line (D-16.98) > shows the shown day's sugar, opens All nutrients from it, and its switch there hides it
+  - Test: src/features/home/HomePage.test.tsx > HomePage: the Sugar line (D-16.98) > shows the shown day's sugar, opens Sugar's sources from it (D-16.105), and the switch in All nutrients hides it
 - **ACC-F14-2** A food without a sugar figure never counts as 0 g ("from n of m foods", "No sugar figures")
   - Test: src/domain/nutrients/sugar.test.ts > sugarOfDay (D-16.98) > never counts a food without a sugar figure as 0 g: it is left out and counted apart
   - Test: src/features/home/SugarLine.test.tsx > SugarLine (D-16.98) > says from how many foods when some have no sugar figure, never counting them as 0 g
@@ -684,6 +684,44 @@ v1.0 is done when every P0 and P1 feature of the inventory (`docs/plan/03-featur
   - Test: src/services/coach/context.test.ts > coachContext: today's sugar against the Sugar limit (D-16.98) > says how many entries had a figure when not all did, never counting the rest as 0 g
   - Test: src/services/coach/context.test.ts > coachContext: today's sugar against the Sugar limit (D-16.98) > says sugar is not known, rather than 0 g, when no entry today has a figure
   - Test: src/services/coach/snapshot.test.ts > takeSnapshot (R04.22) > copies the Sugar limit from Nutrient goals, 0 while it is off (D-16.98)
+
+### F15 · Nutrient sources: which foods gave the most of a nutrient (P1, P18)
+
+- **ACC-F15-1** Each nutrient row of All nutrients, a nutrient pillar and the Sugar line open that nutrient's sources for the shown day; water opens nothing
+  - Test: src/features/home/DayNutrientsSheet.test.tsx > DayNutrientsSheet > opens a nutrient's sources from its row: energy, the macros, every detail; water opens nothing (D-16.105)
+  - Test: src/features/home/PillarRow.test.tsx > PillarRow > names each nutrient's pillar with a button that opens it, keeping the group's name and description (D-16.105)
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary pillars, chosen (P07-03) > opens a nutrient's sources from its pillar, anywhere on it; water's opens nothing (D-16.105)
+  - Test: src/features/home/DaySummary.test.tsx > DaySummary Sugar line (D-16.98) > opens Sugar's sources on a tap, not All nutrients (D-16.105)
+  - Test: src/features/home/HomePage.test.tsx > HomePage: nutrient sources (D-16.105) > opens the shown day's sources from a pillar, and a food opens its entry over the sheet
+  - Test: src/features/home/HomePage.test.tsx > HomePage: nutrient sources (D-16.105) > opens a nutrient's sources from its row in All nutrients for the day shown, and Done goes back to All nutrients
+- **ACC-F15-2** The day's foods that gave the nutrient, largest first, each with its amount and share of the day's total
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > lists the foods that gave the nutrient, largest first, with each share of the total
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > puts the earlier food first on a tie, then the id
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > reads energy in kcal, the macros, an optional nutrient and a sports compound
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > lists the foods that gave the nutrient, largest first, each with its amount, meal and time and share of the day's total
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > shows energy in the person's unit against the day's target
+- **ACC-F15-3** The total against the goal or the limit ("over" in the warning colour past a limit), or alone without one
+  - Test: src/domain/nutrients/sources.test.ts > sourceGoal (D-16.105) > reads energy and the macros against the targets in effect
+  - Test: src/domain/nutrients/sources.test.ts > sourceGoal (D-16.105) > has no energy or macro goal without targets
+  - Test: src/domain/nutrients/sources.test.ts > sourceGoal (D-16.105) > reads the optional goals with their kind: a limit or an amount to reach
+  - Test: src/domain/nutrients/sources.test.ts > sourceGoal (D-16.105) > has none for a goal turned off (0) and for the two fats that never have one
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > says how far over a limit the day is, in the warning colour
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > is not over exactly at the limit, compared as shown
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > reads the total against a goal to reach: an optional goal, and a macro against the targets
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > shows the total alone without a goal: one turned off, a fat that never has one, no profile
+- **ACC-F15-4** A food without a figure is never counted as 0: it is counted apart, and there is no total when no food has one
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > never counts a food without a figure as 0: it is left out of the total and the list and counted apart
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > has no total, rather than 0, when the day has foods but none has a figure
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > counts a figure of 0 toward the total, but does not list a food that gave nothing
+  - Test: src/domain/nutrients/sources.test.ts > sourcesOfDay (D-16.105) > takes a figure that is not a finite amount of 0 or more as no figure
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > never counts a food without a figure as 0: no total when none has one, the foods counted apart
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > lists no food that gave 0, though its 0 counts in the total
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > says nothing was counted on a day without food
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > shows which foods gave the day its sugar from the Sugar line, and opens one in the editor (D-16.105)
+- **ACC-F15-5** A food opens its entry in the editor, with all its nutrients, over the sheet; closing it comes back to the sheet
+  - Test: src/features/home/SourcesSheet.test.tsx > SourcesSheet (D-16.105) > opens a food's entry from its row, and closes with Done
+  - Test: src/features/home/HomePage.test.tsx > HomePage: nutrient sources (D-16.105) > opens the shown day's sources from a pillar, and a food opens its entry over the sheet
+  - Test: e2e/home-progress.spec.ts > Home: days, pillars and the diary (Demo 4) > shows which foods gave the day its sugar from the Sugar line, and opens one in the editor (D-16.105)
 
 ## G · Progress, weight and body fat
 

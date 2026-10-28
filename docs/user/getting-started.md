@@ -103,8 +103,16 @@ The bar at the bottom has four tabs:
   and barcodes usually have one, foods you enter by hand do not), so the line says "from 4 of 6
   foods" when some are missing it, and "No sugar figures" when none has one, rather than counting
   them as 0 g. When some foods give added sugar it shows that too ("12 g added"). Tap the line to
-  see All nutrients. It is hidden while Sugar is one of your pillars, and **Sugar on Home** in All
-  nutrients turns it off.
+  see which foods the sugar came from (below). It is hidden while Sugar is one of your pillars, and
+  **Sugar on Home** in All nutrients turns it off.
+
+  **All nutrients**, under the pillars, lists every nutrient of the day against its goal. To see
+  which foods gave the day a nutrient, tap its row there, its pillar, or the Sugar line. The list
+  starts with the food that gave the most, with its meal and time, its amount and its share of the
+  day's total, under the total against your goal ("19 g of 30 g goal") or limit ("68 g of 50 g
+  limit", with how far over in red). Foods that came without a figure for that nutrient are counted
+  under the list ("1 food has no fibre figure"), never as 0. Tap a food to open it in the editor,
+  which shows all of its nutrients (open Micronutrients for the vitamins, minerals and the rest).
 - **Progress:** weight and body fat with their history, calories over time, and a weekly recap.
   Log a weigh-in here.
 - **Coach:** a chat about your own diary. See [The Coach](coach.md).

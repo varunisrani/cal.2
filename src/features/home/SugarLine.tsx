@@ -10,7 +10,7 @@ export interface SugarLineProps {
   readonly sugar: DaySugar;
   /** The Sugar limit from Nutrient goals, in g; 0 when it is turned off. */
   readonly limit: number;
-  /** A tap: opens All nutrients. */
+  /** A tap: opens Sugar's sources (D-16.105). */
   readonly onOpen: () => void;
 }
 

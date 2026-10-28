@@ -7,28 +7,20 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react';
-import type { DiaryEntry, EntrySource } from '../../domain/model';
+import type { DiaryEntry } from '../../domain/model';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { formatTime } from '../../i18n/format';
 import { useServices } from '../../services/context';
 import { IconButton } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
-import { Icon, type IconName } from '../../ui/icons';
+import { Icon } from '../../ui/icons';
 import { SwipeRow } from '../../ui/SwipeRow';
 import { useToast } from '../../ui/Toast';
 import { energyText } from './energy';
+import { SOURCE_ICONS } from './entryIcons';
 import styles from './home.module.css';
 import sel from './selection.module.css';
 import { tx } from './text';
-
-/** The tile's icon for an entry without an emoji: how it was logged. */
-const SOURCE_ICONS: Readonly<Record<EntrySource, IconName>> = {
-  photo: 'camera',
-  label: 'text',
-  barcode: 'barcode',
-  text: 'chat',
-  manual: 'pencil',
-};
 
 /** How long a press must be held still, in ms, to start picking rows. */
 export const LONG_PRESS_MS = 500;

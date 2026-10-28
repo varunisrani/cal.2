@@ -15,6 +15,7 @@ import { formatWeight } from '../src/domain/units/body';
 import { formatDay, formatDuration, formatInt, formatPeriod } from '../src/i18n/format';
 import {
   LOCALE,
+  OFF_PRODUCT_CODE,
   hooksSeen,
   recordHooks,
   routeFoodDatabases,
@@ -194,6 +195,20 @@ async function enterManually(page: Page, food: Food): Promise<void> {
   }
   await ui(sheet, 'manual.save').click();
   await expect(sheet).toBeHidden();
+}
+
+/** "+" → Snap & scan → Barcode → the typed digits → Look up → Log: the product as reviewed. */
+async function logBarcode(page: Page, code: string): Promise<void> {
+  const menu = await openAddMenu(page);
+  await (await menuItem(menu, words('menu.group.snapScan'), 'home.add.group.snapScan')).click();
+  await (await menuItem(menu, words('menu.method.barcode'), 'home.add.barcode')).click();
+  const scanner = page.getByRole('dialog', { name: words('scan.title') });
+  await scanner.getByRole('textbox', { name: words('scan.digits.label') }).fill(code);
+  await scanner.getByRole('button', { name: words('scan.digits.submit') }).click();
+  await expect(scanner).toBeHidden();
+  const review = page.getByRole('dialog', { name: words('review.title') });
+  await ui(review, 'review.log').click();
+  await expect(review).toBeHidden();
 }
 
 /** "+" → Start fast → Start on the default goal: the running fast's row shows. */
@@ -483,12 +498,27 @@ test.describe('Home: days, pillars and the diary (Demo 4)', () => {
       );
     });
 
-    await test.step('the Sugar line: a food entered by hand has no sugar figure, and Sugar on Home hides the line (D-16.98)', async () => {
+    await test.step("the Sugar line: a food entered by hand has no sugar figure, it opens Sugar's sources, and Sugar on Home hides the line (D-16.98, D-16.105)", async () => {
       const sugar = ui(page, 'home.sugar');
       await expect(sugar).toHaveAccessibleName(
         `${words('home.pillar.sugar')} ${words('home.sugar.noFigures')}`,
       );
       await sugar.click();
+      const sugarName = words('home.pillar.sugar');
+      const sources = page.getByRole('dialog', {
+        name: words('sources.title', { name: sugarName }),
+      });
+      await expect(sources).toHaveAttribute('data-ui', 'sources');
+      await expect(ui(sources, 'sources.total')).toHaveCount(0);
+      await expect(ui(sources, 'sources.empty')).toHaveText(
+        words('sources.empty', { name: 'sugar' }),
+      );
+      await expect(ui(sources, 'sources.noFigure')).toHaveText(
+        words('sources.noFigure', { count: 1, name: 'sugar' }),
+      );
+      await ui(sources, 'sources.done').click();
+      await expect(sources).toBeHidden();
+      await ui(page, 'home.allNutrients').click();
       await expect(nutrients).toHaveAttribute('data-ui', 'home.nutrients');
       const toggle = ui(nutrients, 'home.nutrients.sugarLine');
       await expect(toggle).toHaveAccessibleName(words('home.nutrients.sugarLine'));
@@ -576,6 +606,58 @@ test.describe('Home: days, pillars and the diary (Demo 4)', () => {
       await page.reload();
       await expect(ui(page, 'home.gauge')).toBeVisible();
       await expectHooks(pillars, shown);
+    });
+  });
+
+  test('shows which foods gave the day its sugar from the Sugar line, and opens one in the editor (D-16.105)', async ({
+    page,
+  }) => {
+    await onboard(page);
+    const product = 'Millbrook Bakery Spelt Crackers with Rosemary';
+    const sources = page.getByRole('dialog', {
+      name: words('sources.title', { name: words('home.pillar.sugar') }),
+    });
+    const rows = ui(sources, 'sources.row');
+
+    await test.step('a product from its barcode, with a sugar figure, and a food entered by hand, without one', async () => {
+      // 25 g of crackers at 2.4 g of sugar per 100 g (e2e/fixtures/off-product.json).
+      await logBarcode(page, OFF_PRODUCT_CODE);
+      await enterManually(page, { name: 'Lentil soup', kcal: 410 });
+      await expect(ui(page, 'home.sugar.coverage')).toHaveText(
+        words('home.sugar.coverage', { count: 1, total: 2 }),
+      );
+    });
+
+    await test.step('the Sugar line opens the foods by sugar: the crackers, and the soup counted apart', async () => {
+      await ui(page, 'home.sugar').click();
+      await expect(sources).toHaveAttribute('data-ui', 'sources');
+      await expect(ui(sources, 'sources.day')).toHaveText(words('home.nutrients.today'));
+      await expect(ui(sources, 'sources.total')).toHaveText(
+        words('sources.ofLimit', { amount: '0.6 g', limit: '50 g' }),
+      );
+      await expect(rows).toHaveCount(1);
+      // Logged a moment after 08:30 on the page clock; the browser may space "AM" its own way.
+      const when = words('sources.when', { meal: words('log.meal.breakfast'), time: 'TIME' });
+      const [before, after] = when.split('TIME');
+      await expect(rows.first()).toHaveAccessibleName(
+        new RegExp(`^${product} 0\\.6 g ${before}8:3\\d\\sAM${after} 100%$`),
+      );
+      await expect(ui(sources, 'sources.noFigure')).toHaveText(
+        words('sources.noFigure', { count: 1, name: 'sugar' }),
+      );
+    });
+
+    await test.step('the crackers open in the editor over the sheet, with all their nutrients; Cancel comes back', async () => {
+      await rows.first().click();
+      const editor = page.getByRole('dialog', { name: words('editor.title') });
+      await expect(ui(editor, 'editor.name')).toHaveValue(product);
+      await ui(editor, 'review.more.toggle').click();
+      await expect(ui(editor, 'review.more.sugar')).toContainText('0.6');
+      await ui(editor, 'editor.cancel').click();
+      await expect(editor).toBeHidden();
+      await expect(sources).toBeVisible();
+      await ui(sources, 'sources.done').click();
+      await expect(sources).toBeHidden();
     });
   });
 

@@ -1,0 +1,154 @@
+/*
+ * The Sources sheet (D-16.105): the day, the total against its goal or limit, then a card of the
+ * foods that gave the nutrient, each a row with its tile, name and amount, meal and time and
+ * share, and a thin bar for the share; the notes under it. Every value comes from tokens.css;
+ * logical properties throughout.
+ */
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.day,
+.note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-body);
+}
+
+/* The total in the accent, like All nutrients' amounts; "over" past a limit in the warning colour. */
+.total {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--leading-snug);
+}
+
+.total > :first-child {
+  color: var(--accent);
+}
+
+.total > [data-ui='sources.over'] {
+  color: var(--danger);
+  font-size: var(--type-caption);
+}
+
+/* ---- The foods ---------------------------------------------------------------------------- */
+
+.list {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  list-style: none;
+}
+
+.list > li + li {
+  border-block-start: 1px solid var(--line);
+}
+
+.row {
+  display: grid;
+  grid-template-areas:
+    'tile name amount'
+    'tile when share'
+    'tile bar bar';
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  inline-size: 100%;
+  padding-block: var(--space-3);
+  padding-inline: var(--space-4);
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+}
+
+.tile {
+  display: grid;
+  grid-area: tile;
+  place-items: center;
+  inline-size: 2.5rem;
+  block-size: 2.5rem;
+  border-radius: var(--radius-control);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.emoji {
+  font-size: var(--type-title);
+  line-height: 1;
+}
+
+.name {
+  grid-area: name;
+  min-inline-size: 0;
+  overflow: hidden;
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.amount {
+  grid-area: amount;
+  color: var(--accent);
+  font-size: var(--type-body);
+  font-weight: var(--weight-semibold);
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.when,
+.share {
+  color: var(--text-muted);
+  font-size: var(--type-caption);
+  line-height: var(--leading-snug);
+}
+
+.when {
+  grid-area: when;
+  min-inline-size: 0;
+}
+
+.share {
+  grid-area: share;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+/* As thin as the Sugar line's bar: the food's part of the day's total. */
+.bar {
+  display: block;
+  grid-area: bar;
+  block-size: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent-soft);
+}
+
+.bar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: var(--radius-pill);
+  background-color: var(--accent);
+}

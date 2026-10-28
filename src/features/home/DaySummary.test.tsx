@@ -1,9 +1,10 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { DiaryEntry, Targets } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { DEFAULT_GOAL_VALUES } from '../../domain/nutrients/goalDefaults';
 import { DEFAULT_PILLARS } from '../../domain/nutrients/pillars';
+import type { SourceNutrient } from '../../domain/nutrients/sources';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { home } from '../../i18n/en/home';
 import { makeEntry } from '../../test/factories';
@@ -22,6 +23,7 @@ function summaryProps({
   water = null,
   sugarLine = true,
   onShowAll = () => undefined,
+  onShowSources = () => undefined,
 }: {
   entries?: DiaryEntry[];
   targets?: Targets | null;
@@ -31,8 +33,19 @@ function summaryProps({
   water?: WaterDay | null;
   sugarLine?: boolean;
   onShowAll?: () => void;
+  onShowSources?: (nutrient: SourceNutrient) => void;
 } = {}): DaySummaryProps {
-  return { entries, targets, goals, energyUnit: unit, pillars, water, sugarLine, onShowAll };
+  return {
+    entries,
+    targets,
+    goals,
+    energyUnit: unit,
+    pillars,
+    water,
+    sugarLine,
+    onShowAll,
+    onShowSources,
+  };
 }
 
 function renderSummary(options: Parameters<typeof summaryProps>[0] = {}) {
@@ -181,6 +194,26 @@ describe('DaySummary pillars, chosen (P07-03)', () => {
     );
   });
 
+  it("opens a nutrient's sources from its pillar, anywhere on it; water's opens nothing (D-16.105)", () => {
+    const onShowSources = vi.fn();
+    renderSummary({
+      entries: [makeEntry({ nutrients: { sodium: 1_250 } })],
+      pillars: ['sodium', 'protein'],
+      water: { totalMl: 750, goalMl: 2_000, unit: 'ml' },
+      onShowSources,
+    });
+
+    // The button holds the name only, so the pillar keeps its name and description.
+    const sodium = screen.getByRole('group', { name: words.pillar.sodium });
+    expect(sodium).toHaveAccessibleDescription('1,250 1,050 mg left');
+    fireEvent.click(within(sodium).getByRole('button', { name: words.pillar.sodium }));
+    fireEvent.click(screen.getByRole('button', { name: words.pillar.protein }));
+    expect(onShowSources.mock.calls).toEqual([['sodium'], ['protein']]);
+
+    const water = screen.getByRole('group', { name: words.pillar.water });
+    expect(within(water).queryByRole('button')).toBeNull();
+  });
+
   it('opens every nutrient of the day from the All nutrients link under the pillars', () => {
     const onShowAll = vi.fn();
     renderSummary({ onShowAll });
@@ -211,11 +244,13 @@ describe('DaySummary Sugar line (D-16.98)', () => {
     );
   });
 
-  it("opens the day's nutrients on a tap, as All nutrients does", () => {
+  it("opens Sugar's sources on a tap, not All nutrients (D-16.105)", () => {
     const onShowAll = vi.fn();
-    renderSummary({ entries: sweetDay(), onShowAll });
+    const onShowSources = vi.fn();
+    renderSummary({ entries: sweetDay(), onShowAll, onShowSources });
     fireEvent.click(screen.getByRole('button', { name: /^Sugar 32 g of 50 g/ }));
-    expect(onShowAll).toHaveBeenCalledTimes(1);
+    expect(onShowSources.mock.calls).toEqual([['sugar']]);
+    expect(onShowAll).not.toHaveBeenCalled();
   });
 
   it('is hidden while Sugar is one of the pillars, which shows it instead', () => {

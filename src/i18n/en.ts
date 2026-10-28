@@ -15,6 +15,7 @@ import { progress } from './en/progress';
 import { reminders } from './en/reminders';
 import { review } from './en/review';
 import { settings } from './en/settings';
+import { sources } from './en/sources';
 import { transfer } from './en/transfer';
 import { walk } from './en/walk';
 import { startupPartitions } from './startup';
@@ -44,6 +45,7 @@ export const onDemandPartitions = {
   data,
   health,
   walk,
+  sources,
 } as const;
 
 /** The name of a partition fetched on demand. */

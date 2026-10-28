@@ -2,6 +2,7 @@ import type { DiaryEntry, Targets } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import type { GoalValues } from '../../domain/nutrients/goalDefaults';
 import { MAX_PILLARS } from '../../domain/nutrients/pillars';
+import type { SourceNutrient } from '../../domain/nutrients/sources';
 import { sugarOfDay } from '../../domain/nutrients/sugar';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { Button } from '../../ui/Button';
@@ -40,8 +41,10 @@ export interface DaySummaryProps {
   readonly water: WaterDay | null;
   /** The Sugar line is switched on (setting `home.sugarLine`, D-16.98). */
   readonly sugarLine: boolean;
-  /** "All nutrients", and a tap on the Sugar line: opens the day's nutrient sheet. */
+  /** "All nutrients": opens the day's nutrient sheet. */
   readonly onShowAll: () => void;
+  /** A nutrient's pillar, and the Sugar line for Sugar: opens its sources (D-16.105). */
+  readonly onShowSources: (nutrient: SourceNutrient) => void;
   /**
    * The burn counted in the energy target (P11-04): `targets` already holds goal + burn, and a
    * line under the gauge says so. None while Health Connect's burn is not counted.
@@ -53,7 +56,8 @@ export interface DaySummaryProps {
  * The top of Home for one day: the energy gauge (headed Calories or Kilojoules), with the counted
  * burn under it on the Android app, the chosen pillars with water after them, the Sugar line
  * while it is switched on and Sugar is not one of the pillars (D-16.98), and the link to every
- * nutrient of the day.
+ * nutrient of the day. A nutrient's pillar and the Sugar line open that nutrient's sources
+ * (D-16.105).
  */
 export function DaySummary({
   entries,
@@ -64,6 +68,7 @@ export function DaySummary({
   water,
   sugarLine,
   onShowAll,
+  onShowSources,
   burn = null,
 }: DaySummaryProps) {
   const eaten = entries.reduce((sum, entry) => sum + entry.kcal, 0);
@@ -89,9 +94,20 @@ export function DaySummary({
           })}
         </p>
       )}
-      <PillarRow entries={entries} pillars={pillars} targets={plan} goals={goals} water={water} />
+      <PillarRow
+        entries={entries}
+        pillars={pillars}
+        targets={plan}
+        goals={goals}
+        water={water}
+        onOpen={onShowSources}
+      />
       {showSugar ? (
-        <SugarLine sugar={sugarOfDay(entries)} limit={goals.sugar} onOpen={onShowAll} />
+        <SugarLine
+          sugar={sugarOfDay(entries)}
+          limit={goals.sugar}
+          onOpen={() => onShowSources('sugar')}
+        />
       ) : null}
       <Button
         variant="quiet"

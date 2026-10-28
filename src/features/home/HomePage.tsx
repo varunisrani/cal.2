@@ -20,6 +20,7 @@ import { decodeLayout, type OfferedMethod } from '../../domain/food/addMenu';
 import { fastsOnDay, type DiarySortMode } from '../../domain/meals/diary';
 import type { DiaryEntry, Fast } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
+import type { SourceNutrient } from '../../domain/nutrients/sources';
 import { withPartitions } from '../../i18n/onDemand';
 import { useServices } from '../../services/context';
 import type { WalkPhase, WalkService } from '../../services/walks/service';
@@ -66,6 +67,8 @@ export const SCAN_SHEET = 'scan';
 /** The selected day's nutrients, and the pillar picker that opens over them (P07-04). */
 export const NUTRIENTS_SHEET = 'nutrients';
 export const PILLAR_PICKER_SHEET = 'pillars';
+/** The foods one nutrient of the selected day came from (D-16.105). */
+export const SOURCES_SHEET = 'sources';
 /** The trackers' sheets (P07-05, P07-08): a custom water amount, start a fast, the fast editor. */
 export const WATER_SHEET = 'water';
 export const START_FAST_SHEET = 'startFast';
@@ -101,6 +104,11 @@ const EntryEditor = onDemand(() =>
     ['editor', 'review', 'ingredients', 'fitCheck'],
     import('../log/EntryEditor'),
   ).then((module) => module.EntryEditor),
+);
+
+// Fetched the first time a nutrient's sources are opened.
+const SourcesSheet = onDemand(() =>
+  withPartitions(['sources'], import('./SourcesSheet')).then((module) => module.SourcesSheet),
 );
 
 const NO_ENTRIES: readonly DiaryEntry[] = [];
@@ -154,8 +162,9 @@ function useSteadyRead<T>(read: LiveState<T>): LiveState<T> {
 /**
  * Home for one day, today unless the person picked another (P07-02): the week bar, the gauge and
  * the chosen pillars with water after them, then the Sugar line (D-16.98) (a sideways swipe over
- * them changes the day; "All nutrients" under them, or the Sugar line, opens the day's nutrient
- * sheet with the Sugar on Home switch and, from it, the pillar picker), the diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
+ * them changes the day; "All nutrients" under them opens the day's nutrient sheet with the Sugar
+ * on Home switch and, from it, the pillar picker; a nutrient's pillar, its row in that sheet and
+ * the Sugar line open the foods it came from, each of which opens its entry, D-16.105), the diary with the day's food, water and fasts in the stored sort order (a fast's row opens its
  * editor, P07-05), and the "+" button with the add menu of the stored layout and the water and
  * fasting rows (P07-08). What is logged from here goes to the day shown. Nothing with a number is
  * drawn until the profile, the settings and the day's entries, water and fasts have been read, so
@@ -200,6 +209,9 @@ export function HomePage() {
   const scan = useSheet(SCAN_SHEET);
   const nutrients = useSheet(NUTRIENTS_SHEET);
   const pillarPicker = useSheet(PILLAR_PICKER_SHEET);
+  const sourcesSheet = useSheet(SOURCES_SHEET);
+  // The nutrient the sources sheet shows, as it was picked.
+  const [sourceOf, setSourceOf] = useState<SourceNutrient | null>(null);
   const waterSheet = useSheet(WATER_SHEET);
   const startFast = useSheet(START_FAST_SHEET);
   const fastSheet = useSheet(FAST_SHEET);
@@ -322,6 +334,16 @@ export function HomePage() {
     fastSheet.show();
   };
 
+  const openEntry = (entry: DiaryEntry): void => {
+    setEditing({ id: entry.id, day: entry.dayKey });
+    editor.show();
+  };
+
+  const showSources = (nutrient: SourceNutrient): void => {
+    setSourceOf(nutrient);
+    sourcesSheet.show();
+  };
+
   const foodActions: FoodRowActions = {
     picked: picking.picked,
     // The heart waits for the saved meals, so it never shows the wrong state.
@@ -329,10 +351,7 @@ export function HomePage() {
       savedMeals.status === 'ready'
         ? new Set(savedMeals.value.flatMap((meal) => meal.originEntryId ?? []))
         : null,
-    onOpen: (entry) => {
-      setEditing({ id: entry.id, day: entry.dayKey });
-      editor.show();
-    },
+    onOpen: openEntry,
     onPick: picking.pick,
     onToggle: picking.toggle,
   };
@@ -411,6 +430,7 @@ export function HomePage() {
             water={water}
             sugarLine={settings.value['home.sugarLine']}
             onShowAll={nutrients.show}
+            onShowSources={showSources}
             burn={plan && burned !== null ? { goalKcal: plan.kcal, burnedKcal: burned } : null}
           />
         </DaySwipe>
@@ -476,6 +496,7 @@ export function HomePage() {
           onChoosePillars={pillarPicker.show}
           sugarLine={settings.value['home.sugarLine']}
           onSugarLineChange={storeSugarLine}
+          onOpenSources={showSources}
         />
         <PillarPicker
           open={pillarPicker.open}
@@ -484,6 +505,21 @@ export function HomePage() {
           onSave={savePillars}
           onClose={pillarPicker.close}
         />
+        <Suspense fallback={null}>
+          {sourcesSheet.open && sourceOf ? (
+            <SourcesSheet
+              nutrient={sourceOf}
+              day={dayKey}
+              isToday={selection.isToday}
+              entries={entries.value}
+              targets={dayPlan}
+              goals={goals}
+              energyUnit={unit}
+              onOpenEntry={openEntry}
+              onClose={sourcesSheet.close}
+            />
+          ) : null}
+        </Suspense>
         <Suspense fallback={null}>
           {waterSheet.open ? (
             <CustomWaterSheet open day={dayKey} unit={waterUnit} onClose={waterSheet.close} />

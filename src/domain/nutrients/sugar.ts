@@ -16,8 +16,11 @@ export interface DaySugar {
   readonly addedGrams: number | null;
 }
 
-/** A stored figure that can be counted: a finite number of 0 or more (0 g is a figure). */
-function figure(value: number | undefined): number | null {
+/**
+ * A stored figure that can be counted: a finite number of 0 or more (0 g is a figure). Every
+ * other value, missing included, is no figure. The nutrient sources (D-16.105) read it too.
+ */
+export function figure(value: number | undefined): number | null {
   return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
 }
 

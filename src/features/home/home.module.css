@@ -40,6 +40,44 @@
   gap: var(--space-1);
 }
 
+.pillars > * {
+  position: relative;
+}
+
+/*
+ * A nutrient pillar opens its sources (D-16.105): the button holds the name; its hit area and
+ * focus ring cover the whole pillar.
+ */
+.pillarOpen {
+  max-inline-size: 100%;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pillarOpen::after {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-control);
+  content: '';
+}
+
+.pillarOpen:focus-visible {
+  outline: none;
+}
+
+.pillarOpen:focus-visible::after {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
 /* The counted burn (P11-04): "2,000 goal + 350 burned", close under the gauge. */
 .burn {
   justify-self: center;
@@ -50,7 +88,7 @@
 }
 
 /*
- * The Sugar line (D-16.98): a row under the pillars that opens All nutrients: the name, the grams
+ * The Sugar line (D-16.98): a row under the pillars that opens Sugar's sources: the name, the grams
  * in the accent like a pillar's amount (muted when no food has a figure) and a chevron; the bar;
  * the notes. Past the limit the bar and "over", the first note, take the warning colour.
  */

@@ -1,5 +1,5 @@
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import type { DiaryEntry, Targets } from '../../domain/model';
 import type { PillarKey } from '../../domain/nutrients/catalogue';
 import { DEFAULT_GOAL_VALUES, type GoalValues } from '../../domain/nutrients/goalDefaults';
@@ -17,15 +17,24 @@ function renderRow({
   targets = PLAN,
   goals = DEFAULT_GOAL_VALUES,
   water = null,
+  onOpen,
 }: {
   entries?: DiaryEntry[];
   pillars?: readonly PillarKey[];
   targets?: Targets;
   goals?: Readonly<GoalValues>;
   water?: WaterDay | null;
+  onOpen?: (key: PillarKey) => void;
 } = {}) {
   return render(
-    <PillarRow entries={entries} pillars={pillars} targets={targets} goals={goals} water={water} />,
+    <PillarRow
+      entries={entries}
+      pillars={pillars}
+      targets={targets}
+      goals={goals}
+      water={water}
+      {...(onOpen ? { onOpen } : {})}
+    />,
   );
 }
 
@@ -144,5 +153,28 @@ describe('PillarRow', () => {
     });
     expect(pillar(words.pillar.protein)).toHaveAccessibleDescription('30 120 g left');
     expect(pillar(words.pillar.water)).toHaveAccessibleDescription('500 1,500 ml left');
+  });
+
+  it("names each nutrient's pillar with a button that opens it, keeping the group's name and description (D-16.105)", () => {
+    const onOpen = vi.fn();
+    renderRow({
+      pillars: ['sugar', 'vitaminC'],
+      entries: [makeEntry({ nutrients: { sugar: 12, vitaminC: 45 } })],
+      water: { totalMl: 500, goalMl: 2_000, unit: 'ml' },
+      onOpen,
+    });
+    expect(pillar(words.pillar.sugar)).toHaveAccessibleDescription('12 38 g left');
+    fireEvent.click(within(pillar(words.pillar.vitaminC)).getByRole('button'));
+    expect(onOpen.mock.calls).toEqual([['vitaminC']]);
+    expect(within(pillar(words.pillar.sugar)).getByRole('button')).toHaveAccessibleName(
+      words.pillar.sugar,
+    );
+    // Water is never food: nothing to open.
+    expect(within(pillar(words.pillar.water)).queryByRole('button')).toBeNull();
+  });
+
+  it('draws no button without a way to open the sources', () => {
+    renderRow({ pillars: ['protein'] });
+    expect(within(pillar(words.pillar.protein)).queryByRole('button')).toBeNull();
   });
 });

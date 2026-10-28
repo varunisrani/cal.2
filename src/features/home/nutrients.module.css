@@ -116,6 +116,7 @@
 
 /* ---- The home-pillars row, the Sugar switch and the picker's choices --------------------- */
 
+/* The home-pillars row, and each nutrient's row that opens its sources (D-16.105). */
 .choose {
   inline-size: 100%;
   border: 0;

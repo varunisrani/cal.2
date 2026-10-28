@@ -62,6 +62,7 @@ import {
   RECENT_SHEET,
   SAVED_SHEET,
   SCAN_SHEET,
+  SOURCES_SHEET,
 } from './HomePage';
 import {
   closeHarnesses,
@@ -580,7 +581,12 @@ describe("HomePage: pillars and the day's nutrients (P07-03, P07-04)", () => {
 describe('HomePage: the Sugar line (D-16.98)', () => {
   const sugarLine = () => document.querySelector<HTMLElement>('[data-ui="home.sugar"]');
 
-  it("shows the shown day's sugar, opens All nutrients from it, and its switch there hides it", async () => {
+  beforeAll(async () => {
+    // The sources sheet is fetched on demand: load it once before any wait includes its transform.
+    await import('./SourcesSheet');
+  });
+
+  it("shows the shown day's sugar, opens Sugar's sources from it (D-16.105), and the switch in All nutrients hides it", async () => {
     const { h, mount } = await openWithPillars();
     await h.repos.diaryRepo.addMany([
       makeEntry({ nutrients: { sugar: 20, addedSugar: 4 }, loggedAt: FACTORY_NOW - HOUR }),
@@ -597,6 +603,15 @@ describe('HomePage: the Sugar line (D-16.98)', () => {
     expect(sugarLine()).toHaveAccessibleName('Sugar 70 g of 50 g 20 g over');
 
     fireEvent.click(screen.getByRole('button', { name: /^Sugar 70 g/ }));
+    await untilShown('[data-ui="sources"]');
+    expect(h.router.current().sheets).toEqual([SOURCES_SHEET]);
+    const sources = screen.getByRole('dialog', { name: 'Sugar by food' });
+    expect(within(sources).getByText(dayName('2026-10-25'))).toBeVisible();
+    expect(textOf('sources.total')).toBe('70 g of 50 g limit 20 g over');
+    fireEvent.click(within(sources).getByRole('button', { name: common.common.done }));
+    await untilGone('[data-ui="sources"]');
+
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
     await untilShown('[data-ui="home.nutrients"]');
     expect(h.router.current().sheets).toEqual(['nutrients']);
     expect(within(nutrientsSheet()).getByText(dayName('2026-10-25'))).toBeVisible();
@@ -634,6 +649,106 @@ describe('HomePage: the Sugar line (D-16.98)', () => {
     fireEvent.click(dayTile('2026-10-25'));
     await untilShown('[data-ui="home.sugar"]');
     expect(sugarLine()).toHaveAccessibleName('Sugar 12 g of 50 g');
+  });
+});
+
+describe('HomePage: nutrient sources (D-16.105)', () => {
+  const sourceRows = () =>
+    Array.from(document.querySelectorAll<HTMLElement>('[data-ui="sources.row"]'));
+
+  beforeAll(async () => {
+    // Both are fetched on demand: load them once before any wait includes their transform.
+    await import('./SourcesSheet');
+    await import('../log/EntryEditor');
+  });
+
+  it("opens the shown day's sources from a pillar, and a food opens its entry over the sheet", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({
+        id: 'soup',
+        name: 'Lentil soup',
+        nutrients: { fibre: 14 },
+        loggedAt: FACTORY_NOW - HOUR,
+      }),
+      makeEntry({
+        id: 'toast',
+        name: 'Toast',
+        nutrients: { fibre: 4 },
+        loggedAt: FACTORY_NOW - 2 * HOUR,
+      }),
+      // No fibre figure: counted apart, never as 0 g.
+      makeEntry({ id: 'tea', name: 'Tea', nutrients: {}, loggedAt: FACTORY_NOW - 3 * HOUR }),
+      makeEntry({
+        id: 'apple',
+        name: 'Apple',
+        nutrients: { fibre: 5 },
+        loggedAt: FACTORY_NOW - 24 * HOUR,
+      }),
+    ]);
+    mount();
+    await untilShown('[data-ui="home.pillar.fibre"]');
+
+    const fibre = screen.getByRole('group', { name: words.pillar.fibre });
+    fireEvent.click(within(fibre).getByRole('button', { name: words.pillar.fibre }));
+    await untilShown('[data-ui="sources"]');
+    expect(h.router.current().sheets).toEqual([SOURCES_SHEET]);
+    const sheet = screen.getByRole('dialog', { name: 'Fibre by food' });
+    expect(textOf('sources.day')).toBe(words.nutrients.today);
+    expect(textOf('sources.total')).toBe('18 g of 30 g goal');
+    expect(sourceRows().map((row) => row.dataset.entry)).toEqual(['soup', 'toast']);
+    expect(textOf('sources.noFigure')).toBe('1 food has no fibre figure');
+
+    fireEvent.click(sourceRows()[1]!);
+    // The editor is fetched on first open, which can take over waitFor's 1 s on a busy machine.
+    await untilShown('[data-ui="editor.name"]');
+    expect(h.router.current().sheets).toEqual([SOURCES_SHEET, EDITOR_SHEET]);
+    const editor = within(screen.getByRole('dialog', { name: editorWords.editor.title }));
+    expect(editor.getByDisplayValue('Toast')).toBeVisible();
+    fireEvent.click(editor.getByRole('button', { name: common.common.cancel }));
+    await untilGone('[data-ui="editor"]');
+    expect(h.router.current().sheets).toEqual([SOURCES_SHEET]);
+    expect(sheet).toBeVisible();
+  });
+
+  it("opens a nutrient's sources from its row in All nutrients for the day shown, and Done goes back to All nutrients", async () => {
+    const { h, mount } = await openWithPillars();
+    await h.repos.diaryRepo.addMany([
+      makeEntry({ id: 'today', nutrients: { sodium: 400 }, loggedAt: FACTORY_NOW - HOUR }),
+      makeEntry({
+        id: 'curry',
+        name: 'Curry',
+        nutrients: { sodium: 1_500 },
+        loggedAt: FACTORY_NOW - 24 * HOUR,
+      }),
+      makeEntry({
+        id: 'naan',
+        name: 'Naan',
+        nutrients: { sodium: 400 },
+        loggedAt: FACTORY_NOW - 26 * HOUR,
+      }),
+    ]);
+    mount();
+    await untilShown('[data-ui="home.week"]');
+    fireEvent.click(dayTile('2026-10-25'));
+    await until(() => textOf('home.pillar.protein').startsWith('48'));
+    fireEvent.click(screen.getByRole('button', { name: words.nutrients.link }));
+    await untilShown('[data-ui="home.nutrients"]');
+
+    fireEvent.click(
+      within(nutrientsSheet()).getByRole('button', { name: 'Sodium 1,900 mg / 2,300 mg' }),
+    );
+    await untilShown('[data-ui="sources"]');
+    expect(h.router.current().sheets).toEqual(['nutrients', SOURCES_SHEET]);
+    const sheet = screen.getByRole('dialog', { name: 'Sodium by food' });
+    expect(textOf('sources.day')).toBe(dayName('2026-10-25'));
+    expect(textOf('sources.total')).toBe('1,900 mg of 2,300 mg limit');
+    expect(sourceRows().map((row) => row.dataset.entry)).toEqual(['curry', 'naan']);
+
+    fireEvent.click(within(sheet).getByRole('button', { name: common.common.done }));
+    await untilGone('[data-ui="sources"]');
+    expect(h.router.current().sheets).toEqual(['nutrients']);
+    expect(nutrientsSheet()).toBeVisible();
   });
 });
 

@@ -4,6 +4,7 @@ import { MACRO_KEYS, type DiaryEntry, type Targets } from '../../domain/model';
 import { isGoalKey, unitOf, type PillarKey } from '../../domain/nutrients/catalogue';
 import type { GoalValues } from '../../domain/nutrients/goalDefaults';
 import { MAX_PILLARS } from '../../domain/nutrients/pillars';
+import type { SourceNutrient } from '../../domain/nutrients/sources';
 import type { EnergyDisplayUnit } from '../../domain/units/energy';
 import { formatDay, formatNameList } from '../../i18n/format';
 import { Icon } from '../../ui/icons';
@@ -49,13 +50,16 @@ export interface DayNutrientsSheetProps {
   readonly sugarLine: boolean;
   /** The Sugar on Home switch was turned; the stored value follows. */
   readonly onSugarLineChange: (on: boolean) => void;
+  /** A nutrient's row: opens the foods it came from (D-16.105). */
+  readonly onOpenSources: (nutrient: SourceNutrient) => void;
 }
 
 /**
  * Every nutrient of Home's selected day (05 §3.2.4): the pillars Home shows (a row that opens
  * the picker) and the Sugar on Home switch (D-16.98), the water while it is tracked, the energy and macros against the targets, then the
  * optional nutrients and the sports compounds, each with its unit and goal. A detailed total of
- * exactly 0 reads as a dash.
+ * exactly 0 reads as a dash. Each food nutrient's row opens the foods it came from (D-16.105);
+ * water's opens nothing (it is never food).
  */
 export function DayNutrientsSheet({ open, onClose, ...day }: DayNutrientsSheetProps) {
   return (
@@ -84,6 +88,7 @@ function SheetBody({
   onChoosePillars,
   sugarLine,
   onSugarLineChange,
+  onOpenSources,
 }: BodyProps) {
   const plan = targets ?? NO_TARGETS;
   const kcal = entries.reduce((sum, entry) => sum + entry.kcal, 0);
@@ -142,6 +147,7 @@ function SheetBody({
                 ? tx('home.nutrients.goal', { amount: energyText(plan.kcal, energyUnit) })
                 : tx('home.pillar.noGoal')
             }
+            onOpen={() => onOpenSources('kcal')}
           />
           {MACRO_KEYS.map((key) => (
             <Line
@@ -151,6 +157,7 @@ function SheetBody({
               value={amountText(shownTotal(dayTotal(entries, key)))}
               unit={unitWord('g')}
               goal={goalText(plan[key], 'g')}
+              onOpen={() => onOpenSources(key)}
             />
           ))}
         </ul>
@@ -173,6 +180,7 @@ function SheetBody({
                 value={none ? tx('home.nutrients.none') : amountText(total)}
                 unit={none ? undefined : unitWord(unit)}
                 goal={goal}
+                onOpen={() => onOpenSources(id)}
               />
             );
           })}
@@ -229,12 +237,14 @@ interface LineProps {
   readonly unit?: string | undefined;
   /** "/ goal" or "No goal"; none for a nutrient that never has a goal. */
   readonly goal?: string | undefined;
+  /** Opens the nutrient's sources; the row is a button then, named by its words. */
+  readonly onOpen?: () => void;
 }
 
 /** One nutrient: its name, the day's amount with its unit, and the goal after it. */
-function Line({ id, label, value, unit, goal }: LineProps) {
-  return (
-    <li className={styles.line} data-ui={`home.nutrients.row.${id}`}>
+function Line({ id, label, value, unit, goal, onOpen }: LineProps) {
+  const words = (
+    <>
       <span className={styles.lineLabel}>{label}</span>{' '}
       <span className={styles.amount}>
         <span className={styles.value}>{value}</span>
@@ -251,6 +261,21 @@ function Line({ id, label, value, unit, goal }: LineProps) {
           <span className={styles.goal}>{goal}</span>
         </>
       )}
+    </>
+  );
+  if (onOpen === undefined) {
+    return (
+      <li className={styles.line} data-ui={`home.nutrients.row.${id}`}>
+        {words}
+      </li>
+    );
+  }
+  return (
+    <li data-ui={`home.nutrients.row.${id}`}>
+      <button type="button" className={styles.choose} onClick={onOpen}>
+        {words}
+        <Icon name="chevronRight" size={18} className={styles.mark} />
+      </button>
     </li>
   );
 }
