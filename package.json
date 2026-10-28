@@ -1,7 +1,7 @@
 {
   "name": "platewise",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Platewise: a local-first, bring-your-own-key AI calorie and nutrition tracker (installable web app).",
   "license": "MIT",
   "type": "module",

@@ -3,7 +3,17 @@
 What changed in each release of Platewise, newest first. Version numbers follow
 [Semantic Versioning](https://semver.org/).
 
-## Unreleased (1.2.0)
+## 1.2.0 (2026-10-28)
+
+Platewise 1.2 backs itself up in the Android app, and the keyboard no longer covers what you
+type.
+
+### The keyboard
+
+- In the Android app the screen now ends at the top of the keyboard, so the Coach's text box, the
+  food entry sheets and the reminder form stay in view while you type; the tab bar and the +
+  button step aside while the keyboard is open, so the Coach's text box sits right on the
+  keyboard. (On Android 15 and newer the app was drawn under the keyboard.)
 
 ### Automatic backup in the Android app
 

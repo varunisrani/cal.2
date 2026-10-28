@@ -58,6 +58,19 @@ the P11-05 worktree (`cbc7a27`, P11-01..04, with this slice uncommitted on top),
 | A7 | 1.1.0 APK | `PLATEWISE_BUILD_NUMBER=2 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` at e94f7a7 | OK: debug APK **9 097 419 bytes**, sha256 `96a91b641160b00e7300bde995c6bc05337a3fc1f2d04d07c95e88e919cf2e29`; `aapt dump badging`: `app.platewise.android` versionName **1.1.0**, versionCode **2**, minSdk 26, targetSdk 35, 14 permissions (INTERNET, CAMERA, the 8 health permissions, POST_NOTIFICATIONS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK and androidx's receiver permission); signed with the same debug key as 1.0.0's APK, so it installs over it. Sent to the owner | 2026-10-28, lead |
 | A8 | Notifications on a device | Install 1.1.0, turn reminders on (Android 13+ asks), add one of your own and one through the Coach, close the app; restart the phone; check each arrives and a tap opens Home | **Open: the owner's phone** | — |
 
+## 1.2.0 (2026-10-28): automatic backup and the keyboard
+
+P14 (`docs/plan/phases/P14-auto-backup.md`, D-16.95): automatic backup in the Android app and the keyboard no longer
+covering the Coach composer. `CHANGELOG.md` describes 1.2.0. Results of the release loop and the APK are in the rows
+below; device checks are the owner's.
+
+| # | Gate | Command | Result | Date, where |
+|---|---|---|---|---|
+| B1 | Release loop | `scripts/ci-local.sh` on the 1.2.0 stack | see the 1.2.0 release commit's message | 2026-10-28, lead's loop |
+| B2 | 1.2.0 APK | `PLATEWISE_BUILD_NUMBER=3 PLATEWISE_MAVEN_MIRROR=1 pnpm android:apk` | filled after the build | 2026-10-28, lead |
+| B3 | Keyboard on a device | Open the Coach and type; open Log › Manual and type in the last field; on Android 15+ and on an older phone | **Open: the owner's phone** | — |
+| B4 | Automatic backup on a device | Install 1.2.0, open it, check Documents › Platewise has a backup; next day open it again; Restore one from the list; on Android 8–10 the storage question | **Open: the owner's phone** | — |
+
 ## Release files
 
 | File | State |
